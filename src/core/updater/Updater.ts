@@ -23,6 +23,11 @@ type DiscoveredExtension = {
   type: string;
 };
 
+export type ExtensionRuntimeInfo = {
+  name: string;
+  type: "global" | "local" | "system";
+};
+
 /** GitHub 仓库配置 */
 const REPO_CONFIG = {
   owner: "Yoyo-514",
@@ -32,17 +37,37 @@ const REPO_CONFIG = {
 
 /** 当前开发版本 */
 const EXTENSION_DISPLAY_NAME = manifest.display_name;
+const BUNDLED_VERSION = manifest.version;
+
+function getRuntimeExtensionDirectoryName(): string | null {
+  try {
+    const runtimeDirUrl = new URL(/* @vite-ignore */ "..", import.meta.url);
+    const path = decodeURIComponent(runtimeDirUrl.pathname);
+    const parts = path.split("/").filter(Boolean);
+    const leaf = parts[parts.length - 1]?.trim();
+    return leaf || null;
+  } catch {
+    return null;
+  }
+}
+
+const RUNTIME_EXTENSION_DIRECTORY = getRuntimeExtensionDirectoryName();
 const EXTENSION_NAME_CANDIDATES = Array.from(
   new Set(
     [
+      RUNTIME_EXTENSION_DIRECTORY,
       EXTENSION_DISPLAY_NAME,
       REPO_CONFIG.repo,
+      manifest.homePage
+        ?.split("/")
+        .filter(Boolean)
+        .pop()
+        ?.replace(/\.git$/i, ""),
       "Engram_project",
       "Engram",
     ].filter((name): name is string => Boolean(name?.trim())),
   ),
 );
-const CURRENT_VERSION = manifest.version;
 const CURRENT_HASH_FALLBACK = "unknown";
 
 function normalizeExtensionName(name: string): string {
@@ -71,6 +96,7 @@ let cachedLatestVersion: string | null = null;
 let cachedLatestHash: string | null = null;
 let cachedRealLocalHash: string | null = null;
 let cachedRealExtensionName: string | null = null;
+let cachedExtensionRuntimeInfo: ExtensionRuntimeInfo | null = null;
 let cachedChangelog: string | null = null;
 
 /**
@@ -95,14 +121,23 @@ function compareVersions(a: string, b: string): number {
  */
 export class UpdateService {
   private static getDefaultExtensionName(): string {
-    return EXTENSION_DISPLAY_NAME || REPO_CONFIG.repo;
+    return (
+      RUNTIME_EXTENSION_DIRECTORY ||
+      EXTENSION_DISPLAY_NAME ||
+      REPO_CONFIG.repo ||
+      "Engram"
+    );
+  }
+
+  static getBundledVersion(): string {
+    return BUNDLED_VERSION;
   }
 
   /**
    * 获取当前版本
    */
   static getCurrentVersion(): string {
-    return CURRENT_VERSION;
+    return BUNDLED_VERSION;
   }
 
   /**
@@ -156,15 +191,15 @@ export class UpdateService {
   static async getTavernGitStatus(): Promise<TavernGitStatus | null> {
     try {
       // 1. 获取真实的扩展名 (如果是第一次)
-      const extensionName = await this.getRealExtensionName();
-      if (!extensionName) return null;
+      const extensionInfo = await this.getExtensionRuntimeInfo();
+      if (!extensionInfo) return null;
 
       const response = await fetch("/api/extensions/version", {
         method: "POST",
         headers: getRequestHeaders(),
         body: JSON.stringify({
-          extensionName,
-          global: false,
+          extensionName: extensionInfo.name,
+          global: extensionInfo.type === "global",
         }),
       });
       if (response.ok) {
@@ -180,8 +215,8 @@ export class UpdateService {
    * 通过酒馆 discover API 找到匹配的真实目录名
    * 解决开发环境与生产环境目录名不一致的问题
    */
-  static async getRealExtensionName(): Promise<string | null> {
-    if (cachedRealExtensionName) return cachedRealExtensionName;
+  static async getExtensionRuntimeInfo(): Promise<ExtensionRuntimeInfo | null> {
+    if (cachedExtensionRuntimeInfo) return cachedExtensionRuntimeInfo;
 
     try {
       const response = await fetch("/api/extensions/discover", {
@@ -202,9 +237,21 @@ export class UpdateService {
         );
 
         if (found) {
-          cachedRealExtensionName = extractExtensionLeaf(found.name);
-          console.debug("[Engram] 自动识别扩展标识:", cachedRealExtensionName);
-          return cachedRealExtensionName;
+          cachedExtensionRuntimeInfo = {
+            name: extractExtensionLeaf(found.name),
+            type:
+              found.type === "global" ||
+              found.type === "system" ||
+              found.type === "local"
+                ? found.type
+                : "local",
+          };
+          cachedRealExtensionName = cachedExtensionRuntimeInfo.name;
+          console.debug(
+            "[Engram] 自动识别扩展标识:",
+            cachedExtensionRuntimeInfo,
+          );
+          return cachedExtensionRuntimeInfo;
         }
 
         console.debug(
@@ -216,9 +263,19 @@ export class UpdateService {
       console.warn("[Engram] 自动识别目录名失败", e);
     }
 
-    cachedRealExtensionName = this.getDefaultExtensionName();
-    console.debug("[Engram] 使用默认扩展标识:", cachedRealExtensionName);
-    return cachedRealExtensionName;
+    cachedExtensionRuntimeInfo = {
+      name: this.getDefaultExtensionName(),
+      type: "local",
+    };
+    cachedRealExtensionName = cachedExtensionRuntimeInfo.name;
+    console.debug("[Engram] 使用默认扩展标识:", cachedExtensionRuntimeInfo);
+    return cachedExtensionRuntimeInfo;
+  }
+
+  static async getRealExtensionName(): Promise<string | null> {
+    if (cachedRealExtensionName) return cachedRealExtensionName;
+    const extensionInfo = await this.getExtensionRuntimeInfo();
+    return extensionInfo?.name || null;
   }
 
   /**
@@ -258,7 +315,7 @@ export class UpdateService {
     ]);
 
     // 2. 优先检查版本号
-    if (latestVersion && compareVersions(latestVersion, CURRENT_VERSION) > 0) {
+    if (latestVersion && compareVersions(latestVersion, BUNDLED_VERSION) > 0) {
       return true;
     }
 
@@ -334,7 +391,7 @@ export class UpdateService {
   static async markAsRead(mark?: string): Promise<void> {
     const targetMark =
       mark ||
-      `${(await this.getLatestVersion()) || CURRENT_VERSION}@${(await this.getLatestHash()) || (await this.getRealLocalHash())}`;
+      `${(await this.getLatestVersion()) || BUNDLED_VERSION}@${(await this.getLatestHash()) || (await this.getRealLocalHash())}`;
 
     try {
       SettingsManager.set("lastReadVersion", targetMark);
@@ -351,7 +408,7 @@ export class UpdateService {
     const hasUpdate = await this.hasUpdate();
     if (!hasUpdate) return false;
 
-    const latestVersion = (await this.getLatestVersion()) || CURRENT_VERSION;
+    const latestVersion = (await this.getLatestVersion()) || BUNDLED_VERSION;
     const latestHash =
       (await this.getLatestHash()) || (await this.getRealLocalHash());
     const currentMark = `${latestVersion}@${latestHash}`;
@@ -368,6 +425,7 @@ export class UpdateService {
     cachedLatestHash = null;
     cachedRealLocalHash = null;
     cachedRealExtensionName = null;
+    cachedExtensionRuntimeInfo = null;
     cachedChangelog = null;
   }
 }
