@@ -42,7 +42,7 @@
 1. 打开扩展管理 (Extensions) -> **安装扩展 (Install Extension)**。
 2. 在 URL 栏输入本仓库地址：
    ```
-   https://github.com/shiyue137mh-netizen/Engram
+   https://github.com/Yoyo-514/Engram-R
    ```
 3. 点击 **获取 (Get)** 或 **安装 (Install)**。
 4. 安装完成后，刷新酒馆页面即可。
@@ -53,7 +53,7 @@
 
 ```bash
 cd SillyTavern/public/scripts/extensions/third-party/
-git clone https://github.com/shiyue137mh-netizen/Engram.git
+git clone https://github.com/Yoyo-514/Engram-R.git
 cd Engram
 # 如果仅使用，无需 npm install/build
 ```
