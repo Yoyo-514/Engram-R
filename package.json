@@ -1,0 +1,70 @@
+{
+    "name": "engram",
+    "version": "1.4.9",
+    "description": "Graph RAG 记忆操作系统 for SillyTavern",
+    "type": "module",
+    "main": "src/index.tsx",
+    "scripts": {
+        "dev": "vite",
+        "dev:watch": "vite build --watch",
+        "build": "vite build",
+        "preview": "vite preview",
+        "prettify": "prettier --write \"src/**/*.ts\" \"src/**/*.tsx\"",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "test:coverage": "vitest run --coverage",
+        "type-check": "tsc --noEmit",
+        "lint": "prettier --check \"src/**/*.{ts,tsx}\"",
+        "knip": "knip",
+        "ci": "pnpm run type-check && pnpm run test && pnpm run knip"
+    },
+    "keywords": [
+        "sillytavern",
+        "extension",
+        "graph-rag",
+        "memory"
+    ],
+    "author": "",
+    "license": "GPL-3.0-only",
+    "devDependencies": {
+        "@mdx-js/react": "^3.1.1",
+        "@mdx-js/rollup": "^3.1.1",
+        "@types/jquery": "^3.5.32",
+        "@types/js-yaml": "^4.0.9",
+        "@types/lodash": "^4.17.24",
+        "@types/node": "^22.19.3",
+        "@types/react": "^19.1.11",
+        "@types/react-dom": "^19.1.8",
+        "@vitejs/plugin-react": "^4.3.4",
+        "@vitest/coverage-v8": "^4.0.18",
+        "autoprefixer": "^10.4.23",
+        "fake-indexeddb": "^6.2.5",
+        "knip": "^5.82.1",
+        "postcss": "^8.5.6",
+        "prettier": "^3.4.2",
+        "tailwindcss": "^3.4.17",
+        "typescript": "^5.7.3",
+        "vite": "^6.0.5",
+        "vitest": "^4.0.18"
+    },
+    "dependencies": {
+        "dexie": "^4.0.11",
+        "fast-json-patch": "^3.1.1",
+        "framer-motion": "^12.23.26",
+        "gsap": "^3.14.2",
+        "immer": "^10.1.1",
+        "js-yaml": "^4.1.1",
+        "lodash": "^4.17.21",
+        "lucide-react": "^0.562.0",
+        "react-markdown": "^10.1.0",
+        "react-virtuoso": "^4.18.1",
+        "remark-gfm": "^4.0.1",
+        "rxjs": "^7.8.1",
+        "zod": "^4.3.5",
+        "zustand": "^4.5.4"
+    },
+    "peerDependencies": {
+        "react": "^19.1.1",
+        "react-dom": "^19.1.1"
+    }
+}

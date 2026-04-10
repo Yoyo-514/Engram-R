@@ -1,0 +1,78 @@
+import { Globe, Server, ShieldAlert, AlertCircle, Info, Lock, ArrowRight } from 'lucide-react';
+
+# 云端部署排障指南 (Cloud Deployment)
+
+> 当 Engram 运行在云服务器（VPS）上时，由于 **浏览器安全策略** 与 **网络隔离**，常会出现 `Failed to fetch` 报错。本手册旨在帮助你快速打通链路。
+
+---
+
+## <Globe className="inline w-5 h-5 mb-1 text-primary align-text-bottom" /> 核心概念：请求发起者身份
+
+在大模型配置中填写 API URL 时，请务必记住：
+
+> [!IMPORTANT]
+> 请求是由 **你的本地浏览器** 发起的，而不是服务器端的 Node.js 发起的。
+
+如果你在 API URL 栏填写 `127.0.0.1`，浏览器会向 **你正在用的这台电脑** 请求模型，而不是服务器。
+
+### 解决方案
+API URL 必须填入服务器的 **公网 IP**。
+- ❌ 错误: `http://127.0.0.1:26667/v1`
+- ✅ 正确: `http://<服务器公网IP>:26667/v1`
+
+---
+
+## <Server className="inline w-5 h-5 mb-1 text-primary align-text-bottom" /> 服务器安全组放行
+
+即使填对了 IP，如果服务器端口没开，请求依然会被拦截。
+
+1. **安全组配置**: 登录你的云服务商控制台（腾讯云、阿里云等）。
+2. **放行端口**: 在“防火墙”或“安全组”中，添加入站规则，允许你的 API 端口（如 `26667`）的 TCP 流量。
+3. **本地防火墙**: 如果服务器内部开启了 `ufw` 或 `iptables`，也请确保已放行。
+
+---
+
+## <ShieldAlert className="inline w-5 h-5 mb-1 text-destructive align-text-bottom" /> HTTPS 的混合内容拦截 (Mixed Content)
+
+这是云端部署 **最隐蔽** 的失败原因。
+
+### 现象
+如果你通过 `https://` 访问酒馆，但 API 填的是 `http://` 协议，浏览器会 **静默拦截** 掉这个请求。后端模型服务完全不会收到任何日志。
+
+### 终极方案：Nginx 同源反向代理
+
+推荐将模型接口通过 Nginx 挂载到酒馆所在的同一域名及 HTTPS 协议下。
+
+> [!CAUTION]
+> 酒馆默认路径为 `/api`。**绝不要** 将模型接口代理到 `/api` 路径下，否则会导致酒馆核心功能损坏。
+
+#### 1. Nginx 配置参考
+```nginx
+server {
+    server_name tavern.example.com;
+
+    # 酒馆前端代理...
+    location / {
+        proxy_pass http://127.0.0.1:26666;
+        # ...
+    }
+
+    # 推荐：将模型接口挂载到独立路径 (如 /model-api/)
+    location /model-api/ {
+        proxy_pass http://127.0.0.1:26667/; # 注意后缀的斜杠
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_read_timeout 300s; # 向量化通常耗时较长
+    }
+
+    listen 443 ssl;
+    # ... SSL 证书配置 ...
+}
+```
+
+#### 2. 配置完成后
+在 Engram 的 API URL 中填写：
+`https://tavern.example.com/model-api/v1`
+
+这样请求就属于 **同源 HTTPS**，可以完美规避浏览器的所有安全拦截。

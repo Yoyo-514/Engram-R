@@ -1,0 +1,39 @@
+# 依赖
+node_modules/
+# 构建产物
+dist/*.map
+
+# 日志
+*.log
+npm-debug.log*
+
+# 编辑器
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Agent Rules
+.agents/
+.kilocode/
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 临时文件
+*.tmp
+*.temp
+
+# Documentation
+
+# Workspace
+*.code-workspace
+
+# Scripts and test
+test/private/
+coverage/
+
+# spec-workflow
+.spec-workflow/

@@ -1,0 +1,314 @@
+# Engram RAG 召回系统完全指南 (RAG Retrieval System Guide)
+
+> **Version**: V1.4.3
+> **Last Modified**: 2026-03-07
+
+## 1. 系统概述 (Overview)
+
+Engram V0.9.5 的 RAG (Retrieval-Augmented Generation) 召回系统旨在解决角色扮演场景下常见的「检索鸿沟」问题——即用户输入的短文本（动作、简短对话）与长篇剧情记忆（详细叙事、环境描写）之间在语义密度和表达方式上的巨大差异。
+
+本系统采用多阶段混合检索架构，结合了 LLM 预处理、向量检索 (Embedding)、重排序 (Rerank) 和**类脑召回缓存 (BrainRecallCache)**，以提供精准且连贯的记忆召回体验。
+
+## 2. 核心架构 (Core Architecture)
+
+整个召回流程是一个由 WorkflowEngine 驱动的精密工作流，包含四个主要阶段：
+
+```mermaid
+graph TD
+    UserInput[用户输入] --> Injector
+    Injector -->|GENERATION_AFTER_COMMANDS| Preprocessor
+
+    subgraph Stage 1: 预处理 [可选]
+        Preprocessor -->|LLM| UnifiedQuery[Unified Query<br/>统一检索指令]
+    end
+
+    subgraph Stage 2: 向量检索
+        UnifiedQuery -->|Embed| QueryVec[查询向量]
+        DB[(Engram DB)] -->|Embed| EventVec[事件向量]
+        QueryVec -->|Cosine Similarity| Candidates[候选集 Top-K]
+        EventVec --> Candidates
+    end
+
+    subgraph Stage 3: 重排序 [可选]
+        Candidates --> RerankService
+        RerankService -->|Cross-Encoder| Reranked[重排后列表]
+    end
+
+    subgraph Stage 4: 类脑召回
+        Reranked --> BrainRecallCache[类脑召回缓存]
+        BrainRecallCache -->|强化/衰减/淘汰| WorkingMemory[工作记忆]
+    end
+
+    WorkingMemory --> MacroService
+    MacroService -->|"{{engramSummaries}}"| Prompt[最终 Prompt]
+```
+
+### 关键组件
+
+| 组件 | 文件路径 | 职责 |
+|------|----------|------|
+| **Injector** | `src/modules/rag/injection/Injector.ts` | 监听酒馆事件，阻塞生成流程，协调预处理和召回 |
+| **Preprocessor** | `src/modules/preprocessing/Preprocessor.ts` | 利用 LLM 分析用户意图，生成 Unified Query |
+| **EmbeddingService** | `src/modules/rag/embedding/EmbeddingService.ts` | 处理文本向量化，支持多并发和批处理 |
+| **RerankService** | `src/modules/rag/retrieval/Reranker.ts` | 对初步召回结果进行精细化语义重排序 |
+| **BrainRecallCache** | `src/modules/rag/retrieval/BrainRecallCache.ts` | **V0.9.5 核心**：类脑记忆缓存系统 |
+| **RetrievalWorkflow** | `src/modules/workflow/definitions/RetrievalWorkflow.ts` | **(V1.4.1 新增)** RAG 工作流的底层状态机流转编排定义 |
+| **Retriever** | `src/modules/rag/retrieval/Retriever.ts` | 统一检索入口，重构为封装并调度 `WorkflowEngine` 的门面服务，并包含 Agentic RAG 直通 ID 检索 (`agenticSearch`) 逻辑。 |
+| **KeywordRetrieveStep** | `src/modules/workflow/steps/rag/KeywordRetrieveStep.ts` | 关键词召回检索前置拦截算子。防止后续候选爆炸并提供直接过滤。|
+
+### 蓝灯/绿灯可见性机制 🚦
+
+Engram 使用和SIllytavern世界书系统语义上一致的「信号灯」机制控制事件的可见性，避免信息过载：
+
+| 灯色 | `is_archived` | 可见性规则 |
+|:----:|:-------------:|:-----------|
+| 🔵 **蓝灯** | `false` | **常驻显示** - 无论是否被召回，始终出现在 `{{engramSummaries}}` 中 |
+| 🟢 **绿灯** | `true` | **按需召回** - 仅当被 RAG 系统召回时才临时显示 |
+| 🟠 **锁定** | (任何) | **关键锚点** - 强制不参与自动归档 (实体) 或 Trimming 合并 (事件) |
+
+**工作流程**：
+
+1. 新生成的剧情事件默认为 **蓝灯**（未归档）
+2. 当积累的蓝灯事件超过阈值时，旧事件被**归档**，转为 **绿灯**
+3. RAG 召回时，相关的绿灯事件被临时激活，与蓝灯事件**合并**显示
+4. 召回结束后，绿灯事件回归休眠状态
+
+### 树状目录注入格式 🌳
+
+召回结果通过 `getEventSummaries()` 格式化，彻底摒弃旧有的 `source_range` (楼层偏置) 依赖，全新采用 **绝对时间戳碾压排序 (-1ms 倒推法)**，呈现为极简而完美的层次化结构：
+
+```
+<summary>
+[章节大纲 - Level 1 事件]
+章节1: 主角抵达王都，开始冒险
+
+  ├── [绿灯事件 - 召回] (当前剧情相关)
+  │   事件B: 回忆起与商人的首次交易
+  │
+  └── [绿灯事件 - 召回]
+      事件C: 主角决定前往北方
+
+[章节大纲 - Level 1 事件]
+章节2: 北方之旅
+  ...
+[蓝灯事件 - 常驻] (最新发生)
+事件D: 刚才说的话
+</summary>
+```
+
+**终极时序装配规则 (V1.5)**：
+1. **绝对时间排序**：所有召回的节点 (包括多库合并进入的旧历史节点)，统一执行 `nodes.sort((a,b) => a.timestamp - b.timestamp)` 进行绝对物理纪元排序。
+2. **-1毫秒大纲魔法**：Level 1/2 的大纲在生成存入数据库时，其 `timestamp` 会被强制覆写为它所包裹的子节点中**最早的那个时间，再倒推减 1 毫秒 (-1ms)**。这保证了哪怕是跨库合并，长官节点永远会精准排在它属下的所有子事件的正前方，绝不越位或重叠。
+3. **单向 O(N) 遍历缩进**：排序后，系统仅需从上往下遍历打印，遇到 Level >= 1 大纲则顶格输出并视为当前父域，此后遇到的带有历史归档标记 (绿灯) 的 Level 0 事件，统统无脑追加缩进跟随于父域之下；直到最底部遇到最新拔地而起的未归档蓝灯事件。
+
+## 3. 召回模式 (Recall Modes)
+
+系统提供四种预设模式，以适应不同用户的硬件条件和 API 预算：
+
+| 模式 | 组件组合 | 特点 | 适用场景 |
+|:-----|:---------|:-----|:---------|
+| **Agentic (主动查阅)** | 预处理 (Workflow 编排 JSON 提取) + ID 直通 | 绕过 Embed/Rerank 等管线搜索，由判定模型根据 `{{engramIndex}}` (全量结构化 XML 记忆索引) 输出 `<recall_decision>`，WorkflowEngine 解析出 `agenticRecalls` 数组后传入 `Retriever.agenticSearch` 进行底层直通提取，输入 `BrainRecallCache` | 对话具有强逻辑关联时，精准且低算力 |
+| **Full (顶配)** | 预处理 + Embed + Rerank | 效果最优，成本最高，延迟最高 | 追求极致体验，Token 充足 |
+| **Standard (标准)** | Embed + Rerank | 性价比平衡，由 Embed 广撒网，Rerank 精选 | 大多数用户的首选 |
+| **Light (轻量)** | 仅 Embedding | 速度最快，成本低，仅需向量模型 | 本地运行或预算有限 |
+| **Brute Force (暴力)** | 滚动窗口 | 无需向量模型，返回最近 N 条事件 | 无法部署向量模型的环境 |
+
+**Query 来源说明**：
+- **Light/Standard**: 由于无预处理，系统使用**用户原始输入**作为查询词
+- **Full**: 系统优先使用预处理生成的 **Unified Query**
+
+## 4. 关键技术特性 (Key Features)
+
+### 4.1 Unified Query (统一检索指令)
+
+为了弥补「用户输入」与「剧情文本」的鸿沟，Full 模式下的预处理器会将用户输入转化为多种维度的检索指令：
+
+- **因果指令**: 查找导致当前动作的前因后果
+- **视觉指令**: 查找相关的环境和外观描写
+- **实体指令**: 查找提及的物品或人物背景
+- **情感指令**: 查找类似的情感交互历史
+
+### 4.2 关键词检索与实体扫描 (Keyword Retrieval & Entity Scanning)
+
+为了避免召回结果的泛化与发散，系统在向量化搜索前内置了 **KeywordRetrieveStep** (关键词检索拦截算子)：
+
+- **实体优先扫描**: 即使当前剧情尚未产生归档的“绿灯”事件，关键词算子也会**优先且无条件执行实体数据库的扫表**。
+- **多跳联想 (Multi-Hop Relation)**: 当某个实体被精准命中时，系统会基于设定集内的 `relations` 关系网，自动衰减分数并将关联的二级实体也一同纳入备选名单。
+- **动态防爆限流**:
+    - `keywordTopK.events`: (默认回退至 embedding.topK 或 50) 防止大后期相似事件候选爆炸。
+    - `keywordTopK.entities`: (默认 30) 限制实体联想规模，保障性能并防止上下文过度污染。
+
+### 4.3 混合打分 (Hybrid Scoring)
+
+当同时启用 Embedding 和 Rerank 时，系统使用加权公式计算最终相关度：
+
+```typescript
+HybridScore = (1 - α) * EmbeddingScore + α * RerankScore
+```
+
+- **EmbeddingScore**: 基于余弦相似度，擅长捕捉字面和浅层语义相关性
+- **RerankScore**: 基于 Cross-Encoder 模型，擅长理解深层逻辑关系
+- **α (hybridAlpha)**: 混合权重，可配置。默认 `0.5` 表示两者同等重要
+
+### 4.3 类脑召回系统 (BrainRecallCache) 🧠
+
+> **V1.4 算法更新** (2026-01-28)
+
+这是 Engram 的核心记忆进化，模拟人脑的「越回忆越细节」特点：
+
+#### 4.3.1 核心设计理念
+
+> **💡 关键理解**: 类脑召回的核心是「填满优先」，只有在池子满了之后才启动优胜劣汰。它的本质是把多余的、不那么相关的条目“挤”出去，而不是主动设置一个“斑杀线”。
+
+```
+归档事件库 (IndexedDB)
+        │
+        ▼
+┌─────────────────────────────────────────┐
+│     Embedding + Rerank 统一打分          │
+│     (所有事件都参与，包括已在缓存的)        │
+└─────────────────────────────────────────┘
+        │
+        ├──────────────────────────────────┐
+        ▼                                  ▼
+┌─────────────────────┐          ┌─────────────────────┐
+│  已在缓存池的条目     │          │  不在缓存池的新候选   │
+│  ───────────────────│          │  ───────────────────│
+│  • 参与打分           │          │  • 参与打分           │
+│  • 内部优胜劣汰       │          │  • 竞争注入缓存       │
+└─────────────────────┘          └─────────────────────┘
+        │                                  │
+        └──────────────┬───────────────────┘
+                       ▼
+              ┌─────────────────┐
+              │   短期记忆池 (STM)    │
+              │   (主干事件)        │
+              └─────────────────┘
+                       │
+                       ▼ Top-K (填满优先)
+              ┌─────────────────┐
+              │  工作记忆 (WM)      │
+              │  (输出给 LLM)       │
+              └─────────────────┘
+```
+
+#### 4.3.2 核心设计原则
+
+| 原则 | 说明 |
+|------|------|
+| **填满优先** | 工作记忆 (WM) 不满时，全部进入；只有满了才优胜劣汰 |
+| **基于容量淘汰** | 不设“斩杀线”，而是在超出容量时淘汰分数最低的 |
+| **剧情连贯性** | 剧情事件有时间和逻辑联系，相似度高是正常的 |
+| **双轨限流 (V1.4)** | 系统通过 `category` 字段严格区分 `event` 和 `entity`，并受 `eventWorkingLimit` 和 `entityWorkingLimit` 独立容量配额管控，防止上下文过度污染 |
+
+#### 4.3.3 双轨存储机制
+
+**1. 双轨存储 (Dual Track Storage)**
+- **`embeddingStrength` (潜意识)**: 代表"氛围感"和"字面相关性"。衰减慢，作为保底。
+- **`rerankStrength` (显意识)**: 代表"逻辑焦点"。爆发强，衰减快。
+
+**2. 门控强化 (Gated Reinforcement)**
+- 只有 `RerankScore > gateThreshold` (默认 0.6) 时才强化
+- 确保只有逻辑相关的内容才能占据注意力焦点
+
+**3. 柔性阻尼 (Soft Damping)**
+- 单次强化幅度受 `maxDamping` 限制
+- 记忆需要 2-3 轮持续确认才能建立
+
+**4. Sigmoid 激活**
+- 通过 S 曲线拉开分数差距，让 AI 的注意力更加爱憎分明
+
+### 4.4 可观测性 (Recall Logs)
+
+在开发者面板 (DevLog) 中新增了 **Recall** 标签页，提供：
+
+- 每次召回的完整快照 (Query, Timestamp, Latency)
+- Embedding 和 Rerank 分数的直观对比条
+- 类脑召回系统的状态可视化 (短期记忆大小、平均强度等)
+
+## 5. 配置指南 (Configuration)
+
+### 5.1 启用 RAG
+
+前往 `API 配置 (API Presets)` -> `召回配置` 面板：
+
+1. **启用开关**: 打开相关策略（使用 Embedding 语义检索 等）
+
+### 5.2 向量模型设置
+
+在 `API 配置 (API Presets)` -> `模型配置` -> `向量化` 面板：
+
+| 配置项 | 说明 |
+|--------|------|
+| **源** | 支持 `Transformers.js` (本地)、OpenAI、Ollama、vLLM、Cohere、Jina、Voyage 等 |
+| **模型** | 推荐 `text-embedding-3-small` 或本地 `bge-m3` |
+| **API URL** | 部分源需要填写端点地址 |
+| **API Key** | 部分源需要填写密钥 |
+
+### 5.3 关键词阈值设置
+
+在 `API 配置 (API Presets)` -> `召回配置` 面板，可以对关键词的拦截上限进行管控：
+
+| 配置项 | 说明 |
+|--------|------|
+| **keywordTopK.events** | 控制基于文本字面匹配的事件防爆上限 (兜底使用 Embedding 的 TopK 或 50) |
+| **keywordTopK.entities** | 控制基于名字匹配和多跳联想出来的实体防爆上限 (默认 30) |
+
+### 5.4 Rerank 设置
+
+在 `API 配置 (API Presets)` -> `模型配置` -> `Rerank` 面板：
+
+| 配置项 | 说明 |
+|--------|------|
+| **URL** | Rerank API 端点 |
+| **Model** | 推荐 BGE-Reranker 或 Cohere API |
+| **Top-N** | Rerank 后保留的精选条目数（建议 5-10） |
+| **hybridAlpha** | 混合权重 (0-1) |
+
+### 5.5 类脑召回配置 (V1.4)
+
+| 配置项 | 默认值 | 说明 |
+|--------|--------|------|
+| `enabled` | `true` | 是否启用类脑召回 |
+| `workingLimit` | `10` | 工作记忆容量 |
+| `shortTermLimit` | `35` | 短期记忆容量 |
+| `reinforceFactor` | `0.2` | 强化系数 |
+| `decayRate` | `0.08` | 衰减速率 |
+| `contextSwitchThreshold` | `0.4` | 上下文切换阈值 |
+| `gateThreshold` | `0.6` | 门控阈值，Rerank > 此值才强化 |
+| `maxDamping` | `0.15` | 单次强化最大增量 |
+| `sigmoidTemperature` | `0.25` | Sigmoid 温度系数（越小越陡） |
+| `boredomThreshold` | `5` | 连续进入 WM 多少次触发厌倦惩罚 |
+| `boredomPenalty` | `0.1` | 厌倦时的额外扣分 |
+| `newcomerBoost` | `0.2` | 新记忆的初始加成 |
+
+> ℹ️ **V1.4 简化**: 移除了 `evictionThreshold` 和 `mmrThreshold`，改为基于容量的优胜劣汰。去除了无效的历史包裹体 `evict()` 函数，将超限淘汰逻辑与 `enforceShortTermLimit()` 合二为一，消除功能层叠。
+
+## 6. 开发接口 (Developer API)
+
+### 核心服务
+
+| 服务 | 说明 |
+|------|------|
+| `retriever` | 单例对象，通过 `retriever.search()` 执行召回 |
+| `brainRecallCache` | 类脑缓存单例，管理记忆强化/衰减/淘汰 |
+| `MacroService` | 负责将召回结果或纯净活跃事件注入到相关宏变量中 |
+
+### 宏接口
+
+剧情 AI 的 Prompt Template 中可以使用以下宏接收召回内容：
+
+- `{{engramSummaries}}`: 包含当前轮次召回并格式化好的记忆片段（包含蓝灯与被召回的绿灯片段）。
+- `{{engramActiveEvents}}`: **Agentic RAG 新增**，纯净的活跃记忆（纯蓝灯阵列），不包含任何被 RAG 系统历史捞出的绿灯事件，确保用作裁判判决的客观基准。
+- `{{engramIndex}}`: **Agentic RAG 新增**，全量结构化记忆索引简要（XML 格式），供给判断工具模型使用。
+
+## 7. 版本历史
+
+| 版本 | 变更 |
+|------|------|
+| **V1.4.3**| **颗粒度与生命周期**：实现实体与事件关键词召回独立控制；引入基于 `is_locked` 标志位的锁定保护机制；支持实体自动归档管家。 |
+| **V1.4.1**| **引擎翻新**：废除硬编码的检索总线，引入 `WorkflowEngine` 底层重构驱动检索生命周期；拆分出并跑通数据联通测试。 |
+| V1.4 | 类脑召回算法重构：填满优先、基于容量淘汰、移除 MMR，与 `enforceShortTermLimit` 合并移除 `evict` |
+| V1.2 | 双轨存储机制、门控强化、Sigmoid 激活 |
+| V0.9.5 | 新增 BrainRecallCache，替代 StickyCache |
+| V0.8.5 | 引入混合检索架构 (Embed + Rerank) |

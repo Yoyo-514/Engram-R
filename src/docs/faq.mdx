@@ -1,0 +1,134 @@
+import { HelpCircle, AlertTriangle, Bug, Cpu, Database, Search, Clock, Workflow, WandSparkles, Lock, Archive } from 'lucide-react';
+
+# 常见问题与故障排查（FAQ）
+
+> 先看日志，再改配置。Engram 的问题大多可在 **运行日志 / 模型日志 / 召回日志** 中定位。
+
+---
+
+## <HelpCircle className="inline w-4 h-4 mb-1 text-primary" /> 先走这条排查路径
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4 my-6">
+  <div className="p-4 rounded-lg border border-border bg-card">
+    <div className="flex items-center gap-2 mb-2 text-label font-medium">
+      <Bug className="w-4 h-4 text-primary" />
+      运行日志
+    </div>
+    <p className="text-sm text-muted-foreground">看启动、桥接、数据库连接和异常栈。</p>
+  </div>
+
+  <div className="p-4 rounded-lg border border-border bg-card">
+    <div className="flex items-center gap-2 mb-2 text-label font-medium">
+      <Cpu className="w-4 h-4 text-primary" />
+      模型日志
+    </div>
+    <p className="text-sm text-muted-foreground">看提示词、请求参数、模型返回与解析结果。</p>
+  </div>
+
+  <div className="p-4 rounded-lg border border-border bg-card">
+    <div className="flex items-center gap-2 mb-2 text-label font-medium">
+      <Database className="w-4 h-4 text-primary" />
+      召回日志
+    </div>
+    <p className="text-sm text-muted-foreground">看 query、命中条目、得分和最终注入结果。</p>
+  </div>
+</div>
+
+---
+
+## <AlertTriangle className="inline w-5 h-5 mb-1 text-yellow-500" /> 运行与连接问题
+
+### Q1：插件无响应、界面空白或按钮失效？
+- **优先检查**：运行日志是否有 `ERROR`。
+- **常见原因**：IndexedDB 初始化失败、宿主事件未挂载、版本不兼容。
+- **处理建议**：刷新页面重试；必要时清理异常数据库后重建。
+
+### Q2：API 404 / Connection Refused / 超时？
+- **原因**：模型服务地址、端口、协议或 Key 配置错误。
+- **处理建议**：
+  1. 检查 Base URL（通常需要包含 `/v1`）。
+  2. 检查本地服务跨域策略（如 Ollama 的 `OLLAMA_ORIGINS`）。
+  3. 某些网关要求 Key 非空，即使本地也需填写占位值。
+
+### Q3：更新插件时出现 `Forbidden` / `EACCES`？
+- **原因**：SillyTavern 进程权限不足，无法覆盖旧文件。
+- **处理建议**：关闭占用进程后重新安装，或调整目录读写权限。
+
+---
+
+## <Workflow className="inline w-5 h-5 mb-1 text-primary" /> 处理链路问题（总结 / 提取 / 精简）
+
+### Q4：自动剧情总结没触发？
+- **先看模型日志是否有请求**：
+  - 没请求：通常是触发条件没达到（触发间隔、防抖缓冲层、全局开关）。
+  - 有请求但失败：看 HTTP 返回码与解析错误。
+- **再看运行状态**：若上一轮任务卡住，工作流引擎的串行保护会阻止新任务进入。
+
+### Q5：剧情总结结果质量差或内容重复？
+- **原因候选**：模型能力不足、系统提示词（Prompt）不匹配、历史窗口参数设置不合理。
+- **处理建议**：
+  1. 更换更聪明、更稳定的大语言模型。
+  2. 调整意图对应的提示词模板。
+  3. 拉大总结的间隔并校正缓冲区层数，减少系统抓取到无意义的短噪声输入。
+
+### Q6：记忆精简压缩后“感觉这部分记忆丢了”？
+- **解释**：记忆合并机制（Trimmer）执行的是层级归纳压缩，并不是简单粗暴的删除。
+- **建议**：
+  - 对关键节点使用 <Lock className="inline w-4 h-4 mb-1" /> 锁定保护。
+  - 在记忆流中同时检查低层与高层摘要是否语义一致。
+
+---
+
+## <Search className="inline w-5 h-5 mb-1 text-primary" /> 检索与召回增强问题
+
+### Q7：明明之前聊过，为什么现在需要时没召回？
+- **检查顺序**：
+  1. 检查“召回日志”中提取出的搜索词（Query）是否合理。
+  2. 命中得分是否过低。
+  3. 即使系统成功提取，是否被宿主酒馆设定的最大上下文 Token 窗口截断，或被大模型推理时故意忽略。
+
+### Q8：我手动改了记忆列表中的文字，但还是搜不到刚才加的新词汇？
+- **原因**：底层的向量数字特征索引未更新。
+- **处理**：对刚才修改过的事件或实体执行 **重新向量化 (Re-embed)**。
+
+### Q9：开启特征检索后系统聊天回复明显变慢？
+- **原因**：向量特征匹配 (Embedding) 加上 语义重排序 (Rerank) 会成倍增加发包的请求链路时长。
+- **优化**：
+  - 优先使用纯本地的轻量级向量模型服务。
+  - 在可接受精度的情况下，关闭重排序步骤或直接启用主动直通检索，节省不必要的二次打分环节。
+
+---
+
+## <WandSparkles className="inline w-5 h-5 mb-1 text-primary" /> 预处理问题
+
+### Q10：预处理没有生效？
+- **确认项**：
+  1. 已启用预处理总开关与自动触发。
+  2. 当前模板属于 `preprocessing` 分类。
+  3. 模板输出包含 `<output>` 标签。
+
+### Q11：搜索词增强机制开启了但最终召回内容仍然不准？
+- **检查**：大模型是否真的成功输出了 `<query>` 标签，以及搜索词是否过泛、无意义。
+- **优化**：通过修改提示词，要求模型提取时减少空泛无指代的词，强制增加具体的实体名、地点名、事件锚点词。
+
+---
+
+## <Archive className="inline w-5 h-5 mb-1 text-primary" /> 生命周期与数据管理
+
+### Q12：有些记忆“消失”了？
+- **大概率**：进入归档态（绿灯），不再常驻显示。
+- **说明**：被召回时仍可临时进入上下文，不等于删除。
+
+### Q13：锁定保护功能到底有什么用？
+- **锁定实体**：防止被判定为冷门实体而被系统自动归档休眠。
+- **锁定事件**：防止作为底层事件被压缩机制卷入，向上合并后丢失了细节。
+- **场景**：核心人设、主线转折、关键设定条款。
+
+---
+
+## <Clock className="inline w-5 h-5 mb-1 text-primary" /> 一条实用建议
+
+遇到问题时按这三步执行，成功率最高：
+1. 先看日志定位是“触发问题、模型问题还是检索问题”。
+2. 只改一个参数并复测，避免多变量干扰。
+3. 记录有效配置，形成你自己的稳定预设。
