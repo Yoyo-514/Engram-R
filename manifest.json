@@ -1,5 +1,5 @@
 {
-    "display_name": "Engram",
+    "display_name": "Engram-R",
     "loading_order": 500,
     "requires": [],
     "optional": [
@@ -7,8 +7,8 @@
     ],
     "js": "dist/index.js",
     "css": "dist/style.css",
-    "author": "shiyue137",
-    "version": "1.4.11",
-    "homePage": "https://github.com/shiyue137mh-netizen/Engram.git",
+    "author": "yoyo514",
+    "version": "1.0.0",
+    "homePage": "https://github.com/Yoyo-514/Engram-R.git",
     "description": "Graph RAG 记忆操作系统 - Where memories leave their trace."
 }
