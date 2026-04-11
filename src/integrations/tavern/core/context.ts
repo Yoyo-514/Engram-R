@@ -16,6 +16,9 @@ type RawSTChatMessage = SillyTavern.ChatMessage;
 
 interface SillyTavernHost {
   getContext?: () => unknown;
+  eventSource?: unknown;
+  extensionSettings?: unknown;
+  saveSettingsDebounced?: unknown;
 }
 
 function getSillyTavernHost(): unknown {
@@ -31,17 +34,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isRawSTContext(value: unknown): value is RawSTContext {
-  if (!isRecord(value)) {
-    return false;
+  return isRecord(value);
+}
+
+function getContextCandidate(host: SillyTavernHost): unknown {
+  const hostRecord = isRecord(host) ? host : {};
+
+  if (typeof host.getContext === 'function') {
+    const context = host.getContext();
+    if (isRecord(context)) {
+      return {
+        ...hostRecord,
+        ...context,
+        eventSource: context.eventSource ?? hostRecord.eventSource,
+        extensionSettings: context.extensionSettings ?? hostRecord.extensionSettings,
+        saveSettingsDebounced: context.saveSettingsDebounced ?? hostRecord.saveSettingsDebounced,
+      };
+    }
   }
 
-  return (
-    Array.isArray(value.chat) &&
-    Array.isArray(value.characters) &&
-    typeof value.name1 === 'string' &&
-    typeof value.name2 === 'string' &&
-    typeof value.chatId === 'string'
-  );
+  return hostRecord;
 }
 
 function normalizeChatMessage(message: RawSTChatMessage): STMessage {
@@ -154,17 +166,22 @@ export function getSTContext(): STContext | null {
     return null;
   }
 
+  const chat = Array.isArray(ctx.chat) ? ctx.chat.map(normalizeChatMessage) : [];
+  const characters = Array.isArray(ctx.characters)
+    ? ctx.characters.map((character) => ({
+        name: character.name,
+        avatar: character.avatar,
+        description: character.description,
+      }))
+    : [];
+
   return {
-    chat: ctx.chat.map(normalizeChatMessage),
-    characters: ctx.characters.map((character) => ({
-      name: character.name,
-      avatar: character.avatar,
-      description: character.description,
-    })),
-    name1: ctx.name1,
-    name2: ctx.name2,
+    chat,
+    characters,
+    name1: typeof ctx.name1 === 'string' ? ctx.name1 : '',
+    name2: typeof ctx.name2 === 'string' ? ctx.name2 : '',
     characterId: parseCharacterId(ctx.characterId),
-    chatId: ctx.chatId,
+    chatId: typeof ctx.chatId === 'string' ? ctx.chatId : '',
     eventSource: ctx.eventSource,
     event_types: ctx.eventTypes,
     getRequestHeaders: ctx.getRequestHeaders,
@@ -180,12 +197,12 @@ export function getSTContext(): STContext | null {
 export function getRawSTContext(): RawSTContext | null {
   try {
     const host = getSillyTavernHost();
-    if (!isSillyTavernHost(host) || typeof host.getContext !== 'function') {
+    if (!isSillyTavernHost(host)) {
       return null;
     }
 
-    const ctx = host.getContext();
-    return isRawSTContext(ctx) ? ctx : null;
+    const context = getContextCandidate(host);
+    return isRawSTContext(context) ? context : null;
   } catch (e) {
     Logger.warn(MODULE, '无法获取 ST 上下文', e);
     return null;
