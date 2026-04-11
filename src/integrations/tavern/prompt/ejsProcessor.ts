@@ -1,5 +1,21 @@
 import { Logger } from '@/core/logger';
 
+type EjsRenderContext = Record<string, unknown> & {
+  mvu?: unknown;
+};
+
+type MvuDataLike = {
+  stat_data?: unknown;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function isMvuDataLike(value: unknown): value is MvuDataLike {
+  return isRecord(value) && 'stat_data' in value;
+}
+
 export class EjsProcessor {
   /**
    * 利用 ST-Prompt-Template (如果存在) 清洗 EJS 宏
@@ -16,13 +32,13 @@ export class EjsProcessor {
 
     try {
       // 1. 准备上下文 (自动包含 {{user}}, {{char}} 及所有酒馆变量)
-      const context = await window.EjsTemplate.prepareContext();
+      const context = (await window.EjsTemplate.prepareContext()) as EjsRenderContext;
 
       // 2. 尝试获取 MVU 变量并合并
       if (typeof window.Mvu !== 'undefined' && window.Mvu.getMvuData) {
         try {
           const mvuObj = window.Mvu.getMvuData({ type: 'message', message_id: 'latest' });
-          if (mvuObj && mvuObj.stat_data) {
+          if (isMvuDataLike(mvuObj) && mvuObj.stat_data !== undefined) {
             context.mvu = mvuObj.stat_data;
           }
         } catch (e) {
@@ -34,7 +50,7 @@ export class EjsProcessor {
       const processed = await Promise.all(
         entries.map(async (content) => {
           try {
-            return await window.EjsTemplate!.evalTemplate(content, context);
+            return await window.EjsTemplate!.evalTemplate(content, context as Record<string, any>);
           } catch (err) {
             Logger.warn('EjsProcessor', 'EJS 渲染单条失败，保留原内容', err);
             return content;

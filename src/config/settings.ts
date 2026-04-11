@@ -124,6 +124,8 @@ export class SettingsManager {
     'password',
   ]);
   private static listeners: Set<() => void> = new Set();
+  private static readonly CONTEXT_READY_RETRY_INTERVAL_MS = 200;
+  private static readonly CONTEXT_READY_TIMEOUT_MS = 5000;
 
   /**
    * 订阅设置变更事件
@@ -243,6 +245,32 @@ export class SettingsManager {
     return getRawSTContext() as SettingsCapableContext | null;
   }
 
+  private static hasContextSettings(context: SettingsCapableContext | null): boolean {
+    return !!context?.extensionSettings;
+  }
+
+  private static wait(ms: number): Promise<void> {
+    return new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+  }
+
+  public static async waitUntilReady(
+    timeoutMs: number = this.CONTEXT_READY_TIMEOUT_MS,
+    retryIntervalMs: number = this.CONTEXT_READY_RETRY_INTERVAL_MS
+  ): Promise<boolean> {
+    const startTime = Date.now();
+
+    while (Date.now() - startTime < timeoutMs) {
+      if (this.hasContextSettings(this.getContext())) {
+        return true;
+      }
+      await this.wait(retryIntervalMs);
+    }
+
+    return this.hasContextSettings(this.getContext());
+  }
+
   /**
    * 获取扩展设置对象
    * 如果不存在则创建
@@ -270,18 +298,26 @@ export class SettingsManager {
    * 初始化设置（在扩展加载时调用）
    * 确保所有必需的字段都存在
    */
-  public static initSettings(): void {
+  public static async initSettings(): Promise<boolean> {
+    const isReady = await this.waitUntilReady();
+    if (!isReady) {
+      Logger.warn('SettingsManager', 'Cannot init settings: context.extensionSettings not ready');
+      return false;
+    }
+
     const context = this.getContext();
     const resolved = this.getOrCreateContextSettings(context);
     if (!resolved) {
       Logger.warn('SettingsManager', 'Cannot init settings: context not available');
-      return;
+      return false;
     }
 
     if (this.applyMissingDefaults(resolved.settings)) {
       Logger.info('SettingsManager', 'Created or repaired engram settings');
       this.saveContext(context);
     }
+
+    return true;
   }
 
   /**

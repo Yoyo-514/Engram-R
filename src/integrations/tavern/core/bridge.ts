@@ -30,8 +30,12 @@ export async function initializeEngram(): Promise<void> {
 
   // 初始化设置管理器
   const { SettingsManager } = await import('@/config/settings');
-  SettingsManager.initSettings();
-  Logger.info('STBridge', 'SettingsManager 初始化完成');
+  const settingsReady = await SettingsManager.initSettings();
+  if (settingsReady) {
+    Logger.info('STBridge', 'SettingsManager 初始化完成');
+  } else {
+    Logger.warn('STBridge', 'SettingsManager 初始化超时，后续流程将使用回退配置');
+  }
 
   // 加载保存的正则规则到全局处理器
   const savedRegexRules = SettingsManager.getRegexRules();
@@ -53,7 +57,7 @@ export async function initializeEngram(): Promise<void> {
   // 启动 Summarizer 服务
   try {
     const { summarizerService } = await import('@/modules/memory/Summarizer');
-    summarizerService.start();
+    await summarizerService.start();
     const status = summarizerService.getStatus();
     Logger.info('Summarizer', '服务已启动', status);
   } catch (e) {
