@@ -6,12 +6,13 @@
  * V0.9.12: 修复更新API路径问题，参考 JS-Slash-Runner 实现
  */
 
-import { UpdateService } from "@/core/updater/Updater";
-import { notificationService } from "@/ui/services/NotificationService";
-import { CheckCircle, Download, Loader2, RefreshCw, X } from "lucide-react";
-import React, { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import { UpdateService } from '@/core/updater/Updater';
+import { notificationService } from '@/ui/services/NotificationService';
+import { CheckCircle, Download, Loader2, RefreshCw, X } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import type { FC } from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface UpdateNoticeProps {
   isOpen: boolean;
@@ -24,22 +25,21 @@ interface UpdateNoticeProps {
  */
 function getTavernRequestHeaders(): Record<string, string> {
   try {
-    // @ts-ignore - 酒馆全局函数
-    if (typeof window.getRequestHeaders === "function") {
+    // @ts-expect-error - 酒馆全局函数
+    if (typeof window.getRequestHeaders === 'function') {
       return (window as any).getRequestHeaders();
     }
     // 备用方案：从 SillyTavern context 获取
-    // @ts-ignore
     const context = window.SillyTavern?.getContext?.();
     if (context?.getRequestHeaders) {
       return context.getRequestHeaders();
     }
   } catch (e) {
-    console.warn("[Engram] 无法获取酒馆请求头", e);
+    console.warn('[Engram] 无法获取酒馆请求头', e);
   }
   // 返回最小必要头
   return {
-    "Content-Type": "application/json",
+    'Content-Type': 'application/json',
   };
 }
 
@@ -57,23 +57,18 @@ async function updateEngramExtension(): Promise<{
 
     const extensionInfo = await UpdateService.getExtensionRuntimeInfo();
     if (!extensionInfo?.name) {
-      return { success: false, message: "无法识别当前扩展目录" };
+      return { success: false, message: '无法识别当前扩展目录' };
     }
 
-    const isGlobal = extensionInfo.type === "global";
+    const isGlobal = extensionInfo.type === 'global';
 
-    console.debug(
-      "[Engram] 准备更新扩展:",
-      extensionInfo.name,
-      "| global:",
-      isGlobal,
-    );
+    console.debug('[Engram] 准备更新扩展:', extensionInfo.name, '| global:', isGlobal);
 
-    const response = await fetch("/api/extensions/update", {
-      method: "POST",
+    const response = await fetch('/api/extensions/update', {
+      method: 'POST',
       headers: {
         ...headers,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         extensionName: extensionInfo.name,
@@ -83,31 +78,28 @@ async function updateEngramExtension(): Promise<{
 
     if (!response.ok) {
       const text = await response.text();
-      console.error("[Engram] 更新失败:", response.status, text);
+      console.error('[Engram] 更新失败:', response.status, text);
       return { success: false, message: text || response.statusText };
     }
 
     const data = await response.json();
 
     if (data.isUpToDate) {
-      return { success: true, message: "扩展已是最新版本", isUpToDate: true };
+      return { success: true, message: '扩展已是最新版本', isUpToDate: true };
     }
 
     return {
       success: true,
-      message: `更新成功！新版本: ${data.shortCommitHash || "latest"}`,
+      message: `更新成功！新版本: ${data.shortCommitHash || 'latest'}`,
       isUpToDate: false,
     };
   } catch (error) {
-    console.error("[Engram] 更新失败:", error);
+    console.error('[Engram] 更新失败:', error);
     return { success: false, message: String(error) };
   }
 }
 
-export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
-  isOpen,
-  onClose,
-}) => {
+export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [latestVersion, setLatestVersion] = useState<string | null>(null);
   const [latestHash, setLatestHash] = useState<string | null>(null);
@@ -141,7 +133,7 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
       setChangelog(log);
       setHasUpdate(update);
     } catch (e) {
-      console.error("[Engram] 加载更新信息失败", e);
+      console.error('[Engram] 加载更新信息失败', e);
     } finally {
       setIsLoading(false);
     }
@@ -166,9 +158,9 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
       const result = await updateEngramExtension();
 
       if (result.success && !result.isUpToDate) {
-        setUpdateMessage("更新成功！页面将在 2 秒后刷新...");
+        setUpdateMessage('更新成功！页面将在 2 秒后刷新...');
         // V0.9.10: 弹 toastr 通知
-        notificationService.success("更新成功！页面即将刷新", "Engram 更新");
+        notificationService.success('更新成功！页面即将刷新', 'Engram 更新');
         // 标记为已读
         if (latestVersion) {
           await UpdateService.markAsRead(latestVersion);
@@ -178,16 +170,16 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
           window.location.reload();
         }, 2000);
       } else if (result.isUpToDate) {
-        setUpdateMessage("当前已是最新版本");
+        setUpdateMessage('当前已是最新版本');
         setHasUpdate(false);
       } else {
         setUpdateMessage(`更新失败: ${result.message}`);
         // V0.9.10: 弹 toastr 通知
-        notificationService.error(`更新失败: ${result.message}`, "Engram 更新");
+        notificationService.error(`更新失败: ${result.message}`, 'Engram 更新');
       }
     } catch (error) {
       setUpdateMessage(`更新出错: ${String(error)}`);
-      notificationService.error(`更新出错: ${String(error)}`, "Engram 更新");
+      notificationService.error(`更新出错: ${String(error)}`, 'Engram 更新');
     } finally {
       setIsUpdating(false);
     }
@@ -203,10 +195,7 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-        onClick={onClose}
-      />
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
       <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
@@ -217,12 +206,9 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
               <Download size={16} className="text-primary" />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-foreground">
-                更新通知
-              </h2>
+              <h2 className="text-base font-semibold text-foreground">更新通知</h2>
               <p className="text-xs text-muted-foreground">
-                当前版本: v{currentVersion}{" "}
-                {currentHash !== "unknown" && `(${currentHash})`}
+                当前版本: v{currentVersion} {currentHash !== 'unknown' && `(${currentHash})`}
               </p>
             </div>
           </div>
@@ -232,10 +218,7 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
               className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
               title="刷新"
             >
-              <RefreshCw
-                size={16}
-                className={isLoading ? "animate-spin" : ""}
-              />
+              <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={onClose}
@@ -261,8 +244,8 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
                                 p-4 rounded-lg border
                                 ${
                                   hasUpdate
-                                    ? "bg-primary/5 border-primary/20"
-                                    : "bg-green-500/5 border-green-500/20"
+                                    ? 'bg-primary/5 border-primary/20'
+                                    : 'bg-green-500/5 border-green-500/20'
                                 }
                             `}
               >
@@ -275,11 +258,11 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
                   <div className="flex-1">
                     <p className="font-medium text-foreground">
                       {hasUpdate
-                        ? `发现新版本: v${latestVersion}${latestHash ? ` (${latestHash})` : ""}`
-                        : "已是最新版本"}
+                        ? `发现新版本: v${latestVersion}${latestHash ? ` (${latestHash})` : ''}`
+                        : '已是最新版本'}
                     </p>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {hasUpdate ? "点击下方按钮一键更新" : "无需更新"}
+                      {hasUpdate ? '点击下方按钮一键更新' : '无需更新'}
                     </p>
                   </div>
                 </div>
@@ -291,12 +274,12 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
                   className={`
                                     p-3 rounded-lg text-sm
                                     ${
-                                      updateMessage.includes("成功")
-                                        ? "bg-green-500/10 text-green-600 border border-green-500/20"
-                                        : updateMessage.includes("失败") ||
-                                            updateMessage.includes("出错")
-                                          ? "bg-red-500/10 text-red-600 border border-red-500/20"
-                                          : "bg-muted/30 text-muted-foreground"
+                                      updateMessage.includes('成功')
+                                        ? 'bg-green-500/10 text-green-600 border border-green-500/20'
+                                        : updateMessage.includes('失败') ||
+                                            updateMessage.includes('出错')
+                                          ? 'bg-red-500/10 text-red-600 border border-red-500/20'
+                                          : 'bg-muted/30 text-muted-foreground'
                                     }
                                 `}
                 >
@@ -311,9 +294,7 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
                     更新日志
                   </h3>
                   <div className="bg-muted/20 rounded-lg p-4 max-h-64 overflow-y-auto engram-changelog-content text-sm">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {changelog}
-                    </ReactMarkdown>
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>{changelog}</ReactMarkdown>
                   </div>
                 </div>
               )}
@@ -351,8 +332,8 @@ export const UpdateNotice: React.FC<UpdateNoticeProps> = ({
             disabled={isUpdating || isMarking}
             className={`px-4 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 ${
               hasUpdate
-                ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                : "border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground"
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
+                : 'border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground'
             }`}
           >
             {isUpdating ? (

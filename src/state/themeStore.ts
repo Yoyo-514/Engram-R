@@ -5,16 +5,16 @@
  */
 
 import { ThemeManager } from '@/ui/services/ThemeManager';
-import { ThemeName } from '@/ui/styles/themes';
+import { type ThemeName } from '@/ui/styles/themes';
 import { create } from 'zustand';
 
 interface ThemeState {
-    /** 当前主题名称 */
-    theme: ThemeName;
-    /** 是否为暗色模式 */
-    isDarkMode: boolean;
-    /** 设置主题 */
-    setTheme: (theme: ThemeName) => void;
+  /** 当前主题名称 */
+  theme: ThemeName;
+  /** 是否为暗色模式 */
+  isDarkMode: boolean;
+  /** 设置主题 */
+  setTheme: (theme: ThemeName) => void;
 }
 
 /**
@@ -32,14 +32,14 @@ interface ThemeState {
  * ```
  */
 export const useThemeStore = create<ThemeState>((set) => ({
-    theme: ThemeManager.getTheme(),
-    isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(ThemeManager.getTheme()),
+  theme: ThemeManager.getTheme(),
+  isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(ThemeManager.getTheme()),
 
-    setTheme: (theme) => {
-        ThemeManager.setTheme(theme);
-        set({
-            theme,
-            isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(theme)
-        });
-    },
+  setTheme: (theme) => {
+    ThemeManager.setTheme(theme);
+    set({
+      theme,
+      isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(theme),
+    });
+  },
 }));

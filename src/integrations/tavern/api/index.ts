@@ -11,25 +11,25 @@ export { WorldInfoService } from '../worldbook';
  * 输出 JSON 格式的状态报告到 DevLog
  */
 export async function checkTavernIntegration(): Promise<{
-    eventBus: boolean;
-    messageService: boolean;
-    worldInfoService: boolean;
-    nativeTokenCount: boolean;
-    floorCount: number | null;
-    characterName: string | null;
+  eventBus: boolean;
+  messageService: boolean;
+  worldInfoService: boolean;
+  nativeTokenCount: boolean;
+  floorCount: number | null;
+  characterName: string | null;
 }> {
-    const { EventBus } = await import('@/integrations/tavern');
-    const { MessageService } = await import('./Message');
-    const { WorldInfoService } = await import('../worldbook');
+  const { EventBus } = await import('@/integrations/tavern');
+  const { MessageService } = await import('./Message');
+  const { WorldInfoService } = await import('../worldbook');
 
-    const status = {
-        eventBus: EventBus.isAvailable(),
-        messageService: MessageService.isAvailable(),
-        worldInfoService: WorldInfoService.isAvailable(),
-        nativeTokenCount: await WorldInfoService.isNativeTokenCountAvailable(),
-        floorCount: MessageService.isAvailable() ? MessageService.getFloorCount() : null,
-        characterName: MessageService.isAvailable() ? MessageService.getCurrentCharacterName() : null,
-    };
+  const status = {
+    eventBus: EventBus.isAvailable(),
+    messageService: MessageService.isAvailable(),
+    worldInfoService: WorldInfoService.isAvailable(),
+    nativeTokenCount: await WorldInfoService.isNativeTokenCountAvailable(),
+    floorCount: MessageService.isAvailable() ? MessageService.getFloorCount() : null,
+    characterName: MessageService.isAvailable() ? MessageService.getCurrentCharacterName() : null,
+  };
 
-    return status;
+  return status;
 }

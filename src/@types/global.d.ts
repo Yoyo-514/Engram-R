@@ -1,82 +1,44 @@
 /**
- * 全局类型声明
+ * 项目自有全局类型补充
  *
- * 扩展 Window 接口，为 SillyTavern 全局 API 提供类型提示
+ * function/ 与 iframe/ 目录下的 .d.ts 已由 tsconfig include 自动加载，
+ * 这里仅补充项目本身缺失的 Window 字段与资源模块声明，避免重复声明外部类型。
  */
 
-// 导入 ST 类型定义
-/// <reference path="./st-types/index.d.ts" />
-
 declare global {
-    interface Window {
-        /**
-         * SillyTavern 核心 API
-         */
-        SillyTavern?: {
-            getContext(): {
-                chat: unknown[];
-                chatId: string;
-                characterId: number;
-                characters: unknown[];
-                groups: unknown[];
-                name1: string;
-                name2: string;
-                onlineStatus: string;
-                maxContext: number;
-                // 更多字段可按需从 st-types 中扩展
-            };
-        };
+  interface PowerUserSettingsLike {
+    persona_description?: string;
+  }
 
-        /**
-         * 当前选择的模型名称
-         */
-        selected_model?: string;
+  interface Window {
+    /**
+     * SillyTavern 宿主对象，真正的上下文结构复用 exported.sillytavern.d.ts 中的 `typeof SillyTavern`
+     */
+    SillyTavern?: {
+      getContext?: () => typeof SillyTavern | null;
+    };
 
-        /**
-         * jQuery (由 SillyTavern 提供)
-         */
-        jQuery: JQuery;
-        $: JQuery;
-
-        /**
-         * SillyTavern 事件源
-         */
-        eventSource: EventTarget;
-
-        /**
-         * TavernHelper API (酒馆助手扩展提供)
-         */
-        TavernHelper?: {
-            createWorldbook?: (name: string) => Promise<void>;
-            getWorldbook?: (name: string) => Promise<unknown[]>;
-            saveWorldbook?: (name: string) => Promise<void>;
-            getCharWorldbookNames?: (mode: 'current' | 'all') => {
-                primary?: string;
-                additional: string[];
-            } | null;
-            rebindCharWorldbooks?: (
-                mode: 'current',
-                books: { primary?: string; additional: string[] }
-            ) => Promise<void>;
-            formatAsTavernRegexedString?: (
-                text: string,
-                placement: string, // 'ai_output' | 'user_input' etc
-                options?: { isPrompt: boolean }
-            ) => string;
-        };
-    }
+    /**
+     * 当前选择的模型名称
+     */
+    selected_model?: string;
+    power_user?: PowerUserSettingsLike;
+    chat_metadata?: Record<string, unknown>;
+    saveChatDebounced?: () => void;
+    __ENGRAM_SEARCH_INIT__?: boolean;
+  }
 }
 
 // 确保这是一个模块
-export { };
+export {};
 
 // Vite ?raw 导入声明
 declare module '*.md?raw' {
-    const content: string;
-    export default content;
+  const content: string;
+  export default content;
 }
 
 declare module '*.txt?raw' {
-    const content: string;
-    export default content;
+  const content: string;
+  export default content;
 }

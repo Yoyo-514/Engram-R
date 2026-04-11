@@ -1,4 +1,19 @@
-import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, Sparkles, Workflow, WandSparkles, Archive, Lock, Gauge } from 'lucide-react';
+import {
+  Database,
+  Search,
+  Layers,
+  Command,
+  Brain,
+  Settings,
+  Users,
+  GitBranch,
+  Sparkles,
+  Workflow,
+  WandSparkles,
+  Archive,
+  Lock,
+  Gauge,
+} from 'lucide-react';
 
 # 功能指南（架构对齐版）
 
@@ -13,9 +28,15 @@ import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, S
     通过顶部搜索（或 <code>/</code>）打开命令面板，可快速跳转页面、搜索文档、定位设置项与日志记录。
   </p>
   <ul className="mt-3 text-sm text-muted-foreground list-disc pl-5 space-y-1">
-    <li><span className="text-label">页面导航</span>：仪表盘、处理、记忆编辑、API 预设等。</li>
-    <li><span className="text-label">设置直达</span>：主题、模型开关、处理参数。</li>
-    <li><span className="text-label">内容检索</span>：文档条目、历史摘要、开发日志。</li>
+    <li>
+      <span className="text-label">页面导航</span>：仪表盘、处理、记忆编辑、API 预设等。
+    </li>
+    <li>
+      <span className="text-label">设置直达</span>：主题、模型开关、处理参数。
+    </li>
+    <li>
+      <span className="text-label">内容检索</span>：文档条目、历史摘要、开发日志。
+    </li>
   </ul>
 </div>
 
@@ -34,7 +55,9 @@ import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, S
   </div>
   <div className="p-4 rounded-lg border border-border bg-card">
     <h3 className="text-heading font-semibold mb-2">原子步骤</h3>
-    <p className="text-sm text-muted-foreground">基于最小原子步骤（上下文获取、大模型调用、数据持久化）分发执行。</p>
+    <p className="text-sm text-muted-foreground">
+      基于最小原子步骤（上下文获取、大模型调用、数据持久化）分发执行。
+    </p>
   </div>
 </div>
 
@@ -43,16 +66,19 @@ import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, S
 ## <Settings className="inline-block w-4 h-4 align-text-bottom text-primary" /> 运行时配置（Processing）
 
 ### 1) 总结策略（Summary）
+
 - **自动总结**：全局开关。
 - **楼层间隔**：控制记忆颗粒度，建议 `20 ~ 30`。
 - **缓冲层**：为“可编辑的最新消息区”留出安全窗口，避免刚写完就被固化。
 
 ### 2) 精简策略（合并与压缩）
+
 - 当低层级事件摘要累计过多时自动触发合并。
 - 向上归纳形成更高层大纲，有效降低模型上下文压力。
 - 旧信息不会“凭空消失”，而是作为子节点被纳入层级化的树状结构。
 
 ### 3) 实体提取
+
 - 与剧情总结并行执行，自动更新角色、场景或重要物品的状态设定。
 - 活跃实体达到阈值后将触发自动归档机制，确保检索系统高效运转。
 
@@ -99,18 +125,22 @@ import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, S
 ## <Database className="inline-block w-4 h-4 align-text-bottom text-primary" /> 记忆流（Memory Stream）
 
 ### <Layers className="inline-block w-4 h-4 align-text-bottom text-primary" /> 事件视图
+
 - 时间轴查看事件摘要。
 - 支持搜索、过滤、编辑、删除。
 - 编辑后建议立即 **Re-embed**。
 
 ### <Users className="inline-block w-4 h-4 align-text-bottom text-primary" /> 实体视图
+
 - 查看和修正实体提取结果。
 - 可维护 profile 字段，提升后续生成稳定性。
 
 ### <GitBranch className="inline-block w-4 h-4 align-text-bottom text-primary" /> 图谱视图
+
 - 可视化事件与实体关系，便于排查“记住了什么、为什么召回”。
 
 ### <Sparkles className="inline-block w-4 h-4 align-text-bottom text-primary" /> 重新向量化（极其关键）
+
 - 手动修改了记忆文本后，底层的特征向量不会随之自动更新。
 - 务必在编辑后点击重嵌（Re-embed）按钮，否则你的搜索结果将依然停留在修改前的“幽灵状态”。
 
@@ -123,6 +153,7 @@ import { Database, Search, Layers, Command, Brain, Settings, Users, GitBranch, S
 - 通过归档与精简平衡“可回忆性”和“上下文成本”。
 
 ### <Lock className="inline-block w-4 h-4 align-text-bottom text-primary" /> 锁定保护
+
 - 锁定事件：避免被合并压缩机制（Trimmer）处理。
 - 锁定实体：避免被系统自动清理或归档。
 - 最适合用于必须时刻常驻的关键剧情节点与核心角色设定。

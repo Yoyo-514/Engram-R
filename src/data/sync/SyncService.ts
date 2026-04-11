@@ -1,6 +1,6 @@
 import { Logger, LogModule } from '@/core/logger';
-import { getSTContext, getRequestHeaders } from '@/integrations/tavern';
-import { ChatDatabase, ChatDataDump, getDbForChat, exportChatData, importChatData } from '@/data/db';
+import { getRequestHeaders } from '@/integrations/tavern';
+import { type ChatDataDump, getDbForChat, exportChatData, importChatData } from '@/data/db';
 import { debounce, type DebouncedFunc } from 'lodash';
 import { SettingsManager } from '@/config/settings';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -11,421 +11,438 @@ const SYNC_FILE_PREFIX = 'Engram_sync_';
 const SYNC_FILE_EXT = '.json';
 
 class SyncService {
-    private static instance: SyncService;
-    private debouncedUploads: Map<string, DebouncedFunc<() => void>> = new Map();
-    private isImporting: boolean = false; // 导入锁，防止导入时触发上传
+  private static instance: SyncService;
+  private debouncedUploads: Map<string, DebouncedFunc<() => void>> = new Map();
+  private isImporting: boolean = false; // 导入锁，防止导入时触发上传
 
-    public get isImportingState(): boolean {
-        return this.isImporting;
-    }
+  public get isImportingState(): boolean {
+    return this.isImporting;
+  }
 
-    private hasDocumentAccess(): boolean {
-        return typeof document !== 'undefined'
-            && typeof document.addEventListener === 'function';
-    }
+  private hasDocumentAccess(): boolean {
+    return typeof document !== 'undefined' && typeof document.addEventListener === 'function';
+  }
 
-    private constructor() {
-        Logger.info(MODULE, `Initialized SyncService`);
-        this.initEventListeners();
-    }
+  private constructor() {
+    Logger.info(MODULE, `Initialized SyncService`);
+    this.initEventListeners();
+  }
 
-    private initEventListeners() {
-        // 动态导入 EventBus 以避免循环依赖（如果 EventBus 依赖其他模块）
-        // 这里假设 EventBus 是独立的或我们延迟绑定
-        // 为确保安全，我们在第一次 getInstance 时不强依赖 Tavern 上下文，
-        // 而是依靠外部调用 init 或在构造函数中尝试
-        setTimeout(async () => {
-            const { EventBus, TavernEventType } = await import('@/integrations/tavern');
+  private initEventListeners() {
+    // 动态导入 EventBus 以避免循环依赖（如果 EventBus 依赖其他模块）
+    // 这里假设 EventBus 是独立的或我们延迟绑定
+    // 为确保安全，我们在第一次 getInstance 时不强依赖 Tavern 上下文，
+    // 而是依靠外部调用 init 或在构造函数中尝试
+    setTimeout(() => {
+      void (async () => {
+        const { EventBus, TavernEventType } = await import('@/integrations/tavern');
 
-            // 监听聊天切换事件
-            EventBus.on(TavernEventType.CHAT_CHANGED, async () => {
-                const { getSTContext } = await import('@/integrations/tavern');
-                const chatId = getSTContext()?.chatId;
-                if (chatId) {
-                    Logger.info(MODULE, `Chat changed to ${chatId}, checking sync...`);
-                    // 延迟一点等待 DB 准备好
-                    setTimeout(() => this.autoSyncDownload(chatId), 1000);
-                }
-            });
-
-            // 首次加载也检查一次
+        // 监听聊天切换事件
+        EventBus.on(TavernEventType.CHAT_CHANGED, () => {
+          void (async () => {
             const { getSTContext } = await import('@/integrations/tavern');
-            const initialChatId = getSTContext()?.chatId;
-            if (initialChatId) {
-                this.autoSyncDownload(initialChatId);
+            const chatId = getSTContext()?.chatId;
+            if (chatId) {
+              Logger.info(MODULE, `Chat changed to ${chatId}, checking sync...`);
+              // 延迟一点等待 DB 准备好
+              setTimeout(() => {
+                void this.autoSyncDownload(chatId);
+              }, 1000);
             }
+          })();
+        });
 
-            // P1 Fix: 增加可见性监听，实现“重回焦点即检查同步”
-            if (this.hasDocumentAccess()) {
-                document.addEventListener('visibilitychange', () => {
-                    if (document.visibilityState === 'visible') {
-                        const currentChatId = getSTContext()?.chatId;
-                        if (currentChatId) {
-                            Logger.debug(MODULE, 'Tab became visible, checking sync...');
-                            this.autoSyncDownload(currentChatId);
-                        }
-                    }
-                });
-            } else {
-                Logger.debug(MODULE, 'Document API 不可用，跳过 visibilitychange 监听');
-            }
-        }, 2000);
-    }
-
-    public static getInstance(): SyncService {
-        if (!SyncService.instance) {
-            SyncService.instance = new SyncService();
+        // 首次加载也检查一次
+        const { getSTContext } = await import('@/integrations/tavern');
+        const initialChatId = getSTContext()?.chatId;
+        if (initialChatId) {
+          void this.autoSyncDownload(initialChatId);
         }
-        return SyncService.instance;
+
+        // P1 Fix: 增加可见性监听，实现“重回焦点即检查同步”
+        if (this.hasDocumentAccess()) {
+          document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+              const currentChatId = getSTContext()?.chatId;
+              if (currentChatId) {
+                Logger.debug(MODULE, 'Tab became visible, checking sync...');
+                void this.autoSyncDownload(currentChatId);
+              }
+            }
+          });
+        } else {
+          Logger.debug(MODULE, 'Document API 不可用，跳过 visibilitychange 监听');
+        }
+      })();
+    }, 2000);
+  }
+
+  public static getInstance(): SyncService {
+    if (!SyncService.instance) {
+      SyncService.instance = new SyncService();
+    }
+    return SyncService.instance;
+  }
+
+  /**
+   * 生成同步文件名
+   * 格式: Engram_sync_{chatId}.json
+   */
+  private getSyncFileName(chatId: string): string {
+    // 简单清理 chatId，虽然通常已经是安全的
+    const safeChatId = chatId.replace(/[^a-zA-Z0-9_-]/g, '_');
+    return `${SYNC_FILE_PREFIX}${safeChatId}${SYNC_FILE_EXT}`;
+  }
+
+  /**
+   * 获取同步文件的完整 URL (用于 fetch)
+   */
+  private getSyncFileUrl(fileName: string): string {
+    // 酒馆上传的文件在 /user/files/ 目录下
+    // 添加时间戳防止缓存
+    return `/user/files/${fileName}?t=${Date.now()}`;
+  }
+
+  /**
+   * 清理某个 chat 的待执行上传任务，避免防抖闭包长期滞留
+   */
+  private clearPendingUpload(chatId: string): void {
+    const pending = this.debouncedUploads.get(chatId);
+    if (!pending) return;
+
+    pending.cancel();
+    this.debouncedUploads.delete(chatId);
+  }
+
+  /**
+   * 调度自动上传（防抖）
+   */
+  public scheduleUpload(chatId: string) {
+    // 检查导入锁
+    if (this.isImporting) {
+      Logger.debug(MODULE, `Skipping upload schedule for ${chatId} (Importing)`);
+      return;
     }
 
-    /**
-     * 生成同步文件名
-     * 格式: Engram_sync_{chatId}.json
-     */
-    private getSyncFileName(chatId: string): string {
-        // 简单清理 chatId，虽然通常已经是安全的
-        const safeChatId = chatId.replace(/[^a-zA-Z0-9_-]/g, '_');
-        return `${SYNC_FILE_PREFIX}${safeChatId}${SYNC_FILE_EXT}`;
+    // 检查配置
+    const config = SettingsManager.getSettings().syncConfig;
+    if (!config?.enabled || !config?.autoSync) {
+      this.clearPendingUpload(chatId);
+      return;
     }
 
-    /**
-     * 获取同步文件的完整 URL (用于 fetch)
-     */
-    private getSyncFileUrl(fileName: string): string {
-        // 酒馆上传的文件在 /user/files/ 目录下
-        // 添加时间戳防止缓存
-        return `/user/files/${fileName}?t=${Date.now()}`;
-    }
-
-    /**
-     * 清理某个 chat 的待执行上传任务，避免防抖闭包长期滞留
-     */
-    private clearPendingUpload(chatId: string): void {
-        const pending = this.debouncedUploads.get(chatId);
-        if (!pending) return;
-
-        pending.cancel();
+    if (!this.debouncedUploads.has(chatId)) {
+      const uploadFn = debounce(() => {
+        // 任务开始执行后立即释放缓存，避免随聊天数无限增长
         this.debouncedUploads.delete(chatId);
+
+        // 再次检查配置，防止在 debounce 期间被关闭
+        const currentConfig = SettingsManager.getSettings().syncConfig;
+        if (!currentConfig?.enabled || !currentConfig?.autoSync) {
+          return;
+        }
+
+        this.upload(chatId).catch((err) => {
+          Logger.error(MODULE, `Auto-upload failed for ${chatId}`, err);
+        });
+      }, DEBOUNCE_DELAY);
+      this.debouncedUploads.set(chatId, uploadFn);
     }
 
-    /**
-     * 调度自动上传（防抖）
-     */
-    public scheduleUpload(chatId: string) {
-        // 检查导入锁
-        if (this.isImporting) {
-            Logger.debug(MODULE, `Skipping upload schedule for ${chatId} (Importing)`);
-            return;
-        }
+    const fn = this.debouncedUploads.get(chatId);
+    if (fn) fn();
+  }
 
-        // 检查配置
-        const config = SettingsManager.getSettings().syncConfig;
-        if (!config?.enabled || !config?.autoSync) {
-            this.clearPendingUpload(chatId);
-            return;
-        }
+  /**
+   * 上传当前聊天数据到服务端 (作为文件)
+   */
+  public async upload(chatId: string): Promise<boolean> {
+    try {
+      Logger.info(MODULE, `Starting upload for ${chatId}...`);
+      const db = getDbForChat(chatId);
+      const dump = await exportChatData(db);
 
-        if (!this.debouncedUploads.has(chatId)) {
-            const uploadFn = debounce(() => {
-                // 任务开始执行后立即释放缓存，避免随聊天数无限增长
-                this.debouncedUploads.delete(chatId);
+      // 使用数据库中的 lastModified 作为同步时间戳
+      // 如果是首次上传或旧库，可能没有 lastModified，则使用当前时间并写入
+      let lastModified = (await db.meta.get('lastModified'))?.value as number;
 
-                // 再次检查配置，防止在 debounce 期间被关闭
-                const currentConfig = SettingsManager.getSettings().syncConfig;
-                if (!currentConfig?.enabled || !currentConfig?.autoSync) {
-                    return;
-                }
+      if (!lastModified) {
+        lastModified = Date.now();
+        await db.meta.put({ key: 'lastModified', value: lastModified });
+        // 更新 dump 中的 meta 以包含新的时间戳
+        dump.meta['lastModified'] = lastModified;
+      }
 
-                this.upload(chatId).catch(err => {
-                    Logger.error(MODULE, `Auto-upload failed for ${chatId}`, err);
-                });
-            }, DEBOUNCE_DELAY);
-            this.debouncedUploads.set(chatId, uploadFn);
-        }
+      Logger.debug(MODULE, `导出中: ${dump.events.length} 事件, ${dump.entities.length} 实体`);
 
-        const fn = this.debouncedUploads.get(chatId);
-        if (fn) fn();
-    }
+      const jsonString = JSON.stringify(dump);
 
-    /**
-     * 上传当前聊天数据到服务端 (作为文件)
-     */
-    public async upload(chatId: string): Promise<boolean> {
+      // P3 Fix: 增加超大文件预警，防止静默同步失败喵
+      const sizeInMB = jsonString.length / (1024 * 1024);
+      if (sizeInMB > 15) {
+        Logger.warn(
+          MODULE,
+          `同步内容过大 (${sizeInMB.toFixed(2)} MB), 可能会导致同步缓慢或失败喵！`
+        );
+        notificationService.warning(
+          `记忆库较大 (${sizeInMB.toFixed(2)} MB), 同步可能需要更长时间喵~`,
+          'Sync'
+        );
+      }
+
+      const fileName = this.getSyncFileName(chatId);
+
+      // P0 Fix: 异步转码方案，防止大文件阻塞主线程
+      // 使用 Blob + FileReader 转码为数据 URL，它能流式处理并释放 CPU 压力
+      const base64Data = await new Promise<string>((resolve, reject) => {
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const reader = new FileReader();
+        reader.onload = () => {
+          const result = reader.result as string;
+          // FileReader 的 result 包含 "data:application/json;base64," 前缀，需要剔除
+          const base64 = result.split(',')[1];
+          resolve(base64);
+        };
+        reader.onerror = () => reject(new Error('Base64 encoding failed'));
+        reader.readAsDataURL(blob);
+      });
+
+      // 使用 /api/files/upload 上传 (带重试逻辑)
+      let response: Response | null = null;
+      for (let i = 0; i < 3; i++) {
         try {
-            Logger.info(MODULE, `Starting upload for ${chatId}...`);
-            const db = await getDbForChat(chatId);
-            const dump = await exportChatData(db);
-
-            // 使用数据库中的 lastModified 作为同步时间戳
-            // 如果是首次上传或旧库，可能没有 lastModified，则使用当前时间并写入
-            let lastModified = (await db.meta.get('lastModified'))?.value as number;
-
-            if (!lastModified) {
-                lastModified = Date.now();
-                await db.meta.put({ key: 'lastModified', value: lastModified });
-                // 更新 dump 中的 meta 以包含新的时间戳
-                dump.meta['lastModified'] = lastModified;
-            }
-
-            const timestamp = lastModified;
-
-            Logger.debug(MODULE, `导出中: ${dump.events.length} 事件, ${dump.entities.length} 实体`);
-
-            const jsonString = JSON.stringify(dump);
-            
-            // P3 Fix: 增加超大文件预警，防止静默同步失败喵
-            const sizeInMB = jsonString.length / (1024 * 1024);
-            if (sizeInMB > 15) {
-                Logger.warn(MODULE, `同步内容过大 (${sizeInMB.toFixed(2)} MB), 可能会导致同步缓慢或失败喵！`);
-                notificationService.warning(`记忆库较大 (${sizeInMB.toFixed(2)} MB), 同步可能需要更长时间喵~`, 'Sync');
-            }
-
-            const fileName = this.getSyncFileName(chatId);
-
-            // P0 Fix: 异步转码方案，防止大文件阻塞主线程
-            // 使用 Blob + FileReader 转码为数据 URL，它能流式处理并释放 CPU 压力
-            const base64Data = await new Promise<string>((resolve, reject) => {
-                const blob = new Blob([jsonString], { type: 'application/json' });
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const result = reader.result as string;
-                    // FileReader 的 result 包含 "data:application/json;base64," 前缀，需要剔除
-                    const base64 = result.split(',')[1];
-                    resolve(base64);
-                };
-                reader.onerror = () => reject(new Error('Base64 encoding failed'));
-                reader.readAsDataURL(blob);
-            });
-
-            // 使用 /api/files/upload 上传 (带重试逻辑)
-            let response: Response | null = null;
-            for (let i = 0; i < 3; i++) {
-                try {
-                    response = await fetch('/api/files/upload', {
-                        method: 'POST',
-                        headers: getRequestHeaders(),
-                        body: JSON.stringify({
-                            name: fileName,
-                            data: base64Data
-                        })
-                    });
-                    if (response.ok) break;
-                    Logger.warn(MODULE, `Upload attempt ${i + 1} failed, retrying...`);
-                } catch (e) {
-                    if (i === 2) throw e;
-                    await new Promise(r => setTimeout(r, 1000 * (i + 1))); // 指数退避
-                }
-            }
-
-            if (!response || !response.ok) {
-                const errText = await response?.text();
-                throw new Error(`Upload failed after 3 attempts: ${response?.statusText} - ${errText}`);
-            }
-
-            Logger.success(MODULE, `上传完成: ${fileName}`);
-            return true;
-        } catch (error) {
-            Logger.error(MODULE, `Upload error for ${chatId}`, error);
-            return false;
-        }
-    }
-
-    /**
-     * 删除远程同步文件 (及本地 user/files/ 下的对应文件)
-     */
-    public async purge(chatId: string): Promise<void> {
-        try {
-            this.clearPendingUpload(chatId);
-            const fileName = this.getSyncFileName(chatId);
-            await fetch('/api/files/delete', {
-                method: 'POST',
-                headers: getRequestHeaders(),
-                body: JSON.stringify({
-                    path: fileName // files API 直接接收文件名作为 path (当不需要子目录时)
-                })
-            });
+          response = await fetch('/api/files/upload', {
+            method: 'POST',
+            headers: getRequestHeaders(),
+            body: JSON.stringify({
+              name: fileName,
+              data: base64Data,
+            }),
+          });
+          if (response.ok) break;
+          Logger.warn(MODULE, `Upload attempt ${i + 1} failed, retrying...`);
         } catch (e) {
-            // Ignore purge errors
+          if (i === 2) throw e;
+          await new Promise((r) => setTimeout(r, 1000 * (i + 1))); // 指数退避
         }
+      }
+
+      if (!response || !response.ok) {
+        const errText = await response?.text();
+        throw new Error(`Upload failed after 3 attempts: ${response?.statusText} - ${errText}`);
+      }
+
+      Logger.success(MODULE, `上传完成: ${fileName}`);
+      return true;
+    } catch (error) {
+      Logger.error(MODULE, `Upload error for ${chatId}`, error);
+      return false;
+    }
+  }
+
+  /**
+   * 删除远程同步文件 (及本地 user/files/ 下的对应文件)
+   */
+  public async purge(chatId: string): Promise<void> {
+    try {
+      this.clearPendingUpload(chatId);
+      const fileName = this.getSyncFileName(chatId);
+      await fetch('/api/files/delete', {
+        method: 'POST',
+        headers: getRequestHeaders(),
+        body: JSON.stringify({
+          path: fileName, // files API 直接接收文件名作为 path (当不需要子目录时)
+        }),
+      });
+    } catch {
+      // Ignore purge errors
+    }
+  }
+
+  /**
+   * 检查远程状态
+   * 尝试下载文件头或整个文件来检查是否存在和更新时间
+   */
+  public async getRemoteStatus(chatId: string): Promise<{ exists: boolean; timestamp: number }> {
+    try {
+      const fileName = this.getSyncFileName(chatId);
+      const url = this.getSyncFileUrl(fileName);
+
+      // 使用 fetch HEAD 请求先检查文件是否存在 (酒馆可能不支持 HEAD，直接 GET)
+      // 由于我们需要 meta 信息，且通常文件不会极大，直接 GET
+      const response = await fetch(url);
+
+      if (!response.ok) return { exists: false, timestamp: 0 };
+
+      // P1 Fix: 放弃直接 response.json() 把整个几 MB 甚至几十 MB 吃进内存
+      // 改为流式读取 Buffer 首部，提取 meta.lastModified 后即刻 abort
+      const reader = response.body?.getReader();
+      if (!reader) {
+        // 如果环境不支持流式读取（极少），回退为常规读取
+        const dump = (await response.json()) as ChatDataDump;
+        return {
+          exists: true,
+          timestamp: (dump.meta?.lastModified as number) || 0,
+        };
+      }
+
+      const decoder = new TextDecoder('utf-8');
+      let chunkStr = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        chunkStr += decoder.decode(value, { stream: true });
+
+        // 尝试用正则匹配 `"lastModified": 123456789`
+        const match = chunkStr.match(/"lastModified"\s*:\s*(\d+)/);
+        if (match) {
+          // 取到值后，强制立刻切断后方冗长的数据流下载，拯救内存与带宽喵！
+          void reader.cancel();
+          return {
+            exists: true,
+            timestamp: parseInt(match[1], 10),
+          };
+        }
+
+        // 为了防止极端情况下 meta 不在最前面，但也不会找太久
+        // 仅扫描前 100KB (粗略判断)，如果在 100KB 内没找到也 abort 以保安全
+        if (chunkStr.length > 102400) {
+          void reader.cancel();
+          break;
+        }
+      }
+
+      return { exists: false, timestamp: 0 };
+    } catch {
+      // 404 等错误也会进这里
+      return { exists: false, timestamp: 0 };
+    }
+  }
+
+  /**
+   * 下载并导入数据
+   */
+  public async download(chatId: string): Promise<string> {
+    try {
+      Logger.info(MODULE, `Downloading for ${chatId}...`);
+      this.isImporting = true; // 加锁
+
+      const fileName = this.getSyncFileName(chatId);
+      const url = this.getSyncFileUrl(fileName);
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        Logger.warn(MODULE, `No remote data found for ${chatId} (HTTP ${response.status})`);
+        this.isImporting = false;
+        return 'no_data';
+      }
+
+      const dump = (await response.json()) as ChatDataDump;
+
+      if (!dump.events || !dump.entities) {
+        this.isImporting = false;
+        throw new Error('Invalid file format: missing events or entities');
+      }
+
+      Logger.debug(MODULE, `接收数据: ${dump.events?.length} 事件, ${dump.entities?.length} 实体`);
+
+      const db = getDbForChat(chatId);
+      await importChatData(db, dump);
+
+      // importChatData 应该包含了从服务端来的 meta（其中包含 lastModified）
+      // 因此不需要手动 patch 时间戳，数据库状态应当完全与远程一致
+      // 如果远程文件是旧版本的（没有 lastModified），则再次上传时会补上
+
+      // 验证写入
+      const eventCount = await db.events.count();
+      const entityCount = await db.entities.count();
+      Logger.debug(MODULE, `导入验证: ${eventCount} 事件, ${entityCount} 实体`);
+
+      return 'success';
+    } catch (error) {
+      Logger.error(MODULE, `Download failed for ${chatId}`, error);
+      return 'error';
+    } finally {
+      // 延迟释放锁，等待可能的 DB 钩子处理完毕
+      setTimeout(() => {
+        this.isImporting = false;
+      }, 1000);
+    }
+  }
+
+  /**
+   * 自动下载同步 (单向：远程 -> 本地)
+   * 用于切换聊天时检查
+   */
+  public async autoSyncDownload(chatId: string): Promise<void> {
+    const config = SettingsManager.getSettings().syncConfig;
+    if (!config?.enabled || !config?.autoSync) return;
+
+    const remoteStatus = await this.getRemoteStatus(chatId);
+    if (!remoteStatus.exists) return;
+
+    // 检查本地时间
+    // 检查本地时间 (lastModified)
+    const db = getDbForChat(chatId);
+    const localMeta = await db.meta.get('lastModified');
+    const localTs = (localMeta?.value as number) || 0;
+
+    // 如果远程更新
+    if (remoteStatus.timestamp > localTs) {
+      Logger.info(
+        MODULE,
+        `Found newer remote data (${remoteStatus.timestamp} > ${localTs}), downloading...`
+      );
+      const result = await this.download(chatId);
+      if (result === 'success') {
+        notificationService.success('已自动同步云端数据', 'Engram', { timeOut: 3000 });
+      }
+    } else {
+      Logger.debug(
+        MODULE,
+        `Local data is up to date (Remote: ${remoteStatus.timestamp} <= Local: ${localTs})`
+      );
+    }
+  }
+
+  /**
+   * 自动检查并同步
+   * @returns 'downloaded' | 'uploaded' | 'synced' | 'error' | 'ignored'
+   */
+  public async autoSync(chatId: string): Promise<string> {
+    const remoteStatus = await this.getRemoteStatus(chatId);
+
+    // 1. 远程无数据 -> 忽略
+    if (!remoteStatus.exists) {
+      return 'ignored';
     }
 
-    /**
-     * 检查远程状态
-     * 尝试下载文件头或整个文件来检查是否存在和更新时间
-     */
-    public async getRemoteStatus(chatId: string): Promise<{ exists: boolean, timestamp: number }> {
-        try {
-            const fileName = this.getSyncFileName(chatId);
-            const url = this.getSyncFileUrl(fileName);
+    // 2. 检查本地时间
+    const db = getDbForChat(chatId);
+    const localMeta = await db.meta.get('lastModified');
+    const localTs = (localMeta?.value as number) || 0;
 
-            // 使用 fetch HEAD 请求先检查文件是否存在 (酒馆可能不支持 HEAD，直接 GET)
-            // 由于我们需要 meta 信息，且通常文件不会极大，直接 GET
-            const response = await fetch(url);
+    // 如果是本机刚上传的，忽略 (防回环)
+    // 旧逻辑：通过 deviceId 检查
+    // 新逻辑：通过严格时间戳检查 (remote > local)
+    // 如果 remote == local，说明是已同步状态，返回 synced
+    // 因此不需要特殊的 deviceId 检查
 
-            if (!response.ok) return { exists: false, timestamp: 0 };
-
-            // P1 Fix: 放弃直接 response.json() 把整个几 MB 甚至几十 MB 吃进内存
-            // 改为流式读取 Buffer 首部，提取 meta.lastModified 后即刻 abort
-            const reader = response.body?.getReader();
-            if (!reader) {
-                // 如果环境不支持流式读取（极少），回退为常规读取
-                const dump = await response.json() as ChatDataDump;
-                return {
-                    exists: true,
-                    timestamp: (dump.meta?.lastModified as number) || 0,
-                };
-            }
-
-            const decoder = new TextDecoder('utf-8');
-            let chunkStr = '';
-            
-            while (true) {
-                const { done, value } = await reader.read();
-                if (done) break;
-                
-                chunkStr += decoder.decode(value, { stream: true });
-                
-                // 尝试用正则匹配 `"lastModified": 123456789`
-                const match = chunkStr.match(/"lastModified"\s*:\s*(\d+)/);
-                if (match) {
-                    // 取到值后，强制立刻切断后方冗长的数据流下载，拯救内存与带宽喵！
-                    reader.cancel();
-                    return {
-                        exists: true,
-                        timestamp: parseInt(match[1], 10)
-                    };
-                }
-                
-                // 为了防止极端情况下 meta 不在最前面，但也不会找太久
-                // 仅扫描前 100KB (粗略判断)，如果在 100KB 内没找到也 abort 以保安全
-                if (chunkStr.length > 102400) {
-                    reader.cancel();
-                    break;
-                }
-            }
-
-            return { exists: false, timestamp: 0 };
-
-        } catch (error) {
-            // 404 等错误也会进这里
-            return { exists: false, timestamp: 0 };
-        }
+    // 3. 比较
+    if (remoteStatus.timestamp > localTs) {
+      Logger.info(
+        MODULE,
+        `Remote is newer (${remoteStatus.timestamp} > ${localTs}), downloading...`
+      );
+      const result = await this.download(chatId);
+      return result === 'success' ? 'downloaded' : 'error';
+    } else {
+      // 本地更新，等待 debounce 上传
+      return 'synced';
     }
-
-    /**
-     * 下载并导入数据
-     */
-    public async download(chatId: string): Promise<string> {
-        try {
-            Logger.info(MODULE, `Downloading for ${chatId}...`);
-            this.isImporting = true; // 加锁
-
-            const fileName = this.getSyncFileName(chatId);
-            const url = this.getSyncFileUrl(fileName);
-            const response = await fetch(url);
-
-            if (!response.ok) {
-                Logger.warn(MODULE, `No remote data found for ${chatId} (HTTP ${response.status})`);
-                this.isImporting = false;
-                return 'no_data';
-            }
-
-            const dump = await response.json() as ChatDataDump;
-
-            if (!dump.events || !dump.entities) {
-                this.isImporting = false;
-                throw new Error('Invalid file format: missing events or entities');
-            }
-
-            Logger.debug(MODULE, `接收数据: ${dump.events?.length} 事件, ${dump.entities?.length} 实体`);
-
-            const db = await getDbForChat(chatId);
-            await importChatData(db, dump);
-
-            // importChatData 应该包含了从服务端来的 meta（其中包含 lastModified）
-            // 因此不需要手动 patch 时间戳，数据库状态应当完全与远程一致
-            // 如果远程文件是旧版本的（没有 lastModified），则再次上传时会补上
-
-            // 验证写入
-            const eventCount = await db.events.count();
-            const entityCount = await db.entities.count();
-            Logger.debug(MODULE, `导入验证: ${eventCount} 事件, ${entityCount} 实体`);
-
-            return 'success';
-        } catch (error) {
-            Logger.error(MODULE, `Download failed for ${chatId}`, error);
-            return 'error';
-        } finally {
-            // 延迟释放锁，等待可能的 DB 钩子处理完毕
-            setTimeout(() => {
-                this.isImporting = false;
-            }, 1000);
-        }
-    }
-
-    /**
-     * 自动下载同步 (单向：远程 -> 本地)
-     * 用于切换聊天时检查
-     */
-    public async autoSyncDownload(chatId: string): Promise<void> {
-        const config = SettingsManager.getSettings().syncConfig;
-        if (!config?.enabled || !config?.autoSync) return;
-
-        const remoteStatus = await this.getRemoteStatus(chatId);
-        if (!remoteStatus.exists) return;
-
-        // 检查本地时间
-        // 检查本地时间 (lastModified)
-        const db = await getDbForChat(chatId);
-        const localMeta = await db.meta.get('lastModified');
-        const localTs = (localMeta?.value as number) || 0;
-
-        // 如果远程更新
-        if (remoteStatus.timestamp > localTs) {
-            Logger.info(MODULE, `Found newer remote data (${remoteStatus.timestamp} > ${localTs}), downloading...`);
-            const result = await this.download(chatId);
-            if (result === 'success') {
-                notificationService.success('已自动同步云端数据', 'Engram', { timeOut: 3000 });
-            }
-        } else {
-            Logger.debug(MODULE, `Local data is up to date (Remote: ${remoteStatus.timestamp} <= Local: ${localTs})`);
-        }
-    }
-
-    /**
-     * 自动检查并同步
-     * @returns 'downloaded' | 'uploaded' | 'synced' | 'error' | 'ignored'
-     */
-    public async autoSync(chatId: string): Promise<string> {
-        const remoteStatus = await this.getRemoteStatus(chatId);
-
-        // 1. 远程无数据 -> 忽略
-        if (!remoteStatus.exists) {
-            return 'ignored';
-        }
-
-        // 2. 检查本地时间
-        const db = await getDbForChat(chatId);
-        const localMeta = await db.meta.get('lastModified');
-        const localTs = (localMeta?.value as number) || 0;
-
-        // 如果是本机刚上传的，忽略 (防回环)
-        // 旧逻辑：通过 deviceId 检查
-        // 新逻辑：通过严格时间戳检查 (remote > local)
-        // 如果 remote == local，说明是已同步状态，返回 synced
-        // 因此不需要特殊的 deviceId 检查
-
-        // 3. 比较
-        if (remoteStatus.timestamp > localTs) {
-            Logger.info(MODULE, `Remote is newer (${remoteStatus.timestamp} > ${localTs}), downloading...`);
-            const result = await this.download(chatId);
-            return result === 'success' ? 'downloaded' : 'error';
-        } else {
-            // 本地更新，等待 debounce 上传
-            return 'synced';
-        }
-    }
+  }
 }
 
 export const syncService = SyncService.getInstance();

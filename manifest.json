@@ -1,14 +1,12 @@
 {
-    "display_name": "Engram-R",
-    "loading_order": 500,
-    "requires": [],
-    "optional": [
-        "embeddings"
-    ],
-    "js": "dist/index.js",
-    "css": "dist/style.css",
-    "author": "yoyo514",
-    "version": "1.0.1",
-    "homePage": "https://github.com/Yoyo-514/Engram-R.git",
-    "description": "Graph RAG 记忆操作系统 - Where memories leave their trace."
+  "display_name": "Engram-R",
+  "loading_order": 500,
+  "requires": [],
+  "optional": ["embeddings"],
+  "js": "dist/index.js",
+  "css": "dist/style.css",
+  "author": "yoyo514",
+  "version": "1.0.1",
+  "homePage": "https://github.com/Yoyo-514/Engram-R.git",
+  "description": "Graph RAG 记忆操作系统 - Where memories leave their trace."
 }

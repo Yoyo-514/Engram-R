@@ -1,190 +1,218 @@
 import { getBuiltInTemplateByCategory } from '@/config/types/defaults';
+import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
 import { Logger } from '@/core/logger';
 import { PromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
-import { JobContext } from '../../core/JobContext';
-import { IStep } from '../../core/Step';
+import { type JobContext } from '../../core/JobContext';
+import { type IStep } from '../../core/Step';
 
 interface BuildPromptConfig {
-    templateId?: string;       // 指定模板 ID
-    category?: string;         // 指定分类 (用于 fallback)
-    vars?: Record<string, string>; // 额外的变量
+  templateId?: string;
+  category?: PromptCategory;
+  vars?: Record<string, string>;
+}
+
+type KeywordEntityRef = {
+  id: string;
+  score?: number;
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object';
+}
+
+function readString(value: unknown): string | undefined {
+  return typeof value === 'string' ? value : undefined;
+}
+
+function isPromptCategory(value: unknown): value is PromptCategory {
+  return (
+    value === 'summary' ||
+    value === 'trim' ||
+    value === 'preprocessing' ||
+    value === 'entity_extraction'
+  );
+}
+
+function readKeywordEntityRefs(value: unknown): KeywordEntityRef[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.flatMap((item) => {
+    if (!isRecord(item)) {
+      return [];
+    }
+
+    const id = readString(item.id);
+    if (!id) {
+      return [];
+    }
+
+    const score =
+      typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : undefined;
+    return [{ id, score }];
+  });
+}
+
+function applyMacroReplacements(
+  prompt: string,
+  variables: Record<string, string | undefined>
+): string {
+  let result = prompt;
+
+  for (const [key, value] of Object.entries(variables)) {
+    if (value === undefined || value === null) {
+      continue;
+    }
+
+    result = result.split(key).join(value);
+  }
+
+  return result;
 }
 
 export class BuildPrompt implements IStep {
-    name = 'BuildPrompt';
+  name = 'BuildPrompt';
 
-    constructor(private config: BuildPromptConfig) { }
+  constructor(private config: BuildPromptConfig) {}
 
-    async execute(context: JobContext): Promise<void> {
-        // 1. 确定模板
-        // 优先使用 Context 中的配置，其次是 Step 构造时的配置
-        const templateId = context.config.templateId || this.config.templateId;
-        const category = context.config.category || this.config.category;
+  async execute(context: JobContext): Promise<void> {
+    const contextConfig = context.config as Record<string, unknown>;
+    const contextInput = context.input as Record<string, unknown>;
+    const sharedData = (context.data ?? {}) as Record<string, unknown>;
 
-        // V0.9.11: Use SettingsManager as Source of Truth to include User Custom Templates
-        // PromptLoader only has built-ins.
-        const { SettingsManager } = await import('@/config/settings');
-        const allTemplates = SettingsManager.get('apiSettings')?.promptTemplates || [];
+    const templateId = readString(contextConfig.templateId) ?? this.config.templateId;
+    const category = isPromptCategory(contextConfig.category)
+      ? contextConfig.category
+      : this.config.category;
 
-        // Ensure built-ins are loaded and merged with user settings
-        PromptLoader.init();
-        const builtInTemplates = PromptLoader.getAllTemplates();
+    const { SettingsManager } = await import('@/config/settings');
+    const allTemplates = SettingsManager.get('apiSettings')?.promptTemplates ?? [];
 
-        // Create a map to merge templates by ID (User overrides Built-in)
-        const templateMap = new Map<string, any>();
+    PromptLoader.init();
+    const builtInTemplates = PromptLoader.getAllTemplates();
 
-        // 1. Add built-ins first
-        builtInTemplates.forEach(t => templateMap.set(t.id, t));
+    const templateMap = new Map<string, PromptTemplate>();
+    builtInTemplates.forEach((template) => templateMap.set(template.id, template));
+    allTemplates.forEach((template) => templateMap.set(template.id, template));
 
-        // 2. Override with user templates
-        allTemplates.forEach(t => templateMap.set(t.id, t));
+    const mergedTemplates = Array.from(templateMap.values());
 
-        // 3. Convert back to array
-        const mergedTemplates = Array.from(templateMap.values());
+    let template: PromptTemplate | null = null;
+    if (templateId) {
+      template = mergedTemplates.find((candidate) => candidate.id === templateId) ?? null;
+    } else if (category) {
+      const templates = mergedTemplates.filter(
+        (candidate) => candidate.category === category && candidate.enabled
+      );
+      template = templates.find((candidate) => !candidate.isBuiltIn) ?? templates[0] ?? null;
 
-        let template;
-        if (templateId) {
-            // Priority 1: Use explicit templateId
-            template = mergedTemplates.find(t => t.id === templateId);
-        } else if (category) {
-            // Priority 2: Use Enabled template in category
-            const templates = mergedTemplates.filter(t => t.category === category && t.enabled);
-            const customEnabled = templates.find(t => !t.isBuiltIn);
-            if (customEnabled) {
-                template = customEnabled;
-            } else {
-                template = templates[0];
-            }
+      if (template) {
+        Logger.debug('BuildPrompt', `Using auto-detected enabled template: ${template.name}`);
+      }
+    }
 
-            if (template) {
-                Logger.debug('BuildPrompt', `Using auto-detected enabled template: ${template.name}`);
-            }
-        }
+    if (!template && category) {
+      template = getBuiltInTemplateByCategory(category);
+      Logger.debug('BuildPrompt', `Fallback to builtin template: ${template?.name ?? 'unknown'}`);
+    }
 
-        if (!template && category) {
-            // Priority 3: Fallback to builtin default
-            template = getBuiltInTemplateByCategory(category as any);
-            Logger.debug('BuildPrompt', `Fallback to builtin template: ${template?.name}`);
-        }
+    if (!template) {
+      throw new Error(
+        `BuildPrompt: 未找到可用模板 (ID: ${templateId}, Category: ${category ?? 'none'})`
+      );
+    }
 
-        if (!template) {
-            throw new Error(`BuildPrompt: 未找到可用模板 (ID: ${templateId}, Category: ${category})`);
-        }
+    const variables: Record<string, string> = {
+      ...(this.config.vars ?? {}),
+      '{{userInput}}': readString(contextInput.text) ?? '',
+      '{{chatHistory}}': readString(contextInput.chatHistory) ?? '',
+      '{{previousOutput}}': readString(contextInput.previousOutput) ?? '',
+      '{{feedback}}': readString(contextInput.feedback) ?? '',
+    };
 
-        // 2. 准备变量
-        // 合并 Context input 中的数据作为潜在变量
-        const variables: Record<string, string> = {
-            ...this.config.vars,
-            // 常见的映射
-            '{{userInput}}': context.input.text || '',
-            '{{chatHistory}}': context.input.chatHistory || '',
-            '{{previousOutput}}': context.input.previousOutput || '',
-            '{{feedback}}': context.input.feedback || '',
-            // ... 其他变量交由 MacroService 全局处理 (如 {{worldbookContext}})
-        };
+    let systemPrompt = template.systemPrompt;
+    let userPrompt = template.userPromptTemplate;
 
-        // 3. 初始替换 (处理 input 相关的本地变量)
-        let systemPrompt = template.systemPrompt;
-        let userPrompt = template.userPromptTemplate;
-
-        // V0.9.x: 动态附加反馈模板 (硬编码)
-        if (context.input.feedback) {
-            const feedbackTemplate = `
+    if (variables['{{feedback}}']) {
+      const feedbackTemplate = `
 ---
-【用户反馈 - 请依据此修正上一次的生成】
-上一次的生成内容:
+【用户反馈 - 请依据此修正上一次的生成。上一次的生成内容:
 {{previousOutput}}
 
 用户的修改意见:
 {{feedback}}
 `;
-            userPrompt += feedbackTemplate;
-            Logger.debug('BuildPrompt', '检测到反馈，已自动附加反馈模板');
-        }
-
-        for (const [key, value] of Object.entries(variables)) {
-            // 简单字符串替换 (全局)
-            // 注意: key 应该包含 {{}}，或者我们在 replace 时加上
-            const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
-            systemPrompt = systemPrompt.replace(regex, value);
-            userPrompt = userPrompt.replace(regex, value);
-        }
-
-        // 4. 变量映射 (从 FetchContext 获取的数据)
-        // 我们假设 FetchContext 已经把数据塞进了 context.input
-        const contextData = context.input;
-
-        // 手动映射已知宏 (覆盖 template 中的 {{key}})
-        // 手动映射已知宏 (覆盖 template 中的 {{key}})
-        // V1.2.1: 只映射 Context 中存在的变量，如果是空值则跳过，
-        // 从而允许后续的酒馆全局宏 (substituteParams) 进行回退处理 (例如 {{engramSummaries}})
-        // 映射命中实体 (V1.4.1 NEW)
-        let hitEntitiesSummary = '无';
-        if (context.data?.keywordEntityIds && Array.isArray(context.data.keywordEntityIds)) {
-            // 这里我们只需要名称
-            const chatId = getCurrentChatId();
-            const { tryGetDbForChat } = await import('@/data/db');
-            const db = chatId ? tryGetDbForChat(chatId) : null;
-            if (db) {
-                const names: string[] = [];
-                for (const ke of context.data.keywordEntityIds) {
-                    const ent = await db.entities.get(ke.id);
-                    if (ent) names.push(ent.name);
-                }
-                if (names.length > 0) hitEntitiesSummary = names.join(', ');
-            }
-        }
-
-        const potentialMacros: Record<string, string | undefined> = {
-            '{{chatHistory}}': contextData.chatHistory,
-            '{{engramSummaries}}': contextData.engramSummaries,
-            '{{engramEntityStates}}': contextData.engramEntityStates, // V1.0.0: 实体状态
-            '{{targetSummaries}}': contextData.targetSummaries, // V1.2.1 New Trigger Variable
-            '{{worldbookContext}}': contextData.worldbookContext,
-            '{{context}}': contextData.context || contextData.worldbookContext,
-            '{{userPersona}}': contextData.userPersona,
-            '{{hitEntities}}': hitEntitiesSummary, // V1.4.1: 新增硬匹配提示
-            '{{char}}': contextData.charName,
-            '{{user}}': contextData.userName,
-        };
-
-        // 执行替换
-        for (const [key, value] of Object.entries(potentialMacros)) {
-            // 只有当 value 有值时才替换 (空字符串是否要替换？)
-            // 如果我们想让 "空字符串" 覆盖全局宏，那么应该替换。
-            // 但对于 engramSummaries，在 Trim 流程中，FormatTrimInput 不再设置它，
-            // 所以这里是 undefined。undefined 不应该替换。
-            if (value !== undefined && value !== null) {
-                systemPrompt = systemPrompt.split(key).join(value);
-                userPrompt = userPrompt.split(key).join(value);
-            }
-        }
-
-        // 保存结果之前，调用酒馆原生宏替换 (处理 {{time}}, {{date}}, {{user}} 等标准宏)
-        // 注意：我们必须先做上面的手动替换，因为 {{chatHistory}} 等变量在 Batch 模式下是特定的，不能用全局宏
-        try {
-            // @ts-ignore
-            const stContext = window.SillyTavern?.getContext?.() as any;
-            const substituteParams = stContext?.substituteParams;
-            if (typeof substituteParams === 'function') {
-                systemPrompt = substituteParams(systemPrompt);
-                userPrompt = substituteParams(userPrompt);
-            }
-        } catch (e) {
-            Logger.warn('BuildPrompt', '酒馆原生宏替换失败', e);
-        }
-
-        // 保存结果到 Context
-        context.prompt = {
-            system: systemPrompt,
-            user: userPrompt,
-            templateId: template.id
-        };
-
-        Logger.debug('BuildPrompt', `Prompt 构建完成 (Template: ${template.name})`, {
-            systemLen: systemPrompt.length,
-            userLen: userPrompt.length
-        });
+      userPrompt += feedbackTemplate;
+      Logger.debug('BuildPrompt', '检测到反馈，已自动附加反馈模板');
     }
+
+    for (const [key, value] of Object.entries(variables)) {
+      const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+      systemPrompt = systemPrompt.replace(regex, value);
+      userPrompt = userPrompt.replace(regex, value);
+    }
+
+    let hitEntitiesSummary = '无';
+    const keywordEntityIds = readKeywordEntityRefs(sharedData.keywordEntityIds);
+    if (keywordEntityIds.length > 0) {
+      const chatId = getCurrentChatId();
+      const { tryGetDbForChat } = await import('@/data/db');
+      const db = chatId ? tryGetDbForChat(chatId) : null;
+      if (db) {
+        const names: string[] = [];
+        for (const keywordEntity of keywordEntityIds) {
+          const entity = await db.entities.get(keywordEntity.id);
+          if (entity) {
+            names.push(entity.name);
+          }
+        }
+
+        if (names.length > 0) {
+          hitEntitiesSummary = names.join(', ');
+        }
+      }
+    }
+
+    const potentialMacros: Record<string, string | undefined> = {
+      '{{chatHistory}}': readString(contextInput.chatHistory),
+      '{{engramSummaries}}': readString(contextInput.engramSummaries),
+      '{{engramEntityStates}}': readString(contextInput.engramEntityStates),
+      '{{targetSummaries}}': readString(contextInput.targetSummaries),
+      '{{worldbookContext}}': readString(contextInput.worldbookContext),
+      '{{context}}': readString(contextInput.context) ?? readString(contextInput.worldbookContext),
+      '{{userPersona}}': readString(contextInput.userPersona),
+      '{{hitEntities}}': hitEntitiesSummary,
+      '{{char}}': readString(contextInput.charName),
+      '{{user}}': readString(contextInput.userName),
+    };
+
+    systemPrompt = applyMacroReplacements(systemPrompt, potentialMacros);
+    userPrompt = applyMacroReplacements(userPrompt, potentialMacros);
+
+    try {
+      const stContext = window.SillyTavern?.getContext?.();
+      const substituteParams = stContext?.substituteParams as
+        | ((content: string) => string)
+        | undefined;
+      if (typeof substituteParams === 'function') {
+        systemPrompt = substituteParams(systemPrompt);
+        userPrompt = substituteParams(userPrompt);
+      }
+    } catch (error) {
+      Logger.warn('BuildPrompt', '酒馆原生宏替换失败', error);
+    }
+
+    context.prompt = {
+      system: systemPrompt,
+      user: userPrompt,
+      templateId: template.id,
+    };
+
+    Logger.debug('BuildPrompt', `Prompt 构建完成 (Template: ${template.name})`, {
+      systemLen: systemPrompt.length,
+      userLen: userPrompt.length,
+    });
+  }
 }

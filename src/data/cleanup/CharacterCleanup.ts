@@ -1,9 +1,50 @@
-import { SettingsManager } from "@/config/settings";
-import { Logger, LogModule } from "@/core/logger";
-import { getSTContext } from "@/integrations/tavern";
-import { callPopup } from "@/integrations/tavern";
-import { WorldInfoService } from "@/integrations/tavern/worldbook";
-import { notificationService } from "@/ui/services/NotificationService";
+import { SettingsManager } from '@/config/settings';
+import { Logger, LogModule } from '@/core/logger';
+import { getSTContext } from '@/integrations/tavern';
+import { callPopup } from '@/integrations/tavern';
+import { WorldInfoService } from '@/integrations/tavern/worldbook';
+import { notificationService } from '@/ui/services/NotificationService';
+
+interface DeletedCharacterLike {
+  name?: string;
+  avatar?: string;
+  ch_name?: string;
+  data?: {
+    name?: string;
+  };
+}
+
+interface CharacterDeletedEventPayload {
+  id: number;
+  character: DeletedCharacterLike;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return !!value && typeof value === 'object';
+}
+
+function isDeletedCharacterLike(value: unknown): value is DeletedCharacterLike {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  const data = value.data;
+  return (
+    (value.name === undefined || typeof value.name === 'string') &&
+    (value.avatar === undefined || typeof value.avatar === 'string') &&
+    (value.ch_name === undefined || typeof value.ch_name === 'string') &&
+    (data === undefined ||
+      (isRecord(data) && (data.name === undefined || typeof data.name === 'string')))
+  );
+}
+
+function isCharacterDeletedEventPayload(value: unknown): value is CharacterDeletedEventPayload {
+  if (!isRecord(value)) {
+    return false;
+  }
+
+  return typeof value.id === 'number' && isDeletedCharacterLike(value.character);
+}
 
 /**
  * CharacterDeleteService - 联动删除服务
@@ -19,57 +60,63 @@ export class CharacterDeleteService {
     try {
       const context = getSTContext();
       if (!context?.eventSource || !context?.event_types) {
-        Logger.warn(LogModule.DATA_CLEANUP, "无法获取事件系统");
+        Logger.warn(LogModule.DATA_CLEANUP, '无法获取事件系统');
         return;
       }
 
       // 监听角色删除事件
       if (context.event_types.CHARACTER_DELETED) {
-        // @ts-ignore
-        context.eventSource.on(
-          context.event_types.CHARACTER_DELETED,
-          this.onCharacterDeleted.bind(this),
-        );
-        Logger.debug(LogModule.DATA_CLEANUP, "监听 CHARACTER_DELETED 事件");
+        context.eventSource.on(context.event_types.CHARACTER_DELETED, (data) => {
+          if (!isCharacterDeletedEventPayload(data)) {
+            Logger.warn(LogModule.DATA_CLEANUP, '收到无效的角色删除事件数据', data);
+            return;
+          }
+
+          void this.onCharacterDeleted(data);
+        });
+        Logger.debug(LogModule.DATA_CLEANUP, '监听 CHARACTER_DELETED 事件');
       }
 
       // 监听聊天删除事件
       if (context.event_types.CHAT_DELETED) {
-        // @ts-ignore
-        context.eventSource.on(
-          context.event_types.CHAT_DELETED,
-          this.onChatDeleted.bind(this),
-        );
-        Logger.debug(LogModule.DATA_CLEANUP, "监听 CHAT_DELETED 事件");
+        context.eventSource.on(context.event_types.CHAT_DELETED, (data) => {
+          if (typeof data !== 'string') {
+            Logger.warn(LogModule.DATA_CLEANUP, '收到无效的聊天删除事件数据', data);
+            return;
+          }
+
+          void this.onChatDeleted(data);
+        });
+        Logger.debug(LogModule.DATA_CLEANUP, '监听 CHAT_DELETED 事件');
       }
 
       // 监听群聊删除事件
       if (context.event_types.GROUP_CHAT_DELETED) {
-        // @ts-ignore
-        context.eventSource.on(
-          context.event_types.GROUP_CHAT_DELETED,
-          this.onChatDeleted.bind(this),
-        );
-        Logger.debug(LogModule.DATA_CLEANUP, "监听 GROUP_CHAT_DELETED 事件");
+        context.eventSource.on(context.event_types.GROUP_CHAT_DELETED, (data) => {
+          if (typeof data !== 'string') {
+            Logger.warn(LogModule.DATA_CLEANUP, '收到无效的群聊删除事件数据', data);
+            return;
+          }
+
+          void this.onChatDeleted(data);
+        });
+        Logger.debug(LogModule.DATA_CLEANUP, '监听 GROUP_CHAT_DELETED 事件');
       }
 
       this.isInitialized = true;
     } catch (e) {
-      Logger.error(LogModule.DATA_CLEANUP, "初始化失败", e);
+      Logger.error(LogModule.DATA_CLEANUP, '初始化失败', e);
     }
   }
 
   /**
    * 角色删除回调
    */
-  private static async onCharacterDeleted(data: {
-    id: number;
-    character: any;
-  }) {
+  private static async onCharacterDeleted(data: CharacterDeletedEventPayload) {
     const settings = SettingsManager.getSettings().linkedDeletion;
     if (!settings?.enabled || !settings?.deleteWorldbook) return;
 
-    Logger.debug(LogModule.DATA_CLEANUP, "检测到角色删除", data);
+    Logger.debug(LogModule.DATA_CLEANUP, '检测到角色删除', data);
 
     const characterData = data.character;
     const characterName =
@@ -79,15 +126,11 @@ export class CharacterDeleteService {
       characterData?.data?.name;
 
     if (!characterName) {
-      Logger.warn(LogModule.DATA_CLEANUP, "无法获取已删除角色的名称");
+      Logger.warn(LogModule.DATA_CLEANUP, '无法获取已删除角色的名称');
       return;
     }
 
-    await this.deleteEngramWorldbooks(
-      characterName,
-      "角色",
-      settings.showConfirmation,
-    );
+    await this.deleteEngramWorldbooks(characterName, '角色', settings.showConfirmation);
   }
 
   /**
@@ -98,16 +141,16 @@ export class CharacterDeleteService {
     const settings = SettingsManager.getSettings().linkedDeletion;
     if (!settings?.enabled) return;
 
-    Logger.debug(LogModule.DATA_CLEANUP, "检测到聊天删除", { chatId });
+    Logger.debug(LogModule.DATA_CLEANUP, '检测到聊天删除', { chatId });
 
     // 1. 删除 IndexedDB (V0.6+ Sharding)
     // 只要启用了联动删除，就清理该聊天的数据库，因为它是隔离的，不会影响其他聊天
     try {
-      const { databaseExists, deleteDatabase } = await import("@/data/db");
+      const { databaseExists, deleteDatabase } = await import('@/data/db');
       if (await databaseExists(chatId)) {
         await deleteDatabase(chatId);
         Logger.info(LogModule.DATA_CLEANUP, `已删除 IndexedDB: ${chatId}`);
-        notificationService.info("已清理关联的 Engram 数据库", "Engram");
+        notificationService.info('已清理关联的 Engram 数据库', 'Engram');
       }
     } catch (e) {
       Logger.error(LogModule.DATA_CLEANUP, `删除数据库失败: ${chatId}`, e);
@@ -116,7 +159,7 @@ export class CharacterDeleteService {
     // 2. 删除 Sync 本地文件 (Engram_sync_*.json)
     // 即使 sync 未启用，如果有残留文件也应清理
     try {
-      const { syncService } = await import("@/data/sync/SyncService");
+      const { syncService } = await import('@/data/sync/SyncService');
       await syncService.purge(chatId);
       Logger.debug(LogModule.DATA_CLEANUP, `已触发同步文件清理: ${chatId}`);
     } catch (e) {
@@ -136,11 +179,7 @@ export class CharacterDeleteService {
       return;
     }
 
-    await this.deleteEngramWorldbooks(
-      characterName,
-      "聊天",
-      settings.showConfirmation,
-    );
+    await this.deleteEngramWorldbooks(characterName, '聊天', settings.showConfirmation);
   }
 
   /**
@@ -168,8 +207,8 @@ export class CharacterDeleteService {
    */
   private static async deleteEngramWorldbooks(
     characterName: string,
-    source: "角色" | "聊天",
-    showConfirmation: boolean,
+    source: '角色' | '聊天',
+    showConfirmation: boolean
   ) {
     const candidates = new Set<string>();
 
@@ -183,7 +222,7 @@ export class CharacterDeleteService {
 
     const booksToDelete = Array.from(candidates).filter((name) => {
       if (!allWorldbooksSet.has(name)) return false;
-      const isEngramBook = name.toLowerCase().includes("engram");
+      const isEngramBook = name.toLowerCase().includes('engram');
       if (!isEngramBook) {
         Logger.debug(LogModule.DATA_CLEANUP, `跳过非 Engram 世界书: ${name}`);
       }
@@ -191,10 +230,7 @@ export class CharacterDeleteService {
     });
 
     if (booksToDelete.length === 0) {
-      Logger.debug(
-        LogModule.DATA_CLEANUP,
-        `未找到 "${characterName}" 关联的 Engram 世界书`,
-      );
+      Logger.debug(LogModule.DATA_CLEANUP, `未找到 "${characterName}" 关联的 Engram 世界书`);
       return;
     }
 
@@ -210,16 +246,16 @@ export class CharacterDeleteService {
                     <p>检测到${source} <b>${characterName}</b> 已被删除。</p>
                     <p>发现以下关联的 Engram 记忆库：</p>
                     <ul style="max-height: 100px; overflow-y: auto; background: var(--black50a); padding: 5px; border-radius: 4px; list-style: none; margin: 10px 0;">
-                        ${booksToDelete.map((name) => `<li style="padding: 2px 0;">• ${name}</li>`).join("")}
+                        ${booksToDelete.map((name) => `<li style="padding: 2px 0;">• ${name}</li>`).join('')}
                     </ul>
                     <p>是否一并删除？</p>
                     <small style="opacity: 0.7;">这将永久删除这些记忆库及其包含的所有摘要。</small>
                 </div>
             `;
 
-      const confirmed = await callPopup(confirmHtml, "confirm");
+      const confirmed = (await callPopup(confirmHtml, 'confirm')) === true;
       if (!confirmed) {
-        Logger.info(LogModule.DATA_CLEANUP, "用户取消删除关联世界书");
+        Logger.info(LogModule.DATA_CLEANUP, '用户取消删除关联世界书');
         return;
       }
     }
@@ -228,7 +264,7 @@ export class CharacterDeleteService {
     let deletedCount = 0;
     const failedBooks: string[] = [];
 
-    notificationService.info("正在清理 Engram 记忆库...", "Engram");
+    notificationService.info('正在清理 Engram 记忆库...', 'Engram');
 
     for (const wbName of booksToDelete) {
       try {
@@ -246,17 +282,11 @@ export class CharacterDeleteService {
     }
 
     if (deletedCount > 0) {
-      notificationService.success(
-        `已清理 ${deletedCount} 个关联记忆库`,
-        "Engram",
-      );
+      notificationService.success(`已清理 ${deletedCount} 个关联记忆库`, 'Engram');
     }
 
     if (failedBooks.length > 0) {
-      notificationService.warning(
-        `部分记忆库删除失败: ${failedBooks.join(", ")}`,
-        "Engram",
-      );
+      notificationService.warning(`部分记忆库删除失败: ${failedBooks.join(', ')}`, 'Engram');
     }
   }
 }

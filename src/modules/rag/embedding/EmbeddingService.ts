@@ -20,17 +20,17 @@ import { getCurrentChatId } from '@/integrations/tavern';
  * 嵌入请求
  */
 interface EmbedRequest {
-    id: string;
-    text: string;
+  id: string;
+  text: string;
 }
 
 /**
  * 嵌入结果
  */
 interface EmbedResult {
-    id: string;
-    embedding: number[];
-    error?: string;
+  id: string;
+  embedding: number[];
+  error?: string;
 }
 
 /**
@@ -48,360 +48,363 @@ const DEFAULT_CONCURRENCY = 5;
 // ==================== EmbeddingService ====================
 
 export class EmbeddingService {
-    constructor() {}
-    private config: VectorConfig | null = null;
-    private concurrency: number = DEFAULT_CONCURRENCY;
-    private stopSignal: boolean = false;
+  constructor() {}
+  private config: VectorConfig | null = null;
+  private concurrency: number = DEFAULT_CONCURRENCY;
+  private stopSignal: boolean = false;
 
-    /**
-     * 设置向量配置
-     */
-    public setConfig(config: VectorConfig) {
-        this.config = config;
+  /**
+   * 设置向量配置
+   */
+  public setConfig(config: VectorConfig) {
+    this.config = config;
+  }
+
+  /**
+   * 设置并发数
+   */
+  public setConcurrency(n: number) {
+    this.concurrency = Math.max(1, Math.min(20, n));
+  }
+
+  /**
+   * 停止当前进行的嵌入任务
+   */
+  public stop() {
+    this.stopSignal = true;
+  }
+
+  /**
+   * 重置停止信号
+   */
+  public reset() {
+    this.stopSignal = false;
+  }
+
+  // ==================== 核心嵌入方法 ====================
+
+  /**
+   * 生成单个文本的嵌入向量
+   */
+  public async embed(text: string): Promise<number[]> {
+    if (!this.config) {
+      throw new Error('EmbeddingService: config not set');
     }
 
-    /**
-     * 设置并发数
-     */
-    public setConcurrency(n: number) {
-        this.concurrency = Math.max(1, Math.min(20, n));
+    const results = await this.embedBatch([{ id: 'single', text }]);
+    if (results[0].error) {
+      throw new Error(results[0].error);
+    }
+    return results[0].embedding;
+  }
+
+  /**
+   * 批量生成嵌入 (支持并发控制)
+   */
+  public async embedBatch(
+    requests: EmbedRequest[],
+    onProgress?: EmbedProgressCallback
+  ): Promise<EmbedResult[]> {
+    if (!this.config) {
+      throw new Error('EmbeddingService: config not set');
     }
 
-    /**
-     * 停止当前进行的嵌入任务
-     */
-    public stop() {
-        this.stopSignal = true;
+    this.stopSignal = false;
+    const results: EmbedResult[] = new Array(requests.length);
+    let completed = 0;
+    let errors = 0;
+
+    // 并发处理
+    const worker = async (index: number) => {
+      if (index >= requests.length || this.stopSignal) return;
+
+      const req = requests[index];
+      try {
+        const embedding = await this.callEmbeddingAPI(req.text);
+        results[index] = { id: req.id, embedding };
+      } catch (e: any) {
+        errors++;
+        results[index] = { id: req.id, embedding: [], error: e.message };
+        Logger.warn(LogModule.RAG_EMBED, `嵌入失败: ${req.id}`, { error: e.message });
+      } finally {
+        completed++;
+        onProgress?.(completed, requests.length, errors);
+      }
+    };
+
+    // 分批并发
+    for (let i = 0; i < requests.length; i += this.concurrency) {
+      if (this.stopSignal) break;
+      const batch = Array.from(
+        { length: Math.min(this.concurrency, requests.length - i) },
+        (_, j) => worker(i + j)
+      );
+      await Promise.all(batch);
     }
 
-    /**
-     * 重置停止信号
-     */
-    public reset() {
-        this.stopSignal = false;
+    return results;
+  }
+
+  /**
+   * 调用嵌入 API
+   */
+  private async callEmbeddingAPI(text: string): Promise<number[]> {
+    return EmbeddingClient.callAPI(text, this.config!);
+  }
+
+  // ==================== EventNode 批量嵌入 ====================
+
+  /**
+   * 为未嵌入的 EventNode 生成嵌入
+   * @param onProgress 进度回调
+   * @returns 成功嵌入的数量
+   */
+  public async embedUnprocessedEvents(
+    onProgress?: EmbedProgressCallback,
+    range?: { start?: number; end?: number }
+  ): Promise<{ success: number; failed: number }> {
+    const chatId = getCurrentChatId();
+    if (!chatId) {
+      throw new Error('No current chat');
     }
 
-    // ==================== 核心嵌入方法 ====================
+    const db = getDbForChat(chatId);
 
-    /**
-     * 生成单个文本的嵌入向量
-     */
-    public async embed(text: string): Promise<number[]> {
-        if (!this.config) {
-            throw new Error('EmbeddingService: config not set');
-        }
+    // 获取未嵌入的事件 (V1.2.2: 仅处理 Level 0 事件，大纲节点不进行向量化)
+    let events = await db.events
+      .filter((e) => e.level === 0 && !e.is_embedded && !e.embedding)
+      .toArray();
 
-        const results = await this.embedBatch([{ id: 'single', text }]);
-        if (results[0].error) {
-            throw new Error(results[0].error);
-        }
-        return results[0].embedding;
+    // 应用范围过滤
+    if (range) {
+      events = events.filter((e) => {
+        const { start_index, end_index } = e.source_range;
+        if (range.start !== undefined && start_index < range.start) return false;
+        if (range.end !== undefined && end_index > range.end) return false;
+        return true;
+      });
     }
 
-    /**
-     * 批量生成嵌入 (支持并发控制)
-     */
-    public async embedBatch(
-        requests: EmbedRequest[],
-        onProgress?: EmbedProgressCallback
-    ): Promise<EmbedResult[]> {
-        if (!this.config) {
-            throw new Error('EmbeddingService: config not set');
-        }
-
-        this.stopSignal = false;
-        const results: EmbedResult[] = new Array(requests.length);
-        let completed = 0;
-        let errors = 0;
-
-        // 并发处理
-        const worker = async (index: number) => {
-            if (index >= requests.length || this.stopSignal) return;
-
-            const req = requests[index];
-            try {
-                const embedding = await this.callEmbeddingAPI(req.text);
-                results[index] = { id: req.id, embedding };
-            } catch (e: any) {
-                errors++;
-                results[index] = { id: req.id, embedding: [], error: e.message };
-                Logger.warn(LogModule.RAG_EMBED, `嵌入失败: ${req.id}`, { error: e.message });
-            } finally {
-                completed++;
-                onProgress?.(completed, requests.length, errors);
-            }
-        };
-
-        // 分批并发
-        for (let i = 0; i < requests.length; i += this.concurrency) {
-            if (this.stopSignal) break;
-            const batch = Array.from(
-                { length: Math.min(this.concurrency, requests.length - i) },
-                (_, j) => worker(i + j)
-            );
-            await Promise.all(batch);
-        }
-
-        return results;
+    if (events.length === 0) {
+      return { success: 0, failed: 0 };
     }
 
-    /**
-     * 调用嵌入 API
-     */
-    private async callEmbeddingAPI(text: string): Promise<number[]> {
-        return EmbeddingClient.callAPI(text, this.config!);
+    Logger.info(LogModule.RAG_EMBED, `开始嵌入 ${events.length} 个事件`);
+
+    // 构建请求
+    const requests: EmbedRequest[] = events.map((e) => ({
+      id: e.id,
+      text: e.summary,
+    }));
+
+    // 批量嵌入
+    const results = await this.embedBatch(requests, onProgress);
+
+    // 更新数据库
+    let success = 0;
+    let failed = 0;
+
+    for (const result of results) {
+      if (result.error || result.embedding.length === 0) {
+        failed++;
+        continue;
+      }
+
+      await db.events.update(result.id, {
+        embedding: result.embedding,
+        is_embedded: true,
+      });
+      success++;
     }
 
-    // ==================== EventNode 批量嵌入 ====================
+    Logger.info(LogModule.RAG_EMBED, `嵌入完成: ${success} 成功, ${failed} 失败`);
+    return { success, failed };
+  }
 
-    /**
-     * 为未嵌入的 EventNode 生成嵌入
-     * @param onProgress 进度回调
-     * @returns 成功嵌入的数量
-     */
-    public async embedUnprocessedEvents(
-        onProgress?: EmbedProgressCallback,
-        range?: { start?: number; end?: number }
-    ): Promise<{ success: number; failed: number }> {
-        const chatId = getCurrentChatId();
-        if (!chatId) {
-            throw new Error('No current chat');
-        }
-
-        const db = getDbForChat(chatId);
-
-        // 获取未嵌入的事件 (V1.2.2: 仅处理 Level 0 事件，大纲节点不进行向量化)
-        let events = await db.events
-            .filter(e => e.level === 0 && !e.is_embedded && !e.embedding)
-            .toArray();
-
-        // 应用范围过滤
-        if (range) {
-            events = events.filter(e => {
-                const { start_index, end_index } = e.source_range;
-                if (range.start !== undefined && start_index < range.start) return false;
-                if (range.end !== undefined && end_index > range.end) return false;
-                return true;
-            });
-        }
-
-        if (events.length === 0) {
-            return { success: 0, failed: 0 };
-        }
-
-        Logger.info(LogModule.RAG_EMBED, `开始嵌入 ${events.length} 个事件`);
-
-        // 构建请求
-        const requests: EmbedRequest[] = events.map(e => ({
-            id: e.id,
-            text: e.summary,
-        }));
-
-        // 批量嵌入
-        const results = await this.embedBatch(requests, onProgress);
-
-        // 更新数据库
-        let success = 0;
-        let failed = 0;
-
-        for (const result of results) {
-            if (result.error || result.embedding.length === 0) {
-                failed++;
-                continue;
-            }
-
-            await db.events.update(result.id, {
-                embedding: result.embedding,
-                is_embedded: true,
-            });
-            success++;
-        }
-
-        Logger.info(LogModule.RAG_EMBED, `嵌入完成: ${success} 成功, ${failed} 失败`);
-        return { success, failed };
+  /**
+   * 为指定的事件列表生成嵌入
+   */
+  public async embedEvents(
+    events: EventNode[],
+    onProgress?: EmbedProgressCallback
+  ): Promise<{ success: number; failed: number }> {
+    if (events.length === 0) {
+      return { success: 0, failed: 0 };
     }
 
-    /**
-     * 为指定的事件列表生成嵌入
-     */
-    public async embedEvents(
-        events: EventNode[],
-        onProgress?: EmbedProgressCallback
-    ): Promise<{ success: number; failed: number }> {
-        if (events.length === 0) {
-            return { success: 0, failed: 0 };
-        }
+    const chatId = getCurrentChatId();
+    if (!chatId) throw new Error('No current chat');
+    const db = getDbForChat(chatId);
 
-        const chatId = getCurrentChatId();
-        if (!chatId) throw new Error('No current chat');
-        const db = getDbForChat(chatId);
+    // 构建请求
+    const requests: EmbedRequest[] = events.map((e) => ({
+      id: e.id,
+      text: e.summary,
+    }));
 
-        // 构建请求
-        const requests: EmbedRequest[] = events.map(e => ({
-            id: e.id,
-            text: e.summary,
-        }));
+    // 批量嵌入
+    const results = await this.embedBatch(requests, onProgress);
 
-        // 批量嵌入
-        const results = await this.embedBatch(requests, onProgress);
+    // 更新数据库
+    let success = 0;
+    let failed = 0;
 
-        // 更新数据库
-        let success = 0;
-        let failed = 0;
+    for (const result of results) {
+      if (result.error || result.embedding.length === 0) {
+        failed++;
+        continue;
+      }
 
-        for (const result of results) {
-            if (result.error || result.embedding.length === 0) {
-                failed++;
-                continue;
-            }
-
-            await db.events.update(result.id, {
-                embedding: result.embedding,
-                is_embedded: true,
-            });
-            success++;
-        }
-
-        return { success, failed };
+      await db.events.update(result.id, {
+        embedding: result.embedding,
+        is_embedded: true,
+      });
+      success++;
     }
 
-    /**
-     * 为指定的 EventNode 生成嵌入
-     */
-    public async embedEvent(event: EventNode): Promise<number[]> {
-        const embedding = await this.embed(event.summary);
+    return { success, failed };
+  }
 
-        // 更新数据库
-        const chatId = getCurrentChatId();
-        if (chatId) {
-            const db = tryGetDbForChat(chatId);
-            if (db) {
-                await db.events.update(event.id, {
-                    embedding,
-                    is_embedded: true,
-                });
-            }
-        }
+  /**
+   * 为指定的 EventNode 生成嵌入
+   */
+  public async embedEvent(event: EventNode): Promise<number[]> {
+    const embedding = await this.embed(event.summary);
 
-        return embedding;
+    // 更新数据库
+    const chatId = getCurrentChatId();
+    if (chatId) {
+      const db = tryGetDbForChat(chatId);
+      if (db) {
+        await db.events.update(event.id, {
+          embedding,
+          is_embedded: true,
+        });
+      }
     }
 
-    /**
-     * 重新嵌入所有事件 (模型切换后使用)
-     */
-    public async reembedAllEvents(
-        onProgress?: EmbedProgressCallback,
-        range?: { start?: number; end?: number }
-    ): Promise<{ success: number; failed: number }> {
-        const chatId = getCurrentChatId();
-        if (!chatId) {
-            throw new Error('No current chat');
-        }
+    return embedding;
+  }
 
-        const db = getDbForChat(chatId);
-
-        // 获取所有事件 (V1.2.2: 仅处理 Level 0 事件)
-        let events = await db.events
-            .filter(e => e.level === 0)
-            .toArray();
-
-        // 应用范围过滤
-        if (range) {
-            events = events.filter(e => {
-                const { start_index, end_index } = e.source_range;
-                if (range.start !== undefined && start_index < range.start) return false;
-                if (range.end !== undefined && end_index > range.end) return false;
-                return true;
-            });
-        }
-
-        if (events.length === 0) {
-            return { success: 0, failed: 0 };
-        }
-
-        Logger.info(LogModule.RAG_EMBED, `重新嵌入 ${events.length} 个事件`);
-
-        // 清空选定范围内现有嵌入标记
-        for (const event of events) {
-            await db.events.update(event.id, {
-                embedding: undefined,
-                is_embedded: false,
-            });
-        }
-
-        // 重新嵌入
-        return this.embedEvents(events, onProgress);
+  /**
+   * 重新嵌入所有事件 (模型切换后使用)
+   */
+  public async reembedAllEvents(
+    onProgress?: EmbedProgressCallback,
+    range?: { start?: number; end?: number }
+  ): Promise<{ success: number; failed: number }> {
+    const chatId = getCurrentChatId();
+    if (!chatId) {
+      throw new Error('No current chat');
     }
 
-    // ==================== 工具方法 ====================
+    const db = getDbForChat(chatId);
 
-    /**
-     * 计算向量范数 (L2 Norm)
-     */
-    public computeNorm(vec: number[]): number {
-        let sum = 0;
-        for (let i = 0; i < vec.length; i++) {
-            sum += vec[i] * vec[i];
-        }
-        return sum; // 返回平方和，调用方自行 sqrt 以保持灵活性
+    // 获取所有事件 (V1.2.2: 仅处理 Level 0 事件)
+    let events = await db.events.filter((e) => e.level === 0).toArray();
+
+    // 应用范围过滤
+    if (range) {
+      events = events.filter((e) => {
+        const { start_index, end_index } = e.source_range;
+        if (range.start !== undefined && start_index < range.start) return false;
+        if (range.end !== undefined && end_index > range.end) return false;
+        return true;
+      });
     }
 
-    /**
-     * 计算余弦相似度
-     * 支持传入预计算的范数平方以提升性能
-     *
-     * @param vecA 向量 A
-     * @param vecB 向量 B
-     * @param normSqA (可选) 向量 A 的范数平方
-     * @param normSqB (可选) 向量 B 的范数平方
-     */
-    public cosineSimilarity(vecA: number[], vecB: number[], normSqA?: number, normSqB?: number): number {
-        if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
-
-        let dot = 0;
-        let nA = normSqA ?? 0;
-        let nB = normSqB ?? 0;
-
-        const calcA = normSqA === undefined;
-        const calcB = normSqB === undefined;
-
-        for (let i = 0; i < vecA.length; i++) {
-            dot += vecA[i] * vecB[i];
-            if (calcA) nA += vecA[i] * vecA[i];
-            if (calcB) nB += vecB[i] * vecB[i];
-        }
-
-        const denom = Math.sqrt(nA) * Math.sqrt(nB);
-        return denom === 0 ? 0 : dot / denom;
+    if (events.length === 0) {
+      return { success: 0, failed: 0 };
     }
 
-    /**
-     * 获取嵌入统计信息
-     */
-    public async getEmbeddingStats(): Promise<{
-        total: number;
-        embedded: number;
-        pending: number;
-    }> {
-        const chatId = getCurrentChatId();
-        if (!chatId) {
-            return { total: 0, embedded: 0, pending: 0 };
-        }
+    Logger.info(LogModule.RAG_EMBED, `重新嵌入 ${events.length} 个事件`);
 
-        const db = tryGetDbForChat(chatId);
-        if (!db) {
-            return { total: 0, embedded: 0, pending: 0 };
-        }
-
-        const events = await db.events.toArray();
-        const embedded = events.filter(e => e.is_embedded).length;
-
-        return {
-            total: events.length,
-            embedded,
-            pending: events.length - embedded,
-        };
+    // 清空选定范围内现有嵌入标记
+    for (const event of events) {
+      await db.events.update(event.id, {
+        embedding: undefined,
+        is_embedded: false,
+      });
     }
+
+    // 重新嵌入
+    return this.embedEvents(events, onProgress);
+  }
+
+  // ==================== 工具方法 ====================
+
+  /**
+   * 计算向量范数 (L2 Norm)
+   */
+  public computeNorm(vec: number[]): number {
+    let sum = 0;
+    for (let i = 0; i < vec.length; i++) {
+      sum += vec[i] * vec[i];
+    }
+    return sum; // 返回平方和，调用方自行 sqrt 以保持灵活性
+  }
+
+  /**
+   * 计算余弦相似度
+   * 支持传入预计算的范数平方以提升性能
+   *
+   * @param vecA 向量 A
+   * @param vecB 向量 B
+   * @param normSqA (可选) 向量 A 的范数平方
+   * @param normSqB (可选) 向量 B 的范数平方
+   */
+  public cosineSimilarity(
+    vecA: number[],
+    vecB: number[],
+    normSqA?: number,
+    normSqB?: number
+  ): number {
+    if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+
+    let dot = 0;
+    let nA = normSqA ?? 0;
+    let nB = normSqB ?? 0;
+
+    const calcA = normSqA === undefined;
+    const calcB = normSqB === undefined;
+
+    for (let i = 0; i < vecA.length; i++) {
+      dot += vecA[i] * vecB[i];
+      if (calcA) nA += vecA[i] * vecA[i];
+      if (calcB) nB += vecB[i] * vecB[i];
+    }
+
+    const denom = Math.sqrt(nA) * Math.sqrt(nB);
+    return denom === 0 ? 0 : dot / denom;
+  }
+
+  /**
+   * 获取嵌入统计信息
+   */
+  public async getEmbeddingStats(): Promise<{
+    total: number;
+    embedded: number;
+    pending: number;
+  }> {
+    const chatId = getCurrentChatId();
+    if (!chatId) {
+      return { total: 0, embedded: 0, pending: 0 };
+    }
+
+    const db = tryGetDbForChat(chatId);
+    if (!db) {
+      return { total: 0, embedded: 0, pending: 0 };
+    }
+
+    const events = await db.events.toArray();
+    const embedded = events.filter((e) => e.is_embedded).length;
+
+    return {
+      total: events.length,
+      embedded,
+      pending: events.length - embedded,
+    };
+  }
 }
 
 // 导出单例

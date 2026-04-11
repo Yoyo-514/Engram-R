@@ -16,7 +16,9 @@ import { Globe, Server, ShieldAlert, AlertCircle, Info, Lock, ArrowRight } from 
 如果你在 API URL 栏填写 `127.0.0.1`，浏览器会向 **你正在用的这台电脑** 请求模型，而不是服务器。
 
 ### 解决方案
+
 API URL 必须填入服务器的 **公网 IP**。
+
 - ❌ 错误: `http://127.0.0.1:26667/v1`
 - ✅ 正确: `http://<服务器公网IP>:26667/v1`
 
@@ -37,6 +39,7 @@ API URL 必须填入服务器的 **公网 IP**。
 这是云端部署 **最隐蔽** 的失败原因。
 
 ### 现象
+
 如果你通过 `https://` 访问酒馆，但 API 填的是 `http://` 协议，浏览器会 **静默拦截** 掉这个请求。后端模型服务完全不会收到任何日志。
 
 ### 终极方案：Nginx 同源反向代理
@@ -47,6 +50,7 @@ API URL 必须填入服务器的 **公网 IP**。
 > 酒馆默认路径为 `/api`。**绝不要** 将模型接口代理到 `/api` 路径下，否则会导致酒馆核心功能损坏。
 
 #### 1. Nginx 配置参考
+
 ```nginx
 server {
     server_name tavern.example.com;
@@ -72,6 +76,7 @@ server {
 ```
 
 #### 2. 配置完成后
+
 在 Engram 的 API URL 中填写：
 `https://tavern.example.com/model-api/v1`
 

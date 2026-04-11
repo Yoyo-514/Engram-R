@@ -1,5 +1,5 @@
-import { IStep } from '../../core/Step';
-import { JobContext } from '../../core/JobContext';
+import { type IStep } from '../../core/Step';
+import { type JobContext } from '../../core/JobContext';
 import { Logger } from '@/core/logger';
 import { LogModule } from '@/core/logger';
 
@@ -8,65 +8,66 @@ import { LogModule } from '@/core/logger';
  * 可作为工作流步骤使用，也可直接调用静态方法
  */
 export class StopGeneration implements IStep {
-    name = 'StopGeneration';
+  name = 'StopGeneration';
 
-    async execute(context: JobContext): Promise<void> {
-        Logger.info(LogModule.SYSTEM, '执行 StopGeneration 步骤');
-        await StopGeneration.abort(context.signal);
-    }
+  async execute(context: JobContext): Promise<void> {
+    Logger.info(LogModule.SYSTEM, '执行 StopGeneration 步骤');
+    await StopGeneration.abort(context.signal);
+  }
 
-    /**
-     * 静态方法：直接终止生成
-     */
-    static async abort(signal?: JobContext['signal']): Promise<void> {
-        try {
-            const browserWindow = typeof window !== 'undefined' ? window as any : undefined;
-            const generationId = signal?.generationId;
+  /**
+   * 静态方法：直接终止生成
+   */
+  static async abort(signal?: JobContext['signal']): Promise<void> {
+    try {
+      const browserWindow = typeof window !== 'undefined' ? (window as any) : undefined;
+      const generationId = signal?.generationId;
 
-            if (browserWindow && generationId && typeof browserWindow.stopGenerationById === 'function') {
-                const stopped = await browserWindow.stopGenerationById(generationId);
-                if (stopped) {
-                    Logger.info(LogModule.SYSTEM, '通过 stopGenerationById 成功终止生成', { generationId });
-                    return;
-                }
-            }
-
-            if (browserWindow && typeof browserWindow.stopAllGeneration === 'function') {
-                const stoppedAll = await browserWindow.stopAllGeneration();
-                if (stoppedAll) {
-                    Logger.info(LogModule.SYSTEM, '通过 stopAllGeneration 成功终止生成');
-                    return;
-                }
-            }
-
-            // 路径 1: 使用官方 Context 接口 (Engram 集成层)
-            const stCtx = browserWindow?.SillyTavern?.getContext?.();
-            if (stCtx?.stopGeneration) {
-                stCtx.stopGeneration();
-                Logger.info(LogModule.SYSTEM, '通过 ST Context 成功调用 stopGeneration');
-                return;
-            }
-
-            // 路径 2: 尝试全局作用域下的 stopGeneration (酒馆主脚本可能导出到全局)
-            if (browserWindow && typeof browserWindow.stopGeneration === 'function') {
-                browserWindow.stopGeneration();
-                Logger.info(LogModule.SYSTEM, '通过 window.stopGeneration 成功调用');
-                return;
-            }
-
-            // 路径 3: 暴力模拟 UI 点击 (最后的兜底，只要按钮在 DOM 中就有效)
-            if (typeof document !== 'undefined') {
-                const stopButton = document.getElementById('mes_stop');
-                if (stopButton && stopButton.offsetParent !== null) { // 确保按钮可见/在文档中
-                    stopButton.click();
-                    Logger.info(LogModule.SYSTEM, '通过模拟点击 #mes_stop 按钮触发中断');
-                    return;
-                }
-            }
-
-            Logger.warn(LogModule.SYSTEM, '未找到有效的 StopGeneration 触发路径');
-        } catch (e) {
-            Logger.warn(LogModule.SYSTEM, '调用 stopGeneration 过程中发生致命错误', e);
+      if (browserWindow && generationId && typeof browserWindow.stopGenerationById === 'function') {
+        const stopped = await browserWindow.stopGenerationById(generationId);
+        if (stopped) {
+          Logger.info(LogModule.SYSTEM, '通过 stopGenerationById 成功终止生成', { generationId });
+          return;
         }
+      }
+
+      if (browserWindow && typeof browserWindow.stopAllGeneration === 'function') {
+        const stoppedAll = await browserWindow.stopAllGeneration();
+        if (stoppedAll) {
+          Logger.info(LogModule.SYSTEM, '通过 stopAllGeneration 成功终止生成');
+          return;
+        }
+      }
+
+      // 路径 1: 使用官方 Context 接口 (Engram 集成层)
+      const stCtx = browserWindow?.SillyTavern?.getContext?.();
+      if (stCtx?.stopGeneration) {
+        stCtx.stopGeneration();
+        Logger.info(LogModule.SYSTEM, '通过 ST Context 成功调用 stopGeneration');
+        return;
+      }
+
+      // 路径 2: 尝试全局作用域下的 stopGeneration (酒馆主脚本可能导出到全局)
+      if (browserWindow && typeof browserWindow.stopGeneration === 'function') {
+        browserWindow.stopGeneration();
+        Logger.info(LogModule.SYSTEM, '通过 window.stopGeneration 成功调用');
+        return;
+      }
+
+      // 路径 3: 暴力模拟 UI 点击 (最后的兜底，只要按钮在 DOM 中就有效)
+      if (typeof document !== 'undefined') {
+        const stopButton = document.getElementById('mes_stop');
+        if (stopButton && stopButton.offsetParent !== null) {
+          // 确保按钮可见/在文档中
+          stopButton.click();
+          Logger.info(LogModule.SYSTEM, '通过模拟点击 #mes_stop 按钮触发中断');
+          return;
+        }
+      }
+
+      Logger.warn(LogModule.SYSTEM, '未找到有效的 StopGeneration 触发路径');
+    } catch (e) {
+      Logger.warn(LogModule.SYSTEM, '调用 stopGeneration 过程中发生致命错误', e);
     }
+  }
 }

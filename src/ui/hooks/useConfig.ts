@@ -7,85 +7,87 @@
  */
 
 import type {
-    CustomMacro,
-    EmbeddingConfig,
-    GlobalRegexConfig,
-    RecallConfig,
-    RerankConfig,
-    VectorConfig,
+  CustomMacro,
+  EmbeddingConfig,
+  GlobalRegexConfig,
+  RecallConfig,
+  RerankConfig,
+  VectorConfig,
 } from '@/config/types/defaults';
-import { EntityExtractConfig } from '@/config/types/memory';
+import { type EntityExtractConfig } from '@/config/types/memory';
 import { useConfigStore } from '@/state/configStore';
 
 export interface UseConfigReturn {
-    vectorConfig: VectorConfig;
-    rerankConfig: RerankConfig;
-    recallConfig: RecallConfig;
-    regexConfig: GlobalRegexConfig;
-    entityExtractConfig: EntityExtractConfig;
-    embeddingConfig: EmbeddingConfig;
-    customMacros: CustomMacro[];
-    enableAnimations: boolean;
+  vectorConfig: VectorConfig;
+  rerankConfig: RerankConfig;
+  recallConfig: RecallConfig;
+  regexConfig: GlobalRegexConfig;
+  entityExtractConfig: EntityExtractConfig;
+  embeddingConfig: EmbeddingConfig;
+  customMacros: CustomMacro[];
+  enableAnimations: boolean;
 
-    updateVectorConfig: (config: VectorConfig) => void;
-    updateRerankConfig: (config: RerankConfig) => void;
-    updateRecallConfig: (config: RecallConfig) => void;
-    updateRegexConfig: (config: GlobalRegexConfig) => void;
-    updateEntityExtractConfig: (config: EntityExtractConfig) => void;
-    updateEmbeddingConfig: (config: EmbeddingConfig) => void;
-    updateEnableAnimations: (enabled: boolean) => void;
+  updateVectorConfig: (config: VectorConfig) => void;
+  updateRerankConfig: (config: RerankConfig) => void;
+  updateRecallConfig: (config: RecallConfig) => void;
+  updateRegexConfig: (config: GlobalRegexConfig) => void;
+  updateEntityExtractConfig: (config: EntityExtractConfig) => void;
+  updateEmbeddingConfig: (config: EmbeddingConfig) => void;
+  updateEnableAnimations: (enabled: boolean) => void;
 
-    // Batch update interface (New Feature)
-    updateMultipleConfigs: (updates: Partial<{
-        vectorConfig: VectorConfig;
-        rerankConfig: RerankConfig;
-        recallConfig: RecallConfig;
-        regexConfig: GlobalRegexConfig;
-        entityExtractConfig: EntityExtractConfig;
-        embeddingConfig: EmbeddingConfig;
-        customMacros: CustomMacro[];
-        enableAnimations: boolean;
-    }>) => void;
+  // Batch update interface (New Feature)
+  updateMultipleConfigs: (
+    updates: Partial<{
+      vectorConfig: VectorConfig;
+      rerankConfig: RerankConfig;
+      recallConfig: RecallConfig;
+      regexConfig: GlobalRegexConfig;
+      entityExtractConfig: EntityExtractConfig;
+      embeddingConfig: EmbeddingConfig;
+      customMacros: CustomMacro[];
+      enableAnimations: boolean;
+    }>
+  ) => void;
 
-    // 自定义宏
-    addCustomMacro: () => void;
-    updateCustomMacro: (id: string, updates: Partial<CustomMacro>) => void;
-    deleteCustomMacro: (id: string) => void;
-    toggleCustomMacro: (id: string) => void;
+  // 自定义宏
+  addCustomMacro: () => void;
+  updateCustomMacro: (id: string, updates: Partial<CustomMacro>) => void;
+  deleteCustomMacro: (id: string) => void;
+  toggleCustomMacro: (id: string) => void;
 
-    saveConfig: () => void;
-    hasChanges: boolean;
+  saveConfig: () => void;
+  hasChanges: boolean;
 }
 
 export function useConfig(): UseConfigReturn {
-    const store = useConfigStore();
+  const store = useConfigStore();
 
-    return {
-        vectorConfig: store.vectorConfig,
-        rerankConfig: store.rerankConfig,
-        recallConfig: store.recallConfig,
-        regexConfig: store.regexConfig,
-        entityExtractConfig: store.entityExtractConfig,
-        embeddingConfig: store.embeddingConfig,
-        customMacros: store.customMacros,
-        enableAnimations: store.enableAnimations,
-        hasChanges: store.hasChanges,
+  return {
+    vectorConfig: store.vectorConfig,
+    rerankConfig: store.rerankConfig,
+    recallConfig: store.recallConfig,
+    regexConfig: store.regexConfig,
+    entityExtractConfig: store.entityExtractConfig,
+    embeddingConfig: store.embeddingConfig,
+    customMacros: store.customMacros,
+    enableAnimations: store.enableAnimations,
+    hasChanges: store.hasChanges,
 
-        updateVectorConfig: store.updateVectorConfig,
-        updateRerankConfig: store.updateRerankConfig,
-        updateRecallConfig: store.updateRecallConfig,
-        updateRegexConfig: store.updateRegexConfig,
-        updateEntityExtractConfig: store.updateEntityExtractConfig,
-        updateEmbeddingConfig: store.updateEmbeddingConfig,
-        updateEnableAnimations: store.updateEnableAnimations,
+    updateVectorConfig: store.updateVectorConfig,
+    updateRerankConfig: store.updateRerankConfig,
+    updateRecallConfig: store.updateRecallConfig,
+    updateRegexConfig: store.updateRegexConfig,
+    updateEntityExtractConfig: store.updateEntityExtractConfig,
+    updateEmbeddingConfig: store.updateEmbeddingConfig,
+    updateEnableAnimations: store.updateEnableAnimations,
 
-        updateMultipleConfigs: store.updateMultipleConfigs,
+    updateMultipleConfigs: store.updateMultipleConfigs,
 
-        addCustomMacro: store.addCustomMacro,
-        updateCustomMacro: store.updateCustomMacro,
-        deleteCustomMacro: store.deleteCustomMacro,
-        toggleCustomMacro: store.toggleCustomMacro,
+    addCustomMacro: store.addCustomMacro,
+    updateCustomMacro: store.updateCustomMacro,
+    deleteCustomMacro: store.deleteCustomMacro,
+    toggleCustomMacro: store.toggleCustomMacro,
 
-        saveConfig: store.saveConfig,
-    };
+    saveConfig: store.saveConfig,
+  };
 }

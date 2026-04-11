@@ -2,26 +2,26 @@
  * Engram Icon 组件
  * 图形图标 SVG，支持 currentColor 动态颜色
  */
-import React from 'react';
+import type { FC } from 'react';
 
 interface EngramIconProps {
-    className?: string;
-    size?: number;
+  className?: string;
+  size?: number;
 }
 
-export const EngramIcon: React.FC<EngramIconProps> = ({ className = '', size = 24 }) => {
-    return (
-        <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 96 400 400"
-            width={size}
-            height={size}
-            className={className}
-            aria-label="Engram Icon"
-        >
-            <path
-                fill="currentColor"
-                d="M103.875908,522.166260
+export const EngramIcon: FC<EngramIconProps> = ({ className = '', size = 24 }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 96 400 400"
+      width={size}
+      height={size}
+      className={className}
+      aria-label="Engram Icon"
+    >
+      <path
+        fill="currentColor"
+        d="M103.875908,522.166260
                 C75.225380,521.276611 55.289425,503.229828 52.249313,475.852142
                 C49.879883,454.514191 63.027035,433.000366 83.930901,424.858398
                 C88.449257,423.098541 89.857674,420.860199 89.801926,416.150269
@@ -91,11 +91,10 @@ export const EngramIcon: React.FC<EngramIconProps> = ({ className = '', size = 2
                 C145.119888,331.194611 135.004120,341.287384 120.496223,346.769958
                 C117.238434,348.001068 116.190170,349.706024 116.267418,353.006317
                 C116.450615,360.833862 116.340004,368.668243 116.349434,377.499908z"
-            />
-        </svg>
-    );
+      />
+    </svg>
+  );
 };
-
 
 /**
  * SVG 字符串常量（供非 React 代码使用，如 bridge.ts）

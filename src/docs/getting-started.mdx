@@ -1,4 +1,14 @@
-import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Search, CheckCircle2 } from 'lucide-react';
+import {
+  Settings,
+  Play,
+  Sliders,
+  FileCode,
+  Activity,
+  Database,
+  WandSparkles,
+  Search,
+  CheckCircle2,
+} from 'lucide-react';
 
 # 快速开始（新版本）
 
@@ -37,15 +47,19 @@ import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Se
 ## 1. 先理解四个核心概念
 
 ### <Activity className="inline-block w-4 h-4 align-text-bottom text-primary" /> 工作流驱动，而不是硬编码流程
+
 总结、实体提取、检索召回都由工作流步骤组合执行，便于替换、扩展和调试。
 
 ### <Database className="inline-block w-4 h-4 align-text-bottom text-primary" /> 本地数据库是主存
+
 记忆、实体等核心数据写入浏览器的本地数据库；酒馆原生的世界书主要只承担宏变量占位与接入桥梁的角色。
 
 ### <Search className="inline-block w-4 h-4 align-text-bottom text-primary" /> 召回由统一门面服务调度
+
 可走向量打分、混合重排或主动直通（Agentic）路径。召回结果统一进入宏变量缓存池，参与当前轮的上下文。
 
 ### <WandSparkles className="inline-block w-4 h-4 align-text-bottom text-primary" /> 预处理是“发送前增强”
+
 在用户发言发出前的阶段拦截输入，大模型分析后提取 `<output>` 正文和 `<query>` 搜索词，再继续系统生成。
 
 ---
@@ -53,6 +67,7 @@ import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Se
 ## 2. 配置流程（按顺序）
 
 ### 第一步：模型接入
+
 进入 **API 预设** 页面，至少完成：
 
 1. **大语言模型 (LLM) 预设**（必需）
@@ -63,6 +78,7 @@ import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Se
    - 相关性不稳定时开启，大幅提高候选结果排序质量。
 
 ### 第二步：运行时策略
+
 进入 **数据处理 → 运行时配置**：
 
 - **自动总结**：建议开启。
@@ -71,6 +87,7 @@ import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Se
 - **合并与压缩机制 (Trimmer)**：建议开启，用于记忆库长期控量与层级架构的维护。
 
 ### 第三步：记忆流检查
+
 进入 **记忆编辑**：
 
 - 查看是否有新的事件节点或实体节点生成。
@@ -81,14 +98,17 @@ import { Settings, Play, Sliders, FileCode, Activity, Database, WandSparkles, Se
 ## 3. 预处理与检索联动（推荐开启）
 
 ### <Play className="inline-block w-4 h-4 align-text-bottom text-primary" /> 何时开启
+
 如果你需要“输入润色、含糊词（如：那个、他）指代展开、剧情前置编排”，建议开启预处理。
 
 ### <Sliders className="inline-block w-4 h-4 align-text-bottom text-primary" /> 最小配置
+
 - 选择一个意图预处理分类的模板。
 - 保证判定模型输出含 `<output>` 标签。
 - 搜索增强场景补充 `<query>` 标签。
 
 ### <Settings className="inline-block w-4 h-4 align-text-bottom text-primary" /> 预期行为
+
 - `<output>`：替换本轮用户输入。
 - `<query>`：进入检索流程，提升召回命中率。
 

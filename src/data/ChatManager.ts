@@ -6,7 +6,7 @@
  */
 
 import { Logger } from '@/core/logger';
-import { getDbForChat, type ChatDatabase, type ChatMeta } from './db';
+import { getDbForChat, type ChatDatabase } from './db';
 import { getCurrentChatId, getCurrentCharacter } from '@/integrations/tavern';
 import { DEFAULT_SCOPE_STATE, type ScopeState } from './types/graph';
 
@@ -16,110 +16,110 @@ const CHARACTER_KEY = 'character_name';
 const MODULE = 'ChatManager';
 
 class ChatManager {
-    private currentChatId: string | null = null;
-    private currentDb: ChatDatabase | null = null;
+  private currentChatId: string | null = null;
+  private currentDb: ChatDatabase | null = null;
 
-    /**
-     * 获取当前聊天的数据库实例
-     * 自动从酒馆上下文获取 chat_id 并连接数据库
-     */
-    getCurrentDb(): ChatDatabase | null {
-        const chatId = getCurrentChatId();
-        if (!chatId) {
-            Logger.warn(MODULE, '无法获取 chat_id，上下文可能未就绪');
-            return null;
-        }
-
-        // 如果 chatId 变化，切换数据库连接
-        if (chatId !== this.currentChatId) {
-            this.currentChatId = chatId;
-            this.currentDb = getDbForChat(chatId);
-            Logger.debug(MODULE, `切换数据库: Engram_${chatId}`);
-        }
-
-        return this.currentDb;
+  /**
+   * 获取当前聊天的数据库实例
+   * 自动从酒馆上下文获取 chat_id 并连接数据库
+   */
+  getCurrentDb(): ChatDatabase | null {
+    const chatId = getCurrentChatId();
+    if (!chatId) {
+      Logger.warn(MODULE, '无法获取 chat_id，上下文可能未就绪');
+      return null;
     }
 
-    /**
-     * 获取当前 chatId
-     */
-    getCurrentChatId(): string | null {
-        return getCurrentChatId();
+    // 如果 chatId 变化，切换数据库连接
+    if (chatId !== this.currentChatId) {
+      this.currentChatId = chatId;
+      this.currentDb = getDbForChat(chatId);
+      Logger.debug(MODULE, `切换数据库: Engram_${chatId}`);
     }
 
-    /**
-     * 获取显示用的角色名
-     */
-    getCharacterName(): string {
-        return getCurrentCharacter()?.name || 'Unknown';
+    return this.currentDb;
+  }
+
+  /**
+   * 获取当前 chatId
+   */
+  getCurrentChatId(): string | null {
+    return getCurrentChatId();
+  }
+
+  /**
+   * 获取显示用的角色名
+   */
+  getCharacterName(): string {
+    return getCurrentCharacter()?.name || 'Unknown';
+  }
+
+  /**
+   * 获取当前聊天的状态
+   */
+  async getState(): Promise<ScopeState> {
+    const db = this.getCurrentDb();
+    if (!db) return DEFAULT_SCOPE_STATE;
+
+    try {
+      const meta = await db.meta.get(STATE_KEY);
+      if (meta?.value) {
+        return { ...DEFAULT_SCOPE_STATE, ...(meta.value as ScopeState) };
+      }
+      return DEFAULT_SCOPE_STATE;
+    } catch (e) {
+      Logger.error(MODULE, '获取状态失败:', e);
+      return DEFAULT_SCOPE_STATE;
     }
+  }
 
-    /**
-     * 获取当前聊天的状态
-     */
-    async getState(): Promise<ScopeState> {
-        const db = this.getCurrentDb();
-        if (!db) return DEFAULT_SCOPE_STATE;
+  /**
+   * 更新当前聊天的状态
+   */
+  async updateState(partialState: Partial<ScopeState>): Promise<void> {
+    const db = this.getCurrentDb();
+    if (!db) return;
 
-        try {
-            const meta = await db.meta.get(STATE_KEY);
-            if (meta?.value) {
-                return { ...DEFAULT_SCOPE_STATE, ...(meta.value as ScopeState) };
-            }
-            return DEFAULT_SCOPE_STATE;
-        } catch (e) {
-            Logger.error(MODULE, '获取状态失败:', e);
-            return DEFAULT_SCOPE_STATE;
-        }
+    try {
+      const currentState = await this.getState();
+      const newState = { ...currentState, ...partialState };
+      await db.meta.put({ key: STATE_KEY, value: newState });
+    } catch (e) {
+      Logger.error(MODULE, '更新状态失败:', e);
     }
+  }
 
-    /**
-     * 更新当前聊天的状态
-     */
-    async updateState(partialState: Partial<ScopeState>): Promise<void> {
-        const db = this.getCurrentDb();
-        if (!db) return;
+  /**
+   * 保存角色名到当前数据库（用于 UI 显示）
+   */
+  async saveCharacterName(): Promise<void> {
+    const db = this.getCurrentDb();
+    if (!db) return;
 
-        try {
-            const currentState = await this.getState();
-            const newState = { ...currentState, ...partialState };
-            await db.meta.put({ key: STATE_KEY, value: newState });
-        } catch (e) {
-            Logger.error(MODULE, '更新状态失败:', e);
-        }
-    }
+    const name = this.getCharacterName();
+    await db.meta.put({ key: CHARACTER_KEY, value: name });
+  }
 
-    /**
-     * 保存角色名到当前数据库（用于 UI 显示）
-     */
-    async saveCharacterName(): Promise<void> {
-        const db = this.getCurrentDb();
-        if (!db) return;
+  /**
+   * 获取数据库中保存的角色名
+   */
+  async getSavedCharacterName(): Promise<string> {
+    const db = this.getCurrentDb();
+    if (!db) return 'Unknown';
 
-        const name = this.getCharacterName();
-        await db.meta.put({ key: CHARACTER_KEY, value: name });
-    }
+    const meta = await db.meta.get(CHARACTER_KEY);
+    return (meta?.value as string) || 'Unknown';
+  }
 
-    /**
-     * 获取数据库中保存的角色名
-     */
-    async getSavedCharacterName(): Promise<string> {
-        const db = this.getCurrentDb();
-        if (!db) return 'Unknown';
+  /**
+   * 重置状态（调试用）
+   */
+  async resetState(): Promise<void> {
+    const db = this.getCurrentDb();
+    if (!db) return;
 
-        const meta = await db.meta.get(CHARACTER_KEY);
-        return (meta?.value as string) || 'Unknown';
-    }
-
-    /**
-     * 重置状态（调试用）
-     */
-    async resetState(): Promise<void> {
-        const db = this.getCurrentDb();
-        if (!db) return;
-
-        await db.meta.put({ key: STATE_KEY, value: DEFAULT_SCOPE_STATE });
-    }
+    await db.meta.put({ key: STATE_KEY, value: DEFAULT_SCOPE_STATE });
+  }
 }
 
 export const chatManager = new ChatManager();
@@ -128,4 +128,3 @@ export const chatManager = new ChatManager();
  * @deprecated V0.6: 使用 chatManager 替代
  * 保留以便定位迁移点
  */
-const scopeManager = chatManager;

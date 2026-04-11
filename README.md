@@ -1,11 +1,12 @@
 <div align="center">
   <img src="public/logo/Engram_logo.svg" alt="Engram Logo" width="250" />
 
-  # Engram
+# Engram
 
-  > **Graph RAG Memory Operation System** - *Where memories leave their trace.*
+> **Graph RAG Memory Operation System** - _Where memories leave their trace._
 
-  ![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)
+
 </div>
 
 **Engram** 是专为 **SillyTavern (酒馆)** 设计的下一代智能记忆扩展。它通过**RAG (检索增强生成)** 技术，不仅提供直观的记忆可视化，更能让 AI 角色拥有持久、连贯且可追溯的记忆能力。
@@ -84,6 +85,7 @@ pnpm run dev:watch
 ---
 
 ## 📁 目录结构 (Project Structure)
+
 参考"docs/architecture/项目文件架构.md"
 
 ---
