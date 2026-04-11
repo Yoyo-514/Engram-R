@@ -39,7 +39,7 @@ export const Settings: FC = () => {
   return (
     <div className="flex flex-col h-full animate-in fade-in">
       <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="扩展全局选项与外观配置" />
-      <div className="p-6 space-y-8">
+      <div className="px-4 py-6 md:p-6 space-y-8 overflow-x-hidden">
         {/* Theme Section */}
         <section>
           <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
@@ -474,7 +474,7 @@ const SyncSection: FC = () => {
         </div>
       )}
       {/* 强制操作区 - 仅用于调试或手动恢复 */}
-      <div className="flex gap-2 justify-end pt-2 border-t border-border/50">
+      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2 border-t border-border/50">
         <button
           onClick={async () => {
             try {
@@ -500,7 +500,7 @@ const SyncSection: FC = () => {
               setSyncMessage('上传错误: ' + String(e));
             }
           }}
-          className="px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors"
+          className="w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors"
         >
           强制上传 (覆盖服务端)
         </button>
@@ -529,7 +529,7 @@ const SyncSection: FC = () => {
               setSyncMessage('下载错误: ' + String(e));
             }
           }}
-          className="px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500 transition-colors"
+          className="w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500 transition-colors"
         >
           强制下载 (覆盖本地)
         </button>
@@ -687,22 +687,22 @@ const DatabaseOperations: FC = () => {
         </div>
       </div>
 
-      <div className="pl-14 flex gap-4">
+      <div className="pl-0 sm:pl-14 flex flex-col sm:flex-row gap-3 sm:gap-4">
         <button
           onClick={handleReset}
-          className="px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-yellow-600 transition-colors"
+          className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-yellow-600 transition-colors"
         >
           重置当前数据 (保留DB)
         </button>
         <button
           onClick={handleDelete}
-          className="px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors"
+          className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors"
         >
           删除数据库 (删库)
         </button>
       </div>
 
-      <div className="pl-14 space-y-3 border-t border-border pt-4">
+      <div className="pl-0 sm:pl-14 space-y-3 border-t border-border pt-4">
         <div>
           <h5 className="text-sm font-medium text-foreground">历史数据库清理</h5>
           <p className="text-xs text-muted-foreground mt-1">
@@ -710,12 +710,12 @@ const DatabaseOperations: FC = () => {
           </p>
         </div>
 
-        <div className="flex gap-3 items-center">
+        <div className="flex flex-col sm:flex-row gap-3 sm:items-center min-w-0">
           <select
             value={selectedDatabase}
             onChange={(e) => setSelectedDatabase(e.target.value)}
             disabled={isLoadingDatabases || availableDatabases.length === 0}
-            className="flex-1 p-2 text-sm bg-background border border-border rounded focus:ring-1 focus:ring-primary outline-none text-foreground disabled:opacity-50"
+            className="w-full min-w-0 sm:flex-1 p-2 text-sm bg-background border border-border rounded focus:ring-1 focus:ring-primary outline-none text-foreground disabled:opacity-50"
           >
             {availableDatabases.length === 0 ? (
               <option value="">未发现可清理的历史数据库</option>
@@ -731,7 +731,7 @@ const DatabaseOperations: FC = () => {
           <button
             onClick={loadAvailableDatabases}
             disabled={isLoadingDatabases}
-            className="px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-foreground transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-foreground transition-colors disabled:opacity-50"
           >
             刷新列表
           </button>
@@ -739,7 +739,7 @@ const DatabaseOperations: FC = () => {
           <button
             onClick={handleDeleteSelectedDatabase}
             disabled={isDeletingSelected || availableDatabases.length === 0 || !selectedDatabase}
-            className="px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors disabled:opacity-50"
+            className="w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors disabled:opacity-50"
           >
             删除所选历史库
           </button>

@@ -575,7 +575,7 @@ function qM(e, t) {
     }));
   });
 }
-const KM = "Engram-R", WM = "1.0.1", YM = "https://github.com/Yoyo-514/Engram-R.git", ng = {
+const KM = "Engram-R", WM = "1.0.2", YM = "https://github.com/Yoyo-514/Engram-R.git", ng = {
   display_name: KM,
   version: WM,
   homePage: YM
@@ -62054,7 +62054,7 @@ const Lie = [
   );
   return /* @__PURE__ */ a.jsxs("div", { className: "flex flex-col h-full animate-in fade-in", children: [
     /* @__PURE__ */ a.jsx(mg, { breadcrumbs: ["设置"], title: "全局选项", subtitle: "扩展全局选项与外观配置" }),
-    /* @__PURE__ */ a.jsxs("div", { className: "p-6 space-y-8", children: [
+    /* @__PURE__ */ a.jsxs("div", { className: "px-4 py-6 md:p-6 space-y-8 overflow-x-hidden", children: [
       /* @__PURE__ */ a.jsxs("section", { children: [
         /* @__PURE__ */ a.jsx("h3", { className: "text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4", children: "外观" }),
         /* @__PURE__ */ a.jsxs("div", { className: "space-y-4", children: [
@@ -62390,7 +62390,7 @@ const Lie = [
         /* @__PURE__ */ a.jsx("li", { children: "请定期备份重要数据" })
       ] })
     ] }),
-    /* @__PURE__ */ a.jsxs("div", { className: "flex gap-2 justify-end pt-2 border-t border-border/50", children: [
+    /* @__PURE__ */ a.jsxs("div", { className: "flex flex-col sm:flex-row gap-2 sm:justify-end pt-2 border-t border-border/50", children: [
       /* @__PURE__ */ a.jsx(
         "button",
         {
@@ -62409,7 +62409,7 @@ const Lie = [
               H.error(ge.DATA_SYNC, "Manual upload failed", b), r("error"), l("上传错误: " + String(b));
             }
           },
-          className: "px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors",
+          className: "w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors",
           children: "强制上传 (覆盖服务端)"
         }
       ),
@@ -62431,7 +62431,7 @@ const Lie = [
               H.error(ge.DATA_SYNC, "Manual download failed", b), r("error"), l("下载错误: " + String(b));
             }
           },
-          className: "px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500 transition-colors",
+          className: "w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500 transition-colors",
           children: "强制下载 (覆盖本地)"
         }
       )
@@ -62526,12 +62526,12 @@ const Lie = [
         /* @__PURE__ */ a.jsx("p", { className: "text-sm text-meta line-clamp-2", children: "手动清空或删除当前聊天的数据库" })
       ] })
     ] }) }),
-    /* @__PURE__ */ a.jsxs("div", { className: "pl-14 flex gap-4", children: [
+    /* @__PURE__ */ a.jsxs("div", { className: "pl-0 sm:pl-14 flex flex-col sm:flex-row gap-3 sm:gap-4", children: [
       /* @__PURE__ */ a.jsx(
         "button",
         {
           onClick: b,
-          className: "px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-yellow-600 transition-colors",
+          className: "w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-yellow-600 transition-colors",
           children: "重置当前数据 (保留DB)"
         }
       ),
@@ -62539,24 +62539,24 @@ const Lie = [
         "button",
         {
           onClick: v,
-          className: "px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors",
+          className: "w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors",
           children: "删除数据库 (删库)"
         }
       )
     ] }),
-    /* @__PURE__ */ a.jsxs("div", { className: "pl-14 space-y-3 border-t border-border pt-4", children: [
+    /* @__PURE__ */ a.jsxs("div", { className: "pl-0 sm:pl-14 space-y-3 border-t border-border pt-4", children: [
       /* @__PURE__ */ a.jsxs("div", { children: [
         /* @__PURE__ */ a.jsx("h5", { className: "text-sm font-medium text-foreground", children: "历史数据库清理" }),
         /* @__PURE__ */ a.jsx("p", { className: "text-xs text-muted-foreground mt-1", children: "可手动删除当前聊天之外的残留 Engram 数据库，用于清理失效角色卡或历史会话遗留数据" })
       ] }),
-      /* @__PURE__ */ a.jsxs("div", { className: "flex gap-3 items-center", children: [
+      /* @__PURE__ */ a.jsxs("div", { className: "flex flex-col sm:flex-row gap-3 sm:items-center min-w-0", children: [
         /* @__PURE__ */ a.jsx(
           "select",
           {
             value: r,
             onChange: (E) => i(E.target.value),
             disabled: l || t.length === 0,
-            className: "flex-1 p-2 text-sm bg-background border border-border rounded focus:ring-1 focus:ring-primary outline-none text-foreground disabled:opacity-50",
+            className: "w-full min-w-0 sm:flex-1 p-2 text-sm bg-background border border-border rounded focus:ring-1 focus:ring-primary outline-none text-foreground disabled:opacity-50",
             children: t.length === 0 ? /* @__PURE__ */ a.jsx("option", { value: "", children: "未发现可清理的历史数据库" }) : t.map((E) => /* @__PURE__ */ a.jsx("option", { value: E, children: E }, E))
           }
         ),
@@ -62565,7 +62565,7 @@ const Lie = [
           {
             onClick: g,
             disabled: l,
-            className: "px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-foreground transition-colors disabled:opacity-50",
+            className: "w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-foreground transition-colors disabled:opacity-50",
             children: "刷新列表"
           }
         ),
@@ -62574,7 +62574,7 @@ const Lie = [
           {
             onClick: C,
             disabled: u || t.length === 0 || !r,
-            className: "px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors disabled:opacity-50",
+            className: "w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors disabled:opacity-50",
             children: "删除所选历史库"
           }
         )
