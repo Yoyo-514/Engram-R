@@ -1,20 +1,28 @@
+import { Logger } from '@/core/logger';
+import { getTavernContext } from '@/core/utils';
+
 /**
  * EventBus - 事件总线封装
  *
  * 提供类型安全的事件订阅/取消订阅接口
  */
-export type EventType = (typeof events)[keyof typeof events]
+export const events = {
+  CHAT_CHANGED: 'chat_id_changed',
+  MESSAGE_RECEIVED: 'message_received',
+  MESSAGE_EDITED: 'message_edited',
+  GENERATION_STARTED: 'generation_started',
+  GENERATION_ENDED: 'generation_ended',
+  GENERATION_AFTER_COMMANDS: 'GENERATION_AFTER_COMMANDS',
+  ENGRAM_REQUEST_REVIEW: 'engram:request_review',
+} as const;
 
-export const events = { ...tavern_events, ENGRAM_REQUEST_REVIEW: 'engram:request_review' };
+export type EventType = (typeof events)[keyof typeof events];
 
 /** 事件回调函数类型 */
 export type EventCallback = (...args: unknown[]) => void | Promise<void>;
 
 /** 取消订阅函数类型 */
 export type Unsubscribe = () => void;
-
-import { Logger } from '@/core/logger';
-import { getTavernContext } from '@/core/utils';
 
 const MODULE = 'TavernEventBus';
 
