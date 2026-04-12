@@ -36,22 +36,36 @@ export default defineConfig(({ mode }) => ({
   build: {
     outDir: 'dist',
     emptyDirOnBuild: true,
+    cssCodeSplit: false,
+    lib: {
+      entry: path.resolve(__dirname, 'src/index.tsx'),
+      formats: ['iife'],
+      name: 'EngramPlugin',
+      fileName: () => 'index.js',
+    },
     rollupOptions: {
       treeshake: {
         moduleSideEffects: false,
         propertyReadSideEffects: false,
       },
-      input: 'src/index.tsx',
       output: {
-        format: 'es',
-        entryFileNames: '[name].js',
-        chunkFileNames: '[name].[hash].chunk.js',
-        assetFileNames: '[name].[ext]',
-        preserveModules: false,
+        format: 'iife',
+        name: 'EngramPlugin',
+        inlineDynamicImports: true,
+        manualChunks: undefined,
+        entryFileNames: 'index.js',
+        chunkFileNames: 'index.js',
+        assetFileNames: (assetInfo) => {
+          if (assetInfo.names.some((name) => name.endsWith('.css'))) {
+            return 'index.css';
+          }
+
+          return '[name][extname]';
+        },
       },
     },
     minify: mode === 'production' ? 'terser' : false,
-    sourcemap: mode === 'production' ? 'hidden' : 'inline',
+    sourcemap: mode === 'production' ? false : 'inline',
     terserOptions:
       mode === 'production'
         ? {
