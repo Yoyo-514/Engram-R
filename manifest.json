@@ -4,7 +4,7 @@
   "requires": [],
   "optional": ["embeddings"],
   "js": "dist/index.js",
-  "css": "dist/style.css",
+  "css": "dist/index.css",
   "author": "yoyo514",
   "version": "1.0.3",
   "homePage": "https://github.com/Yoyo-514/Engram-R.git",
