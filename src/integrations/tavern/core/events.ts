@@ -58,7 +58,7 @@ export class EventBus {
    * @param callback 回调函数
    * @returns 取消订阅函数
    */
-  static on(event: EventType, callback: EventCallback): Unsubscribe {
+  static on(event: string, callback: EventCallback): Unsubscribe {
     const eventSource = getEventSource();
 
     if (eventSource) {
@@ -82,7 +82,7 @@ export class EventBus {
    * @param event 事件名称
    * @param callback 回调函数
    */
-  static once(event: EventType, callback: EventCallback): void {
+  static once(event: string, callback: EventCallback): void {
     const eventSource = getEventSource();
 
     if (eventSource) {
@@ -102,7 +102,7 @@ export class EventBus {
    * @param event 事件名称
    * @param callback 回调函数
    */
-  static off(event: EventType, callback: EventCallback): void {
+  static off(event: string, callback: EventCallback): void {
     const eventSource = getEventSource();
 
     if (eventSource) {
@@ -118,7 +118,7 @@ export class EventBus {
    * @param event 事件名称
    * @param args 参数
    */
-  static async emit(event: EventType, ...args: unknown[]): Promise<any> {
+  static async emit(event: string, ...args: unknown[]): Promise<any> {
     const eventSource = getEventSource();
 
     if (eventSource) {
