@@ -1,5 +1,5 @@
 import { Plus, X } from 'lucide-react';
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 

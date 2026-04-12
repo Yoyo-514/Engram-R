@@ -3,7 +3,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { type RegexRule, DEFAULT_REGEX_RULES } from '@/modules/workflow/steps';
+import { type RegexRule, DEFAULT_REGEX_RULES, regexProcessor } from '@/modules/workflow';
 import { SettingsManager } from '@/config/settings';
 
 export interface UseRegexRulesReturn {
@@ -93,7 +93,6 @@ export function useRegexRules(): UseRegexRulesReturn {
   const saveRegexRules = useCallback(async () => {
     SettingsManager.setRegexRules(regexRules);
     // 同步更新 Processor
-    const { regexProcessor } = await import('@/modules/workflow/steps');
     regexProcessor.setRules(regexRules);
     setHasChanges(false);
   }, [regexRules]);

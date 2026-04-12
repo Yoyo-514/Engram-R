@@ -3,12 +3,12 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import type { EngramAPISettings, LLMPreset, PromptTemplate } from '@/config/types/defaults';
+import type { EngramAPISettings, LLMPreset, PromptTemplate } from '@/types/config';
 import {
   createDefaultLLMPreset,
   getBuiltInPromptTemplates,
   getDefaultAPISettings,
-} from '@/config/types/defaults';
+} from '@/types/config';
 import { useCallback, useEffect, useState } from 'react';
 
 export interface UseLLMPresetsReturn {

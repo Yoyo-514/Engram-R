@@ -1,4 +1,4 @@
-import type { EntityNode, EventNode } from '@/data/types/graph';
+import type { EntityNode, EventNode } from '@/types/graph';
 import { type AgenticRecall } from '@/modules/preprocessing/types';
 import { useMemoryStore } from '@/state/memoryStore';
 import { SimpleModal } from '@/ui/components/feedback/SimpleModal';

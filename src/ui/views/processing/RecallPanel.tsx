@@ -1,5 +1,5 @@
-import type { RecallConfig, RerankConfig } from '@/config/types/defaults';
-import type { EntityNode, EventNode } from '@/data/types/graph';
+import type { RecallConfig, RerankConfig } from '@/types/config';
+import type { EntityNode, EventNode } from '@/types/graph';
 import { useState, type FC } from 'react';
 import { RecallConfigForm } from './components/RecallConfigForm';
 

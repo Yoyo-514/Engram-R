@@ -7,16 +7,17 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_ENTITY_CONFIG } from '@/config/types/defaults';
-import type { EntityExtractConfig } from '@/config/types/memory';
+import { DEFAULT_ENTITY_CONFIG } from '@/types/config';
+import type { EntityExtractConfig } from '@/types/memory';
 import { EventBus } from '@/core/events';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
-import type { EntityNode } from '@/data/types/graph';
+import type { EntityNode } from '@/types/graph';
 import { MacroService } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
+import { createEntityWorkflow, WorkflowEngine } from '@/modules/workflow';
 
 /**
  * 实体构建结果
@@ -223,12 +224,6 @@ export class EntityBuilder {
     );
 
     try {
-      // Lazy import to avoid circular dep
-      const { WorkflowEngine } = await import('@/modules/workflow/core/WorkflowEngine');
-      const { createEntityWorkflow } =
-        await import('@/modules/workflow/definitions/EntityWorkflow');
-      const { MacroService } = await import('@/integrations/tavern');
-
       // V1.0.4: 使用全局 "启用修订模式" 开关 (复用 summarizerConfig)
       const globalSettings = SettingsManager.get('summarizerConfig');
       const previewEnabled = manual || (globalSettings?.previewEnabled ?? true);

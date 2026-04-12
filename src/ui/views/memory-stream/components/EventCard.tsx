@@ -5,7 +5,7 @@
  * 遵循「无框流体」设计：边框高亮而非填充背景
  * 文本层级：heading(标题) → foreground(正文) → meta(元数据)
  */
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { Archive, ChevronRight, Lock, LockOpen, Trash2, Zap } from 'lucide-react';
 import type { FC } from 'react';
 

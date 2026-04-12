@@ -1,5 +1,5 @@
 import { generateShortUUID } from '@/core/utils';
-import type { EntityNode } from '@/data/types/graph';
+import type { EntityNode } from '@/types/graph';
 import { type StateCreator } from 'zustand';
 import { getCurrentDb, tryGetCurrentDb } from './coreSlice';
 

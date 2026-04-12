@@ -1,6 +1,6 @@
-import { createPromptTemplate } from '@/config/types/defaults';
-import type { PromptTemplate } from '@/config/types/prompt';
-import { PROMPT_CATEGORIES } from '@/config/types/prompt';
+import { createPromptTemplate } from '@/types/config';
+import type { PromptTemplate } from '@/types/prompt';
+import { PROMPT_CATEGORIES } from '@/types/prompt';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FileText, Plus, RotateCcw } from 'lucide-react';
 import type { FC } from 'react';

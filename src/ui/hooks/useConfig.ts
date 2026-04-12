@@ -13,8 +13,8 @@ import type {
   RecallConfig,
   RerankConfig,
   VectorConfig,
-} from '@/config/types/defaults';
-import { type EntityExtractConfig } from '@/config/types/memory';
+} from '@/types/config';
+import { type EntityExtractConfig } from '@/types/memory';
 import { useConfigStore } from '@/state/configStore';
 
 export interface UseConfigReturn {

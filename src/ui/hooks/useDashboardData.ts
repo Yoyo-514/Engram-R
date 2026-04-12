@@ -7,12 +7,13 @@
  * - Feature Status: 功能开关状态
  */
 import { SettingsManager, type EngramSettings } from '@/config/settings';
-import { DEFAULT_BRAIN_RECALL_CONFIG, getDefaultAPISettings } from '@/config/types/defaults';
+import { DEFAULT_BRAIN_RECALL_CONFIG, getDefaultAPISettings } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import { getSTContext, MacroService, getCurrentChatId } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { tryGetDbForChat } from '@/data/db'
 
 // ==================== 类型定义 ====================
 
@@ -157,8 +158,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
     const chatId = getCurrentChatId();
     if (!chatId) return;
 
-    const dbModule = await import('@/data/db');
-    const db = dbModule.tryGetDbForChat(chatId);
+    const db = tryGetDbForChat(chatId);
     if (!db) return;
 
     const metaMod = await db.meta.get('lastModified');

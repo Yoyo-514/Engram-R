@@ -1,6 +1,6 @@
 import { chatManager } from '@/data/ChatManager';
 import { deleteDatabase, getDbForChat, tryGetDbForChat, type ChatDatabase } from '@/data/db';
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { type StateCreator } from 'zustand';
 

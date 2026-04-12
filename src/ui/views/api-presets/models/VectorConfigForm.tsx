@@ -1,7 +1,7 @@
 /**
  * 向量化配置表单
  */
-import type { VectorConfig, VectorSource } from '@/config/types/rag';
+import type { VectorConfig, VectorSource } from '@/types/rag';
 import { type ModelAPIType, type ModelInfo, ModelService } from '@/integrations/llm/ModelDiscovery';
 import {
   FormSection,

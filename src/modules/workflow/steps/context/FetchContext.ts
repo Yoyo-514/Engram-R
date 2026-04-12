@@ -1,4 +1,5 @@
 import { Logger } from '@/core/logger';
+import { getCurrentTavernCharacter } from '@/core/utils';
 import {
   getCurrentCharacter,
   getCurrentChat,
@@ -8,6 +9,8 @@ import {
 import { WorldInfoService } from '@/integrations/tavern/worldbook';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
+import { SettingsManager } from '@/config/settings';
+import { PromptLoader } from '@/integrations/llm';
 
 interface TemplateWithWorldbooks {
   id: string;
@@ -25,21 +28,15 @@ export class FetchContext implements IStep {
 
     const char = getCurrentCharacter();
     const stContext = getSTContext();
+    const currentCharacter = getCurrentTavernCharacter(stContext);
     if (char) {
-      const currentCharacter =
-        stContext?.characterId !== null && stContext?.characterId !== undefined
-          ? stContext?.characters[stContext.characterId]
-          : undefined;
       context.input.charName = char.name;
       context.input.charPersona = currentCharacter?.description || '';
     }
 
     if (stContext) {
       context.input.userName = stContext.name1 || 'User';
-      context.input.userPersona =
-        window.power_user?.persona_description ||
-        stContext.powerUserSettings?.persona_description ||
-        '';
+      context.input.userPersona = stContext.powerUserSettings?.persona_description || '';
     }
 
     const range = context.input.range;
@@ -72,9 +69,6 @@ export class FetchContext implements IStep {
     let extraBooks = (context.input.extraWorldbooks as string[] | undefined) || [];
 
     try {
-      const { SettingsManager } = await import('@/config/settings');
-      const { PromptLoader } = await import('@/integrations/llm/PromptLoader');
-
       let templateId = context.config.templateId;
       const category = context.config.category;
       const apiSettings = SettingsManager.get('apiSettings') as

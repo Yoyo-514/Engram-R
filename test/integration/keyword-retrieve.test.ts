@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { SettingsManager } from '@/config/settings';
-import { EntityType } from '@/data/types/graph';
+import { EntityType } from '@/types/graph';
 import { type JobContext } from '@/modules/workflow/core/JobContext';
 import { KeywordRetrieveStep } from '@/modules/workflow/steps/rag/KeywordRetrieveStep';
 import { useMemoryStore } from '@/state/memoryStore';

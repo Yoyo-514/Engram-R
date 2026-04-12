@@ -1,16 +1,17 @@
-import type { PreprocessingConfig, RegexRule } from '@/config/types/data_processing';
-import type { EngramAPISettings } from '@/config/types/defaults';
-import { getBuiltInTemplateById } from '@/config/types/defaults';
-import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
+import type { PreprocessingConfig, RegexRule } from '@/types/data_processing';
+import type { EngramAPISettings } from '@/types/config';
+import { getBuiltInTemplateById } from '@/types/config';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { deepClone } from '@/core/utils';
 import { Logger } from '@/core/logger';
-import { getRawSTContext, type RawSTContext } from '@/integrations/tavern/core/context';
+import { getRawSTContext } from '@/integrations/tavern/core';
+import type { TavernContext } from '@/core/utils'
 import type { SummarizerConfig } from '@/modules/memory/types';
-
-type JsonObject = Record<string, unknown>;
+import type { JsonObject } from 'type-fest';
 
 type EngramContextSettings = Record<string, EngramSettings | undefined>;
 
-type SettingsCapableContext = Omit<RawSTContext, 'extensionSettings'> & {
+type SettingsCapableContext = Omit<TavernContext, 'extensionSettings'> & {
   extensionSettings?: EngramContextSettings;
 };
 
@@ -27,7 +28,6 @@ export interface EngramSettings {
   presets: JsonObject; // 待扩展的预设类型，暂时使用 Record
   templates: JsonObject; // 待扩展的模板类型，暂时使用 Record
   promptTemplates: PromptTemplate[]; // 提示词模板列表
-  hasSeenWelcome: boolean; // 是否已观看欢迎动画
   lastReadVersion: string; // 最后已读的版本号
   lastOpenedTab: string; // 上次打开的主界面页面
   summarizerConfig: Partial<SummarizerConfig> & { trimConfig?: unknown }; // 总结器配置 (Legacy)
@@ -68,7 +68,6 @@ const defaultSettings: EngramSettings = Object.freeze({
   presets: {},
   templates: {},
   promptTemplates: [],
-  hasSeenWelcome: false,
   lastReadVersion: '0.0.0',
   lastOpenedTab: 'dashboard',
   summarizerConfig: {},
@@ -182,7 +181,7 @@ export class SettingsManager {
   }
 
   private static cloneDefaultSettings(): EngramSettings {
-    return structuredClone(defaultSettings);
+    return deepClone(defaultSettings);
   }
 
   private static getOrCreateContextSettings(
@@ -226,7 +225,7 @@ export class SettingsManager {
     settings: EngramSettings,
     key: K
   ): void {
-    settings[key] = structuredClone(defaultSettings[key]);
+    settings[key] = deepClone(defaultSettings[key]);
   }
 
   private static saveContext(context: SettingsCapableContext | null): void {

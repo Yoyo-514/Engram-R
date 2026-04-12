@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { type EntityNode, type EventNode } from '@/data/types/graph';
+import { type EntityNode, type EventNode } from '@/types/graph';
 
 const MODULE = 'EntityScanner';
 

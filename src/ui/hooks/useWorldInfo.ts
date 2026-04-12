@@ -3,8 +3,8 @@ import type {
   EngramAPISettings,
   WorldbookConfig,
   WorldbookConfigProfile,
-} from '@/config/types/defaults';
-import { getDefaultAPISettings } from '@/config/types/defaults';
+} from '@/types/config';
+import { getDefaultAPISettings } from '@/types/config';
 import { getTavernHelper, WorldInfoService } from '@/integrations/tavern/worldbook';
 import { useCallback, useEffect, useState } from 'react';
 

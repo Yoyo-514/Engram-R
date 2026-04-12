@@ -2,8 +2,8 @@ import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReviewAction, ReviewRequest } from '@/core/events/ReviewBridge';
-import type { EntityNode } from '@/data/types/graph';
-import { EventBus, TavernEventType } from '@/integrations/tavern'; // EventBus is from events.ts
+import type { EntityNode } from '@/types/graph';
+import { EventBus, events } from '@/integrations/tavern'; // EventBus is from events.ts
 import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { ModernButton as Button } from '@/ui/components/core/Button';
 import {
@@ -284,7 +284,7 @@ export const ReviewContainer: FC = () => {
   const [footerEl, setFooterEl] = useState<HTMLElement | null>(null); // State to hold ref to footer slot
 
   useEffect(() => {
-    const unsubscribe = EventBus.on(TavernEventType.ENGRAM_REQUEST_REVIEW, (payload: unknown) => {
+    const unsubscribe = EventBus.on(events.ENGRAM_REQUEST_REVIEW, (payload: unknown) => {
       const req = payload as ReviewRequest;
       // Ensure ID exists (fallback for old callers though we updated Bridge)
       if (!req.id) req.id = Date.now().toString();

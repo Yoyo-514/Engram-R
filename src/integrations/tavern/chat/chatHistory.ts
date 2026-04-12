@@ -3,11 +3,12 @@ import { Logger } from '@/core/logger';
 import type { SummarizerConfig } from '@/modules/memory/types';
 import { regexProcessor } from '@/modules/workflow/steps';
 import { useMemoryStore } from '@/state/memoryStore';
-import { getSTContext, type STMessage } from '../core/context';
+import { getSTContext, type RawSTChatMessage } from '../core/context';
+import { getTavernHelper } from '@/core/utils';
 
 type RegexSource = 'user_input' | 'ai_output';
 
-type ChatHistoryMessage = STMessage & {
+type ChatHistoryMessage = RawSTChatMessage & {
   content?: string;
   message?: string;
 };
@@ -25,7 +26,7 @@ export class ChatHistoryHelper {
   static getChatHistory(floorRange?: [number, number]): string {
     try {
       const context = getSTContext();
-      const tavernHelper = window.TavernHelper;
+      const tavernHelper = getTavernHelper();
       const regexConfig = SettingsManager.get('apiSettings')?.regexConfig;
       const enableNativeRegex = regexConfig?.enableNativeRegex ?? true;
 
@@ -87,7 +88,7 @@ export class ChatHistoryHelper {
             // 1. 酒馆原生正则清洗
             // V0.9.9: 增加详细调试日志
             const hasTavernHelper = !!tavernHelper;
-            const hasFormatFunc = typeof tavernHelper?.formatAsTavernRegexedString === 'function';
+            const hasFormatFunc = typeof tavernHelper.formatAsTavernRegexedString === 'function';
 
             // 只在第一条消息输出一次诊断信息
             if (index === 0) {

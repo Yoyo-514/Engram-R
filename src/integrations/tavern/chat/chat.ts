@@ -1,5 +1,6 @@
 import { Logger } from '@/core/logger';
-import { getSTContext, type STMessage } from '../core/context';
+import { getSTContext, RawSTChatMessage } from '../core/context';
+import { getTavernHelper } from '@/core/utils';
 
 const MODULE = 'TavernChat';
 
@@ -40,9 +41,14 @@ export async function hideMessageRange(start: number, end: number): Promise<void
   try {
     const command = `/hide ${start}-${end}`;
 
+    const tavernhelper = getTavernHelper();
+    if (!tavernhelper) {
+        return;
+      }
+
     // 优先使用官方扩展支持的斜杠指令触发器（高兼容性）
-    if (typeof window.TavernHelper?.triggerSlash === 'function') {
-      void window.TavernHelper.triggerSlash(command);
+    if (typeof tavernhelper.triggerSlash === 'function') {
+      await tavernhelper.triggerSlash(command);
       Logger.debug(MODULE, `Slash command execution: ${command}`);
     } else {
       // 降级：如果不可用，尝试兼容之前的做法
@@ -99,13 +105,11 @@ export async function injectMessage(
         ? getCharacterAvatar(scriptModule, ctx.characterId)
         : undefined;
 
-    const newMessage: STMessage = {
+    const newMessage: RawSTChatMessage = {
       name: senderName,
       is_user: role === 'user',
       is_system: false,
-      send_date: Date.now(),
       mes: content,
-      force_avatar: forceAvatar,
     };
 
     // 3. 推入聊天记录

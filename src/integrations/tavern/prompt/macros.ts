@@ -1,11 +1,13 @@
 import { SettingsManager } from '@/config/settings';
-import type { CustomMacro } from '@/config/types/prompt';
+import type { CustomMacro } from '@/types/prompt';
 import { Logger } from '@/core/logger';
+import { getCurrentTavernCharacter } from '@/core/utils';
 import { WorldInfoService } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { ChatHistoryHelper } from '../chat/chatHistory';
 import { getSTContext } from '../core/context';
 import { EjsProcessor } from './ejsProcessor';
+import { brainRecallCache } from '@/modules/rag';
 
 declare global {
   interface Window {
@@ -39,7 +41,7 @@ export class MacroService {
     try {
       const context = getSTContext();
 
-      if (!context?.registerMacro && !context?.macros) {
+      if (!context?.registerMacro) {
         Logger.warn('MacroService', 'SillyTavern registerMacro API 不可用');
         return;
       }
@@ -118,9 +120,7 @@ export class MacroService {
         'userPersona',
         () => {
           // 实时优先：由于人设切换频繁，此处优先读取酒馆原生变量
-          const liveDescription =
-            window.power_user?.persona_description ||
-            getSTContext()?.powerUserSettings?.persona_description;
+          const liveDescription = getSTContext()?.powerUserSettings?.persona_description;
           return typeof liveDescription === 'string'
             ? liveDescription
             : MacroService.cachedUserPersona;
@@ -292,7 +292,6 @@ export class MacroService {
 
       try {
         // 动态导入避免循环依赖
-        const { brainRecallCache } = await import('@/modules/rag/retrieval/BrainRecallCache');
         const snapshot = brainRecallCache.getShortTermSnapshot();
 
         if (!effectiveRecalledIds && snapshot.length > 0) {
@@ -419,7 +418,6 @@ export class MacroService {
 
       // 2. V1.4.1: 同步刷新实体状态
       try {
-        const { brainRecallCache } = await import('@/modules/rag/retrieval/BrainRecallCache');
         const entityIds = brainRecallCache
           .getShortTermSnapshot()
           .filter((slot) => slot.category === 'entity')
@@ -464,15 +462,8 @@ export class MacroService {
    */
   private static refreshCharDescription(): void {
     try {
-      const context = getSTContext();
-      if (
-        context?.characterId !== null &&
-        context?.characterId !== undefined &&
-        context.characterId >= 0
-      ) {
-        const char = context.characters[context.characterId];
-        this.cachedCharDescription = char?.description || '';
-      }
+      const char = getCurrentTavernCharacter(getSTContext());
+      this.cachedCharDescription = char?.description || '';
     } catch (e) {
       Logger.debug('MacroService', '刷新角色描述失败', e);
     }
@@ -508,7 +499,7 @@ export class MacroService {
    */
   private static refreshUserPersona(): void {
     try {
-      const powerUser = window.power_user || getSTContext()?.powerUserSettings;
+      const powerUser = getSTContext()?.powerUserSettings;
       this.cachedUserPersona = powerUser?.persona_description || '';
       Logger.debug('MacroService', '用户设定缓存已刷新', {
         length: this.cachedUserPersona.length,

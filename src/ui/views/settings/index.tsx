@@ -1,6 +1,6 @@
 import { SettingsManager } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
-import { getCurrentChatId } from '@/integrations/tavern';
+import { getCurrentChatId, getSTContext } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { preprocessor } from '@/modules/preprocessing';
 import { DEFAULT_PREPROCESSING_CONFIG } from '@/modules/preprocessing/types';
@@ -14,6 +14,10 @@ import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 import { useConfigStore } from '@/state/configStore';
 import { ThemeSelector } from './components/ThemeSelector';
+import { deleteDatabase, listAllDatabases } from '@/data/db';
+import { Dexie } from 'dexie';
+import { ThemeManager } from '@/ui/services';
+import { syncService } from '@/data/SyncService';
 
 export const Settings: FC = () => {
   const { enableAnimations, updateEnableAnimations, saveConfig } = useConfigStore();
@@ -35,6 +39,8 @@ export const Settings: FC = () => {
   const [linkedDeletion, setLinkedDeletion] = useState(
     SettingsManager.getSettings().linkedDeletion
   );
+
+  const refreshTheme = () => ThemeManager.setTheme(ThemeManager.getTheme());
 
   return (
     <div className="flex flex-col h-full animate-in fade-in">
@@ -98,9 +104,7 @@ export const Settings: FC = () => {
                     enabled: checked,
                   };
                   SettingsManager.set('glassSettings', newSettings);
-                  void import('@/ui/services/ThemeManager').then(({ ThemeManager }) => {
-                    ThemeManager.setTheme(ThemeManager.getTheme());
-                  });
+                  refreshTheme;
                   forceUpdate({});
                 }}
               />
@@ -119,9 +123,7 @@ export const Settings: FC = () => {
                       opacity: val,
                     };
                     SettingsManager.set('glassSettings', newSettings);
-                    void import('@/ui/services/ThemeManager').then(({ ThemeManager }) => {
-                      ThemeManager.setTheme(ThemeManager.getTheme());
-                    });
+                    refreshTheme;
                     forceUpdate({});
                   }}
                   min={0}
@@ -139,9 +141,7 @@ export const Settings: FC = () => {
                       blur: val,
                     };
                     SettingsManager.set('glassSettings', newSettings);
-                    void import('@/ui/services/ThemeManager').then(({ ThemeManager }) => {
-                      ThemeManager.setTheme(ThemeManager.getTheme());
-                    });
+                    refreshTheme;
                     forceUpdate({});
                   }}
                   min={0}
@@ -330,7 +330,6 @@ const SyncSection: FC = () => {
       setSyncStatus('check');
       setSyncMessage('检查中...');
 
-      const { getSTContext } = await import('@/integrations/tavern');
       const context = getSTContext();
       if (!context?.chatId) {
         alert('请先打开一个聊天以进行同步测试');
@@ -342,8 +341,6 @@ const SyncSection: FC = () => {
       const chatId = context.chatId;
       setSyncStatus('syncing');
       setSyncMessage('同步中...');
-
-      const { syncService } = await import('@/data/sync/SyncService');
 
       // 使用 autoSync 智能同步
       const result = await syncService.autoSync(chatId);
@@ -480,11 +477,9 @@ const SyncSection: FC = () => {
             try {
               setSyncStatus('syncing');
               setSyncMessage('强制上传中...');
-              const { getSTContext } = await import('@/integrations/tavern');
               const chatId = getSTContext()?.chatId;
               if (!chatId) throw new Error('未连接到聊天');
 
-              const { syncService } = await import('@/data/sync/SyncService');
               const success = await syncService.upload(chatId);
 
               if (success) {
@@ -509,11 +504,9 @@ const SyncSection: FC = () => {
             try {
               setSyncStatus('syncing');
               setSyncMessage('强制下载中...');
-              const { getSTContext } = await import('@/integrations/tavern');
               const chatId = getSTContext()?.chatId;
               if (!chatId) throw new Error('未连接到聊天');
 
-              const { syncService } = await import('@/data/sync/SyncService');
               const result = await syncService.download(chatId);
 
               if (result === 'success') {
@@ -551,12 +544,6 @@ const DatabaseOperations: FC = () => {
   const loadAvailableDatabases = async () => {
     setIsLoadingDatabases(true);
     try {
-      const [{ listAllDatabases }, DexieModule] = await Promise.all([
-        import('@/data/db'),
-        import('dexie'),
-      ]);
-
-      const Dexie = DexieModule.default;
       const dbNames = await listAllDatabases();
       const existingDbNames = await Promise.all(
         dbNames.map(async (name) => ((await Dexie.exists(name)) ? name : null))
@@ -659,7 +646,6 @@ const DatabaseOperations: FC = () => {
 
     setIsDeletingSelected(true);
     try {
-      const { deleteDatabase } = await import('@/data/db');
       await deleteDatabase(chatId);
       notificationService.success(`已删除历史数据库 ${selectedDatabase}`, 'Engram 设置');
       await refreshDatabaseList();

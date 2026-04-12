@@ -1,4 +1,4 @@
-import { EntityType, type EntityNode, type EventNode } from '@/data/types/graph';
+import { EntityType, type EntityNode, type EventNode } from '@/types/graph';
 import type {
   EntityGroupMode,
   EntitySortMode,

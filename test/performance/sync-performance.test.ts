@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { syncService } from '@/data/sync/SyncService';
+import { syncService } from '@/data/SyncService';
 
 // Mock Tavern
 vi.mock('@/integrations/tavern', () => ({

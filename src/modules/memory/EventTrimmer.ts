@@ -5,12 +5,13 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_TRIM_CONFIG } from '@/config/types/defaults';
-import type { TrimConfig } from '@/config/types/memory';
+import { DEFAULT_TRIM_CONFIG } from '@/types/config';
+import type { TrimConfig } from '@/types/memory';
 import { Logger, LogModule } from '@/core/logger';
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
+import { createTrimmerWorkflow, WorkflowEngine } from '@/modules/workflow';
 
 interface TrimResult {
   /** 精简后的事件 */
@@ -111,10 +112,6 @@ class EventTrimmer {
 
     try {
       // Lazy import
-      const { WorkflowEngine } = await import('@/modules/workflow/core/WorkflowEngine');
-      const { createTrimmerWorkflow } =
-        await import('@/modules/workflow/definitions/TrimmerWorkflow');
-
       const config = this.getEffectiveConfig();
       const context = await WorkflowEngine.run(createTrimmerWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
@@ -160,7 +157,6 @@ class EventTrimmer {
    */
   async getStatus() {
     // 动态导入以避免循环依赖
-    const { useMemoryStore } = await import('@/state/memoryStore');
     const store = useMemoryStore.getState();
     // V1.0.5: 使用 activeEventCount 而非 eventCount
     const { totalTokens, activeEventCount } = await store.countEventTokens();

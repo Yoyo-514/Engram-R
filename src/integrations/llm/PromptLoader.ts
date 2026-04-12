@@ -1,6 +1,6 @@
 import { Logger, LogModule } from '@/core/logger';
-import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
-import yaml from 'js-yaml';
+import { parseYaml } from '@/core/utils';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 
 interface ImportMetaWithGlob extends ImportMeta {
   glob<T>(pattern: string, options: { eager: boolean; query: string }): Record<string, T>;
@@ -38,7 +38,7 @@ export class PromptLoader {
           continue;
         }
 
-        const parsed = yaml.load(rawContent);
+        const parsed = parseYaml(rawContent);
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
           Logger.warn(LogModule.LLM, `Skipping invalid prompt template in ${path}: invalid YAML`);
           continue;

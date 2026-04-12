@@ -4,8 +4,9 @@
  * 提供聊天消息获取、楼层计数等功能
  */
 
+import { getCurrentTavernCharacter } from '@/core/utils';
 import { getSTContext, isSTAvailable } from '@/integrations/tavern';
-import type { STMessage } from '@/integrations/tavern';
+import type { RawSTChatMessage } from '@/integrations/tavern';
 
 /** 消息角色类型 */
 type MessageRole = 'user' | 'assistant' | 'system';
@@ -20,8 +21,6 @@ export interface TavernMessage {
   content: string;
   /** 发送者名称 */
   name: string;
-  /** 是否隐藏 */
-  isHidden: boolean;
   /** 原始消息对象引用 */
   raw?: unknown;
 }
@@ -37,7 +36,7 @@ export interface GetMessagesOptions {
 /**
  * 将酒馆原始消息转换为统一格式
  */
-function convertMessage(msg: STMessage, index: number): TavernMessage {
+function convertMessage(msg: RawSTChatMessage, index: number): TavernMessage {
   let role: MessageRole = 'assistant';
   if (msg.is_user) {
     role = 'user';
@@ -50,7 +49,6 @@ function convertMessage(msg: STMessage, index: number): TavernMessage {
     role,
     content: msg.mes || '',
     name: msg.name || '',
-    isHidden: msg.is_hidden ?? false,
     raw: msg,
   };
 }
@@ -71,11 +69,6 @@ export class MessageService {
     }
 
     let messages = context.chat.map((msg, index) => convertMessage(msg, index));
-
-    // 过滤隐藏消息
-    if (!options.includeHidden) {
-      messages = messages.filter((m) => !m.isHidden);
-    }
 
     // 角色过滤
     if (options.role) {
@@ -132,12 +125,7 @@ export class MessageService {
    * 获取当前角色名称
    */
   static getCurrentCharacterName(): string | null {
-    const context = getSTContext();
-    if (!context?.characters || context.characterId === null || context.characterId < 0) {
-      return null;
-    }
-
-    return context.characters[context.characterId]?.name || null;
+    return getCurrentTavernCharacter(getSTContext())?.name || null;
   }
 
   /**

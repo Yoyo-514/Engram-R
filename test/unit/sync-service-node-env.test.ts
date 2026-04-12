@@ -56,7 +56,7 @@ describe('SyncService in non-DOM environment', () => {
     vi.useFakeTimers();
     delete (globalThis as any).document;
 
-    await import('@/data/sync/SyncService');
+    await import('@/data/SyncService');
     await vi.advanceTimersByTimeAsync(2100);
 
     expect((globalThis as any).document).toBeUndefined();

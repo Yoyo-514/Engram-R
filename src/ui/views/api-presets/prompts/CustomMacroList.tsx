@@ -3,7 +3,7 @@
  * V0.9.2: 简化为卡片列表，点击后右侧编辑
  */
 
-import type { CustomMacro } from '@/config/types/prompt';
+import type { CustomMacro } from '@/types/prompt';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Braces, Plus, Power, Trash2 } from 'lucide-react';
 import type { FC } from 'react';

@@ -8,8 +8,8 @@ import {
   type RecallConfig,
   type RerankConfig,
   type VectorConfig,
-} from '@/config/types/defaults';
-import type { EntityExtractConfig } from '@/config/types/memory';
+} from '@/types/config';
+import type { EntityExtractConfig } from '@/types/memory';
 import { create } from 'zustand';
 
 export interface ConfigState {

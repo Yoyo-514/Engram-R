@@ -13,7 +13,7 @@ import {
   type RegexScope,
   DEFAULT_REGEX_RULES,
   REGEX_SCOPE_OPTIONS,
-} from '@/config/types/data_processing';
+} from '@/types/data_processing';
 
 const MODULE = 'RegexProcessor';
 

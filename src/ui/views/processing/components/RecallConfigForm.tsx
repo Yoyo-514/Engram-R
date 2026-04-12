@@ -1,4 +1,4 @@
-import type { RecallConfig, RerankConfig } from '@/config/types/rag';
+import type { RecallConfig, RerankConfig } from '@/types/rag';
 import { Switch } from '@/ui/components/core/Switch';
 import { NumberField } from '@/ui/components/form/FormComponents';
 import {

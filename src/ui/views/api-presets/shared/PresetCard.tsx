@@ -4,7 +4,7 @@
 import type { FC } from 'react';
 import { Edit2, Copy, Trash2, Server, Cloud } from 'lucide-react';
 import { ItemCard } from '@/ui/components/display/ItemCard';
-import type { LLMPreset } from '@/config/types/llm';
+import type { LLMPreset } from '@/types/llm';
 
 interface PresetCardProps {
   preset: LLMPreset;

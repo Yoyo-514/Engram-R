@@ -45,7 +45,3 @@ export const COMMANDS: CommandItem[] = [
     type: 'navigation',
   },
 ];
-
-/**
- * 搜索命令
- */

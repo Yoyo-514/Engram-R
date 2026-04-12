@@ -8,7 +8,7 @@
 import { Logger } from '@/core/logger';
 import { getDbForChat, type ChatDatabase } from './db';
 import { getCurrentChatId, getCurrentCharacter } from '@/integrations/tavern';
-import { DEFAULT_SCOPE_STATE, type ScopeState } from './types/graph';
+import { DEFAULT_SCOPE_STATE, type ScopeState } from '../types/graph';
 
 /** Meta 表中的状态 key */
 const STATE_KEY = 'scope_state';

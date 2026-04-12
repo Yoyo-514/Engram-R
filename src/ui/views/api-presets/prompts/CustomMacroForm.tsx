@@ -4,7 +4,7 @@
  */
 import type { FC } from 'react';
 import { TextField, FormSection } from '@/ui/components/form/FormComponents';
-import type { CustomMacro } from '@/config/types/prompt';
+import type { CustomMacro } from '@/types/prompt';
 
 interface CustomMacroFormProps {
   macro: CustomMacro;

@@ -11,14 +11,15 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_RECALL_CONFIG } from '@/config/types/defaults';
+import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import {
   EventBus,
   getCurrentChatId,
   getSTContext,
   MacroService,
-  TavernEventType,
+  EventType,
+  events,
 } from '@/integrations/tavern';
 import { preprocessor } from '@/modules/preprocessing';
 import type { PreprocessingResult } from '@/modules/preprocessing/types';
@@ -54,7 +55,7 @@ class Injector {
     // V0.8: 使用 GENERATION_AFTER_COMMANDS 事件
     // 这个事件在命令处理后、生成开始前触发，酒馆会 await 处理器
     EventBus.on(
-      TavernEventType.GENERATION_AFTER_COMMANDS,
+      events.GENERATION_AFTER_COMMANDS,
       async (type: any, params: any, dryRun: any) => {
         console.info('[Injector] 🎯 GENERATION_AFTER_COMMANDS triggered', { type, dryRun });
         Logger.debug(LogModule.RAG_INJECT, '捕获 GENERATION_AFTER_COMMANDS', { type });
@@ -65,7 +66,7 @@ class Injector {
     );
 
     // 聊天切换时重置状态
-    EventBus.on(TavernEventType.CHAT_CHANGED, () => {
+    EventBus.on(events.CHAT_CHANGED, () => {
       Logger.debug(LogModule.RAG_INJECT, '捕获到 CHAT_CHANGED 事件');
       this.processingChats.clear();
       this.cacheInvalid = false; // 切换聊天时重置缓存状态
@@ -75,7 +76,7 @@ class Injector {
     });
 
     // V0.9.5: 监听消息编辑事件，用户编辑自己的消息后标记缓存失效
-    EventBus.on(TavernEventType.MESSAGE_EDITED, (...args: unknown[]) => {
+    EventBus.on(events.MESSAGE_EDITED, (...args: unknown[]) => {
       const msgIndex = args[0] as number;
       const context = getSTContext();
       const msg = context?.chat?.[msgIndex];
@@ -393,7 +394,7 @@ class Injector {
             // 触发消息更新事件刷新 UI
             try {
               const eventSource = context.eventSource;
-              const eventTypes = context.event_types;
+              const eventTypes = context.eventTypes;
               if (eventSource && eventTypes?.MESSAGE_UPDATED) {
                 eventSource.emit(eventTypes.MESSAGE_UPDATED, lastMessageIndex);
                 Logger.debug(LogModule.RAG_INJECT, '已触发 MESSAGE_UPDATED 事件');

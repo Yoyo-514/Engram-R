@@ -1,6 +1,8 @@
-import { getBuiltInTemplateByCategory } from '@/config/types/defaults';
+import { getBuiltInTemplateByCategory } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import { llmAdapter } from '@/integrations/llm/Adapter';
+import { MacroService } from '@/integrations/tavern';
+import { SettingsManager } from '@/config/settings';
 
 export class BatchUtils {
   /**
@@ -34,13 +36,10 @@ export class BatchUtils {
    */
   static async summarizeChunk(chunk: string, chunkIndex: number): Promise<string> {
     // 1. 注入当前分块到宏系统 (供 {{userInput}} 使用)
-    const { MacroService } = await import('@/integrations/tavern');
     MacroService.setUserInput(chunk);
     await MacroService.refreshCache(); // 刷新其他宏 (如 chatHistory)
 
     // 2. 获取模板 (优先使用用户启用的 summary 模板)
-    const { SettingsManager } = await import('@/config/settings');
-
     const allTemplates = SettingsManager.get('apiSettings')?.promptTemplates || [];
     const userTemplate = allTemplates.find((t) => t.category === 'summary' && t.enabled);
     const builtInTemplate = getBuiltInTemplateByCategory('summary');

@@ -7,7 +7,7 @@
  * - 状态项按重要性区分字体大小
  * - 去卡片化，使用细线分割
  */
-import type { TrimConfig, TrimTriggerType } from '@/config/types/memory';
+import type { TrimConfig, TrimTriggerType } from '@/types/memory';
 import {
   AlertCircle,
   Calculator,
@@ -21,11 +21,19 @@ import {
 import { useEffect, useState } from 'react';
 import type { FC, ElementType } from 'react';
 
-import type { TrimmerStatus } from '@/modules/memory';
+import {
+  entityBuilder,
+  eventTrimmer,
+  summarizerService,
+  type TrimmerStatus,
+} from '@/modules/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import type { UseSummarizerConfigReturn } from '@/ui/hooks/useSummarizerConfig';
+import { chatManager } from '@/data/ChatManager';
+import { useMemoryStore } from '@/state/memoryStore';
+import { notificationService } from '@/ui/services';
 
 interface SummarizerStatus {
   running: boolean;
@@ -74,7 +82,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const loadStatus = async () => {
     try {
-      const { summarizerService } = await import('@/modules/memory');
       // V0.7.1: 始终刷新缓存，确保待处理数正确
       await summarizerService.initializeForCurrentChat();
       const currentStatus = summarizerService.getStatus();
@@ -82,18 +89,15 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       // Config loading removed as it comes from props
 
       // 加载精简服务状态 (使用 EventTrimmer V0.7)
-      const { eventTrimmer } = await import('@/modules/memory/EventTrimmer');
       const trimmerStatus = await eventTrimmer.getStatus();
       setTrimStatus(trimmerStatus);
 
       // V0.7.1: 从 IndexedDB 读取事件统计
-      const { useMemoryStore } = await import('@/state/memoryStore');
       const store = useMemoryStore.getState();
       const { totalTokens, activeEventCount: activeCount } = await store.countEventTokens();
       setWorldbookTokens(totalTokens);
       setActiveEventCount(activeCount); // 蓝灯数
 
-      const { entityBuilder } = await import('@/modules/memory/EntityExtractor');
       const entityStatus = await entityBuilder.getStatus();
       setExtractedFloor(entityStatus.lastExtractedFloor || 0);
 
@@ -107,12 +111,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const handleSetSummarizedFloor = async () => {
     try {
-      const { summarizerService } = await import('@/modules/memory');
       await summarizerService.setLastSummarizedFloor(editSummarizedFloor);
       await loadStatus();
-      void import('@/ui/services/NotificationService').then(({ notificationService }) => {
-        notificationService.success(`总结指针已更新至 ${editSummarizedFloor}`, 'Engram');
-      });
+      notificationService.success(`总结指针已更新至 ${editSummarizedFloor}`, 'Engram');
     } catch (error) {
       console.error('修改总结指针失败:', error);
     }
@@ -120,12 +121,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const handleSetExtractedFloor = async () => {
     try {
-      const { chatManager } = await import('@/data/ChatManager');
       await chatManager.updateState({ last_extracted_floor: editExtractedFloor });
       await loadStatus();
-      void import('@/ui/services/NotificationService').then(({ notificationService }) => {
-        notificationService.success(`提取指针已更新至 ${editExtractedFloor}`, 'Engram');
-      });
+      notificationService.success(`提取指针已更新至 ${editExtractedFloor}`, 'Engram');
     } catch (error) {
       console.error('修改提取指针失败:', error);
     }
@@ -133,7 +131,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const handleStart = async () => {
     try {
-      const { summarizerService } = await import('@/modules/memory');
       summarizerService.start();
       await loadStatus();
     } catch (error) {
@@ -143,7 +140,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const handleStop = async () => {
     try {
-      const { summarizerService } = await import('@/modules/memory');
       summarizerService.stop();
       await loadStatus();
     } catch (error) {
@@ -154,7 +150,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const handleTrigger = async () => {
     setLoading(true);
     try {
-      const { summarizerService } = await import('@/modules/memory');
       await summarizerService.triggerSummary(true);
       await loadStatus();
     } catch (error) {
@@ -169,7 +164,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
     if (!confirm('确定要重置总结进度吗？这会导致扫描所有历史消息。')) return;
     setLoading(true);
     try {
-      const { summarizerService } = await import('@/modules/memory');
       // 这是一个 hack，通过设置 lastSummarizedFloor 为 0 来重置
       // 理想情况下应该在 service 中暴露 reset 方法
       await summarizerService.setLastSummarizedFloor(0);
@@ -199,7 +193,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
     const newConfig = { ...trimConfig, enabled: !trimConfig.enabled };
     onTrimConfigChange(newConfig);
     // Runtime update if needed, typically handled by save action or service sync
-    const { eventTrimmer } = await import('@/modules/memory/EventTrimmer');
     eventTrimmer.updateConfig({ enabled: newConfig.enabled });
   };
 
@@ -207,7 +200,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const handleTriggerTrim = async () => {
     setTrimLoading(true);
     try {
-      const { eventTrimmer } = await import('@/modules/memory/EventTrimmer');
       await eventTrimmer.trim(true);
       await loadStatus();
     } catch (error) {
@@ -406,7 +398,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 checked={settings.autoEnabled}
                 onChange={async (newVal) => {
                   onSummarizerSettingsChange({ ...settings, autoEnabled: newVal });
-                  const { summarizerService } = await import('@/modules/memory');
                   summarizerService.updateConfig({ enabled: newVal });
                 }}
               />
@@ -421,9 +412,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 checked={settings.autoHide}
                 onChange={(newVal) => {
                   onSummarizerSettingsChange({ ...settings, autoHide: newVal });
-                  void import('@/modules/memory').then(({ summarizerService }) => {
-                    summarizerService.updateConfig({ autoHide: newVal });
-                  });
+                  summarizerService.updateConfig({ autoHide: newVal });
                 }}
               />
             </div>
@@ -449,7 +438,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     value={settings.floorInterval}
                     onChange={async (val) => {
                       onSummarizerSettingsChange({ ...settings, floorInterval: val });
-                      const { summarizerService } = await import('@/modules/memory');
                       summarizerService.updateConfig({ floorInterval: val });
                     }}
                   />
@@ -471,9 +459,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     value={settings.bufferSize}
                     onChange={(val) => {
                       onSummarizerSettingsChange({ ...settings, bufferSize: val });
-                      void import('@/modules/memory').then(({ summarizerService }) => {
-                        summarizerService.updateConfig({ bufferSize: val });
-                      });
+                      summarizerService.updateConfig({ bufferSize: val });
                     }}
                   />
                 </div>

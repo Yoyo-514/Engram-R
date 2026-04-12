@@ -9,7 +9,7 @@
  * - 新人红利 & 厌倦惩罚
  * - 容量限制 & 淘汰
  */
-import { DEFAULT_BRAIN_RECALL_CONFIG } from '@/config/types/defaults';
+import { DEFAULT_BRAIN_RECALL_CONFIG } from '@/types/config';
 import { BrainRecallCache, type RecallCandidate } from '@/modules/rag/retrieval/BrainRecallCache';
 import { beforeEach, describe, expect, it } from 'vitest';
 

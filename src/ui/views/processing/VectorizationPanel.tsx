@@ -7,7 +7,7 @@
  * - 批量嵌入控制
  * - 进度显示
  */
-import type { EmbeddingConfig, VectorConfig } from '@/config/types/rag';
+import type { EmbeddingConfig, VectorConfig } from '@/types/rag';
 import { embeddingService } from '@/modules/rag';
 import {
   NumberField,

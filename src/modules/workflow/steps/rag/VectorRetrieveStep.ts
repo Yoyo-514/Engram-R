@@ -1,5 +1,5 @@
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_RECALL_CONFIG } from '@/config/types/defaults';
+import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';

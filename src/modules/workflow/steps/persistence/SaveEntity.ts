@@ -1,9 +1,9 @@
 import { Logger } from '@/core/logger';
+import { deepClone, stringifyYaml } from '@/core/utils';
 import { RobustJsonParser } from '@/core/utils/JsonParser';
-import { type EntityNode, EntityType } from '@/data/types/graph';
+import { type EntityNode, EntityType } from '@/types/graph';
 import { useMemoryStore } from '@/state/memoryStore';
 import * as jsonpatch from 'fast-json-patch';
-import * as yaml from 'js-yaml';
 import { z } from 'zod';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
@@ -523,8 +523,8 @@ export class SaveEntity implements IStep {
   ): Promise<void> {
     try {
       const targetDoc: EntityPatchDocument = {
-        ...structuredClone(existing),
-        _original: structuredClone(existing),
+        ...deepClone(existing),
+        _original: deepClone(existing),
       };
 
       const relativeOps = this.buildRelativePatches(entityName, entityPatches, targetDoc);
@@ -705,7 +705,7 @@ export class SaveEntity implements IStep {
         if (!target) continue;
 
         try {
-          const targetDoc: EntityPatchDocument = structuredClone(target);
+          const targetDoc: EntityPatchDocument = deepClone(target);
           jsonpatch.applyPatch(targetDoc, patch.ops as jsonpatch.Operation[]);
 
           if (!isDryRun) {
@@ -828,12 +828,7 @@ export class SaveEntity implements IStep {
   private profileToYaml(name: string, type: string, profile: EntityProfile): string {
     try {
       const entityObj = { profile };
-      const yamlContent = yaml.dump(entityObj, {
-        indent: 2,
-        lineWidth: -1,
-        noRefs: true,
-        sortKeys: false,
-      });
+      const yamlContent = stringifyYaml(entityObj);
       return `${name}\n${yamlContent.trim()}`;
     } catch (error) {
       Logger.warn('SaveEntity', 'YAML Dump failed', error);

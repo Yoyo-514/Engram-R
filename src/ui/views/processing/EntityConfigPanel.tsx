@@ -7,7 +7,7 @@
  * - 去卡片化，使用细线分割
  * V1.4.2: 增加自动归档与手动清理功能
  */
-import type { EntityExtractConfig } from '@/config/types/memory';
+import type { EntityExtractConfig } from '@/types/memory';
 import { EventBus } from '@/core/events';
 import { entityBuilder } from '@/modules/memory/EntityExtractor';
 import { SliderField } from '@/ui/components/core/SliderField';

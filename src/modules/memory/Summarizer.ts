@@ -4,12 +4,17 @@
 
 import { SettingsManager } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
-import { getSTContext } from '@/integrations/tavern';
+import { getSTContext, WorldBookSlotService } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore'; // Used for setLastSummarizedFloor
 import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '@/modules/workflow/core/JobContext';
 import type { SummarizerConfig, SummarizerStatus, SummaryResult } from './types';
 import { DEFAULT_SUMMARIZER_CONFIG } from './types';
+import { chatManager } from '@/data/ChatManager';
+import { createSummaryWorkflow, StopGeneration, WorkflowEngine } from '@/modules/workflow';
+import { eventTrimmer } from './EventTrimmer';
+import { Logger } from '@/core/logger';
+import { getTavernContext } from '@/core/utils';
 
 /** 元数据 key */
 const METADATA_KEY = 'engram';
@@ -21,24 +26,12 @@ function getChatMetadata(): Record<string, unknown> | null {
   try {
     // 优先从 context 获取
     const context = getSTContext();
-    if (context?.chat_metadata) {
-      return context.chat_metadata;
+    if (context?.chatMetadata) {
+      return context.chatMetadata;
     }
-    // 备用：直接访问全局变量
-    return window.chat_metadata || null;
+    return null;
   } catch {
     return null;
-  }
-}
-
-/**
- * 保存聊天（防抖）
- */
-function saveChatDebounced(): void {
-  try {
-    window.saveChatDebounced?.();
-  } catch {
-    console.warn('[Engram] saveChatDebounced 不可用');
   }
 }
 
@@ -96,7 +89,6 @@ class SummarizerService {
 
     // 直接从 IndexedDB 读取，避免 memoryStore 缓存未初始化的问题
     try {
-      const { chatManager } = await import('@/data/ChatManager');
       const state = await chatManager.getState();
       this._lastSummarizedFloor = state.last_summarized_floor;
       await this.log('debug', '从 DB 读取 lastSummarizedFloor', {
@@ -127,7 +119,7 @@ class SummarizerService {
    * 获取当前真实楼层数
    */
   private getCurrentFloor(): number {
-    const context = window.SillyTavern?.getContext?.();
+    const context = getTavernContext();
     if (!context?.chat) {
       return 0;
     }
@@ -139,12 +131,11 @@ class SummarizerService {
    * 获取当前聊天 ID
    */
   private getCurrentChatId(): string | null {
-    const context = window.SillyTavern?.getContext?.();
+    const context = getTavernContext();
     return context?.chatId || null;
   }
 
   private async requestStopGeneration(signal?: JobContext['signal']): Promise<void> {
-    const { StopGeneration } = await import('@/modules/workflow/steps/execution/StopGeneration');
     await StopGeneration.abort(signal);
   }
 
@@ -376,10 +367,6 @@ class SummarizerService {
       });
 
       // 2. Run Workflow
-      const { WorkflowEngine } = await import('@/modules/workflow/core/WorkflowEngine');
-      const { createSummaryWorkflow } =
-        await import('@/modules/workflow/definitions/SummaryWorkflow');
-      const { WorldBookSlotService } = await import('@/integrations/tavern/worldbook');
       await WorldBookSlotService.init();
 
       const context = await WorkflowEngine.run(createSummaryWorkflow(), {
@@ -425,7 +412,6 @@ class SummarizerService {
 
       // V1.0.5: 联动触发精简 - 总结完成后检查是否需要精简
       try {
-        const { eventTrimmer } = await import('@/modules/memory/EventTrimmer');
         const trimStatus = await eventTrimmer.getStatus();
         const trimConfig = eventTrimmer.getConfig();
         const trimAvailability = await eventTrimmer.canTrim();
@@ -553,7 +539,6 @@ class SummarizerService {
     data?: unknown
   ): Promise<void> {
     try {
-      const { Logger } = await import('@/core/logger');
       Logger[level]('Summarizer', message, data);
     } catch {
       console.info(`[Summarizer] ${level}: ${message}`, data);

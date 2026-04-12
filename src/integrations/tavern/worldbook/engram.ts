@@ -88,7 +88,7 @@ export class WorldbookEngramService {
       // V1.4.6 Fix: 只有在已选择角色时才尝试获取角色世界书，防止酒馆在首页报错
       const stContext = getSTContext();
       const hasCharacter =
-        stContext && stContext.characterId !== undefined && stContext.characterId !== -1;
+        stContext && stContext.characterId !== undefined && stContext.characterId !== null;
 
       if (hasCharacter) {
         const charBooks = helper.getCharWorldbookNames('current');

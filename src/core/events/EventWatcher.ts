@@ -9,7 +9,7 @@
  * 基于 tavern/TavernEvents.ts 的 EventBus 进行封装
  */
 
-import { EventBus, TavernEventType, type Unsubscribe } from '@/integrations/tavern';
+import { EventBus, events, type Unsubscribe } from '@/integrations/tavern';
 
 /** 监听回调类型 */
 interface WatcherCallbacks {
@@ -58,10 +58,10 @@ class EventWatcher {
 
     // 订阅核心事件
     this.unsubscribers.push(
-      EventBus.on(TavernEventType.MESSAGE_RECEIVED, () => this.emit('messageReceived')),
-      EventBus.on(TavernEventType.CHAT_CHANGED, () => this.emit('chatChanged')),
-      EventBus.on(TavernEventType.GENERATION_STARTED, () => this.emit('generationStarted')),
-      EventBus.on(TavernEventType.GENERATION_ENDED, () => this.emit('generationEnded'))
+      EventBus.on(events.MESSAGE_RECEIVED, () => this.emit('messageReceived')),
+      EventBus.on(events.CHAT_CHANGED, () => this.emit('chatChanged')),
+      EventBus.on(events.GENERATION_STARTED, () => this.emit('generationStarted')),
+      EventBus.on(events.GENERATION_ENDED, () => this.emit('generationEnded'))
     );
 
     console.info('[EventWatcher] Started, listening to core events.');

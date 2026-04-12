@@ -16,9 +16,9 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import type { EngramAPISettings } from '@/config/types/defaults';
-import type { PromptTemplate } from '@/config/types/prompt';
-import type { RecallConfig } from '@/config/types/rag';
+import type { EngramAPISettings } from '@/types/config';
+import type { PromptTemplate } from '@/types/prompt';
+import type { RecallConfig } from '@/types/rag';
 import { NAV_ITEMS } from '@/constants/navigation';
 import { Logger } from '@/core/logger';
 import { preprocessor } from '@/modules/preprocessing';
@@ -39,6 +39,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { openMainPanel } from '@/integrations/tavern';
 
 interface QuickPanelProps {
   isOpen: boolean;
@@ -218,16 +219,11 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
 
   const handleNavigate = useCallback(
     (path: string) => {
-      void import('@/integrations/tavern')
-        .then(({ openMainPanel }) => {
-          openMainPanel();
-        })
-        .finally(() => {
-          window.setTimeout(() => {
-            window.dispatchEvent(new CustomEvent('engram:navigate', { detail: path }));
-          }, 0);
-          onClose();
-        });
+      openMainPanel();
+      window.setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('engram:navigate', { detail: path }));
+      }, 0);
+      onClose();
     },
     [onClose]
   );
@@ -300,9 +296,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                   onChange={() => {
                     const newConfig = { ...config, preview: !config.preview };
                     setConfig(newConfig);
-                    void import('@/config/settings').then(({ SettingsManager }) => {
-                      SettingsManager.set('preprocessingConfig', newConfig);
-                    });
+                    SettingsManager.set('preprocessingConfig', newConfig);
                   }}
                 />
               </div>

@@ -11,8 +11,10 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import type { LLMPreset } from '@/config/types/llm';
+import type { LLMPreset } from '@/types/llm';
 import { Logger } from '@/core/logger';
+import { regexProcessor } from '@/modules/workflow';
+import { getTavernHelper } from '@/core/utils';
 
 const MODULE = 'LLMAdapter';
 
@@ -64,24 +66,12 @@ interface QueuedRequest {
 /**
  * 获取 TavernHelper API
  */
-function getTavernHelper(): {
-  generate?: (options: unknown) => Promise<string>;
-  generateRaw?: (options: unknown) => Promise<string>;
-} | null {
-  try {
-    // @ts-expect-error - TavernHelper 全局对象
-    return window.TavernHelper || null;
-  } catch {
-    return null;
-  }
-}
-
 function createCancellationError(reason?: string): Error & { isCancellation: true } {
-  const error = new Error('UserCancelled') as Error & { isCancellation: true };
+  const error = new Error(reason) as Error & { isCancellation: true };
   error.name = 'UserCancelled';
   error.isCancellation = true;
   if (reason) {
-    error.message = 'UserCancelled';
+    error.message = `\nreason: ${reason}`;
   }
   return error;
 }
@@ -117,20 +107,20 @@ class LLMAdapter {
 
   private async requestStop(generationId?: string): Promise<void> {
     try {
-      const browserWindow = typeof window !== 'undefined' ? window : undefined;
-      if (!browserWindow) {
+      const helper = getTavernHelper();
+      if (!helper) {
         return;
       }
 
-      if (generationId && typeof browserWindow.stopGenerationById === 'function') {
-        const stopped = browserWindow.stopGenerationById(generationId);
+      if (generationId && typeof helper.stopGenerationById === 'function') {
+        const stopped = await helper.stopGenerationById(generationId);
         if (stopped) {
           return;
         }
       }
 
-      if (typeof browserWindow.stopAllGeneration === 'function') {
-        const stoppedAll = browserWindow.stopAllGeneration();
+      if (typeof helper.stopAllGeneration === 'function') {
+        const stoppedAll = await helper.stopAllGeneration();
         if (stoppedAll) {
           return;
         }
@@ -317,7 +307,6 @@ class LLMAdapter {
 
     // Engram Pipeline (RegexProcessor)
     // Fix P1: 移除导致循环依赖的 @/modules/workflow/steps 导入，改为直接导入
-    const { regexProcessor } = await import('@/modules/workflow/steps/processing/RegexProcessor');
     finalUserPrompt = regexProcessor.process(finalUserPrompt, 'input');
     this.throwIfCancelled(request.signal);
 

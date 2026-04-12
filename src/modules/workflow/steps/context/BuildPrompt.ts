@@ -1,10 +1,13 @@
-import { getBuiltInTemplateByCategory } from '@/config/types/defaults';
-import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
+import { getBuiltInTemplateByCategory } from '@/types/config';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import { Logger } from '@/core/logger';
 import { PromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
+import type { JobContext } from '../../core/JobContext';
+import type { IStep } from '../../core/Step';
+import { tryGetDbForChat } from '@/data/db';
+import { SettingsManager } from '@/config/settings';
+import { getTavernContext } from '@/core/utils';
 
 interface BuildPromptConfig {
   templateId?: string;
@@ -87,7 +90,6 @@ export class BuildPrompt implements IStep {
       ? contextConfig.category
       : this.config.category;
 
-    const { SettingsManager } = await import('@/config/settings');
     const allTemplates = SettingsManager.get('apiSettings')?.promptTemplates ?? [];
 
     PromptLoader.init();
@@ -158,7 +160,6 @@ export class BuildPrompt implements IStep {
     const keywordEntityIds = readKeywordEntityRefs(sharedData.keywordEntityIds);
     if (keywordEntityIds.length > 0) {
       const chatId = getCurrentChatId();
-      const { tryGetDbForChat } = await import('@/data/db');
       const db = chatId ? tryGetDbForChat(chatId) : null;
       if (db) {
         const names: string[] = [];
@@ -192,7 +193,7 @@ export class BuildPrompt implements IStep {
     userPrompt = applyMacroReplacements(userPrompt, potentialMacros);
 
     try {
-      const stContext = window.SillyTavern?.getContext?.();
+      const stContext = getTavernContext();
       const substituteParams = stContext?.substituteParams as
         | ((content: string) => string)
         | undefined;

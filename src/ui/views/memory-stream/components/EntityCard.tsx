@@ -5,7 +5,7 @@
  * 遵循「无框流体」设计
  * 文本层级：heading(名称) → label(类型) → foreground(描述) → meta(别名)
  */
-import type { EntityNode } from '@/data/types/graph';
+import type { EntityNode } from '@/types/graph';
 import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen } from 'lucide-react';
 import type { FC } from 'react';
 

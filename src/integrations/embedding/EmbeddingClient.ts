@@ -1,4 +1,4 @@
-import type { VectorConfig, VectorSource } from '@/config/types/rag';
+import type { VectorConfig, VectorSource } from '@/types/rag';
 
 /**
  * 嵌入 API 响应 (OpenAI 格式)

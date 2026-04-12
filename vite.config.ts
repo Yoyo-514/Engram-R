@@ -1,72 +1,70 @@
-import { defineConfig } from 'vite';
-import react from '@vitejs/plugin-react';
 import mdx from '@mdx-js/rollup';
+import react from '@vitejs/plugin-react';
+import path from 'node:path';
 import remarkGfm from 'remark-gfm';
-import path from 'path';
+import { defineConfig } from 'vite';
+import tsconfigPaths from 'vite-tsconfig-paths';
 
-const commitHash = 'unknown'; // Git hash is now detected at runtime via tavern API
+const commitHash = 'unknown';
 
 export default defineConfig(({ mode }) => ({
-  plugins: [
-    // MDX 支持 - 必须在 react() 之前
-    mdx({ remarkPlugins: [remarkGfm] }),
-    react(),
-  ],
+  plugins: [mdx({ remarkPlugins: [remarkGfm] }), tsconfigPaths(), react()],
 
-  // 开发服务器配置
   server: {
     port: 5173,
-    cors: true, // 允许跨域（ST 需要访问）
+    cors: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
     },
-    // HMR 配置
     hmr: {
-      overlay: false, // 禁用错误遮罩，避免在 ST 中遮挡太严重
+      overlay: false,
     },
-    // 允许访问项目根目录的 assets
     fs: {
       allow: ['..'],
     },
   },
 
-  // public 目录作为静态资源目录
   publicDir: 'public',
+
+  css: {
+    devSourcemap: true,
+    preprocessorOptions: {
+      scss: {},
+    },
+  },
 
   build: {
     outDir: 'dist',
     emptyDirOnBuild: true,
-
-    lib: {
-      entry: path.resolve(__dirname, 'src/index.tsx'),
-      name: 'Engram',
-      fileName: () => 'index.js',
-      formats: ['es'],
-    },
-
     rollupOptions: {
-      // 摇树优化
       treeshake: {
         moduleSideEffects: false,
         propertyReadSideEffects: false,
       },
-      // 不外部化任何依赖，全部打包
+      input: 'src/index.tsx',
       output: {
-        inlineDynamicImports: true,
-        assetFileNames: (assetInfo) => {
-          if (assetInfo.name?.endsWith('.css')) {
-            return 'style.css';
-          }
-          return assetInfo.name || 'assets/[name][extname]';
-        },
+        format: 'es',
+        entryFileNames: '[name].js',
+        chunkFileNames: '[name].[hash].chunk.js',
+        assetFileNames: '[name].[ext]',
+        preserveModules: false,
       },
     },
-
-    minify: mode === 'production',
-    sourcemap: true,
+    minify: mode === 'production' ? 'terser' : false,
+    sourcemap: mode === 'production' ? 'hidden' : 'inline',
+    terserOptions:
+      mode === 'production'
+        ? {
+            format: { quote_style: 1 },
+            mangle: { reserved: ['_', 'toastr', 'YAML', '$', 'z'] },
+          }
+        : {
+            format: { beautify: true, indent_level: 2 },
+            compress: false,
+            mangle: false,
+          },
   },
 
-  // 定义环境变量，避免浏览器 process is not defined 错误
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
     __COMMIT_HASH__: JSON.stringify(commitHash),
@@ -75,10 +73,8 @@ export default defineConfig(({ mode }) => ({
   resolve: {
     alias: {
       '@': path.resolve(__dirname, 'src'),
-      '@core': path.resolve(__dirname, 'src/core'),
-      '@infrastructure': path.resolve(__dirname, 'src/infrastructure'),
-      '@hooks': path.resolve(__dirname, 'src/hooks'),
-      '@components': path.resolve(__dirname, 'src/components'),
     },
   },
+
+  target: 'esnext',
 }));

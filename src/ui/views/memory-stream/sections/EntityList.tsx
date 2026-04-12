@@ -1,4 +1,4 @@
-import type { EntityNode } from '@/data/types/graph';
+import type { EntityNode } from '@/types/graph';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
 import { ChevronDown, RefreshCw, Search, Users } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';

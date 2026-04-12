@@ -1,9 +1,10 @@
 import { Logger } from '@/core/logger';
-import type { WorldbookConfig } from '@/config/types/prompt';
+import type { WorldbookConfig } from '@/types/prompt';
 import { getSTContext } from '@/integrations/tavern';
 import { getTavernHelper } from './adapter';
 import { getEntries } from './crud';
 import { type WorldInfoEntry } from './types';
+import { SettingsManager } from '@/config/settings';
 
 const MODULE = 'Worldbook';
 
@@ -15,7 +16,6 @@ async function loadFilteringState() {
     ? ([...(charBooks.additional || []), charBooks.primary].filter(Boolean) as string[])
     : [];
 
-  const { SettingsManager } = await import('@/config/settings');
   const settings = SettingsManager.getSettings();
   const config: WorldbookConfig | undefined = settings.apiSettings?.worldbookConfig;
 

@@ -1,7 +1,7 @@
 /**
  * LLM 预设编辑表单
  */
-import type { APISource, CustomAPIConfig, LLMPreset } from '@/config/types/llm';
+import type { APISource, CustomAPIConfig, LLMPreset } from '@/types/llm';
 import { type ModelInfo, ModelService } from '@/integrations/llm/ModelDiscovery';
 import { SliderField } from '@/ui/components/core/SliderField';
 import {

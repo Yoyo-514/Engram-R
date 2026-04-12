@@ -6,7 +6,7 @@ import {
   FormSection,
   SearchableSelectField,
 } from '@/ui/components/form/FormComponents';
-import type { RerankConfig } from '@/config/types/rag';
+import type { RerankConfig } from '@/types/rag';
 import { RefreshCw, Loader2 } from 'lucide-react';
 import { ModelService, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 

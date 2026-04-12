@@ -1,5 +1,5 @@
 import { SettingsManager } from '@/config/settings';
-import { EntityType, type EntityNode, type EventNode } from '@/data/types/graph';
+import { EntityType, type EntityNode, type EventNode } from '@/types/graph';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import { useMemoryStore, getCurrentDb } from '@/state/memoryStore';
@@ -11,6 +11,8 @@ import {
   groupEvents,
 } from '@/ui/views/memory-stream/utils/streamProcessors';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import Dexie from 'dexie';
+import { MacroService } from '@/integrations/tavern';
 
 const DESKTOP_BREAKPOINT = 768;
 
@@ -241,7 +243,6 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
           prev.map((e) => (e.id === id ? { ...e, is_archived: isArchived } : e))
         );
 
-        const { MacroService } = await import('@/integrations/tavern/prompt/macros');
         await MacroService.refreshEngramCache();
 
         notificationService.success(isArchived ? '实体已归档' : '实体已恢复活跃', 'MemoryStream');
@@ -495,7 +496,6 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       }
     }
     try {
-      const Dexie = (await import('dexie')).default;
       const names = await Dexie.getDatabaseNames();
       const currentDbName = getCurrentDb()?.name || '';
       const engramDbs = names.filter((n) => n.startsWith('Engram_') && n !== currentDbName);

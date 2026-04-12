@@ -6,7 +6,7 @@
 import {
   DEFAULT_PREPROCESSING_CONFIG,
   type PreprocessingConfig,
-} from '@/config/types/data_processing';
+} from '@/types/data_processing';
 
 // 重新导出以便模块内其他文件使用
 export { DEFAULT_PREPROCESSING_CONFIG };

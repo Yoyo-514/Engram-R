@@ -1,6 +1,6 @@
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_RECALL_CONFIG } from '@/config/types/defaults';
-import type { RecallConfig } from '@/config/types/rag';
+import { DEFAULT_RECALL_CONFIG } from '@/types/config';
+import type { RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { mergeResults, scoreAndSort, type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import { rerankService } from '@/modules/rag/retrieval/Reranker';

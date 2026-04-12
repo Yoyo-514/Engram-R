@@ -7,6 +7,7 @@
  */
 
 import { UpdateService } from '@/core/updater/Updater';
+import { getTavernContext } from '@/core/utils';
 import { notificationService } from '@/ui/services/NotificationService';
 import { CheckCircle, Download, Loader2, RefreshCw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
@@ -25,12 +26,8 @@ interface UpdateNoticeProps {
  */
 function getTavernRequestHeaders(): Record<string, string> {
   try {
-    // @ts-expect-error - 酒馆全局函数
-    if (typeof window.getRequestHeaders === 'function') {
-      return (window as any).getRequestHeaders();
-    }
-    // 备用方案：从 SillyTavern context 获取
-    const context = window.SillyTavern?.getContext?.();
+    // 从 SillyTavern context 获取
+    const context = getTavernContext();
     if (context?.getRequestHeaders) {
       return context.getRequestHeaders();
     }

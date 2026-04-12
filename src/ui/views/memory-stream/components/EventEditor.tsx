@@ -5,11 +5,11 @@
  * - KV 自动烧录进 summary（始终开启）
  * - 编辑即时反馈到父组件
  */
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { TextField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import { useResponsive } from '@/ui/hooks/useResponsive';
-import { debounce } from 'lodash';
+import debounce from 'lodash-es/debounce';
 import { Archive, ArrowLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
 import {
   forwardRef,

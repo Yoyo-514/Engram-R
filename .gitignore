@@ -23,6 +23,7 @@ npm-debug.log*
 .env.*.local
 
 # 临时文件
+temp
 *.tmp
 *.temp
 
@@ -39,3 +40,4 @@ coverage/
 .spec-workflow/
 
 tsconfig.tsbuildinfo
+tavern-api

@@ -14,6 +14,9 @@ import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '@/modules/workflow/core/JobContext';
 import type { AgenticRecall, PreprocessingConfig, PreprocessingResult } from './types';
 import { DEFAULT_PREPROCESSING_CONFIG } from './types';
+import { createPreprocessWorkflow, StopGeneration, WorkflowEngine } from '@/modules/workflow';
+import { injectMessage } from '@/integrations/tavern';
+import { RobustJsonParser } from '@/core/utils';
 
 // Helper functions to get context info safely
 
@@ -36,7 +39,6 @@ class Preprocessor {
    * 请求停止生成
    */
   private async requestStopGeneration(signal?: JobContext['signal']): Promise<void> {
-    const { StopGeneration } = await import('@/modules/workflow/steps/execution/StopGeneration');
     await StopGeneration.abort(signal);
   }
 
@@ -80,10 +82,6 @@ class Preprocessor {
 
     try {
       // Lazy import
-      const { WorkflowEngine } = await import('@/modules/workflow/core/WorkflowEngine');
-      const { createPreprocessWorkflow } =
-        await import('@/modules/workflow/definitions/PreprocessWorkflow');
-
       const context = await WorkflowEngine.run(createPreprocessWorkflow(), {
         trigger: 'auto',
         signal: cancelSignal,
@@ -102,7 +100,6 @@ class Preprocessor {
         Logger.info(LogModule.PREPROCESS, '检测到跳过标记，执行 AI 消息注入');
         const contentToInject = context.output;
         if (typeof contentToInject === 'string') {
-          const { injectMessage } = await import('@/integrations/tavern');
           await injectMessage('char', contentToInject);
           notificationService.success('已作为 AI 消息注入', 'Engram');
         } else {
@@ -140,7 +137,6 @@ class Preprocessor {
       const recallDecisionRaw = context.extractedTags?.recall_decision;
       if (recallDecisionRaw) {
         try {
-          const { RobustJsonParser } = await import('@/core/utils/JsonParser');
           const parsed = RobustJsonParser.parse<{ recalls?: AgenticRecall[] }>(recallDecisionRaw);
           if (parsed?.recalls && Array.isArray(parsed.recalls)) {
             agenticRecalls = parsed.recalls;

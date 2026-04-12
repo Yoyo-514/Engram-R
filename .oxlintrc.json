@@ -1,0 +1,62 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["typescript", "react", "import", "unicorn", "oxc", "vitest"],
+  "env": {
+    "browser": true,
+    "node": true,
+    "es2024": true
+  },
+  "globals": {
+    "$": "readonly",
+    "jQuery": "readonly",
+    "toastr": "readonly",
+    "DOMPurify": "readonly"
+  },
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**",
+    "node_modules/**",
+    ".kilo/**",
+    "docs/reference/**",
+    "**/*.d.ts"
+  ],
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn"
+  },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    "react/exhaustive-deps": "warn",
+    "typescript/consistent-type-imports": "error",
+    "typescript/no-explicit-any": "warn",
+    "eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_"
+      }
+    ],
+    "import/no-duplicates": "error",
+    "unicorn/prefer-node-protocol": "off"
+  },
+  "overrides": [
+    {
+      "files": ["test/**/*.{ts,tsx}"],
+      "globals": {
+        "afterAll": "readonly",
+        "afterEach": "readonly",
+        "beforeAll": "readonly",
+        "beforeEach": "readonly",
+        "describe": "readonly",
+        "expect": "readonly",
+        "it": "readonly",
+        "test": "readonly",
+        "vi": "readonly"
+      },
+      "rules": {
+        "typescript/no-explicit-any": "off"
+      }
+    }
+  ]
+}

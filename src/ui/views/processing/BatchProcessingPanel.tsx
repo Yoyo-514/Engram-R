@@ -24,6 +24,10 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import type { FC, ChangeEvent } from 'react';
+import { useMemoryStore } from '@/state/memoryStore';
+import { notificationService } from '@/ui/services/NotificationService';
+import { Archive, Loader2, Search as SearchIcon } from 'lucide-react';
+import { chatManager } from '@/data/ChatManager';
 
 // 任务状态图标
 const TaskStatusIcon: FC<{ status: string }> = ({ status }) => {
@@ -50,10 +54,6 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 };
 
 // ==================== 数据批处理区域 ====================
-
-import { useMemoryStore } from '@/state/memoryStore';
-import { notificationService } from '@/ui/services/NotificationService';
-import { Archive, Loader2, Search as SearchIcon } from 'lucide-react';
 
 /** 数据批处理 - 独立于楼层的数据级操作 */
 const DataBatchSection: FC = () => {
@@ -172,7 +172,6 @@ export const BatchProcessingPanel: FC = () => {
   useEffect(() => {
     const initFloors = async () => {
       try {
-        const { chatManager } = await import('@/data/ChatManager');
         const state = await chatManager.getState();
         setStartFloor((state.last_summarized_floor || 0) + 1);
       } catch (e) {

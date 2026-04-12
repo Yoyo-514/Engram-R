@@ -1,4 +1,4 @@
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { ErrorBoundary } from '@/ui/components/core/ErrorBoundary';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
 import { Brain, RefreshCw, Search } from 'lucide-react';

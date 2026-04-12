@@ -17,18 +17,18 @@ import { RecallLogService } from '@/core/logger/RecallLogger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/types/defaults';
+import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
 import type {
   BrainRecallConfig,
   RecallConfig,
   RerankConfig,
   VectorConfig,
-} from '@/config/types/rag';
-import type { EventNode } from '@/data/types/graph';
+} from '@/types/rag';
+import type { EventNode } from '@/types/graph';
 import { ChatHistoryHelper } from '@/integrations/tavern/chat/chatHistory';
 import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { WorkflowEngine } from '@/modules/workflow/core/WorkflowEngine';
-import { createRetrievalWorkflow } from '@/modules/workflow/definitions/RetrievalWorkflow';
+import { createRetrievalWorkflow } from '@/modules/workflow';
 import { brainRecallCache, type RecallCandidate } from './BrainRecallCache';
 
 // ==================== 类型定义 ====================

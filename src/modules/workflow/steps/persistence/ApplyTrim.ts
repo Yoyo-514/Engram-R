@@ -1,6 +1,6 @@
 import { SettingsManager } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { type EventNode } from '@/data/types/graph';
+import { type EventNode } from '@/types/graph';
 import { MacroService } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag';
 import { useMemoryStore } from '@/state/memoryStore';

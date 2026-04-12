@@ -1,8 +1,9 @@
 import { generateShortUUID } from '@/core/utils';
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 import { WorldInfoService } from '@/integrations/tavern';
 import { type StateCreator } from 'zustand';
 import { type CoreState, getCurrentDb, tryGetCurrentDb } from './coreSlice';
+import Dexie from 'dexie';
 
 export interface EventState {
   saveEvent: (
@@ -84,7 +85,6 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
     const destDb = getCurrentDb();
     if (!destDb) throw new Error('[MemoryStore] No current chat context to import into');
 
-    const Dexie = (await import('dexie')).default;
     const sourceDb = new Dexie(sourceDbName);
     sourceDb.version(3).stores({
       events:

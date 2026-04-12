@@ -6,7 +6,7 @@
  */
 
 import { SettingsManager } from '@/config/settings';
-import type { RerankConfig } from '@/config/types/rag';
+import type { RerankConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 
 // ==================== 类型定义 ====================

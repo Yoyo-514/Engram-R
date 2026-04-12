@@ -1,10 +1,11 @@
 import { Logger } from '@/core/logger';
-import { type EventNode } from '@/data/types/graph';
+import { type EventNode } from '@/types/graph';
 import { hideMessageRange, MacroService } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
+import { RobustJsonParser } from '@/core/utils';
 
 type EventKvInput = Partial<EventNode['structured_kv']> & {
   characters?: string | string[];
@@ -113,7 +114,6 @@ export class SaveEvent implements IStep {
       }
 
       try {
-        const { RobustJsonParser } = await import('@/core/utils/JsonParser');
         const parsed = RobustJsonParser.parse<ParsedEventsPayload>(content);
         eventsToSave = extractEvents(parsed);
       } catch {

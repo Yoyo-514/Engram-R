@@ -1,6 +1,6 @@
-import { type EntityNode, EntityType } from '@/data/types/graph';
+import { type EntityNode, EntityType } from '@/types/graph';
+import { deepClone, stringifyYaml } from '@/core/utils';
 import { ModernButton as Button } from '@/ui/components/core/Button';
-import * as jsYaml from 'js-yaml';
 import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
@@ -57,12 +57,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
   const updatePreview = (entity: EntityNode) => {
     try {
       const entityObj = { profile: entity.profile };
-      const yamlContent = jsYaml.dump(entityObj, {
-        indent: 2,
-        lineWidth: -1,
-        noRefs: true,
-        sortKeys: false,
-      });
+      const yamlContent = stringifyYaml(entityObj);
       setPreviewDescription(`${entity.name}\n${yamlContent.trim()}`);
     } catch (_error) {
       // If JSON is invalid during typing, we might not have a valid object to dump.
@@ -88,7 +83,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
   };
 
   const handleEditStart = (list: 'new' | 'updated', index: number, entity: EntityNodeWithDiff) => {
-    setEditingEntity({ list, index, entity: structuredClone(entity) });
+    setEditingEntity({ list, index, entity: deepClone(entity) });
   };
 
   const handleEditSave = () => {

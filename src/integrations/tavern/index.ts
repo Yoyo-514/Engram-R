@@ -1,6 +1,6 @@
-export * from './core/bridge';
-export * from './core/context';
-export * from './core/events';
+export * from './core';
+export * from './core';
+export * from './core';
 
 export * from './chat/chat';
 export * from './chat/chatHistory';

@@ -11,8 +11,8 @@ import manifest from '../../../manifest.json';
 import { EventBus } from '../events';
 import type { EngramEvent } from '../events';
 import type { LogModule } from './LogModule';
-import { DEFAULT_LOGGER_CONFIG, LogLevel } from './types';
-import type { LogEntry, LoggerConfig } from './types';
+import { DEFAULT_LOGGER_CONFIG, LogLevel } from '@/types/logger';
+import type { LogEntry, LoggerConfig } from '@/types/logger';
 
 // 日志流 Subject (RxJS)
 const logSubject = new Subject<LogEntry>();

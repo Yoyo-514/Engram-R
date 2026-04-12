@@ -7,6 +7,7 @@ import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
 import { ParseJson } from '@/modules/workflow/steps/processing/ParseJson';
 import { type BatchTask, type IBatchTaskHandler } from '../types';
 import { BatchUtils } from '@/modules/batch/utils/BatchUtils';
+import { createEntityWorkflow } from '@/modules/workflow';
 
 /** 外部导入模式 */
 export type ImportMode = 'fast' | 'detailed';
@@ -114,8 +115,6 @@ export class ImportTextTask implements IBatchTaskHandler {
 
               // V1.0.8: 外部导入文本复用执行实体提取 (由于 FetchContext 已经旁路了，这里可以直接塞原文进去让它以为是聊天记录)
               try {
-                const { createEntityWorkflow } =
-                  await import('@/modules/workflow/definitions/EntityWorkflow');
                 await WorkflowEngine.run(createEntityWorkflow(), {
                   trigger: 'auto',
                   config: {

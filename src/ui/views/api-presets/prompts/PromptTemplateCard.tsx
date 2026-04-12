@@ -2,12 +2,12 @@ import {
   createPromptTemplate,
   getBuiltInTemplateByCategory,
   getBuiltInTemplateById,
-} from '@/config/types/defaults';
-import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
-import { PROMPT_CATEGORIES } from '@/config/types/prompt';
+} from '@/types/config';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { PROMPT_CATEGORIES } from '@/types/prompt';
+import { parseYaml, stringifyYaml } from '@/core/utils';
 import { Logger, LogModule } from '@/core/logger';
 import { notificationService } from '@/ui/services/NotificationService';
-import { dump, load } from 'js-yaml';
 import {
   BrainCircuit,
   Clapperboard,
@@ -86,10 +86,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
       injectionMode: template.injectionMode,
     };
 
-    const yamlString = dump(exportData, {
-      lineWidth: -1, // 不换行
-      quotingType: '"',
-    });
+    const yamlString = stringifyYaml(exportData);
 
     const blob = new Blob([yamlString], { type: 'text/yaml' });
     const url = URL.createObjectURL(blob);
@@ -106,6 +103,19 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     fileInputRef.current?.click();
   };
 
+  function isRecord(value: unknown): value is Record<string, unknown> {
+    return value !== null && typeof value === 'object';
+  }
+
+  function isPromptCategory(value: unknown): value is PromptCategory {
+    return (
+      value === 'summary' ||
+      value === 'trim' ||
+      value === 'preprocessing' ||
+      value === 'entity_extraction'
+    );
+  }
+
   const handleImportFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !onImport) return;
@@ -113,33 +123,48 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     const reader = new FileReader();
     reader.onload = (e) => {
       try {
-        const content = e.target?.result as string;
-        // 尝试解析 YAML (兼容 JSON)
-        const data = load(content) as any;
-        const templateData = data?.template || data;
+        const content = typeof e.target?.result === 'string' ? e.target.result : '';
+        const data = parseYaml<Record<string, unknown>>(content);
+        const rawTemplate = isRecord(data?.template) ? data.template : data;
 
-        if (templateData && templateData.name) {
-          const importedTemplate = createPromptTemplate(
-            templateData.name,
-            templateData.category as PromptCategory,
-            {
-              enabled: template.enabled, // 保持当前启用状态
-              isBuiltIn: template.isBuiltIn, // 保持内置状态
-              boundPresetId: templateData.boundPresetId,
-              systemPrompt: templateData.systemPrompt,
-              userPromptTemplate: templateData.userPromptTemplate,
-              injectionMode: templateData.injectionMode,
-            }
-          );
-          // 保持原 ID
-          importedTemplate.id = template.id;
-          onImport(importedTemplate);
-          notificationService.success(`模板 "${importedTemplate.name}" 导入成功`);
-          Logger.info(LogModule.TAVERN, `Prompt template imported: ${importedTemplate.name}`);
-        } else {
+        if (!isRecord(rawTemplate)) {
           Logger.error(LogModule.TAVERN, 'Invalid template format during import', data);
           notificationService.error('导入失败: 无效的模板文件格式');
+          return;
         }
+
+        const name = typeof rawTemplate.name === 'string' ? rawTemplate.name.trim() : '';
+        const category = isPromptCategory(rawTemplate.category) ? rawTemplate.category : undefined;
+
+        if (!name || !category) {
+          Logger.error(LogModule.TAVERN, 'Invalid template fields during import', rawTemplate);
+          notificationService.error('导入失败: 模板缺少有效的名称或分类');
+          return;
+        }
+
+        const importedTemplate = createPromptTemplate(name, category, {
+          enabled: template.enabled,
+          isBuiltIn: template.isBuiltIn,
+          boundPresetId:
+            typeof rawTemplate.boundPresetId === 'string' ? rawTemplate.boundPresetId : null,
+          systemPrompt:
+            typeof rawTemplate.systemPrompt === 'string' ? rawTemplate.systemPrompt : '',
+          userPromptTemplate:
+            typeof rawTemplate.userPromptTemplate === 'string'
+              ? rawTemplate.userPromptTemplate
+              : '',
+          injectionMode:
+            rawTemplate.injectionMode === 'replace' ||
+            rawTemplate.injectionMode === 'append' ||
+            rawTemplate.injectionMode === 'prepend'
+              ? rawTemplate.injectionMode
+              : undefined,
+        });
+
+        importedTemplate.id = template.id;
+        onImport(importedTemplate);
+        notificationService.success(`模板 "${importedTemplate.name}" 导入成功`);
+        Logger.info(LogModule.TAVERN, `Prompt template imported: ${importedTemplate.name}`);
       } catch (err) {
         Logger.error(LogModule.TAVERN, 'Failed to parse template file', err);
         notificationService.error('导入失败: 无法解析文件');
@@ -147,7 +172,6 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     };
     reader.readAsText(file);
 
-    // 重置 input
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }

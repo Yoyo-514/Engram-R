@@ -5,6 +5,7 @@ import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '../../core/JobContext';
 import type { IStep, StepResult } from '../../core/Step';
+import { RobustJsonParser } from '@/core/utils';
 
 interface UserReviewConfig {
   title: string;
@@ -101,7 +102,6 @@ export class UserReview implements IStep {
         }
         if (context.extractedTags.recall_decision) {
           try {
-            const { RobustJsonParser } = await import('@/core/utils/JsonParser');
             const parsed = RobustJsonParser.parse<{ recalls?: AgenticRecall[] }>(
               context.extractedTags.recall_decision
             );

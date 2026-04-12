@@ -8,6 +8,7 @@ import { LogAdapter } from '@/modules/search/adapters/LogAdapter';
 import { MemoryAdapter } from '@/modules/search/adapters/MemoryAdapter';
 import { PresetAdapter } from '@/modules/search/adapters/PresetAdapter';
 import { SettingAdapter } from '@/modules/search/adapters/SettingAdapter';
+import { setCommandPaletteCallback } from '@/index';
 
 if (!window.__ENGRAM_SEARCH_INIT__) {
   searchService.registerAdapter(new CommandAdapter());
@@ -72,13 +73,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
   }, [isOpen]);
 
   useEffect(() => {
-    void import('@/index')
-      .then(({ setCommandPaletteCallback }) => {
-        setCommandPaletteCallback(() => setIsOpen(true));
-      })
-      .catch(() => {
-        // Ignore circular import fallback.
-      });
+    setCommandPaletteCallback(() => setIsOpen(true));
   }, []);
 
   const executeSelected = () => {

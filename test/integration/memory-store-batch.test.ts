@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { EntityType } from '@/data/types/graph';
+import { EntityType } from '@/types/graph';
 import { useMemoryStore } from '@/state/memoryStore';
 
 vi.mock('@/integrations/tavern', async () => {

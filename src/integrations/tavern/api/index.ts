@@ -5,6 +5,8 @@
  */
 
 export { WorldInfoService } from '../worldbook';
+import { EventBus, WorldInfoService } from '@/integrations/tavern';
+import { MessageService } from './Message';
 
 /**
  * 检查酒馆接口对接状态
@@ -18,10 +20,6 @@ export async function checkTavernIntegration(): Promise<{
   floorCount: number | null;
   characterName: string | null;
 }> {
-  const { EventBus } = await import('@/integrations/tavern');
-  const { MessageService } = await import('./Message');
-  const { WorldInfoService } = await import('../worldbook');
-
   const status = {
     eventBus: EventBus.isAvailable(),
     messageService: MessageService.isAvailable(),

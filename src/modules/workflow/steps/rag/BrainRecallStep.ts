@@ -1,6 +1,6 @@
 import { SettingsManager } from '@/config/settings';
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/types/defaults';
-import type { BrainRecallConfig, RecallConfig } from '@/config/types/rag';
+import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
+import type { BrainRecallConfig, RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';

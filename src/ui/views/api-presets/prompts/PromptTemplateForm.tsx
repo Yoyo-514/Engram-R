@@ -1,9 +1,10 @@
 /**
  * 提示词模板编辑表单
  */
-import type { LLMPreset } from '@/config/types/llm';
-import type { PromptCategory, PromptTemplate } from '@/config/types/prompt';
-import { PROMPT_CATEGORIES } from '@/config/types/prompt';
+import { WorldInfoService } from '@/integrations/tavern';
+import type { LLMPreset } from '@/types/llm';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { PROMPT_CATEGORIES } from '@/types/prompt';
 import { FormSection, SelectField, TextField } from '@/ui/components/form/FormComponents';
 import { WorldbookBindingField } from '@/ui/components/form/WorldbookBindingField';
 import { Check, Copy } from 'lucide-react';
@@ -125,7 +126,6 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
 
     const updateTokenCounts = async () => {
       try {
-        const { WorldInfoService } = await import('@/integrations/tavern/worldbook');
         const nextSysTokens = template.systemPrompt
           ? await WorldInfoService.countTokens(template.systemPrompt)
           : 0;

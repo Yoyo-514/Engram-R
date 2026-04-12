@@ -8,7 +8,7 @@
  */
 import { NAV_ITEMS } from '@/constants/navigation';
 import { Logger } from '@/core/logger';
-import type { LogEntry } from '@/core/logger/types';
+import type { LogEntry } from '@/types/logger';
 import { Switch } from '@/ui/components/core/Switch';
 import { PageTitle } from '@/ui/components/display/PageTitle';
 import { Divider } from '@/ui/components/layout/Divider';

@@ -1,4 +1,4 @@
-import type { WorldbookConfig } from '@/config/types/prompt';
+import type { WorldbookConfig } from '@/types/prompt';
 import { FormSection, SwitchField } from '@/ui/components/form/FormComponents';
 import { AlertCircle, Book, ChevronDown, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';

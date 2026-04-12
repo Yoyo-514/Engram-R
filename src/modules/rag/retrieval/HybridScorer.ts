@@ -5,7 +5,7 @@
  */
 
 import { Logger, LogModule } from '@/core/logger';
-import type { EventNode } from '@/data/types/graph';
+import type { EventNode } from '@/types/graph';
 
 // ==================== 类型定义 ====================
 
