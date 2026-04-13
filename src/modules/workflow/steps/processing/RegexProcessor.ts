@@ -28,6 +28,7 @@ export class RegexProcessor {
   private rules: RegexRule[] = [];
   private ruleRegexCache: Map<string, RegExp> = new Map();
   private tagRegexCache: Map<string, RegExp> = new Map();
+  private revision = 0;
 
   constructor(rules?: RegexRule[]) {
     this.setRules(rules || [...DEFAULT_REGEX_RULES]);
@@ -135,12 +136,17 @@ export class RegexProcessor {
     return [...this.rules];
   }
 
+  getRevision(): number {
+    return this.revision;
+  }
+
   /**
    * 设置规则 (清空缓存)
    */
   setRules(rules: RegexRule[]): void {
     this.rules = [...rules];
     this.ruleRegexCache.clear();
+    this.revision += 1;
   }
 
   /**
@@ -148,6 +154,7 @@ export class RegexProcessor {
    */
   addRule(rule: RegexRule): void {
     this.rules.push(rule);
+    this.revision += 1;
     // 无需清空整个缓存，只需新增即可 (懒加载)
   }
 
@@ -163,6 +170,7 @@ export class RegexProcessor {
       // 考虑到更新频率低，清除整个缓存也无妨，或者不管它（内存泄漏风险极低）。
       // 最佳实践：清除所有缓存以防万一
       this.ruleRegexCache.clear();
+      this.revision += 1;
     }
   }
 
@@ -172,6 +180,7 @@ export class RegexProcessor {
   deleteRule(id: string): void {
     this.rules = this.rules.filter((r) => r.id !== id);
     this.ruleRegexCache.clear();
+    this.revision += 1;
   }
 
   /**
@@ -181,6 +190,7 @@ export class RegexProcessor {
     const rule = this.rules.find((r) => r.id === id);
     if (rule) {
       rule.enabled = !rule.enabled;
+      this.revision += 1;
     }
   }
 

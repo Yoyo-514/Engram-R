@@ -14,10 +14,7 @@ export class ThemeManager {
    * 初始化主题系统
    */
   public static init() {
-    // 1. 注入 CSS 文件
-    this.injectStyles();
-
-    // 2. 加载并应用已保存的主题
+    // 1. 加载并应用已保存的主题
     // 优先使用 extension_settings，如果没有则回退到 localStorage (顺便尝试迁移)
     const settings = SettingsManager.loadSettings();
     let saved = settings.theme as ThemeName;
@@ -59,23 +56,6 @@ export class ThemeManager {
    */
   public static getTheme(): ThemeName {
     return this.currentTheme;
-  }
-
-  /**
-   * 注入样式表 (dist/style.css)
-   */
-  private static injectStyles() {
-    const cssId = 'engram-styles';
-    if (document.getElementById(cssId)) return;
-
-    const link = document.createElement('link');
-    link.id = cssId;
-    link.rel = 'stylesheet';
-    link.type = 'text/css';
-    // 注意：这里假设 dist/style.css 路径是相对于 index.html 的
-    // 添加时间戳防止缓存
-    link.href = `scripts/extensions/Engram_project/dist/style.css?v=${Date.now()}`;
-    document.head.appendChild(link);
   }
 
   /**

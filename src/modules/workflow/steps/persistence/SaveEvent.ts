@@ -1,11 +1,11 @@
 import { Logger } from '@/core/logger';
-import { type EventNode } from '@/types/graph';
+import { RobustJsonParser } from '@/core/utils';
 import { hideMessageRange, MacroService } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
+import { type EventNode } from '@/types/graph';
 import { notificationService } from '@/ui/services/NotificationService';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
-import { RobustJsonParser } from '@/core/utils';
 
 type EventKvInput = Partial<EventNode['structured_kv']> & {
   characters?: string | string[];
@@ -100,69 +100,84 @@ function extractEvents(value: unknown): ParsedEventInput[] {
     .filter((item): item is ParsedEventInput => item !== null);
 }
 
-// Replaces Pipeline.ts logic
+function buildBurnedSummary(event: ParsedEventInput): string {
+  const kv = event.structured_kv ?? event.meta ?? {};
+
+  const titleSuffixParts: string[] = [];
+  if (kv.causality) titleSuffixParts.push(kv.causality);
+  if (kv.logic && kv.logic.length > 0) {
+    titleSuffixParts.push(kv.logic.join(', '));
+  }
+  const titleSuffix = titleSuffixParts.length > 0 ? ` (${titleSuffixParts.join(' | ')})` : '';
+
+  const eventTitle = kv.event ?? '';
+  const titleLine = eventTitle ? `${eventTitle}${titleSuffix}:\n` : '';
+
+  const metaParts: string[] = [];
+  if (kv.time_anchor) metaParts.push(kv.time_anchor);
+  if (kv.location && kv.location.length > 0) {
+    metaParts.push(kv.location.join(', '));
+  }
+
+  const rolesArray =
+    kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
+  if (rolesArray.length > 0) metaParts.push(rolesArray.join(', '));
+  const metaLine = metaParts.length > 0 ? `(${metaParts.join(' | ')}) ` : '';
+
+  const rawSummary = event.summary ?? `[Summary Missing] ${kv.event ?? 'Unknown Event'}`;
+  return `${titleLine}${metaLine}${rawSummary}`;
+}
+
+async function parseEventsToSave(context: JobContext): Promise<ParsedEventInput[]> {
+  let eventsToSave = extractEvents(context.parsedData);
+
+  if (eventsToSave.length > 0) {
+    return eventsToSave;
+  }
+
+  const content = typeof context.output === 'string' ? context.output : context.cleanedContent;
+  if (!content) {
+    throw new Error('SaveEvent: missing output content');
+  }
+
+  try {
+    const parsed = RobustJsonParser.parse<ParsedEventsPayload>(content);
+    eventsToSave = extractEvents(parsed);
+  } catch {
+    throw new Error('SaveEvent: failed to parse events JSON');
+  }
+
+  if (eventsToSave.length === 0) {
+    throw new Error('SaveEvent: no events to save');
+  }
+
+  return eventsToSave;
+}
+
 export class SaveEvent implements IStep {
   name = 'SaveEvent';
 
   async execute(context: JobContext): Promise<void> {
-    let eventsToSave = extractEvents(context.parsedData);
-
-    if (eventsToSave.length === 0) {
-      const content = typeof context.output === 'string' ? context.output : context.cleanedContent;
-      if (!content) {
-        throw new Error('SaveEvent: 无内容可保存');
-      }
-
-      try {
-        const parsed = RobustJsonParser.parse<ParsedEventsPayload>(content);
-        eventsToSave = extractEvents(parsed);
-      } catch {
-        throw new Error('SaveEvent: 无法解析 JSON 事件数据');
-      }
-    }
-
-    if (eventsToSave.length === 0) {
-      throw new Error('SaveEvent: 无有效事件');
-    }
-
+    const eventsToSave = await parseEventsToSave(context);
     const store = useMemoryStore.getState();
     const db = await store.initChat();
-    if (!db) throw new Error('No chat context');
+
+    if (!db) {
+      throw new Error('SaveEvent: no chat context');
+    }
 
     const savedEvents: EventNode[] = [];
     const range = context.input.range || [0, 0];
     const isImport = context.input?.isImport === true;
     const autoHide = context.config.autoHide === true;
 
-    for (const evt of eventsToSave) {
-      const kv = evt.structured_kv ?? evt.meta ?? {};
-
-      const titleSuffixParts: string[] = [];
-      if (kv.causality) titleSuffixParts.push(kv.causality);
-      if (kv.logic && kv.logic.length > 0) {
-        titleSuffixParts.push(kv.logic.join(', '));
-      }
-      const titleSuffix = titleSuffixParts.length > 0 ? ` (${titleSuffixParts.join(' | ')})` : '';
-
-      const eventTitle = kv.event ?? '';
-      const titleLine = eventTitle ? `${eventTitle}${titleSuffix}:\n` : '';
-
-      const metaParts: string[] = [];
-      if (kv.time_anchor) metaParts.push(kv.time_anchor);
-      if (kv.location && kv.location.length > 0) {
-        metaParts.push(kv.location.join(', '));
-      }
-
+    for (const event of eventsToSave) {
+      const kv = event.structured_kv ?? event.meta ?? {};
       const rolesArray =
         kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
-      if (rolesArray.length > 0) metaParts.push(rolesArray.join(', '));
-      const metaLine = metaParts.length > 0 ? `(${metaParts.join(' | ')}) ` : '';
-
-      const rawSummary = evt.summary ?? `[Summary Missing] ${kv.event ?? '无摘要'}`;
-      const burnedSummary = `${titleLine}${metaLine}${rawSummary}`;
 
       const saved = await store.saveEvent({
-        summary: burnedSummary,
+        summary: buildBurnedSummary(event),
         structured_kv: {
           time_anchor: kv.time_anchor ?? '',
           role: rolesArray,
@@ -171,7 +186,7 @@ export class SaveEvent implements IStep {
           logic: kv.logic ?? [],
           causality: kv.causality ?? '',
         },
-        significance_score: evt.significance_score ?? 0.5,
+        significance_score: event.significance_score ?? 0.5,
         level: 0,
         is_embedded: false,
         is_archived: false,
@@ -194,19 +209,23 @@ export class SaveEvent implements IStep {
     if (autoHide && range[1] > 0 && !isImport) {
       const startIndex = range[0] - 1;
       const endIndex = range[1] - 1;
-      Logger.info('SaveEvent', '准备执行自动隐藏', {
+
+      Logger.info('SaveEvent', 'Preparing to auto-hide summarized messages', {
         workflowRange: range,
         hideRange: [startIndex, endIndex],
-        autoHide,
-        isImport,
         savedEventCount: savedEvents.length,
       });
-      hideMessageRange(startIndex, endIndex).catch((error) => {
-        Logger.error('SaveEvent', '自动隐藏失败', error);
-      });
+
+      try {
+        await hideMessageRange(startIndex, endIndex);
+        Logger.success('SaveEvent', 'Summarized messages hidden successfully');
+      } catch (error) {
+        Logger.error('SaveEvent', 'Auto-hide failed after summary save', error);
+        notificationService.warning('Summary saved, but auto-hide failed. Please check the chat state.', 'Engram');
+      }
     }
 
-    Logger.success('SaveEvent', `已保存 ${savedEvents.length} 个事件`);
-    notificationService.success(`已保存 ${savedEvents.length} 个事件`, 'Engram');
+    Logger.success('SaveEvent', `Saved ${savedEvents.length} event(s)`);
+    notificationService.success(`Saved ${savedEvents.length} event(s)`, 'Engram');
   }
 }

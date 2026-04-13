@@ -18,13 +18,11 @@ declare global {
     Mvu?: {
       getMvuData: (params: unknown) => unknown;
     };
-    // V1.2.8: 新版宏系统定义
     macros?: {
       register: (name: string, options: Record<string, unknown>) => unknown;
     };
   }
 }
-
 /**
  * MacroService 类
  * V0.8: 支持预处理使用的宏，包括 {{engramSummaries}} 和 {{worldbookContext}}
@@ -566,9 +564,23 @@ export class MacroService {
     // 兼容性修复: 强制使用旧版 registerMacro API
     // 新版 context.macros.register API 在某些 ST 版本中可能存在参数兼容问题导致 filter undefined 错误
     if (context?.registerMacro) {
+      this.unregisterMacro(name);
       context.registerMacro(name, handler);
     } else {
       Logger.warn('MacroService', `无法注册宏 ${name}: 没有可用的 registerMacro API`);
+    }
+  }
+
+  private static unregisterMacro(name: string) {
+    const context = getSTContext();
+    if (!context?.unregisterMacro) {
+      return;
+    }
+
+    try {
+      context.unregisterMacro(name);
+    } catch (error) {
+      Logger.debug('MacroService', `注销旧宏失败，继续覆盖注册: ${name}`, error);
     }
   }
 }

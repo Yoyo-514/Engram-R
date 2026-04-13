@@ -17,30 +17,163 @@ function getMessageContent(message: ChatHistoryMessage): string {
   return message.mes || message.content || message.message || '';
 }
 
+const PROCESSED_MESSAGE_CACHE_LIMIT = 500;
+
 export class ChatHistoryHelper {
-  /**
-   * 获取对话历史
-   * @param floorRange 可选：指定楼层范围 [start, end] (1-based, inclusive)
-   * 如果未指定，则从配置读取 limit 获取最近消息
-   */
+  private static processedMessageCache = new Map<string, string>();
+  private static cacheSignature = '';
+
+  private static resetCacheIfNeeded(signature: string): void {
+    if (this.cacheSignature === signature) {
+      return;
+    }
+
+    this.cacheSignature = signature;
+    this.processedMessageCache.clear();
+  }
+
+  private static getCachedProcessedMessage(cacheKey: string): string | undefined {
+    const cached = this.processedMessageCache.get(cacheKey);
+    if (cached === undefined) {
+      return undefined;
+    }
+
+    this.processedMessageCache.delete(cacheKey);
+    this.processedMessageCache.set(cacheKey, cached);
+    return cached;
+  }
+
+  private static setCachedProcessedMessage(cacheKey: string, value: string): void {
+    if (this.processedMessageCache.has(cacheKey)) {
+      this.processedMessageCache.delete(cacheKey);
+    } else if (this.processedMessageCache.size >= PROCESSED_MESSAGE_CACHE_LIMIT) {
+      const oldestKey = this.processedMessageCache.keys().next().value;
+      if (oldestKey !== undefined) {
+        this.processedMessageCache.delete(oldestKey);
+      }
+    }
+
+    this.processedMessageCache.set(cacheKey, value);
+  }
+
+  private static processMessage(
+    message: ChatHistoryMessage,
+    index: number,
+    messageCount: number,
+    tavernHelper: ReturnType<typeof getTavernHelper>,
+    enableNativeRegex: boolean,
+    hasTavernHelper: boolean,
+    hasFormatFunc: boolean
+  ): string {
+    let content = getMessageContent(message);
+    const originalContent = content;
+    const regexSource: RegexSource = message.is_user ? 'user_input' : 'ai_output';
+    const cacheKey = `${regexSource}|${originalContent}`;
+    const cachedContent = this.getCachedProcessedMessage(cacheKey);
+
+    if (cachedContent !== undefined) {
+      if (index === 0 || index === messageCount - 1) {
+        Logger.debug('ChatHistoryHelper', '消息处理详情', {
+          index,
+          original: originalContent.substring(0, 50),
+          source: regexSource,
+          cacheHit: true,
+          result: cachedContent.substring(0, 50),
+        });
+      }
+
+      return cachedContent;
+    }
+
+    if (index === 0) {
+      Logger.debug('ChatHistoryHelper', 'TavernHelper 诊断', {
+        hasTavernHelper,
+        hasFormatFunc,
+        enableNativeRegex,
+        availableMethods: tavernHelper ? Object.keys(tavernHelper).slice(0, 10) : [],
+      });
+    }
+
+    if (enableNativeRegex && hasTavernHelper && hasFormatFunc) {
+      try {
+        const prev = content;
+
+        if (tavernHelper?.formatAsTavernRegexedString) {
+          content = tavernHelper.formatAsTavernRegexedString(content, regexSource, 'prompt');
+        }
+
+        if (index === 0) {
+          Logger.debug('ChatHistoryHelper', 'TavernHelper 正则结果', {
+            didChange: prev !== content,
+            prevLength: prev.length,
+            afterLength: content.length,
+          });
+        }
+
+        if (!content && prev) {
+          if (index === 0) {
+            Logger.debug('ChatHistoryHelper', 'TavernHelper stripped content empty! (Recovered)', {
+              prev,
+              content,
+            });
+          }
+          content = prev;
+        }
+      } catch (err) {
+        Logger.warn('ChatHistoryHelper', '酒馆原生正则清洗失败', err);
+      }
+    } else if (index === 0 && !enableNativeRegex) {
+      Logger.debug('ChatHistoryHelper', '酒馆原生正则已禁用，跳过清洗');
+    } else if (index === 0) {
+      Logger.warn('ChatHistoryHelper', 'TavernHelper.formatAsTavernRegexedString 不可用', {
+        hasTavernHelper,
+        hasFormatFunc,
+      });
+    }
+
+    const preRegex = content;
+    content = regexProcessor.process(content, 'both');
+
+    if (!content && preRegex) {
+      Logger.warn('ChatHistoryHelper', 'RegexProcessor 清洗后内容为空!', {
+        preRegex,
+        content,
+      });
+    }
+
+    if (index === 0 || index === messageCount - 1) {
+      Logger.debug('ChatHistoryHelper', '消息处理详情', {
+        index,
+        original: originalContent.substring(0, 50),
+        source: regexSource,
+        step1_tavern: preRegex.substring(0, 50),
+        step2_regex: content.substring(0, 50),
+        cacheHit: false,
+      });
+    }
+
+    this.setCachedProcessedMessage(cacheKey, content);
+    return content;
+  }
+
   static getChatHistory(floorRange?: [number, number]): string {
     try {
       const context = getSTContext();
       const tavernHelper = getTavernHelper();
       const regexConfig = SettingsManager.get('apiSettings')?.regexConfig;
       const enableNativeRegex = regexConfig?.enableNativeRegex ?? true;
+      const hasTavernHelper = !!tavernHelper;
+      const hasFormatFunc = typeof tavernHelper.formatAsTavernRegexedString === 'function';
+      const cacheSignature = `${regexProcessor.getRevision()}|${enableNativeRegex ? 1 : 0}|${hasFormatFunc ? 1 : 0}`;
+
+      this.resetCacheIfNeeded(cacheSignature);
 
       if (context?.chat && Array.isArray(context.chat)) {
         let messages: ChatHistoryMessage[] = [];
 
         if (floorRange) {
-          // 指定范围模式 (Summarizer 用)
           const [start, end] = floorRange;
-          // 鲁棒性保护：确保 start 至少为 1，防止 slice(-1) 错误
           const effectiveStart = Math.max(1, start);
-
-          // slice(start, end) end 是不包含的 (exclusive)，但我们需要包含 end 楼层。
-          // floor 1 对应 index 0。
           const sliceStart = effectiveStart - 1;
           const sliceEnd = end;
           messages = context.chat.slice(sliceStart, sliceEnd);
@@ -52,21 +185,16 @@ export class ChatHistoryHelper {
             firstMsgIndex: messages[0] ? context.chat.indexOf(messages[0]) : -1,
           });
         } else {
-          // 默认模式：智能增量 (Last Summarized -> End)
           const store = useMemoryStore.getState();
           const lastFloor = store.lastSummarizedFloor;
 
           if (lastFloor > 0) {
-            // 如果有上次总结的记录，从下一层开始获取
-            // lastFloor 是 index + 1 (1-based)
-            // slice(lastFloor) 刚好是从 lastFloor (index) 开始，即 floor lastFloor + 1
             messages = context.chat.slice(lastFloor);
             Logger.debug('ChatHistoryHelper', 'getChatHistory (Smart Incremental)', {
               lastSummarizedFloor: lastFloor,
               count: messages.length,
             });
           } else {
-            // Fallback: 最近 N 条
             const limit = this.getDynamicChatHistoryLimit();
             messages = context.chat.slice(-limit);
             Logger.debug('ChatHistoryHelper', 'getChatHistory (Recent Fallback)', {
@@ -79,101 +207,20 @@ export class ChatHistoryHelper {
         if (messages.length === 0) return '';
 
         return messages
-          .map((message, index: number) => {
-            // 鲁棒的 content 获取
-            let content = getMessageContent(message);
-            const originalContent = content;
-            const regexSource: RegexSource = message.is_user ? 'user_input' : 'ai_output';
-
-            // 1. 酒馆原生正则清洗
-            // V0.9.9: 增加详细调试日志
-            const hasTavernHelper = !!tavernHelper;
-            const hasFormatFunc = typeof tavernHelper.formatAsTavernRegexedString === 'function';
-
-            // 只在第一条消息输出一次诊断信息
-            if (index === 0) {
-              Logger.debug('ChatHistoryHelper', 'TavernHelper 诊断', {
-                hasTavernHelper,
-                hasFormatFunc,
-                enableNativeRegex,
-                availableMethods: tavernHelper ? Object.keys(tavernHelper).slice(0, 10) : [],
-              });
-            }
-
-            if (enableNativeRegex && hasTavernHelper && hasFormatFunc) {
-              try {
-                const prev = content;
-
-                // JS-Slash-Runner 正确签名：
-                // formatAsTavernRegexedString(text, source, destination, option?)
-                // destination='prompt' 对应“仅格式提示词”链路。
-                if (tavernHelper?.formatAsTavernRegexedString) {
-                  content = tavernHelper.formatAsTavernRegexedString(
-                    content,
-                    regexSource,
-                    'prompt'
-                  );
-                }
-
-                // 检查正则是否有实际效果
-                const didChange = prev !== content;
-                if (index === 0) {
-                  Logger.debug('ChatHistoryHelper', 'TavernHelper 正则结果', {
-                    didChange,
-                    prevLength: prev.length,
-                    afterLength: content.length,
-                  });
-                }
-
-                if (!content && prev) {
-                  if (index === 0) {
-                    Logger.debug(
-                      'ChatHistoryHelper',
-                      'TavernHelper stripped content empty! (Recovered)',
-                      { prev, content }
-                    );
-                  }
-                  content = prev; // 兜底恢复
-                }
-              } catch (err) {
-                Logger.warn('ChatHistoryHelper', '酒馆原生正则清洗失败', err);
-              }
-            } else if (index === 0 && !enableNativeRegex) {
-              Logger.debug('ChatHistoryHelper', '酒馆原生正则已禁用，跳过清洗');
-            } else if (index === 0) {
-              Logger.warn('ChatHistoryHelper', 'TavernHelper.formatAsTavernRegexedString 不可用', {
-                hasTavernHelper,
-                hasFormatFunc,
-              });
-            }
-
-            const preRegex = content;
-            // 2. Engram 内部正则清洗 (关键：逐条清洗)
-            content = regexProcessor.process(content, 'both');
-
-            if (!content && preRegex) {
-              Logger.warn('ChatHistoryHelper', 'RegexProcessor 清洗后内容为空!', {
-                preRegex,
-                content,
-              });
-            }
-
-            // 仅记录第一条和最后一条消息的处理情况以供调试
-            if (index === 0 || index === messages.length - 1) {
-              Logger.debug('ChatHistoryHelper', '消息处理详情', {
-                index,
-                original: originalContent.substring(0, 50),
-                source: regexSource,
-                step1_tavern: preRegex.substring(0, 50),
-                step2_regex: content.substring(0, 50),
-              });
-            }
-
-            // 3. 返回纯内容 (去除角色名前缀)
-            return content;
-          })
-          .join('\n\n'); // 使用双换行分隔，更清晰
+          .map((message, index: number) =>
+            this.processMessage(
+              message,
+              index,
+              messages.length,
+              tavernHelper,
+              enableNativeRegex,
+              hasTavernHelper,
+              hasFormatFunc
+            )
+          )
+          .join('\n\n');
       }
+
       Logger.warn('ChatHistoryHelper', 'Context chat is empty or invalid');
       return '';
     } catch (e) {
@@ -182,9 +229,6 @@ export class ChatHistoryHelper {
     }
   }
 
-  /**
-   * V0.9.9: 获取当前对话消息总数 (用于精确日志记录)
-   */
   static getCurrentMessageCount(): number {
     try {
       const context = getSTContext();
@@ -197,19 +241,11 @@ export class ChatHistoryHelper {
     }
   }
 
-  /**
-   * V0.9.2: 获取动态计算的 chatHistory 消息条数
-   * 直接使用 bufferSize,从而和{{engramsummaries}}进行衔接
-   * 无参数调用 {{chatHistory}} 时使用
-   */
   static getDynamicChatHistoryLimit(): number {
     try {
       const summarizerConfig: Partial<SummarizerConfig> = SettingsManager.get('summarizerConfig');
       const floorInterval = summarizerConfig?.floorInterval ?? 20;
       const bufferSize = summarizerConfig?.bufferSize ?? 10;
-      // V1.2.7: 修正：使用 floorInterval 而非 bufferSize
-      // 原因：间隔 20，缓冲 10 时，第 11~20 层可能还没被总结但也不在缓冲区内
-      // 使用 floorInterval 确保完整覆盖可能出现在上下文中的内容
       const limit = Math.max(1, floorInterval);
       Logger.debug('ChatHistoryHelper', '动态计算 chatHistory limit (FloorInterval)', {
         floorInterval,
@@ -219,7 +255,7 @@ export class ChatHistoryHelper {
       return limit;
     } catch (e) {
       Logger.warn('ChatHistoryHelper', '动态计算 limit 失败，使用默认值 20', e);
-      return 20; // 默认 floorInterval
+      return 20;
     }
   }
 }
