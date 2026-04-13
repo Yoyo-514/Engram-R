@@ -9,11 +9,11 @@
 import { SettingsManager, type EngramSettings } from '@/config/settings';
 import { DEFAULT_BRAIN_RECALL_CONFIG, getDefaultAPISettings } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
-import { getSTContext, MacroService, getCurrentChatId } from '@/integrations/tavern';
+import { getSTContext, getCurrentChatId, getSummaries } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { tryGetDbForChat } from '@/data/db'
+import { tryGetDbForChat } from '@/data/db';
 
 // ==================== 类型定义 ====================
 
@@ -233,7 +233,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
         score: s.finalScore,
       }));
 
-      const contextText = MacroService.getSummaries();
+      const contextText = getSummaries();
 
       if (!isMounted.current) return;
       setBrainStats({
@@ -309,7 +309,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               SettingsManager.set('apiSettings', {
                 ...currentApiSettings,
                 entityExtractConfig: {
-                  ...(entityConfig || {}),
+                  ...entityConfig,
                   enabled: nextVal,
                 },
               } as any);
@@ -322,7 +322,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               SettingsManager.set('apiSettings', {
                 ...currentApiSettings,
                 embeddingConfig: {
-                  ...(embeddingConfig || {}),
+                  ...embeddingConfig,
                   enabled: nextVal,
                 },
               } as any);
@@ -334,7 +334,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               SettingsManager.set('apiSettings', {
                 ...currentApiSettings,
                 recallConfig: {
-                  ...(recallConfig || {}),
+                  ...recallConfig,
                   enabled: nextVal,
                 },
               } as any);
@@ -351,7 +351,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               SettingsManager.set('apiSettings', {
                 ...currentApiSettings,
                 recallConfig: {
-                  ...(currentApiSettings.recallConfig ?? defaults.recallConfig ?? {}),
+                  ...(currentApiSettings.recallConfig ?? defaults.recallConfig),
                   usePreprocessing: nextVal,
                 },
               } as any);

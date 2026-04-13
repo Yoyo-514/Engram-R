@@ -1,4 +1,4 @@
-import { MacroService } from '@/integrations/tavern';
+import { getEntityStates, getSummaries } from '@/integrations/tavern';
 import {
   ArrowDownUp,
   Database,
@@ -63,8 +63,8 @@ export const ActionBar: FC<ActionBarProps> = ({
   onCreate,
 }) => {
   const handlePreviewOpen = () => {
-    const summaries = MacroService.getSummaries() || '(无剧情摘要)';
-    const entities = MacroService.getEntityStates() || '(无实体状态)';
+    const summaries = getSummaries() || '(无剧情摘要)';
+    const entities = getEntityStates() || '(无实体状态)';
     onPreviewClick(
       `--- [Engram Summaries] ---\n${summaries}\n\n--- [Engram Entity States] ---\n${entities}`
     );

@@ -1,7 +1,7 @@
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
 import { chatManager } from '@/data/ChatManager';
-import { MacroService } from '@/integrations/tavern';
+import { getCurrentMessageCount } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { entityBuilder } from '@/modules/memory/EntityExtractor';
 import { eventTrimmer } from '@/modules/memory/EventTrimmer';
@@ -34,7 +34,7 @@ export class HistoryTask implements IBatchTaskHandler {
     // 我们需要重新拉取各个模块最新的状态以得到 currentFloor
     const state = await chatManager.getState();
     // @ts-ignore
-    const currentFloor = state.current_floor || MacroService.getCurrentMessageCount() || 0;
+    const currentFloor = state.current_floor || getCurrentMessageCount() || 0;
 
     const summarizerConfig = summarizerService.getConfig();
     const entityConfig = entityBuilder.getConfig();

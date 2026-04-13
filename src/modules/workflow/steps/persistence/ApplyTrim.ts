@@ -1,7 +1,7 @@
 import { SettingsManager } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { type EventNode } from '@/types/graph';
-import { MacroService } from '@/integrations/tavern';
+import { refreshCache } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -83,7 +83,7 @@ export class ApplyTrim implements IStep {
     await store.archiveEvents(sourceEventIds);
 
     // 4. 刷新缓存
-    await MacroService.refreshCache();
+    await refreshCache();
 
     Logger.success('ApplyTrim', '精简完成', {
       merged: eventsToMerge.length,

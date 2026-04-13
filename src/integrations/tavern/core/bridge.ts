@@ -11,13 +11,14 @@ import { summarizerService, entityBuilder } from '@/modules/memory';
 import {
   checkTavernIntegration,
   createTopBarButton,
-  MacroService,
+  MacroServiceInit,
   mountGlobalOverlay,
   toggleMainPanel,
+  WorldBookSlotService,
+  initQuickPanelButton,
 } from '@/integrations/tavern';
 import { ThemeManager } from '@/ui/services';
 import { injector } from '@/modules/rag';
-import { WorldBookSlotService, initQuickPanelButton } from '@/integrations/tavern';
 import { CharacterDeleteService } from '@/data/CharacterCleanup';
 import { setupKeyboardShortcuts } from '@/core/utils';
 import { openCommandPalette, toggleQuickPanel } from '@/index';
@@ -88,7 +89,7 @@ export async function initializeEngram(): Promise<void> {
   // Initialize MacroService (Global ST Macros) and Worldbook Slot
   try {
     await WorldBookSlotService.init();
-    await MacroService.init();
+    await MacroServiceInit();
   } catch (e) {
     Logger.warn('MacroService', '宏服务/世界书初始化失败', { error: String(e) });
   }

@@ -17,9 +17,11 @@ import {
   EventBus,
   getCurrentChatId,
   getSTContext,
-  MacroService,
-  EventType,
   events,
+  refreshCache,
+  setUserInput,
+  refreshEngramCache,
+  refreshCacheWithNodes,
 } from '@/integrations/tavern';
 import { preprocessor } from '@/modules/preprocessing';
 import type { PreprocessingResult } from '@/modules/preprocessing/types';
@@ -70,7 +72,7 @@ class Injector {
       Logger.debug(LogModule.RAG_INJECT, '捕获到 CHAT_CHANGED 事件');
       this.processingChats.clear();
       this.cacheInvalid = false; // 切换聊天时重置缓存状态
-      MacroService.refreshCache().catch((e) => {
+      refreshCache().catch((e) => {
         Logger.warn(LogModule.RAG_INJECT, '聊天切换时刷新缓存失败', e);
       });
     });
@@ -283,9 +285,9 @@ class Injector {
         ) {
           try {
             // 设置用户输入到宏缓存
-            MacroService.setUserInput(userInput);
+            setUserInput(userInput);
             // 预处理阶段只需要 Engram 侧缓存，避免在请求发送前再次触发世界书全量扫描。
-            await MacroService.refreshEngramCache();
+            await refreshEngramCache();
 
             preprocessResult = await preprocessor.process(userInput);
 
@@ -341,7 +343,7 @@ class Injector {
                   Logger.success(LogModule.RAG_INJECT, 'Agentic RAG 召回完成', {
                     nodeCount: agenticResult.nodes.length,
                   });
-                  await MacroService.refreshCacheWithNodes(agenticResult.nodes);
+                  await refreshCacheWithNodes(agenticResult.nodes);
                   SettingsManager.incrementStatistic('totalRagInjections', 1);
                   ragHandled = true;
                 } else {
@@ -369,7 +371,7 @@ class Injector {
                   nodeCount: recallResult.nodes.length,
                   entityCount: recallResult.recalledEntities?.length ?? 0,
                 });
-                await MacroService.refreshCacheWithNodes(recallResult.nodes);
+                await refreshCacheWithNodes(recallResult.nodes);
                 SettingsManager.incrementStatistic('totalRagInjections', 1);
               } else {
                 Logger.debug(LogModule.RAG_INJECT, '召回无结果');

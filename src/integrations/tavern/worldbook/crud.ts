@@ -47,7 +47,7 @@ export async function getEntries(worldbookName: string): Promise<WorldInfoEntry[
         name: (entry.name as string) || '',
         world: worldbookName, // Inject worldbook name for filtering context
         content: (entry.content as string) || '',
-        enabled: typeof entry.enabled === 'boolean' ? entry.enabled : entry.disable !== true,
+        enabled: entry.disable !== undefined ? entry.disable !== true : (entry.enabled as boolean) ?? true,
         constant: strategy?.type === 'constant' || (entry.constant as boolean) === true,
         keys,
         position: (position?.type as WorldInfoPosition) || 'before_character_definition',

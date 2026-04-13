@@ -1,67 +1,56 @@
+import { SettingsManager } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { getEjsTemplate, getMvu } from '@/core/utils';
 
-type EjsRenderContext = Record<string, unknown> & {
-  mvu?: unknown;
-};
+export async function processEJSMacros(entries: string[]): Promise<string[]> {
+  if (entries.length === 0) {
+    return entries;
+  }
 
-type MvuDataLike = {
-  stat_data?: unknown;
-};
+  const ejs = getEjsTemplate();
+  const mvu = getMvu();
 
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object';
-}
+  const enableEJS = SettingsManager.get('apiSettings')?.worldbookConfig?.enableEJS ?? true;
+  if (!enableEJS) {
+    Logger.debug('EjsProcessor', 'EJS processing disabled by worldbook settings');
+    return entries;
+  }
 
-function isMvuDataLike(value: unknown): value is MvuDataLike {
-  return isRecord(value) && 'stat_data' in value;
-}
+  if (ejs && typeof ejs.evaltemplate !== 'function') {
+    Logger.debug('EjsProcessor', 'ST-Prompt-Template unavailable, skipping EJS processing');
+    return entries;
+  }
 
-export class EjsProcessor {
-  /**
-   * 利用 ST-Prompt-Template (如果存在) 清洗 EJS 宏
-   * V0.8.6: 切换为直接调用 window.EjsTemplate API (参考其他人的做法)
-   */
-  static async processEJSMacros(entries: string[]): Promise<string[]> {
-    if (entries.length === 0) return entries;
+  try {
+    const context = ejs ? await ejs.prepareContext() : null;
 
-    // 检查 ST-Prompt-Template 是否可用
-    if (!window.EjsTemplate || typeof window.EjsTemplate.evalTemplate !== 'function') {
-      Logger.debug('EjsProcessor', 'ST-Prompt-Template 未检测到，跳过 EJS 处理');
-      return entries;
-    }
-
-    try {
-      // 1. 准备上下文 (自动包含 {{user}}, {{char}} 及所有酒馆变量)
-      const context = (await window.EjsTemplate.prepareContext()) as EjsRenderContext;
-
-      // 2. 尝试获取 MVU 变量并合并
-      if (typeof window.Mvu !== 'undefined' && window.Mvu.getMvuData) {
-        try {
-          const mvuObj = window.Mvu.getMvuData({ type: 'message', message_id: 'latest' });
-          if (isMvuDataLike(mvuObj) && mvuObj.stat_data !== undefined) {
-            context.mvu = mvuObj.stat_data;
-          }
-        } catch (e) {
-          Logger.warn('EjsProcessor', '获取 MVU 数据失败', e);
+    if (mvu && typeof mvu.getMvuData == 'function') {
+      try {
+        const mvuObj = mvu.getMvuData({ type: 'message', message_id: 'latest' });
+        if (context && mvuObj.stat_data !== undefined) {
+          context.mvu = mvuObj.stat_data;
         }
+      } catch (error) {
+        Logger.warn('EjsProcessor', 'Failed to read MVU context for EJS', error);
       }
-
-      // 3. 逐条渲染
-      const processed = await Promise.all(
-        entries.map(async (content) => {
-          try {
-            return await window.EjsTemplate!.evalTemplate(content, context as Record<string, any>);
-          } catch (err) {
-            Logger.warn('EjsProcessor', 'EJS 渲染单条失败，保留原内容', err);
-            return content;
-          }
-        })
-      );
-
-      return processed;
-    } catch (e) {
-      Logger.warn('EjsProcessor', 'EJS 预处理失败', e);
-      return entries;
     }
+
+    return await Promise.all(
+      entries.map(async (content) => {
+        try {
+          return await ejs!.evaltemplate(content, context as Record<string, unknown>);
+        } catch (error) {
+          Logger.warn(
+            'EjsProcessor',
+            'EJS render failed for a worldbook entry, keeping raw content',
+            error
+          );
+          return content;
+        }
+      })
+    );
+  } catch (error) {
+    Logger.warn('EjsProcessor', 'EJS preprocessing failed', error);
+    return entries;
   }
 }

@@ -11,8 +11,8 @@ import {
   groupEvents,
 } from '@/ui/views/memory-stream/utils/streamProcessors';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import Dexie from 'dexie';
-import { MacroService } from '@/integrations/tavern';
+import dexie from 'dexie';
+import { refreshEngramCache } from '@/integrations/tavern';
 
 const DESKTOP_BREAKPOINT = 768;
 
@@ -243,7 +243,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
           prev.map((e) => (e.id === id ? { ...e, is_archived: isArchived } : e))
         );
 
-        await MacroService.refreshEngramCache();
+        await refreshEngramCache();
 
         notificationService.success(isArchived ? '实体已归档' : '实体已恢复活跃', 'MemoryStream');
       } catch (error) {
@@ -496,7 +496,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       }
     }
     try {
-      const names = await Dexie.getDatabaseNames();
+      const names = await dexie.getDatabaseNames();
       const currentDbName = getCurrentDb()?.name || '';
       const engramDbs = names.filter((n) => n.startsWith('Engram_') && n !== currentDbName);
       setAvailableDbs(engramDbs);

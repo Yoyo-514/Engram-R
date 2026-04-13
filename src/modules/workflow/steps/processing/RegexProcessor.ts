@@ -119,8 +119,8 @@ export class RegexProcessor {
    */
   validatePattern(pattern: string, flags: string): { valid: boolean; error?: string } {
     try {
-      new RegExp(pattern, flags);
-      return { valid: true };
+      const regexp = new RegExp(pattern, flags);
+      return { valid: Boolean(regexp) };
     } catch (e) {
       return {
         valid: false,

@@ -122,9 +122,7 @@ export class WorldbookScannerService {
     contextText: string,
     options?: { forceInclude?: boolean }
   ): Promise<string> {
-    const entries = await getEntries(worldbookName);
-    if (entries.length === 0) return '';
-
+    // Early-exit: check filtering state BEFORE expensive getEntries() API call
     const filterState = await loadFilteringState();
     let { disabledGlobalBooks } = filterState;
     const { disabledEntries, globalWorldbooks, config } = filterState;
@@ -145,6 +143,9 @@ export class WorldbookScannerService {
     if (options?.forceInclude) {
       disabledGlobalBooks = disabledGlobalBooks.filter((name) => name !== worldbookName);
     }
+
+    const entries = await getEntries(worldbookName);
+    if (entries.length === 0) return '';
 
     const activeEntries: WorldInfoEntry[] = [];
     const lowerContext = contextText.toLowerCase();

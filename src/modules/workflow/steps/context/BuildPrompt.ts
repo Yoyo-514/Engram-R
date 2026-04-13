@@ -182,7 +182,7 @@ export class BuildPrompt implements IStep {
       '{{engramEntityStates}}': readString(contextInput.engramEntityStates),
       '{{targetSummaries}}': readString(contextInput.targetSummaries),
       '{{worldbookContext}}': readString(contextInput.worldbookContext),
-      '{{context}}': readString(contextInput.context) ?? readString(contextInput.worldbookContext),
+      '{{context}}': readString(contextInput.context) ?? readString(contextInput.charPersona),
       '{{userPersona}}': readString(contextInput.userPersona),
       '{{hitEntities}}': hitEntitiesSummary,
       '{{char}}': readString(contextInput.charName),

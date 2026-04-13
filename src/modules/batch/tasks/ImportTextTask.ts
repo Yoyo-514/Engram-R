@@ -6,7 +6,7 @@ import { WorkflowEngine } from '@/modules/workflow/core/WorkflowEngine';
 import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
 import { ParseJson } from '@/modules/workflow/steps/processing/ParseJson';
 import { type BatchTask, type IBatchTaskHandler } from '../types';
-import { BatchUtils } from '@/modules/batch/utils/BatchUtils';
+import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
 import { createEntityWorkflow } from '@/modules/workflow';
 
 /** 外部导入模式 */
@@ -35,7 +35,7 @@ export class ImportTextTask implements IBatchTaskHandler {
    * 第一步：分片并预估需要创建的 Task 数
    */
   async estimate(): Promise<BatchTask[]> {
-    const chunks = BatchUtils.chunkText(this.text, this.config.chunkSize, this.config.overlapSize);
+    const chunks = chunkText(this.text, this.config.chunkSize, this.config.overlapSize);
     if (chunks.length === 0) return [];
 
     // 我们对于 Import 这个行为，就只构建一个宏观级的任务单元
@@ -60,7 +60,7 @@ export class ImportTextTask implements IBatchTaskHandler {
   ): AsyncGenerator<void, void, unknown> {
     // ImportText 只有一个宏观任务定义在 tasks[0]
     const mainTask = tasks[0];
-    const chunks = BatchUtils.chunkText(this.text, this.config.chunkSize, this.config.overlapSize);
+    const chunks = chunkText(this.text, this.config.chunkSize, this.config.overlapSize);
     let success = 0;
 
     for (let i = 0; i < chunks.length; i++) {
@@ -76,7 +76,7 @@ export class ImportTextTask implements IBatchTaskHandler {
       try {
         if (this.config.mode === 'detailed') {
           // V0.9.7: 调用 LLM 生成结构化摘要
-          const llmResult = await BatchUtils.summarizeChunk(chunk, i);
+          const llmResult = await summarizeChunk(chunk, i);
           if (checkStopSignal()) return;
 
           if (llmResult) {

@@ -14,7 +14,7 @@ import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
 import type { EntityNode } from '@/types/graph';
-import { MacroService } from '@/integrations/tavern';
+import { getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
 import { createEntityWorkflow, WorkflowEngine } from '@/modules/workflow';
@@ -85,7 +85,7 @@ export class EntityBuilder {
    */
   private async handleMessageReceived(): Promise<void> {
     // Fix P1: 移除无意义的 await import 微任务，直接使用顶部已导入的单例
-    const currentFloor = MacroService.getCurrentMessageCount();
+    const currentFloor = getCurrentMessageCount();
     const state = await chatManager.getState();
     const lastExtracted = state.last_extracted_floor || 0;
 
@@ -205,7 +205,6 @@ export class EntityBuilder {
    * @param manual 是否手动触发
    */
   async extractFromChat(
-    chatHistory: string, // Kept for signature compatibility, but workflow fetches it again or receives it
     floor: number,
     manual = false,
     dryRun = false,
@@ -229,7 +228,7 @@ export class EntityBuilder {
       const previewEnabled = manual || (globalSettings?.previewEnabled ?? true);
 
       // 获取聊天历史 (如果是单条楼层，则宏系统会自动处理)
-      const chatHistory = MacroService.getChatHistory(range || [floor, floor]);
+      const chatHistory = getChatHistory(range || [floor, floor]);
 
       // 231: Cancel Signal
       const signal = { cancelled: false };
@@ -334,7 +333,7 @@ export class EntityBuilder {
    */
   async extractByRange(range: [number, number], manual = false): Promise<EntityBuildResult | null> {
     // 同步获取清洗后的历史记录
-    const chatHistory = MacroService.getChatHistory(range);
+    const chatHistory = getChatHistory(range);
 
     if (!chatHistory) {
       Logger.warn(LogModule.MEMORY_ENTITY, '指定范围的历史记录为空', { range });
@@ -342,7 +341,7 @@ export class EntityBuilder {
     }
 
     // 调用核心提取逻辑 (floor 参数传入结束楼层)
-    return this.extractFromChat(chatHistory, range[1], manual, false, range);
+    return this.extractFromChat(range[1], manual, false, range);
   }
 
   /**
@@ -355,7 +354,7 @@ export class EntityBuilder {
     // 用户反馈: "上次提取" 会导致中间一段丢失上下文
     const state = await chatManager.getState();
     const lastSummarized = state.last_summarized_floor || 0;
-    const currentFloor = MacroService.getCurrentMessageCount();
+    const currentFloor = getCurrentMessageCount();
 
     // 计算范围: (lastSummarized + 1) -> current
     // 如果 lastSummarized 离现在太远 (>50)，则只取最近 50 层
@@ -381,7 +380,7 @@ export class EntityBuilder {
    */
   async saveRawEntities(newEntities: EntityNode[], updatedEntities: EntityNode[]): Promise<void> {
     const store = useMemoryStore.getState();
-    const currentFloor = MacroService.getCurrentMessageCount();
+    const currentFloor = getCurrentMessageCount();
 
     Logger.info(LogModule.MEMORY_ENTITY, '开始保存实体 (saveRawEntities)', {
       newCount: newEntities.length,

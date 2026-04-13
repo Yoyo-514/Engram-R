@@ -1,6 +1,6 @@
 import { Logger } from '@/core/logger';
 import { RobustJsonParser } from '@/core/utils';
-import { hideMessageRange, MacroService } from '@/integrations/tavern';
+import { hideMessageRange, refreshEngramCache } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { type EventNode } from '@/types/graph';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -204,7 +204,7 @@ export class SaveEvent implements IStep {
       await store.setLastSummarizedFloor(range[1]);
     }
 
-    await MacroService.refreshEngramCache();
+    await refreshEngramCache();
 
     if (autoHide && range[1] > 0 && !isImport) {
       const startIndex = range[0] - 1;

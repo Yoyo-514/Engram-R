@@ -1,16 +1,19 @@
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
 import {
+  getChatHistory,
   getCurrentCharacter,
   getCurrentChat,
+  getEntityStates,
   getSTContext,
-  MacroService,
+  getSummaries,
 } from '@/integrations/tavern';
 import { WorldInfoService } from '@/integrations/tavern/worldbook';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
 import { SettingsManager } from '@/config/settings';
 import { PromptLoader } from '@/integrations/llm';
+import type { WorldbookConfig } from '@/types/prompt';
 
 interface TemplateWithWorldbooks {
   id: string;
@@ -54,7 +57,7 @@ export class FetchContext implements IStep {
       history = context.input.text || context.input.chatHistory || '';
       Logger.debug('FetchContext', '使用外部导入文本作为上下文', { bytes: history.length });
     } else {
-      history = MacroService.getChatHistory(range);
+      history = getChatHistory(range);
     }
 
     context.input.chatHistory = history || '';
@@ -102,60 +105,80 @@ export class FetchContext implements IStep {
       Logger.warn('FetchContext', '获取模板绑定世界书失败', error);
     }
 
-    const allBooks = [...new Set([...globalBooks, ...charBooks, ...extraBooks])];
-    const worldbooksToScan = allBooks.filter((name) => !name.startsWith('[Engram]'));
+    // Load worldbook config for filtering
+    const wbConfig: WorldbookConfig | undefined =
+      SettingsManager.get('apiSettings')?.worldbookConfig;
 
-    Logger.debug('FetchContext', '世界书扫描列表', {
-      global: globalBooks.length,
-      char: charBooks.length,
-      extra: extraBooks.length,
-      totalFilter: worldbooksToScan.length,
-      list: worldbooksToScan,
-    });
+    let wiContent = '';
 
-    let scanText = '';
-    if (range) {
-      const chat = getCurrentChat();
-      const messages = chat.slice(Math.max(0, range[0] - 1), range[1]);
-      scanText = messages.map((message) => message.mes || '').join('\n');
+    // Early-exit: if worldbook feature is disabled entirely, skip all scanning
+    if (wbConfig?.enabled === false) {
+      Logger.debug('FetchContext', '世界书功能已关闭，跳过扫描');
     } else {
-      scanText = context.input.text || history || '';
-    }
+      const disabledBooks = wbConfig?.disabledWorldbooks || [];
+      const includeGlobal = wbConfig?.includeGlobal !== false;
 
-    const worldInfoContentParts: string[] = [];
-    await new Promise((resolve) => setTimeout(resolve, 0));
+      // When includeGlobal=false, exclude global-only books (keep char books even if global)
+      const scopedGlobalBooks = includeGlobal ? globalBooks : [];
+      const allBooks = [...new Set([...scopedGlobalBooks, ...charBooks, ...extraBooks])];
+      const worldbooksToScan = allBooks
+        .filter((name) => !name.startsWith('[Engram]'))
+        .filter((name) => !disabledBooks.includes(name));
 
-    for (const book of extraBooks) {
-      if (book.startsWith('[Engram]')) {
-        continue;
-      }
-
-      const content = await WorldInfoService.scanWorldbook(book, scanText, {
-        forceInclude: true,
+      Logger.debug('FetchContext', '世界书扫描列表', {
+        global: globalBooks.length,
+        char: charBooks.length,
+        extra: extraBooks.length,
+        disabled: disabledBooks.length,
+        includeGlobal,
+        totalFilter: worldbooksToScan.length,
+        list: worldbooksToScan,
       });
-      if (content) {
-        worldInfoContentParts.push(content);
+
+      let scanText = '';
+      if (range) {
+        const chat = getCurrentChat();
+        const messages = chat.slice(Math.max(0, range[0] - 1), range[1]);
+        scanText = messages.map((message) => message.mes || '').join('\n');
+      } else {
+        scanText = context.input.text || history || '';
       }
-    }
 
-    const booksToScanNormally = worldbooksToScan.filter((book) => !extraBooks.includes(book));
-    if (booksToScanNormally.length > 0) {
-      const results = await Promise.all(
-        booksToScanNormally.map((worldbookName) =>
-          WorldInfoService.scanWorldbook(worldbookName, scanText)
-        )
-      );
-      worldInfoContentParts.push(...results.filter(Boolean));
-    }
+      const worldInfoContentParts: string[] = [];
+      await new Promise((resolve) => setTimeout(resolve, 0));
 
-    const wiContent = worldInfoContentParts.filter(Boolean).join('\n\n');
+      for (const book of extraBooks) {
+        if (book.startsWith('[Engram]')) {
+          continue;
+        }
+
+        const content = await WorldInfoService.scanWorldbook(book, scanText, {
+          forceInclude: true,
+        });
+        if (content) {
+          worldInfoContentParts.push(content);
+        }
+      }
+
+      const booksToScanNormally = worldbooksToScan.filter((book) => !extraBooks.includes(book));
+      if (booksToScanNormally.length > 0) {
+        const results = await Promise.all(
+          booksToScanNormally.map((worldbookName) =>
+            WorldInfoService.scanWorldbook(worldbookName, scanText)
+          )
+        );
+        worldInfoContentParts.push(...results.filter(Boolean));
+      }
+
+      wiContent = worldInfoContentParts.filter(Boolean).join('\n\n');
+    }
     context.input.worldbookContext = wiContent;
-    context.input.context = wiContent;
+    context.input.context = context.input.charPersona || '';
 
-    const summaryContent = MacroService.getSummaries();
+    const summaryContent = getSummaries();
     context.input.engramSummaries = summaryContent;
 
-    const entityStatesContent = MacroService.getEntityStates();
+    const entityStatesContent = getEntityStates();
     context.input.engramEntityStates = entityStatesContent;
 
     Logger.debug('FetchContext', '上下文获取完成', {
