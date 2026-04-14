@@ -175,12 +175,13 @@ function processMessage(
     }
 
     const preRegex = content;
-    content = regexProcessor.process(content, 'both');
+    content = regexProcessor.process(content, 'input');
 
     if (!content && preRegex) {
-      Logger.warn('ChatHistoryHelper', 'RegexProcessor 清洗后内容为空!', {
+      Logger.warn('ChatHistoryHelper', 'RegexProcessor 输入清洗后内容为空!', {
         preRegex,
         content,
+        source: regexSource,
       });
     }
 
@@ -190,7 +191,7 @@ function processMessage(
         original: originalContent.substring(0, 50),
         source: regexSource,
         step1_tavern: preRegex.substring(0, 50),
-        step2_regex: content.substring(0, 50),
+        step2_regex_input: content.substring(0, 50),
         cacheHit: false,
       });
     }
