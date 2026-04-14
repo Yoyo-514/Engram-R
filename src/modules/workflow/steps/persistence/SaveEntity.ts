@@ -1,6 +1,6 @@
 import { Logger } from '@/core/logger';
 import { deepClone, stringifyYaml } from '@/core/utils';
-import { RobustJsonParser } from '@/core/utils/JsonParser';
+import { parseJson } from '@/core/utils/JsonParser';
 import { type EntityNode, EntityType } from '@/types/graph';
 import { useMemoryStore } from '@/state/memoryStore';
 import * as jsonpatch from 'fast-json-patch';
@@ -265,7 +265,7 @@ export class SaveEntity implements IStep {
 
     // Handle UserReview modifications
     if (typeof context.output === 'string') {
-      sourceContent = RobustJsonParser.parse(context.output);
+      sourceContent = parseJson(context.output);
       if (!sourceContent) {
         throw new Error(
           `SaveEntity: Failed to re-parse user modified content - JSON 解析失败，请检查格式`

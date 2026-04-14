@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import { ThemeManager } from '@/ui/services/ThemeManager';
+import { getTheme, setTheme } from '@/ui/services';
 import { themes, type ThemeName } from '../../../styles/themes';
-import { SettingsManager } from '@/config/settings';
+import { set } from '@/config/settings';
 import type { FC } from 'react';
 
 interface ThemeOption {
@@ -16,12 +16,12 @@ export const ThemeSelector: FC = () => {
   const [currentTheme, setCurrentTheme] = useState<ThemeName>('claudeDark');
 
   useEffect(() => {
-    setCurrentTheme(ThemeManager.getTheme());
+    setCurrentTheme(getTheme());
   }, []);
 
   const handleThemeChange = (themeId: ThemeName) => {
-    ThemeManager.setTheme(themeId);
-    SettingsManager.set('theme', themeId); // Persist to ST settings
+    setTheme(themeId);
+    set('theme', themeId); // Persist to ST settings
     setCurrentTheme(themeId);
   };
 

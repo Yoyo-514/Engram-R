@@ -8,7 +8,7 @@
  * 4. 返回处理结果供注入
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '@/modules/workflow/core/JobContext';
@@ -16,7 +16,7 @@ import type { AgenticRecall, PreprocessingConfig, PreprocessingResult } from './
 import { DEFAULT_PREPROCESSING_CONFIG } from './types';
 import { createPreprocessWorkflow, StopGeneration, WorkflowEngine } from '@/modules/workflow';
 import { injectMessage } from '@/integrations/tavern';
-import { RobustJsonParser } from '@/core/utils';
+import { parseJson } from '@/core/utils';
 
 // Helper functions to get context info safely
 
@@ -137,7 +137,7 @@ class Preprocessor {
       const recallDecisionRaw = context.extractedTags?.recall_decision;
       if (recallDecisionRaw) {
         try {
-          const parsed = RobustJsonParser.parse<{ recalls?: AgenticRecall[] }>(recallDecisionRaw);
+          const parsed = parseJson<{ recalls?: AgenticRecall[] }>(recallDecisionRaw);
           if (parsed?.recalls && Array.isArray(parsed.recalls)) {
             agenticRecalls = parsed.recalls;
             Logger.info(LogModule.PREPROCESS, 'Agentic RAG 召回决策已解析', {
@@ -200,7 +200,7 @@ class Preprocessor {
    * 获取预处理配置
    */
   getConfig(): PreprocessingConfig {
-    const config = SettingsManager.get('preprocessingConfig');
+    const config = get('preprocessingConfig');
     return config || DEFAULT_PREPROCESSING_CONFIG;
   }
 
@@ -209,7 +209,7 @@ class Preprocessor {
    */
   saveConfig(config: PreprocessingConfig): void {
     Logger.debug(LogModule.PREPROCESS, '保存配置', config);
-    SettingsManager.set('preprocessingConfig', config);
+    set('preprocessingConfig', config);
   }
 
   /**

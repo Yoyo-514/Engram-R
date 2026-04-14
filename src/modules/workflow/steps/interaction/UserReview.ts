@@ -1,11 +1,11 @@
 import { reviewService } from '@/core/events/ReviewBridge';
 import { Logger } from '@/core/logger';
-import { WorldInfoService } from '@/integrations/tavern/worldbook';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '../../core/JobContext';
 import type { IStep, StepResult } from '../../core/Step';
-import { RobustJsonParser } from '@/core/utils';
+import { parseJson } from '@/core/utils';
 
 interface UserReviewConfig {
   title: string;
@@ -66,7 +66,7 @@ export class UserReview implements IStep {
     }
 
     // 计算 Token (供显示)
-    const tokenCount = await WorldInfoService.countTokens(contentToReview);
+    const tokenCount = await countWorldbookTokens(contentToReview);
     const range = context.input.range
       ? `${context.input.range[0]} - ${context.input.range[1]} 楼`
       : '未知范围';
@@ -102,7 +102,7 @@ export class UserReview implements IStep {
         }
         if (context.extractedTags.recall_decision) {
           try {
-            const parsed = RobustJsonParser.parse<{ recalls?: AgenticRecall[] }>(
+            const parsed = parseJson<{ recalls?: AgenticRecall[] }>(
               context.extractedTags.recall_decision
             );
             if (parsed?.recalls && Array.isArray(parsed.recalls)) {
@@ -166,7 +166,7 @@ export class UserReview implements IStep {
 
       // 如果 Review 返回了新的 structured data (例如实体编辑结果)，更新 context
       if (isReviewPayload(result.data)) {
-        const reviewData = result.data;
+        reviewData = result.data;
 
         // V1.3: 处理编辑后的 query 与 agentic 决策
         if (context.extractedTags) {
@@ -198,10 +198,10 @@ export class UserReview implements IStep {
 
       Logger.info('UserReview', '用户确认修订');
       return { action: 'next' };
-    } catch (_e) {
+    } catch (e) {
       Logger.warn('UserReview', '用户取消操作');
       notificationService.info('已取消操作', '操作取消');
-      throw new Error('UserCancelled');
+      throw new Error('UserCancelled', { cause: e });
     }
   }
   private clearContextOutput(context: JobContext) {

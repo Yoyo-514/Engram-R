@@ -8,7 +8,7 @@ import {
 } from '@/ui/components/form/FormComponents';
 import type { RerankConfig } from '@/types/rag';
 import { RefreshCw, Loader2 } from 'lucide-react';
-import { ModelService, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
+import { fetchOpenAIModels, getCommonRerankModels, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 
 interface RerankConfigFormProps {
   config: RerankConfig;
@@ -37,7 +37,7 @@ export const RerankConfigForm: FC<RerankConfigFormProps> = ({ config, onChange }
 
     try {
       // 尝试从 OpenAI 兼容 API 获取
-      const models = await ModelService.fetchOpenAIModels({
+      const models = await fetchOpenAIModels({
         apiUrl: config.url,
         apiKey: config.apiKey,
       });
@@ -46,11 +46,11 @@ export const RerankConfigForm: FC<RerankConfigFormProps> = ({ config, onChange }
         setModelList(models);
       } else {
         // 如果 API 不返回模型，使用常用预设
-        setModelList(ModelService.getCommonRerankModels());
+        setModelList(getCommonRerankModels());
       }
     } catch {
       // 失败时使用常用模型预设
-      setModelList(ModelService.getCommonRerankModels());
+      setModelList(getCommonRerankModels());
     } finally {
       setIsLoadingModels(false);
     }

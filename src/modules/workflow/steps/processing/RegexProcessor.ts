@@ -7,7 +7,7 @@
  */
 
 import { Logger } from '@/core/logger';
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import {
   type RegexRule,
   type RegexScope,
@@ -60,7 +60,7 @@ export class RegexProcessor {
    */
   private isEngramRegexEnabled(): boolean {
     try {
-      return SettingsManager.get('apiSettings')?.regexConfig?.enableEngramRegex ?? true;
+      return get('apiSettings')?.regexConfig?.enableEngramRegex ?? true;
     } catch {
       return true;
     }

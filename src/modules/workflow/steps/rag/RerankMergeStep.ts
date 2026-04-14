@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import type { RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
@@ -12,7 +12,7 @@ export class RerankMergeStep implements IStep {
   ignoreFailure = true;
 
   get retry(): RetryConfig {
-    const rerankConfig = SettingsManager.get('apiSettings')?.rerankConfig;
+    const rerankConfig = get('apiSettings')?.rerankConfig;
     const customConfig = rerankConfig?.retryConfig;
 
     return {
@@ -60,7 +60,7 @@ export class RerankMergeStep implements IStep {
 
     const candidates = Array.from(candidateMap.values());
     const activeConfig =
-      config || SettingsManager.get('apiSettings')?.recallConfig || DEFAULT_RECALL_CONFIG;
+      config || get('apiSettings')?.recallConfig || DEFAULT_RECALL_CONFIG;
 
     if (candidates.length === 0) {
       Logger.info(LogModule.RAG_INJECT, '没有合并候选，跳过 RerankMergeStep');

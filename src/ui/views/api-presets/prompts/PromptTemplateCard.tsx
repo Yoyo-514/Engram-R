@@ -121,7 +121,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     if (!file || !onImport) return;
 
     const reader = new FileReader();
-    reader.onload = (e) => {
+    reader.addEventListener('load', (e: ProgressEvent<FileReader>) => {
       try {
         const content = typeof e.target?.result === 'string' ? e.target.result : '';
         const data = parseYaml<Record<string, unknown>>(content);
@@ -169,7 +169,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         Logger.error(LogModule.TAVERN, 'Failed to parse template file', err);
         notificationService.error('导入失败: 无法解析文件');
       }
-    };
+    });
     reader.readAsText(file);
 
     if (fileInputRef.current) {

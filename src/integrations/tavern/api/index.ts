@@ -3,10 +3,8 @@
  *
  * 提供 SillyTavern 事件、消息、世界书等功能的封装
  */
-
-export { WorldInfoService } from '../worldbook';
-import { EventBus, WorldInfoService } from '@/integrations/tavern';
-import { MessageService } from './Message';
+import { eventBus, isNativeWorldbookTokenCountAvailable, isWorldInfoAvailable,  } from '@/integrations/tavern';
+import { getFloorCount, isMessageServiceAvailable, getCurrentCharacterName as getCurrentCharName  } from './Message';
 
 /**
  * 检查酒馆接口对接状态
@@ -21,12 +19,12 @@ export async function checkTavernIntegration(): Promise<{
   characterName: string | null;
 }> {
   const status = {
-    eventBus: EventBus.isAvailable(),
-    messageService: MessageService.isAvailable(),
-    worldInfoService: WorldInfoService.isAvailable(),
-    nativeTokenCount: await WorldInfoService.isNativeTokenCountAvailable(),
-    floorCount: MessageService.isAvailable() ? MessageService.getFloorCount() : null,
-    characterName: MessageService.isAvailable() ? MessageService.getCurrentCharacterName() : null,
+    eventBus: eventBus.isAvailable(),
+    messageService: isMessageServiceAvailable(),
+    worldInfoService: isWorldInfoAvailable(),
+    nativeTokenCount: await isNativeWorldbookTokenCountAvailable(),
+    floorCount: isMessageServiceAvailable() ? getFloorCount() : null,
+    characterName: isMessageServiceAvailable() ? getCurrentCharName() : null,
   };
 
   return status;

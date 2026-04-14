@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getEjsTemplate, getMvu } from '@/core/utils';
 
@@ -10,7 +10,7 @@ export async function processEJSMacros(entries: string[]): Promise<string[]> {
   const ejs = getEjsTemplate();
   const mvu = getMvu();
 
-  const enableEJS = SettingsManager.get('apiSettings')?.worldbookConfig?.enableEJS ?? true;
+  const enableEJS = get('apiSettings')?.worldbookConfig?.enableEJS ?? true;
   if (!enableEJS) {
     Logger.debug('EjsProcessor', 'EJS processing disabled by worldbook settings');
     return entries;

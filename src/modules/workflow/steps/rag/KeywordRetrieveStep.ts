@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
@@ -35,7 +35,7 @@ export class KeywordRetrieveStep implements IStep {
     if (!db) return;
 
     const startTime = Date.now();
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const recallConfig = apiSettings?.recallConfig;
 
     // P0 & P1 Fix: 此处不再因为无归档事件而直接返回

@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { EntityType, type EntityNode, type EventNode } from '@/types/graph';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
@@ -397,7 +397,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   }, [checkedIds, viewTab, store]);
 
   const handleReembedAll = useCallback(async () => {
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const vectorConfig = apiSettings?.vectorConfig;
 
     if (!vectorConfig) {

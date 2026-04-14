@@ -2,7 +2,7 @@
  * 向量化配置表单
  */
 import type { VectorConfig, VectorSource } from '@/types/rag';
-import { type ModelAPIType, type ModelInfo, ModelService } from '@/integrations/llm/ModelDiscovery';
+import { fetchOllamaModels, fetchOpenAIModels, fetchVLLMModels, getPresetModels, type ModelAPIType, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 import {
   FormSection,
   SearchableSelectField,
@@ -144,28 +144,28 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
             setModelError('请先填写 API URL');
             return;
           }
-          models = await ModelService.fetchOpenAIModels(fetchConfig);
+          models = await fetchOpenAIModels(fetchConfig);
           break;
         case 'ollama':
           if (!config.apiUrl) {
             setModelError('请先填写 API URL');
             return;
           }
-          models = await ModelService.fetchOllamaModels(fetchConfig);
+          models = await fetchOllamaModels(fetchConfig);
           break;
         case 'vllm':
           if (!config.apiUrl) {
             setModelError('请先填写 API URL');
             return;
           }
-          models = await ModelService.fetchVLLMModels(fetchConfig);
+          models = await fetchVLLMModels(fetchConfig);
           break;
         case 'openai':
         case 'cohere':
         case 'jina':
         case 'voyage':
           // 这些使用预设列表
-          models = ModelService.getPresetModels(config.source as ModelAPIType);
+          models = getPresetModels(config.source as ModelAPIType);
           break;
         default:
           models = [];

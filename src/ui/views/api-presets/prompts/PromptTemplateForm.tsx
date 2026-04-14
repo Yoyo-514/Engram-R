@@ -1,7 +1,7 @@
 /**
  * 提示词模板编辑表单
  */
-import { WorldInfoService } from '@/integrations/tavern';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import type { LLMPreset } from '@/types/llm';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import { PROMPT_CATEGORIES } from '@/types/prompt';
@@ -127,10 +127,10 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
     const updateTokenCounts = async () => {
       try {
         const nextSysTokens = template.systemPrompt
-          ? await WorldInfoService.countTokens(template.systemPrompt)
+          ? await countWorldbookTokens(template.systemPrompt)
           : 0;
         const nextUserTokens = template.userPromptTemplate
-          ? await WorldInfoService.countTokens(template.userPromptTemplate)
+          ? await countWorldbookTokens(template.userPromptTemplate)
           : 0;
 
         if (cancelled || requestId !== tokenRequestIdRef.current) {

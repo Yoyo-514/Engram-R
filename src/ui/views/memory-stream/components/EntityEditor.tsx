@@ -218,7 +218,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
 
         // V1.2.9 FIX: Only send incremental updates to avoid stale closure overwriting
         onSave?.(entity.id, { description: newDesc, profile: profileObj });
-      } catch (e) {
+      } catch {
         alert('Profile JSON 格式错误，无法生成描述');
       }
     };

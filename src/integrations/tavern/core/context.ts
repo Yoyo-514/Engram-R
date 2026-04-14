@@ -13,18 +13,6 @@ const MODULE = 'STContext';
 
 export type RawSTChatMessage = SillyTavern.ChatMessage;
 
-interface SillyTavernHost {
-  getContext?: () => unknown;
-}
-
-function getSillyTavernHost(): unknown {
-  return (window as Window & { SillyTavern?: unknown }).SillyTavern;
-}
-
-function isSillyTavernHost(value: unknown): value is SillyTavernHost {
-  return !!value && typeof value === 'object';
-}
-
 function parseCharacterId(value: unknown): string {
   if (typeof value !== 'string') {
     const strValue = String(value);
@@ -53,11 +41,6 @@ export function getSTContext(): TavernContext | null {
 
 export function getRawSTContext(): TavernContext | null | undefined {
   try {
-    const host = getSillyTavernHost();
-    if (!isSillyTavernHost(host)) {
-      return null;
-    }
-
     return getTavernContext();
   } catch (e) {
     Logger.warn(MODULE, '无法获取 ST 上下文', e);

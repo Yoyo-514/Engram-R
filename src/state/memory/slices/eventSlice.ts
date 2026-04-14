@@ -1,6 +1,6 @@
 import { generateShortUUID } from '@/core/utils';
 import type { EventNode } from '@/types/graph';
-import { WorldInfoService } from '@/integrations/tavern';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import { type StateCreator } from 'zustand';
 import { type CoreState, getCurrentDb, tryGetCurrentDb } from './coreSlice';
 import Dexie from 'dexie';
@@ -166,7 +166,7 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
       // Trim 触发口径：仅统计新的、未归档的 lv0 细节事件
       const activeEvents = events.filter((e) => e.level === 0 && !e.is_archived);
       const allSummaries = activeEvents.map((e) => e.summary).join('\n\n');
-      const totalTokens = await WorldInfoService.countTokens(allSummaries);
+      const totalTokens = await countWorldbookTokens(allSummaries);
 
       return {
         totalTokens,

@@ -223,15 +223,15 @@ export function createPromptTemplate(
   };
 }
 
-import { PromptLoader } from '@/integrations/llm/PromptLoader';
+import { getBuiltInTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 
 /**
  * 内置提示词模板
  */
 export function getBuiltInPromptTemplates(): PromptTemplate[] {
   // 确保已加载
-  PromptLoader.init();
-  return PromptLoader.getBuiltInTemplates();
+  initPromptLoader();
+  return getBuiltInTemplates();
 }
 
 /**

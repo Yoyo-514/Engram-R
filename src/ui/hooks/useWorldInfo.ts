@@ -1,11 +1,12 @@
-import { SettingsManager } from '@/config/settings';
+import { get, set } from '@/config/settings';
 import type {
   EngramAPISettings,
   WorldbookConfig,
   WorldbookConfigProfile,
 } from '@/types/config';
 import { getDefaultAPISettings } from '@/types/config';
-import { getTavernHelper, WorldInfoService } from '@/integrations/tavern/worldbook';
+import { getTavernHelper } from '@/core/utils';
+import { getWorldbookScopes, getWorldbookStructure } from '@/integrations/tavern';
 import { useCallback, useEffect, useState } from 'react';
 
 export interface UseWorldInfoReturn {
@@ -33,15 +34,15 @@ export interface UseWorldInfoReturn {
 export function useWorldInfo(): UseWorldInfoReturn {
   const [worldbookStructure, setWorldbookStructure] = useState<Record<string, unknown[]>>({});
   const [disabledEntries, setDisabledEntries] = useState<Record<string, number[]>>(
-    SettingsManager.get('apiSettings')?.worldbookConfig?.disabledEntries || {}
+    get('apiSettings')?.worldbookConfig?.disabledEntries || {}
   );
   const [disabledWorldbooks, setDisabledWorldbooks] = useState<string[]>([]);
   const [currentCharWorldbook, setCurrentCharWorldbook] = useState<string | null>(null);
   const [worldbookConfig, setWorldbookConfig] = useState<WorldbookConfig | undefined>(
-    SettingsManager.get('apiSettings')?.worldbookConfig || getDefaultAPISettings().worldbookConfig
+    get('apiSettings')?.worldbookConfig || getDefaultAPISettings().worldbookConfig
   );
   const [worldbookProfiles, setWorldbookProfiles] = useState<WorldbookConfigProfile[]>(
-    SettingsManager.get('apiSettings')?.worldbookProfiles || []
+    get('apiSettings')?.worldbookProfiles || []
   );
   const [worldbookScopes, setWorldbookScopes] = useState<{
     global: string[];
@@ -52,11 +53,11 @@ export function useWorldInfo(): UseWorldInfoReturn {
 
   const loadWorldbookState = useCallback(async () => {
     // 1. 加载结构
-    const structure = await WorldInfoService.getWorldbookStructure();
+    const structure = await getWorldbookStructure();
     setWorldbookStructure(structure);
 
     // 加载作用域
-    const scopes = WorldInfoService.getScopes();
+    const scopes = getWorldbookScopes();
     setWorldbookScopes(scopes);
 
     // 2. 加载当前角色状态 (仅记录当前角色世界书用于 fallback)
@@ -67,7 +68,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
     }
 
     // 3. 加载设置
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const config = apiSettings?.worldbookConfig;
     setWorldbookConfig(config);
     if (config?.disabledWorldbooks) {
@@ -134,7 +135,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
 
   const saveWorldInfo = useCallback(async () => {
     // 保存全局配置和Profiles
-    const currentSettings = (SettingsManager.get('apiSettings') || {}) as EngramAPISettings;
+    const currentSettings = (get('apiSettings') || {}) as EngramAPISettings;
     const newWorldbookConfig = {
       ...currentSettings.worldbookConfig,
       ...worldbookConfig,
@@ -142,7 +143,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
       disabledEntries: disabledEntries,
     };
 
-    SettingsManager.set('apiSettings', {
+    set('apiSettings', {
       ...currentSettings,
       worldbookConfig: newWorldbookConfig,
       worldbookProfiles: worldbookProfiles,

@@ -12,9 +12,9 @@ import {
 export const createSummaryWorkflow = (): WorkflowDefinition => ({
   name: 'SummaryWorkflow',
   steps: [
-    new StopGeneration(),
     new FetchContext(),
     new BuildPrompt({ category: 'summary' }),
+    new StopGeneration('manual_only'),
     new LlmRequest(),
     new CleanRegex('output'),
     new UserReview({

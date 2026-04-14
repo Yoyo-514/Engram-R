@@ -4,7 +4,7 @@
  * 替换原有的 ThemeContext，提供更简洁的状态管理
  */
 
-import { ThemeManager } from '@/ui/services/ThemeManager';
+import { getTheme, setTheme as setGlobalTheme } from '@/ui/services';
 import { type ThemeName } from '@/ui/styles/themes';
 import { create } from 'zustand';
 
@@ -32,11 +32,11 @@ interface ThemeState {
  * ```
  */
 export const useThemeStore = create<ThemeState>((set) => ({
-  theme: ThemeManager.getTheme(),
-  isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(ThemeManager.getTheme()),
+  theme: getTheme(),
+  isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(getTheme()),
 
   setTheme: (theme) => {
-    ThemeManager.setTheme(theme);
+    setGlobalTheme(theme);
     set({
       theme,
       isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(theme),

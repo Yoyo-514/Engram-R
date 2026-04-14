@@ -1,28 +1,110 @@
 import { Logger } from '@/core/logger';
 import type { WorldbookConfig } from '@/types/prompt';
-import { getSTContext } from '@/integrations/tavern';
-import { getTavernHelper } from './adapter';
-import { getEntries } from './crud';
-import { type WorldInfoEntry } from './types';
-import { SettingsManager } from '@/config/settings';
+import { eventBus, events } from '../core/events';
+import { getEntries, type WorldbookEntryWithWorld } from './crud';
+import { getSettings } from '@/config/settings';
+import { getScopes } from './engram';
 
 const MODULE = 'Worldbook';
+const ENGRAM_WORLDBOOK_PREFIX = '[Engram]';
 
-async function loadFilteringState() {
-  const helper = getTavernHelper();
-  const globalWorldbooks = helper?.getGlobalWorldbookNames?.() || [];
-  const charBooks = helper?.getCharWorldbookNames?.('current');
-  const chatWorldbooks = charBooks
-    ? ([...(charBooks.additional || []), charBooks.primary].filter(Boolean) as string[])
-    : [];
+interface WorldInfoScanDonePayload {
+  activated?: {
+    text?: string;
+    entries?: Map<`${string}.${string}`, SillyTavern.FlattenedWorldInfoEntry>;
+  };
+}
 
-  const settings = SettingsManager.getSettings();
+interface ContextualWorldInfoOptions {
+  floorRange?: [number, number];
+  extraWorldbooks?: string[];
+}
+
+const CONTEXTUAL_WORLD_INFO_CACHE_LIMIT = 32;
+
+let latestActivatedWorldInfoText = '';
+let hasActivatedWorldInfoCache = false;
+let worldInfoScanListenerInitialized = false;
+let unsubscribeWorldInfoScanListener: (() => void) | null = null;
+const unsubscribeWorldInfoCacheInvalidators: Array<() => void> = [];
+const contextualWorldInfoCache = new Map<string, string>();
+
+function clearLiveWorldInfoCache(reason: string): void {
+  latestActivatedWorldInfoText = '';
+  hasActivatedWorldInfoCache = false;
+  Logger.debug(MODULE, 'Cleared live world info cache', { reason });
+}
+
+function clearContextualWorldInfoCache(reason: string): void {
+  if (contextualWorldInfoCache.size === 0) {
+    return;
+  }
+
+  contextualWorldInfoCache.clear();
+  Logger.debug(MODULE, 'Cleared contextual world info cache', { reason });
+}
+
+function clearWorldInfoCaches(reason: string): void {
+  clearLiveWorldInfoCache(reason);
+  clearContextualWorldInfoCache(reason);
+}
+
+function normalizeExtraWorldbooks(extraWorldbooks?: string[]): string[] {
+  return [...new Set((extraWorldbooks || []).filter((name): name is string => !!name))];
+}
+
+function ensureWorldInfoScanListener(): void {
+  if (worldInfoScanListenerInitialized || !eventBus.isAvailable()) {
+    return;
+  }
+
+  unsubscribeWorldInfoScanListener = eventBus.on(
+    events.WORLDINFO_SCAN_DONE,
+    (eventData: unknown) => {
+      const payload = eventData as WorldInfoScanDonePayload;
+      latestActivatedWorldInfoText = payload.activated?.text || '';
+      hasActivatedWorldInfoCache = true;
+
+      Logger.debug(MODULE, 'Updated activated world info cache from Tavern event', {
+        textLength: latestActivatedWorldInfoText.length,
+        entryCount: payload.activated?.entries?.size || 0,
+      });
+    }
+  );
+
+  unsubscribeWorldInfoCacheInvalidators.push(
+    eventBus.on(events.CHAT_CHANGED, () => {
+      clearWorldInfoCaches('chat_changed');
+    })
+  );
+  unsubscribeWorldInfoCacheInvalidators.push(
+    eventBus.on(events.SETTINGS_UPDATED, () => {
+      clearWorldInfoCaches('settings_updated');
+    })
+  );
+  unsubscribeWorldInfoCacheInvalidators.push(
+    eventBus.on(events.WORLDINFO_UPDATED, () => {
+      clearWorldInfoCaches('worldinfo_updated');
+    })
+  );
+  unsubscribeWorldInfoCacheInvalidators.push(
+    eventBus.on(events.WORLDINFO_SETTINGS_UPDATED, () => {
+      clearWorldInfoCaches('worldinfo_settings_updated');
+    })
+  );
+
+  worldInfoScanListenerInitialized = true;
+}
+
+function loadFilteringState() {
+  const { global, chat } = getScopes();
+  const settings = getSettings();
   const config: WorldbookConfig | undefined = settings.apiSettings?.worldbookConfig;
 
   return {
     config,
-    globalWorldbooks,
-    chatWorldbooks,
+    globalWorldbooks: global,
+    chatWorldbooks: chat,
     disabledGlobalBooks: config?.disabledWorldbooks || [],
     disabledEntries: config?.disabledEntries || {},
   };
@@ -32,8 +114,78 @@ function isWorldbookFeatureEnabled(config?: WorldbookConfig): boolean {
   return config?.enabled !== false;
 }
 
+function getWorldbooksForContextScan(filterState: ReturnType<typeof loadFilteringState>): string[] {
+  const { config, globalWorldbooks, chatWorldbooks, disabledGlobalBooks } = filterState;
+  const scopedGlobalBooks = config?.includeGlobal === false ? [] : globalWorldbooks;
+
+  return [...new Set([...scopedGlobalBooks, ...chatWorldbooks])]
+    .filter((name): name is string => typeof name === 'string' && name.length > 0)
+    .filter((name) => !name.startsWith(ENGRAM_WORLDBOOK_PREFIX))
+    .filter((name) => !disabledGlobalBooks.includes(name));
+}
+
+function resolveScanMessages(chatMessages?: string[]): string[] {
+  return (chatMessages || []).filter(
+    (message): message is string => typeof message === 'string' && message.length > 0
+  );
+}
+
+function buildFilterStateCacheKey(filterState: ReturnType<typeof loadFilteringState>): string {
+  const { config, globalWorldbooks, chatWorldbooks, disabledGlobalBooks, disabledEntries } = filterState;
+
+  return JSON.stringify({
+    enabled: config?.enabled !== false,
+    includeGlobal: config?.includeGlobal !== false,
+    globalWorldbooks: [...globalWorldbooks].sort(),
+    chatWorldbooks: [...chatWorldbooks].sort(),
+    disabledGlobalBooks: [...disabledGlobalBooks].sort(),
+    disabledEntries: Object.entries(disabledEntries)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([book, entries]) => [book, [...entries].sort((a, b) => a - b)]),
+  });
+}
+
+function buildContextualWorldInfoCacheKey(
+  messages: string[],
+  options: ContextualWorldInfoOptions | undefined,
+  filterState: ReturnType<typeof loadFilteringState>
+): string {
+  return JSON.stringify({
+    messages,
+    floorRange: options?.floorRange ?? null,
+    extraWorldbooks: normalizeExtraWorldbooks(options?.extraWorldbooks),
+    filterState: buildFilterStateCacheKey(filterState),
+  });
+}
+
+function getContextualWorldInfoCache(key: string): string | undefined {
+  const cached = contextualWorldInfoCache.get(key);
+  if (cached === undefined) {
+    return undefined;
+  }
+
+  contextualWorldInfoCache.delete(key);
+  contextualWorldInfoCache.set(key, cached);
+  return cached;
+}
+
+function setContextualWorldInfoCache(key: string, value: string): void {
+  if (contextualWorldInfoCache.has(key)) {
+    contextualWorldInfoCache.delete(key);
+  }
+
+  contextualWorldInfoCache.set(key, value);
+
+  if (contextualWorldInfoCache.size > CONTEXTUAL_WORLD_INFO_CACHE_LIMIT) {
+    const oldestKey = contextualWorldInfoCache.keys().next().value;
+    if (oldestKey) {
+      contextualWorldInfoCache.delete(oldestKey);
+    }
+  }
+}
+
 function shouldIncludeEntry(
-  entry: WorldInfoEntry,
+  entry: WorldbookEntryWithWorld,
   globalWorldbooks: string[],
   disabledGlobalBooks: string[],
   disabledEntries: Record<string, number[]>,
@@ -44,7 +196,7 @@ function shouldIncludeEntry(
   }
 
   if (entry.extra?.engram === true) return true;
-  if (entry.world?.startsWith('[Engram]')) return false;
+  if (entry.world?.startsWith(ENGRAM_WORLDBOOK_PREFIX)) return false;
 
   if (entry.world && disabledGlobalBooks.includes(entry.world)) {
     return false;
@@ -64,175 +216,193 @@ function shouldIncludeEntry(
   return true;
 }
 
-function getWorldbooksForContextScan(
-  filterState: Awaited<ReturnType<typeof loadFilteringState>>
-): string[] {
-  const { config, globalWorldbooks, chatWorldbooks, disabledGlobalBooks } = filterState;
+/**
+ * 扫描单个世界书，返回命中的条目文本
+ */
+export async function scanWorldbook(
+  worldbookName: string,
+  contextText: string,
+  options?: { forceInclude?: boolean }
+): Promise<string> {
+  // Early-exit: check filtering state BEFORE expensive getEntries() API call
+  const filterState = loadFilteringState();
+  let { disabledGlobalBooks } = filterState;
+  const { disabledEntries, globalWorldbooks, config } = filterState;
 
-  const scopedGlobalBooks = config?.includeGlobal === false ? [] : globalWorldbooks;
-
-  return [...new Set([...scopedGlobalBooks, ...chatWorldbooks])]
-    .filter((name): name is string => typeof name === 'string' && name.length > 0)
-    .filter((name) => !name.startsWith('[Engram]'))
-    .filter((name) => !disabledGlobalBooks.includes(name));
-}
-
-function resolveScanMessages(
-  chatMessages?: string[],
-  options?: { floorRange?: [number, number] }
-): string[] {
-  const DEFAULT_SCAN_LIMIT = 4;
-  let messages = chatMessages;
-
-  const context = getSTContext();
-
-  if (options?.floorRange) {
-    const [startFloor, endFloor] = options.floorRange;
-    if (context?.chat && Array.isArray(context.chat)) {
-      const rangeChat = context.chat.slice(startFloor - 1, endFloor);
-      messages = rangeChat.map((message) => message.mes || '').reverse();
-      const rangeMessages = messages ?? [];
-      if (rangeMessages.length > 0) {
-        Logger.debug(MODULE, 'Using floor range scan', {
-          floorRange: options.floorRange,
-          messageCount: rangeMessages.length,
-        });
-      }
-    }
-  } else if (!messages || messages.length === 0) {
-    if (context?.chat && Array.isArray(context.chat)) {
-      const recentChat = context.chat.slice(-DEFAULT_SCAN_LIMIT);
-      messages = recentChat.map((message) => message.mes || '').reverse();
-      const recentMessages = messages ?? [];
-      if (recentMessages.length > 0) {
-        Logger.debug(MODULE, 'Using recent messages scan', {
-          scanLimit: DEFAULT_SCAN_LIMIT,
-          messageCount: recentMessages.length,
-        });
-      }
-    }
+  if (!isWorldbookFeatureEnabled(config)) {
+    Logger.debug(MODULE, 'Worldbook feature disabled, skipping scan', {
+      worldbook: worldbookName,
+    });
+    return '';
   }
 
-  return messages || [];
-}
+  const isDisabled = disabledGlobalBooks.includes(worldbookName);
+  if (isDisabled && !options?.forceInclude) {
+    Logger.debug(MODULE, `Worldbook [${worldbookName}] is disabled`, { forceInclude: false });
+    return '';
+  }
 
-export class WorldbookScannerService {
-  static async scanWorldbook(
-    worldbookName: string,
-    contextText: string,
-    options?: { forceInclude?: boolean }
-  ): Promise<string> {
-    // Early-exit: check filtering state BEFORE expensive getEntries() API call
-    const filterState = await loadFilteringState();
-    let { disabledGlobalBooks } = filterState;
-    const { disabledEntries, globalWorldbooks, config } = filterState;
+  if (options?.forceInclude) {
+    disabledGlobalBooks = disabledGlobalBooks.filter((name) => name !== worldbookName);
+  }
 
-    if (!isWorldbookFeatureEnabled(config)) {
-      Logger.debug(MODULE, 'Worldbook feature disabled, skipping scan', {
-        worldbook: worldbookName,
-      });
-      return '';
+  const entries = await getEntries(worldbookName);
+  if (entries.length === 0) return '';
+
+  const activeEntries: WorldbookEntryWithWorld[] = [];
+  const lowerContext = contextText.toLowerCase();
+
+  for (const entry of entries) {
+    if (!shouldIncludeEntry(entry, globalWorldbooks, disabledGlobalBooks, disabledEntries, config)) {
+      continue;
     }
 
-    const isDisabled = disabledGlobalBooks.includes(worldbookName);
-    if (isDisabled && !options?.forceInclude) {
-      Logger.debug(MODULE, `Worldbook [${worldbookName}] is disabled`, { forceInclude: false });
-      return '';
+    if (!entry.enabled) {
+      continue;
     }
 
-    if (options?.forceInclude) {
-      disabledGlobalBooks = disabledGlobalBooks.filter((name) => name !== worldbookName);
+    if (entry.strategy.type === 'constant') {
+      activeEntries.push(entry);
+      continue;
     }
 
-    const entries = await getEntries(worldbookName);
-    if (entries.length === 0) return '';
-
-    const activeEntries: WorldInfoEntry[] = [];
-    const lowerContext = contextText.toLowerCase();
-
-    for (const entry of entries) {
-      if (
-        !shouldIncludeEntry(entry, globalWorldbooks, disabledGlobalBooks, disabledEntries, config)
-      ) {
-        continue;
-      }
-
-      if (!entry.enabled) {
-        continue;
-      }
-
-      if (entry.constant) {
-        activeEntries.push(entry);
-        continue;
-      }
-
-      if (!entry.keys || entry.keys.length === 0) {
-        continue;
-      }
-
-      const matched = entry.keys.some(
-        (key: string) => key && lowerContext.includes(key.toLowerCase())
-      );
-      if (matched) {
-        activeEntries.push(entry);
-      }
+    const keys = entry.strategy.keys;
+    if (!keys || keys.length === 0) {
+      continue;
     }
 
-    if (activeEntries.length === 0) {
-      Logger.debug(MODULE, `No matching entries for [${worldbookName}]`, {
-        total: entries.length,
-        reason: 'No keys matched or no constant entries',
-      });
-      return '';
-    }
-
-    Logger.debug(MODULE, `Scanned worldbook [${worldbookName}]`, {
-      total: entries.length,
-      matched: activeEntries.length,
-      matchedEntries: activeEntries.map((entry) => entry.name),
+    const matched = keys.some((key) => {
+      const keyStr = typeof key === 'string' ? key : key.source;
+      return keyStr && lowerContext.includes(keyStr.toLowerCase());
     });
 
-    activeEntries.sort((a, b) => a.order - b.order);
-    return activeEntries.map((entry) => entry.content).join('\n\n');
-  }
-
-  static async getActivatedWorldInfo(
-    chatMessages?: string[],
-    options?: { floorRange?: [number, number] }
-  ): Promise<string> {
-    try {
-      const filterState = await loadFilteringState();
-      const { config } = filterState;
-
-      if (!isWorldbookFeatureEnabled(config)) {
-        Logger.debug(MODULE, 'Worldbook feature disabled, skipping activated scan');
-        return '';
-      }
-
-      const messages = resolveScanMessages(chatMessages, options);
-      const contextText = messages.join('\n');
-      const worldbooksToScan = getWorldbooksForContextScan(filterState);
-
-      if (worldbooksToScan.length === 0) {
-        return '';
-      }
-
-      const scanResults = await Promise.all(
-        worldbooksToScan.map((worldbookName) => this.scanWorldbook(worldbookName, contextText))
-      );
-
-      const activeContents = scanResults.filter(Boolean);
-
-      Logger.info(MODULE, 'Activated worldbook scan completed', {
-        books: worldbooksToScan.length,
-        matched: activeContents.length,
-        includeGlobal: config?.includeGlobal !== false,
-      });
-
-      return activeContents.join('\n\n');
-    } catch (error) {
-      Logger.error(MODULE, 'Failed to get activated worldbooks', error);
-      return '';
+    if (matched) {
+      activeEntries.push(entry);
     }
   }
+
+  if (activeEntries.length === 0) {
+    Logger.debug(MODULE, `No matching entries for [${worldbookName}]`, {
+      total: entries.length,
+      reason: 'No keys matched or no constant entries',
+    });
+    return '';
+  }
+
+  Logger.debug(MODULE, `Scanned worldbook [${worldbookName}]`, {
+    total: entries.length,
+    matched: activeEntries.length,
+    matchedEntries: activeEntries.map((entry) => entry.name),
+  });
+
+  activeEntries.sort((a, b) => a.position.order - b.position.order);
+  return activeEntries.map((entry) => entry.content).join('\n\n');
+}
+
+/**
+ * 获取当前 Tavern 已激活的世界书文本
+ */
+export async function getLiveActivatedWorldInfo(): Promise<string> {
+  try {
+    ensureWorldInfoScanListener();
+
+    const { config } = loadFilteringState();
+    if (!isWorldbookFeatureEnabled(config)) {
+      Logger.debug(MODULE, 'Worldbook feature disabled, skipping live world info');
+      return '';
+    }
+
+    if (!hasActivatedWorldInfoCache) {
+      Logger.debug(MODULE, 'Activated world info cache is not ready yet');
+      return '';
+    }
+
+    Logger.debug(MODULE, 'Using Tavern activated world info cache', {
+      textLength: latestActivatedWorldInfoText.length,
+    });
+
+    return latestActivatedWorldInfoText;
+  } catch (error) {
+    Logger.error(MODULE, 'Failed to get live activated worldbooks', error);
+    return '';
+  }
+}
+
+export async function getContextualWorldInfo(
+  chatMessages: string[],
+  options?: ContextualWorldInfoOptions
+): Promise<string> {
+  try {
+    ensureWorldInfoScanListener();
+
+    const filterState = loadFilteringState();
+    const { config } = filterState;
+
+    if (!isWorldbookFeatureEnabled(config)) {
+      Logger.debug(MODULE, 'Worldbook feature disabled, skipping contextual world info');
+      return '';
+    }
+
+    const messages = resolveScanMessages(chatMessages);
+    const cacheKey = buildContextualWorldInfoCacheKey(messages, options, filterState);
+    const cached = getContextualWorldInfoCache(cacheKey);
+    if (cached !== undefined) {
+      Logger.debug(MODULE, 'Using contextual world info cache', {
+        messageCount: messages.length,
+        extraWorldbooksCount: normalizeExtraWorldbooks(options?.extraWorldbooks).length,
+      });
+      return cached;
+    }
+
+    const contextText = messages.join('\n');
+    const extraWorldbooks = normalizeExtraWorldbooks(options?.extraWorldbooks);
+    const defaultWorldbooks = getWorldbooksForContextScan(filterState);
+    const standardWorldbooks = defaultWorldbooks.filter(
+      (worldbookName) => !extraWorldbooks.includes(worldbookName)
+    );
+
+    if (!contextText && standardWorldbooks.length === 0 && extraWorldbooks.length === 0) {
+      setContextualWorldInfoCache(cacheKey, '');
+      return '';
+    }
+
+    const extraScanResults = await Promise.all(
+      extraWorldbooks.map((worldbookName) =>
+        scanWorldbook(worldbookName, contextText, { forceInclude: true })
+      )
+    );
+    const scanResults = await Promise.all(
+      standardWorldbooks.map((worldbookName) => scanWorldbook(worldbookName, contextText))
+    );
+
+    const result = [...extraScanResults, ...scanResults].filter(Boolean).join('\n\n');
+    setContextualWorldInfoCache(cacheKey, result);
+
+    Logger.debug(MODULE, 'Resolved world info via contextual scan', {
+      hasFloorRange: Boolean(options?.floorRange),
+      extraWorldbooksCount: extraWorldbooks.length,
+      matchedCount: result ? result.split('\n\n').length : 0,
+      messageCount: messages.length,
+      cacheSize: contextualWorldInfoCache.size,
+    });
+
+    return result;
+  } catch (error) {
+    Logger.error(MODULE, 'Failed to get contextual worldbooks', error);
+    return '';
+  }
+}
+
+/**
+ * 重置已激活世界书缓存与监听状态
+ * 用于测试、热重载或需要重新建立监听的场景
+ */
+export function resetWorldInfoScanCache(): void {
+  unsubscribeWorldInfoScanListener?.();
+  unsubscribeWorldInfoScanListener = null;
+  for (const unsubscribe of unsubscribeWorldInfoCacheInvalidators.splice(0)) {
+    unsubscribe();
+  }
+  clearWorldInfoCaches('manual_reset');
+  worldInfoScanListenerInitialized = false;
 }

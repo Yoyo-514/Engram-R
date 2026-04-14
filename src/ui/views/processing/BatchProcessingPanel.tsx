@@ -21,12 +21,14 @@ import {
   Square,
   Upload,
   XCircle,
+  Archive,
+  Loader2,
+  Search as SearchIcon,
 } from 'lucide-react';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import type { FC, ChangeEvent } from 'react';
 import { useMemoryStore } from '@/state/memoryStore';
 import { notificationService } from '@/ui/services/NotificationService';
-import { Archive, Loader2, Search as SearchIcon } from 'lucide-react';
 import { chatManager } from '@/data/ChatManager';
 
 // 任务状态图标
@@ -89,7 +91,7 @@ const DataBatchSection: FC = () => {
       await store.archiveEvents(ids);
       notificationService.success(`已归档 ${ids.length} 条事件`, 'Engram');
       setArchiveStats((prev) => (prev ? { ...prev, pending: 0 } : null));
-    } catch (error) {
+    } catch {
       notificationService.error('归档失败', 'Engram');
     } finally {
       setIsArchiving(false);
@@ -267,7 +269,7 @@ export const BatchProcessingPanel: FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => setImportText((event.target?.result as string) || '');
+    reader.addEventListener('load', (event) => setImportText((event?.target?.result as string) || ''));
     reader.readAsText(file);
   }, []);
 

@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { RobustJsonParser } from '@/core/utils';
+import { parseJson } from '@/core/utils';
 import { hideMessageRange, refreshEngramCache } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { type EventNode } from '@/types/graph';
@@ -141,7 +141,7 @@ async function parseEventsToSave(context: JobContext): Promise<ParsedEventInput[
   }
 
   try {
-    const parsed = RobustJsonParser.parse<ParsedEventsPayload>(content);
+    const parsed = parseJson<ParsedEventsPayload>(content);
     eventsToSave = extractEvents(parsed);
   } catch {
     throw new Error('SaveEvent: failed to parse events JSON');

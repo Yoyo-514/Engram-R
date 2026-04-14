@@ -1,6 +1,6 @@
 import { Logger, LogModule } from '@/core/logger';
 import { RecallLogService } from '@/core/logger/RecallLogger';
-import { WorldbookScannerService } from '@/integrations/tavern/worldbook/scanner';
+import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
 import { type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
@@ -25,7 +25,7 @@ export class RecordRecallLogStep implements IStep {
     let worldbookEntriesCount = 0;
     try {
       // 这只是为了展示在日志里，不需要等待它注入，ST 会自己处理注入
-      const worldInfoText = await WorldbookScannerService.getActivatedWorldInfo();
+      const worldInfoText = await getLiveActivatedWorldInfo();
       worldbookEntriesCount = worldInfoText ? worldInfoText.split('\n\n').length : 0;
     } catch (e) {
       Logger.debug(LogModule.RAG_INJECT, '获取世界书条目统计失败');

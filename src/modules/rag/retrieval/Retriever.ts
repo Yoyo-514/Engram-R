@@ -11,21 +11,15 @@
  * - keyword_only: 仅关键词扫描
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { RecallLogService } from '@/core/logger/RecallLogger';
 import { tryGetDbForChat } from '@/data/db';
-import { getCurrentChatId } from '@/integrations/tavern';
+import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
 
 import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
-import type {
-  BrainRecallConfig,
-  RecallConfig,
-  RerankConfig,
-  VectorConfig,
-} from '@/types/rag';
+import type { BrainRecallConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
 import type { EventNode } from '@/types/graph';
-import { ChatHistoryHelper } from '@/integrations/tavern/chat/chatHistory';
 import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { WorkflowEngine } from '@/modules/workflow/core/WorkflowEngine';
 import { createRetrievalWorkflow } from '@/modules/workflow';
@@ -48,7 +42,7 @@ class Retriever {
    * 获取召回配置
    */
   private getRecallConfig(): RecallConfig {
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     return apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
   }
 
@@ -88,7 +82,7 @@ class Retriever {
    * 获取全局向量配置
    */
   private getVectorConfig(): VectorConfig | undefined {
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     return apiSettings?.vectorConfig;
   }
 
@@ -96,7 +90,7 @@ class Retriever {
    * 获取 Rerank 配置
    */
   private getRerankConfig(): RerankConfig | null {
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     return apiSettings?.rerankConfig || null;
   }
 
@@ -111,7 +105,7 @@ class Retriever {
       unifiedCount: unifiedQueries?.length || 0,
     });
 
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const recallConfig = apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
 
     // 未启用召回，使用滚动窗口策略
@@ -162,9 +156,10 @@ class Retriever {
     let enhancedInput = userInput;
     if (recallConfig.useKeywordRecall) {
       try {
-        const recentContext = ChatHistoryHelper.getChatHistory([
-          Math.max(1, ChatHistoryHelper.getCurrentMessageCount() - 2),
-          ChatHistoryHelper.getCurrentMessageCount(),
+        const currentMessageCount = getCurrentMessageCount();
+        const recentContext = getChatHistory([
+          Math.max(1, currentMessageCount - 2),
+          currentMessageCount,
         ]);
         if (recentContext) {
           enhancedInput = `${recentContext}\n\n[Current]\n${userInput}`;

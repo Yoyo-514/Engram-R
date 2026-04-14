@@ -12,13 +12,6 @@ import {
 export { DEFAULT_PREPROCESSING_CONFIG };
 export type { PreprocessingConfig };
 
-/** 预处理模式 */
-type PreprocessingMode =
-  | 'query_enhance' // RAG Query 增强
-  | 'plot_director' // 剧情构思
-  | 'description' // 描写增强
-  | 'custom'; // 自定义
-
 /** Agentic RAG 召回条目 */
 export interface AgenticRecall {
   /** 事件短 UUID (如 evt_a1b2c3d4) */

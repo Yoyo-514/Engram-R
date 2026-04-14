@@ -15,7 +15,7 @@
  * 用于快捷切换预处理模式、查看 RAG 状态等
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, set, subscribe } from '@/config/settings';
 import type { EngramAPISettings } from '@/types/config';
 import type { PromptTemplate } from '@/types/prompt';
 import type { RecallConfig } from '@/types/rag';
@@ -118,10 +118,10 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     preprocessor.getConfig() || DEFAULT_PREPROCESSING_CONFIG
   );
   const [recallConfig, setRecallConfig] = useState<RecallConfig | null>(
-    SettingsManager.get('apiSettings')?.recallConfig ?? null
+    get('apiSettings')?.recallConfig ?? null
   );
   const [templates, setTemplates] = useState<PromptTemplate[]>(
-    SettingsManager.get('apiSettings')?.promptTemplates ?? []
+    get('apiSettings')?.promptTemplates ?? []
   );
 
   const availableModes = useMemo(() => {
@@ -145,7 +145,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
       setConfig((prev) => (JSON.stringify(prev) !== JSON.stringify(newPre) ? newPre : prev));
 
       // 2. Recall Config & Templates
-      const apiSettings: EngramAPISettings | null = SettingsManager.get('apiSettings');
+      const apiSettings: EngramAPISettings | null = get('apiSettings');
       if (apiSettings) {
         const newRecall = apiSettings.recallConfig ?? null;
         setRecallConfig((prev) =>
@@ -162,7 +162,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     syncData(); // 初始化读取
 
     // 订阅设置更改事件
-    const unsubscribe = SettingsManager.subscribe(syncData);
+    const unsubscribe = subscribe(syncData);
 
     return () => {
       unsubscribe();
@@ -177,10 +177,10 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     Logger.debug('QuickPanel', '切换预处理状态', { from: currentRecallState, to: newState });
 
     // 读取最新设置以防覆盖
-    const apiSettings: EngramAPISettings | null = SettingsManager.get('apiSettings');
+    const apiSettings: EngramAPISettings | null = get('apiSettings');
     if (apiSettings && apiSettings.recallConfig) {
       const newRecallConfig = { ...apiSettings.recallConfig, usePreprocessing: newState };
-      SettingsManager.set('apiSettings', {
+      set('apiSettings', {
         ...apiSettings,
         recallConfig: newRecallConfig,
       });
@@ -189,7 +189,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     // 更新 Preprocessor Config
     const newPreConfig = { ...config, enabled: newState };
     setConfig(newPreConfig);
-    SettingsManager.set('preprocessingConfig', newPreConfig);
+    set('preprocessingConfig', newPreConfig);
   }, [config, recallConfig]);
 
   // 切换模式
@@ -200,14 +200,14 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
       // 1. 更新 Preprocessor Config
       const newPreConfig = { ...config, templateId: templateId, enabled: true };
       setConfig(newPreConfig);
-      SettingsManager.set('preprocessingConfig', newPreConfig);
+      set('preprocessingConfig', newPreConfig);
 
       // 2. 确保全局 Recall Config 也是开启的
-      const apiSettings: EngramAPISettings | null = SettingsManager.get('apiSettings');
+      const apiSettings: EngramAPISettings | null = get('apiSettings');
       if (apiSettings && apiSettings.recallConfig) {
         if (!apiSettings.recallConfig.usePreprocessing) {
           const newRecallConfig = { ...apiSettings.recallConfig, usePreprocessing: true };
-          SettingsManager.set('apiSettings', {
+          set('apiSettings', {
             ...apiSettings,
             recallConfig: newRecallConfig,
           });
@@ -296,7 +296,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                   onChange={() => {
                     const newConfig = { ...config, preview: !config.preview };
                     setConfig(newConfig);
-                    SettingsManager.set('preprocessingConfig', newConfig);
+                    set('preprocessingConfig', newConfig);
                   }}
                 />
               </div>

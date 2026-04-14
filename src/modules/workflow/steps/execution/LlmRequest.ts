@@ -4,13 +4,13 @@ import { llmAdapter } from '@/integrations/llm/Adapter';
 import { ModelLogger } from '@/core/logger/ModelLogger';
 import { getCurrentCharacter, getCurrentModel } from '@/integrations/tavern';
 import { Logger } from '@/core/logger';
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 
 export class LlmRequest implements IStep {
   name = 'LlmRequest';
 
   get retry(): RetryConfig {
-    const apiSettings = SettingsManager.get('apiSettings') as any;
+    const apiSettings = get('apiSettings') as any;
     const presets = apiSettings?.llmPresets || [];
     const activePresetId = apiSettings?.activeLLMPresetId;
     const activePreset = presets.find((p: any) => p.id === activePresetId) || presets[0];

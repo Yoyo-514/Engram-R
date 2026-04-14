@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
@@ -104,7 +104,7 @@ export class ImportTextTask implements IBatchTaskHandler {
             if (Array.isArray(savedEvents) && savedEvents.length > 0) {
               // Pipeline 已处理存储，只需嵌入
               // V1.2.2: 联动嵌入前确保配置已加载
-              const vectorConfig = SettingsManager.get('apiSettings')?.vectorConfig;
+              const vectorConfig = get('apiSettings')?.vectorConfig;
               if (vectorConfig) {
                 embeddingService.setConfig(vectorConfig);
               }
@@ -186,7 +186,7 @@ export class ImportTextTask implements IBatchTaskHandler {
         if (checkStopSignal()) return;
 
         if (Array.isArray(fallbackEvents) && fallbackEvents.length > 0) {
-          const vectorConfig = SettingsManager.get('apiSettings')?.vectorConfig;
+          const vectorConfig = get('apiSettings')?.vectorConfig;
           if (vectorConfig) {
             embeddingService.setConfig(vectorConfig);
           }

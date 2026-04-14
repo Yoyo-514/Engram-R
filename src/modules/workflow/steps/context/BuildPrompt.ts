@@ -1,12 +1,12 @@
 import { getBuiltInTemplateByCategory } from '@/types/config';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import { Logger } from '@/core/logger';
-import { PromptLoader } from '@/integrations/llm/PromptLoader';
+import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
 import type { JobContext } from '../../core/JobContext';
 import type { IStep } from '../../core/Step';
 import { tryGetDbForChat } from '@/data/db';
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { getTavernContext } from '@/core/utils';
 
 interface BuildPromptConfig {
@@ -90,10 +90,10 @@ export class BuildPrompt implements IStep {
       ? contextConfig.category
       : this.config.category;
 
-    const allTemplates = SettingsManager.get('apiSettings')?.promptTemplates ?? [];
+    const allTemplates = get('apiSettings')?.promptTemplates ?? [];
 
-    PromptLoader.init();
-    const builtInTemplates = PromptLoader.getAllTemplates();
+    initPromptLoader();
+    const builtInTemplates = getAllTemplates();
 
     const templateMap = new Map<string, PromptTemplate>();
     builtInTemplates.forEach((template) => templateMap.set(template.id, template));
@@ -127,7 +127,7 @@ export class BuildPrompt implements IStep {
     }
 
     const variables: Record<string, string> = {
-      ...(this.config.vars ?? {}),
+      ...this.config.vars,
       '{{userInput}}': readString(contextInput.text) ?? '',
       '{{chatHistory}}': readString(contextInput.chatHistory) ?? '',
       '{{previousOutput}}': readString(contextInput.previousOutput) ?? '',

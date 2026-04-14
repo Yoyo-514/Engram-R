@@ -2,9 +2,9 @@
  * SummarizerService - 剧情总结核心服务
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, incrementStatistic, set } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
-import { getSTContext, WorldBookSlotService } from '@/integrations/tavern';
+import { getSTContext, initWorldBookSlot,  } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore'; // Used for setLastSummarizedFloor
 import { notificationService } from '@/ui/services/NotificationService';
 import type { JobContext } from '@/modules/workflow/core/JobContext';
@@ -15,6 +15,10 @@ import { createSummaryWorkflow, StopGeneration, WorkflowEngine } from '@/modules
 import { eventTrimmer } from './EventTrimmer';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
+import {
+  getCurrentSummaryPreparationChatId,
+  summaryPreparationCache,
+} from './SummaryPreparationCache';
 
 /** 元数据 key */
 const METADATA_KEY = 'engram';
@@ -55,7 +59,7 @@ class SummarizerService {
 
   constructor(config?: Partial<SummarizerConfig>) {
     // 优先使用传入配置，其次加载持久化配置，最后使用默认配置
-    const savedConfig = SettingsManager.get('summarizerConfig') as Partial<SummarizerConfig>;
+    const savedConfig = get('summarizerConfig') as Partial<SummarizerConfig>;
     this.config = { ...DEFAULT_SUMMARIZER_CONFIG, ...savedConfig, ...config };
   }
 
@@ -111,6 +115,7 @@ class SummarizerService {
     // 保存到 memoryStore
     const store = useMemoryStore.getState();
     await store.setLastSummarizedFloor(floor);
+    summaryPreparationCache.reset(getCurrentSummaryPreparationChatId(), floor);
   }
 
   // ==================== 楼层计算 ====================
@@ -249,6 +254,14 @@ class SummarizerService {
     // await this.checkEntityExtraction(currentFloor);
 
     // 检查是否达到 Summary 触发条件
+    if (this.config.enabled && !this.isSummarizing && pendingFloors > 0) {
+      summaryPreparationCache.scheduleWarm({
+        chatId: this.currentChatId,
+        baseFloor: lastSummarized,
+        targetFloor: currentFloor,
+      });
+    }
+
     if (pendingFloors >= this.config.floorInterval) {
       await this.log('info', '达到触发条件，准备总结', {
         pendingFloors,
@@ -366,8 +379,14 @@ class SummarizerService {
         rangeOverride: rangeOverride ?? null,
       });
 
+      const preparedSummaryContext = await summaryPreparationCache.getPreparedRange({
+        chatId: this.currentChatId,
+        baseFloor: this._lastSummarizedFloor,
+        range,
+      });
+
       // 2. Run Workflow
-      await WorldBookSlotService.init();
+      await initWorldBookSlot();
 
       const context = await WorkflowEngine.run(createSummaryWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
@@ -380,6 +399,7 @@ class SummarizerService {
         },
         input: {
           range: range,
+          preparedSummaryContext,
         },
       });
 
@@ -403,11 +423,11 @@ class SummarizerService {
       };
 
       if (Array.isArray(savedEvents) && savedEvents.length > 0) {
-        SettingsManager.incrementStatistic('totalEvents', savedEvents.length);
+        incrementStatistic('totalEvents', savedEvents.length);
       }
 
       // Update local state (redundant if SaveEvent updated store, but safe)
-      this._lastSummarizedFloor = endFloor;
+      await this.setLastSummarizedFloor(endFloor);
       this.summaryHistory.push(result);
 
       // V1.0.5: 联动触发精简 - 总结完成后检查是否需要精简
@@ -508,7 +528,7 @@ class SummarizerService {
   updateConfig(config: Partial<SummarizerConfig>) {
     this.config = { ...this.config, ...config };
     // 持久化保存
-    SettingsManager.set('summarizerConfig', this.config);
+    set('summarizerConfig', this.config);
     void this.log('debug', '配置已更新并保存', this.config);
   }
 

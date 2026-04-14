@@ -192,10 +192,6 @@ export class HistoryTask implements IBatchTaskHandler {
 
       try {
         // 核心修改：向 triggerSummary 传递明确的 range
-        const res = await summarizerService.triggerSummary(true, [
-          currentSliceStart,
-          currentSliceEnd,
-        ]);
         if (checkStopSignal()) return;
 
         // 无论成功与否，我们都推进 processedFloors，因为逻辑已外置

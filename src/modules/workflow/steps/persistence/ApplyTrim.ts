@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { type EventNode } from '@/types/graph';
 import { refreshCache } from '@/integrations/tavern';
@@ -58,7 +58,7 @@ export class ApplyTrim implements IStep {
 
     // 2. 联动嵌入 (Trim Linkage)
     const sourceEventIds = eventsToMerge.map((e) => e.id);
-    const settings = SettingsManager.get('apiSettings');
+    const settings = get('apiSettings');
     // @ts-ignore
     const embeddingConfig = settings?.embeddingConfig;
 

@@ -11,7 +11,7 @@ import type { VectorConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { getDbForChat, tryGetDbForChat } from '@/data/db';
 import type { EventNode } from '@/types/graph';
-import { EmbeddingClient } from '@/integrations/embedding/EmbeddingClient';
+import { callEmbeddingAPI } from '@/integrations/embedding/EmbeddingClient';
 import { getCurrentChatId } from '@/integrations/tavern';
 
 // ==================== 类型定义 ====================
@@ -45,87 +45,145 @@ type EmbedProgressCallback = (current: number, total: number, errors: number) =>
  */
 const DEFAULT_CONCURRENCY = 5;
 
+function normalizeConcurrency(value: number): number {
+  return Math.max(1, Math.min(20, Math.floor(value)));
+}
+
+function filterEventsByRange<
+  T extends { source_range: { start_index: number; end_index: number } },
+>(events: T[], range?: { start?: number; end?: number }): T[] {
+  if (!range) {
+    return events;
+  }
+
+  return events.filter((event) => {
+    const { start_index, end_index } = event.source_range;
+    if (range.start !== undefined && start_index < range.start) return false;
+    if (range.end !== undefined && end_index > range.end) return false;
+    return true;
+  });
+}
+
+async function persistEventEmbedding(
+  eventId: string,
+  embedding: number[],
+  chatId?: string | null
+): Promise<void> {
+  const resolvedChatId = chatId ?? getCurrentChatId();
+  if (!resolvedChatId) {
+    return;
+  }
+
+  const db = tryGetDbForChat(resolvedChatId);
+  if (!db) {
+    return;
+  }
+
+  await db.events.update(eventId, {
+    embedding,
+    is_embedded: true,
+  });
+}
+
 // ==================== EmbeddingService ====================
 
-export class EmbeddingService {
-  constructor() {}
-  private config: VectorConfig | null = null;
-  private concurrency: number = DEFAULT_CONCURRENCY;
-  private stopSignal: boolean = false;
+export function createEmbeddingService() {
+  let config: VectorConfig | null = null;
+  let concurrency = DEFAULT_CONCURRENCY;
+  let stopSignal = false;
 
   /**
    * 设置向量配置
    */
-  public setConfig(config: VectorConfig) {
-    this.config = config;
+  function setConfig(nextConfig: VectorConfig): void {
+    config = nextConfig;
   }
 
   /**
    * 设置并发数
    */
-  public setConcurrency(n: number) {
-    this.concurrency = Math.max(1, Math.min(20, n));
+  function setConcurrency(n: number): void {
+    concurrency = normalizeConcurrency(n);
   }
 
   /**
    * 停止当前进行的嵌入任务
    */
-  public stop() {
-    this.stopSignal = true;
+  function stop(): void {
+    stopSignal = true;
   }
 
   /**
    * 重置停止信号
    */
-  public reset() {
-    this.stopSignal = false;
+  function reset(): void {
+    stopSignal = false;
   }
 
   // ==================== 核心嵌入方法 ====================
 
   /**
-   * 生成单个文本的嵌入向量
+   * 调用嵌入 API
    */
-  public async embed(text: string): Promise<number[]> {
-    if (!this.config) {
+  async function recallEmbeddingAPI(text: string): Promise<number[]> {
+    if (!config) {
       throw new Error('EmbeddingService: config not set');
     }
 
-    const results = await this.embedBatch([{ id: 'single', text }]);
-    if (results[0].error) {
-      throw new Error(results[0].error);
+    return callEmbeddingAPI(text, config);
+  }
+
+  /**
+   * 生成单个文本的嵌入向量
+   */
+  async function embed(text: string): Promise<number[]> {
+    if (!config) {
+      throw new Error('EmbeddingService: config not set');
     }
-    return results[0].embedding;
+
+    const results = await embedBatch([{ id: 'single', text }]);
+    const firstResult = results[0];
+
+    if (!firstResult) {
+      throw new Error('EmbeddingService: no embedding result returned');
+    }
+
+    if (firstResult.error) {
+      throw new Error(firstResult.error);
+    }
+
+    return firstResult.embedding;
   }
 
   /**
    * 批量生成嵌入 (支持并发控制)
    */
-  public async embedBatch(
+  async function embedBatch(
     requests: EmbedRequest[],
     onProgress?: EmbedProgressCallback
   ): Promise<EmbedResult[]> {
-    if (!this.config) {
+    if (!config) {
       throw new Error('EmbeddingService: config not set');
     }
 
-    this.stopSignal = false;
-    const results: EmbedResult[] = new Array(requests.length);
+    stopSignal = false;
+    const results: EmbedResult[] = Array.from({ length: requests.length });
     let completed = 0;
     let errors = 0;
 
     // 并发处理
     const worker = async (index: number) => {
-      if (index >= requests.length || this.stopSignal) return;
+      if (index >= requests.length || stopSignal) return;
 
       const req = requests[index];
       try {
-        const embedding = await this.callEmbeddingAPI(req.text);
+        const embedding = await recallEmbeddingAPI(req.text);
         results[index] = { id: req.id, embedding };
-      } catch (e: any) {
+      } catch (error: unknown) {
         errors++;
-        results[index] = { id: req.id, embedding: [], error: e.message };
-        Logger.warn(LogModule.RAG_EMBED, `嵌入失败: ${req.id}`, { error: e.message });
+        const message = error instanceof Error ? error.message : String(error);
+        results[index] = { id: req.id, embedding: [], error: message };
+        Logger.warn(LogModule.RAG_EMBED, `嵌入失败: ${req.id}`, { error: message });
       } finally {
         completed++;
         onProgress?.(completed, requests.length, errors);
@@ -133,23 +191,16 @@ export class EmbeddingService {
     };
 
     // 分批并发
-    for (let i = 0; i < requests.length; i += this.concurrency) {
-      if (this.stopSignal) break;
-      const batch = Array.from(
-        { length: Math.min(this.concurrency, requests.length - i) },
-        (_, j) => worker(i + j)
+    for (let i = 0; i < requests.length; i += concurrency) {
+      if (stopSignal) break;
+
+      const batch = Array.from({ length: Math.min(concurrency, requests.length - i) }, (_, j) =>
+        worker(i + j)
       );
       await Promise.all(batch);
     }
 
     return results;
-  }
-
-  /**
-   * 调用嵌入 API
-   */
-  private async callEmbeddingAPI(text: string): Promise<number[]> {
-    return EmbeddingClient.callAPI(text, this.config!);
   }
 
   // ==================== EventNode 批量嵌入 ====================
@@ -159,7 +210,7 @@ export class EmbeddingService {
    * @param onProgress 进度回调
    * @returns 成功嵌入的数量
    */
-  public async embedUnprocessedEvents(
+  async function embedUnprocessedEvents(
     onProgress?: EmbedProgressCallback,
     range?: { start?: number; end?: number }
   ): Promise<{ success: number; failed: number }> {
@@ -172,18 +223,11 @@ export class EmbeddingService {
 
     // 获取未嵌入的事件 (V1.2.2: 仅处理 Level 0 事件，大纲节点不进行向量化)
     let events = await db.events
-      .filter((e) => e.level === 0 && !e.is_embedded && !e.embedding)
+      .filter((event) => event.level === 0 && !event.is_embedded && !event.embedding)
       .toArray();
 
     // 应用范围过滤
-    if (range) {
-      events = events.filter((e) => {
-        const { start_index, end_index } = e.source_range;
-        if (range.start !== undefined && start_index < range.start) return false;
-        if (range.end !== undefined && end_index > range.end) return false;
-        return true;
-      });
-    }
+    events = filterEventsByRange(events, range);
 
     if (events.length === 0) {
       return { success: 0, failed: 0 };
@@ -192,20 +236,20 @@ export class EmbeddingService {
     Logger.info(LogModule.RAG_EMBED, `开始嵌入 ${events.length} 个事件`);
 
     // 构建请求
-    const requests: EmbedRequest[] = events.map((e) => ({
-      id: e.id,
-      text: e.summary,
+    const requests: EmbedRequest[] = events.map((event) => ({
+      id: event.id,
+      text: event.summary,
     }));
 
     // 批量嵌入
-    const results = await this.embedBatch(requests, onProgress);
+    const results = await embedBatch(requests, onProgress);
 
     // 更新数据库
     let success = 0;
     let failed = 0;
 
     for (const result of results) {
-      if (result.error || result.embedding.length === 0) {
+      if (!result || result.error || result.embedding.length === 0) {
         failed++;
         continue;
       }
@@ -224,7 +268,7 @@ export class EmbeddingService {
   /**
    * 为指定的事件列表生成嵌入
    */
-  public async embedEvents(
+  async function embedEvents(
     events: EventNode[],
     onProgress?: EmbedProgressCallback
   ): Promise<{ success: number; failed: number }> {
@@ -233,32 +277,30 @@ export class EmbeddingService {
     }
 
     const chatId = getCurrentChatId();
-    if (!chatId) throw new Error('No current chat');
-    const db = getDbForChat(chatId);
+    if (!chatId) {
+      throw new Error('No current chat');
+    }
 
     // 构建请求
-    const requests: EmbedRequest[] = events.map((e) => ({
-      id: e.id,
-      text: e.summary,
+    const requests: EmbedRequest[] = events.map((event) => ({
+      id: event.id,
+      text: event.summary,
     }));
 
     // 批量嵌入
-    const results = await this.embedBatch(requests, onProgress);
+    const results = await embedBatch(requests, onProgress);
 
     // 更新数据库
     let success = 0;
     let failed = 0;
 
     for (const result of results) {
-      if (result.error || result.embedding.length === 0) {
+      if (!result || result.error || result.embedding.length === 0) {
         failed++;
         continue;
       }
 
-      await db.events.update(result.id, {
-        embedding: result.embedding,
-        is_embedded: true,
-      });
+      await persistEventEmbedding(result.id, result.embedding, chatId);
       success++;
     }
 
@@ -268,28 +310,16 @@ export class EmbeddingService {
   /**
    * 为指定的 EventNode 生成嵌入
    */
-  public async embedEvent(event: EventNode): Promise<number[]> {
-    const embedding = await this.embed(event.summary);
-
-    // 更新数据库
-    const chatId = getCurrentChatId();
-    if (chatId) {
-      const db = tryGetDbForChat(chatId);
-      if (db) {
-        await db.events.update(event.id, {
-          embedding,
-          is_embedded: true,
-        });
-      }
-    }
-
+  async function embedEvent(event: EventNode): Promise<number[]> {
+    const embedding = await embed(event.summary);
+    await persistEventEmbedding(event.id, embedding);
     return embedding;
   }
 
   /**
    * 重新嵌入所有事件 (模型切换后使用)
    */
-  public async reembedAllEvents(
+  async function reembedAllEvents(
     onProgress?: EmbedProgressCallback,
     range?: { start?: number; end?: number }
   ): Promise<{ success: number; failed: number }> {
@@ -301,17 +331,10 @@ export class EmbeddingService {
     const db = getDbForChat(chatId);
 
     // 获取所有事件 (V1.2.2: 仅处理 Level 0 事件)
-    let events = await db.events.filter((e) => e.level === 0).toArray();
+    let events = await db.events.filter((event) => event.level === 0).toArray();
 
     // 应用范围过滤
-    if (range) {
-      events = events.filter((e) => {
-        const { start_index, end_index } = e.source_range;
-        if (range.start !== undefined && start_index < range.start) return false;
-        if (range.end !== undefined && end_index > range.end) return false;
-        return true;
-      });
-    }
+    events = filterEventsByRange(events, range);
 
     if (events.length === 0) {
       return { success: 0, failed: 0 };
@@ -328,15 +351,16 @@ export class EmbeddingService {
     }
 
     // 重新嵌入
-    return this.embedEvents(events, onProgress);
+    return embedEvents(events, onProgress);
   }
 
   // ==================== 工具方法 ====================
 
   /**
-   * 计算向量范数 (L2 Norm)
+   * 计算向量范数平方 (L2 Norm Squared)
+   * 注意：为了保持兼容，函数名仍为 computeNorm，但返回的是平方和
    */
-  public computeNorm(vec: number[]): number {
+  function computeNorm(vec: number[]): number {
     let sum = 0;
     for (let i = 0; i < vec.length; i++) {
       sum += vec[i] * vec[i];
@@ -353,7 +377,7 @@ export class EmbeddingService {
    * @param normSqA (可选) 向量 A 的范数平方
    * @param normSqB (可选) 向量 B 的范数平方
    */
-  public cosineSimilarity(
+  function cosineSimilarity(
     vecA: number[],
     vecB: number[],
     normSqA?: number,
@@ -381,7 +405,7 @@ export class EmbeddingService {
   /**
    * 获取嵌入统计信息
    */
-  public async getEmbeddingStats(): Promise<{
+  async function getEmbeddingStats(): Promise<{
     total: number;
     embedded: number;
     pending: number;
@@ -397,7 +421,7 @@ export class EmbeddingService {
     }
 
     const events = await db.events.toArray();
-    const embedded = events.filter((e) => e.is_embedded).length;
+    const embedded = events.filter((event) => event.is_embedded).length;
 
     return {
       total: events.length,
@@ -405,7 +429,24 @@ export class EmbeddingService {
       pending: events.length - embedded,
     };
   }
+
+  return {
+    setConfig,
+    setConcurrency,
+    stop,
+    reset,
+    embed,
+    embedBatch,
+    embedUnprocessedEvents,
+    embedEvents,
+    embedEvent,
+    reembedAllEvents,
+    computeNorm,
+    cosineSimilarity,
+    getEmbeddingStats,
+  };
 }
 
 // 导出单例
-export const embeddingService = new EmbeddingService();
+export const embeddingService = createEmbeddingService();
+

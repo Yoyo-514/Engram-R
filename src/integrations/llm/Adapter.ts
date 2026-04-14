@@ -10,7 +10,7 @@
  * - 支持 tavern_profile 临时切换模式
  */
 
-import { SettingsManager } from '@/config/settings';
+import { getSettings, incrementStatistic } from '@/config/settings';
 import type { LLMPreset } from '@/types/llm';
 import { Logger } from '@/core/logger';
 import { regexProcessor } from '@/modules/workflow';
@@ -205,7 +205,7 @@ class LLMAdapter {
 
     try {
       // 获取预设配置
-      const settings = SettingsManager.getSettings();
+      const settings = getSettings();
       let preset: LLMPreset | undefined;
 
       if (request.presetId) {
@@ -316,7 +316,7 @@ class LLMAdapter {
 
     // V1.5 获取此请求所用的 Preset (如果是内部预设，需要再查一次或从上层传下来)
     // 这里基于 SettingsManager 直接根据 context 取一下当前在跑哪个 preset
-    const settings = SettingsManager.getSettings();
+    const settings = getSettings();
     const currentPreset = request.presetId
       ? settings.apiSettings?.llmPresets?.find((p) => p.id === request.presetId)
       : settings.apiSettings?.llmPresets?.find(
@@ -330,7 +330,7 @@ class LLMAdapter {
       _engram_internal: request.internal,
     };
 
-    let content: string;
+    let generationResult: string | GenerateToolCallResult;
     const stopWatching = this.watchForCancellation(request.signal, request.generationId);
 
     try {
@@ -346,15 +346,14 @@ class LLMAdapter {
         // 这样酒馆就不会在末尾自动追加多余的内容
         prompts.push({ role: 'user', content: finalUserPrompt });
 
-        content = await helper.generateRaw({
+        generationResult = await helper.generateRaw({
           ordered_prompts: prompts,
           custom_api: customApiConfig,
           ...generationOptions,
         });
       } else if (helper.generate) {
-        content = await helper.generate({
+        generationResult = await helper.generate({
           user_input: finalUserPrompt,
-          system_prompt: finalSystemPrompt,
           max_chat_history: 0,
           custom_api: customApiConfig,
           ...generationOptions,
@@ -366,13 +365,16 @@ class LLMAdapter {
       stopWatching();
     }
 
+    const content =
+      typeof generationResult === 'string' ? generationResult : generationResult.content || '';
+
     this.throwIfCancelled(request.signal);
 
     // --- 全局数据遥测 (Telemetry) ---
-    SettingsManager.incrementStatistic('totalLlmCalls', 1);
+    incrementStatistic('totalLlmCalls', 1);
     const estimatedPromptTokens = this.estimateTokens(finalSystemPrompt + finalUserPrompt);
-    const estimatedCompletionTokens = this.estimateTokens(content || '');
-    SettingsManager.incrementStatistic(
+    const estimatedCompletionTokens = this.estimateTokens(content);
+    incrementStatistic(
       'totalTokens',
       estimatedPromptTokens + estimatedCompletionTokens
     );

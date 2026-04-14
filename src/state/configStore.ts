@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get as getExtSettings, set as setExtSerrings } from '@/config/settings';
 import {
   DEFAULT_EMBEDDING_CONFIG,
   getDefaultAPISettings,
@@ -57,7 +57,7 @@ export interface ConfigState {
 }
 
 const defaults = getDefaultAPISettings();
-const savedContext: any = SettingsManager.get('apiSettings') || {};
+const savedContext: any = getExtSettings('apiSettings') || {};
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
   vectorConfig: savedContext.vectorConfig || defaults.vectorConfig,
@@ -122,8 +122,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   saveConfig: () => {
     const state = get();
     // Option to add Schema Check here before saving
-    const currentSettings = SettingsManager.get('apiSettings') || {};
-    SettingsManager.set('apiSettings', {
+    const currentSettings = getExtSettings('apiSettings') || {};
+    setExtSerrings('apiSettings', {
       ...currentSettings,
       vectorConfig: state.vectorConfig,
       rerankConfig: state.rerankConfig,

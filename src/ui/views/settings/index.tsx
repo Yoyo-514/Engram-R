@@ -1,6 +1,6 @@
-import { SettingsManager } from '@/config/settings';
+import { getSettings, loadSettings, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
-import { getCurrentChatId, getSTContext } from '@/integrations/tavern';
+import { getCurrentChatId } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { preprocessor } from '@/modules/preprocessing';
 import { DEFAULT_PREPROCESSING_CONFIG } from '@/modules/preprocessing/types';
@@ -16,31 +16,28 @@ import { useConfigStore } from '@/state/configStore';
 import { ThemeSelector } from './components/ThemeSelector';
 import { deleteDatabase, listAllDatabases } from '@/data/db';
 import { Dexie } from 'dexie';
-import { ThemeManager } from '@/ui/services';
+import { getTheme, setTheme } from '@/ui/services';
 import { syncService } from '@/data/SyncService';
 
 export const Settings: FC = () => {
   const { enableAnimations, updateEnableAnimations, saveConfig } = useConfigStore();
   const [previewEnabled, setPreviewEnabled] = useState(
-    SettingsManager.getSettings().summarizerConfig?.previewEnabled ?? true
+    getSettings().summarizerConfig?.previewEnabled ?? true
   );
   const [preprocessingPreviewEnabled, setPreprocessingPreviewEnabled] = useState(
-    SettingsManager.getSettings().preprocessingConfig?.preview ??
-      DEFAULT_PREPROCESSING_CONFIG.preview
+    getSettings().preprocessingConfig?.preview ?? DEFAULT_PREPROCESSING_CONFIG.preview
   );
 
   // HACK: 强制刷新引用
   const [, forceUpdate] = useState({});
 
   useEffect(() => {
-    SettingsManager.loadSettings();
+    loadSettings();
   }, []);
 
-  const [linkedDeletion, setLinkedDeletion] = useState(
-    SettingsManager.getSettings().linkedDeletion
-  );
+  const [linkedDeletion, setLinkedDeletion] = useState(getSettings().linkedDeletion);
 
-  const refreshTheme = () => ThemeManager.setTheme(ThemeManager.getTheme());
+  const refreshTheme = () => setTheme(getTheme());
 
   return (
     <div className="flex flex-col h-full animate-in fade-in">
@@ -96,34 +93,34 @@ export const Settings: FC = () => {
                 </div>
               </div>
               <Switch
-                checked={SettingsManager.getSettings().glassSettings?.enabled ?? true}
+                checked={getSettings().glassSettings?.enabled ?? true}
                 onChange={(checked) => {
-                  const current = SettingsManager.getSettings();
+                  const current = getSettings();
                   const newSettings = {
                     ...current.glassSettings,
                     enabled: checked,
                   };
-                  SettingsManager.set('glassSettings', newSettings);
-                  refreshTheme;
+                  set('glassSettings', newSettings);
+                  refreshTheme();
                   forceUpdate({});
                 }}
               />
             </div>
 
-            {(SettingsManager.getSettings().glassSettings?.enabled ?? true) && (
+            {(getSettings().glassSettings?.enabled ?? true) && (
               <>
                 <NumberField
                   label="不透明度 (Opacity)"
                   description="调整面板背景的遮罩强度，数值越低越透明"
-                  value={SettingsManager.getSettings().glassSettings?.opacity ?? 0.8}
+                  value={getSettings().glassSettings?.opacity ?? 0.8}
                   onChange={(val) => {
-                    const current = SettingsManager.getSettings();
+                    const current = getSettings();
                     const newSettings = {
                       ...current.glassSettings,
                       opacity: val,
                     };
-                    SettingsManager.set('glassSettings', newSettings);
-                    refreshTheme;
+                    set('glassSettings', newSettings);
+                    refreshTheme();
                     forceUpdate({});
                   }}
                   min={0}
@@ -133,15 +130,15 @@ export const Settings: FC = () => {
                 <NumberField
                   label="背景磨砂 (Blur)"
                   description="调整背景模糊程度 (px)"
-                  value={SettingsManager.getSettings().glassSettings?.blur ?? 10}
+                  value={getSettings().glassSettings?.blur ?? 10}
                   onChange={(val) => {
-                    const current = SettingsManager.getSettings();
+                    const current = getSettings();
                     const newSettings = {
                       ...current.glassSettings,
                       blur: val,
                     };
-                    SettingsManager.set('glassSettings', newSettings);
-                    refreshTheme;
+                    set('glassSettings', newSettings);
+                    refreshTheme();
                     forceUpdate({});
                   }}
                   min={0}
@@ -237,7 +234,7 @@ export const Settings: FC = () => {
                 onChange={(checked) => {
                   const newSettings = { ...linkedDeletion, enabled: checked };
                   setLinkedDeletion(newSettings);
-                  SettingsManager.set('linkedDeletion', newSettings);
+                  set('linkedDeletion', newSettings);
                 }}
               />
             </div>
@@ -254,7 +251,7 @@ export const Settings: FC = () => {
                         showConfirmation: checked,
                       };
                       setLinkedDeletion(newSettings);
-                      SettingsManager.set('linkedDeletion', newSettings);
+                      set('linkedDeletion', newSettings);
                     }}
                     className="scale-90"
                   />
@@ -276,7 +273,7 @@ export const Settings: FC = () => {
                         deleteChatWorldbook: checked,
                       };
                       setLinkedDeletion(newSettings);
-                      SettingsManager.set('linkedDeletion', newSettings);
+                      set('linkedDeletion', newSettings);
                     }}
                     className="scale-90"
                   />
@@ -307,7 +304,7 @@ export const Settings: FC = () => {
 // 提取的 SyncSection 组件避免重新渲染整个 Settings
 const SyncSection: FC = () => {
   const [syncConfig, setSyncConfig] = useState(
-    SettingsManager.getSettings().syncConfig || {
+    getSettings().syncConfig || {
       enabled: false,
       autoSync: true,
     }
@@ -322,7 +319,7 @@ const SyncSection: FC = () => {
   const handleConfigChange = (key: keyof typeof syncConfig) => (checked: boolean) => {
     const newConfig = { ...syncConfig, [key]: checked };
     setSyncConfig(newConfig);
-    SettingsManager.set('syncConfig', newConfig);
+    set('syncConfig', newConfig);
   };
 
   const handleManualSync = async () => {
@@ -330,15 +327,13 @@ const SyncSection: FC = () => {
       setSyncStatus('check');
       setSyncMessage('检查中...');
 
-      const context = getSTContext();
-      if (!context?.chatId) {
+      if (!chatId) {
         alert('请先打开一个聊天以进行同步测试');
         setSyncStatus('idle');
         setSyncMessage('');
         return;
       }
 
-      const chatId = context.chatId;
       setSyncStatus('syncing');
       setSyncMessage('同步中...');
 
@@ -477,7 +472,6 @@ const SyncSection: FC = () => {
             try {
               setSyncStatus('syncing');
               setSyncMessage('强制上传中...');
-              const chatId = getSTContext()?.chatId;
               if (!chatId) throw new Error('未连接到聊天');
 
               const success = await syncService.upload(chatId);
@@ -504,7 +498,6 @@ const SyncSection: FC = () => {
             try {
               setSyncStatus('syncing');
               setSyncMessage('强制下载中...');
-              const chatId = getSTContext()?.chatId;
               if (!chatId) throw new Error('未连接到聊天');
 
               const result = await syncService.download(chatId);

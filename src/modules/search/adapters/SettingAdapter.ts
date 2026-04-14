@@ -1,5 +1,5 @@
 import { type SearchAdapter, type SearchResult } from '../SearchService';
-import { Settings, Sliders, Key, Database, Cpu, MessageSquare } from 'lucide-react';
+import { Sliders, Key, Database, Cpu, MessageSquare } from 'lucide-react';
 
 export class SettingAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {

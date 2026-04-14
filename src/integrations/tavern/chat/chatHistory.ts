@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import type { SummarizerConfig } from '@/modules/memory/types';
 import { regexProcessor } from '@/modules/workflow/steps';
@@ -18,45 +18,43 @@ function getMessageContent(message: ChatHistoryMessage): string {
 }
 
 const PROCESSED_MESSAGE_CACHE_LIMIT = 500;
+const processedMessageCache = new Map<string, string>();
+let cacheSignature = '';
 
-export class ChatHistoryHelper {
-  private static processedMessageCache = new Map<string, string>();
-  private static cacheSignature = '';
-
-  private static resetCacheIfNeeded(signature: string): void {
-    if (this.cacheSignature === signature) {
-      return;
-    }
-
-    this.cacheSignature = signature;
-    this.processedMessageCache.clear();
+function resetCacheIfNeeded(signature: string): void {
+  if (cacheSignature === signature) {
+    return;
   }
 
-  private static getCachedProcessedMessage(cacheKey: string): string | undefined {
-    const cached = this.processedMessageCache.get(cacheKey);
-    if (cached === undefined) {
-      return undefined;
-    }
+  cacheSignature = signature;
+  processedMessageCache.clear();
+}
 
-    this.processedMessageCache.delete(cacheKey);
-    this.processedMessageCache.set(cacheKey, cached);
-    return cached;
+function getCachedProcessedMessage(cacheKey: string): string | undefined {
+  const cached = processedMessageCache.get(cacheKey);
+  if (cached === undefined) {
+    return undefined;
   }
 
-  private static setCachedProcessedMessage(cacheKey: string, value: string): void {
-    if (this.processedMessageCache.has(cacheKey)) {
-      this.processedMessageCache.delete(cacheKey);
-    } else if (this.processedMessageCache.size >= PROCESSED_MESSAGE_CACHE_LIMIT) {
-      const oldestKey = this.processedMessageCache.keys().next().value;
-      if (oldestKey !== undefined) {
-        this.processedMessageCache.delete(oldestKey);
-      }
-    }
+  processedMessageCache.delete(cacheKey);
+  processedMessageCache.set(cacheKey, cached);
+  return cached;
+}
 
-    this.processedMessageCache.set(cacheKey, value);
+function setCachedProcessedMessage(cacheKey: string, value: string): void {
+  if (processedMessageCache.has(cacheKey)) {
+    processedMessageCache.delete(cacheKey);
+  } else if (processedMessageCache.size >= PROCESSED_MESSAGE_CACHE_LIMIT) {
+    const oldestKey = processedMessageCache.keys().next().value;
+    if (oldestKey !== undefined) {
+      processedMessageCache.delete(oldestKey);
+    }
   }
 
-  private static processMessage(
+  processedMessageCache.set(cacheKey, value);
+}
+
+function processMessage(
     message: ChatHistoryMessage,
     index: number,
     messageCount: number,
@@ -69,7 +67,7 @@ export class ChatHistoryHelper {
     const originalContent = content;
     const regexSource: RegexSource = message.is_user ? 'user_input' : 'ai_output';
     const cacheKey = `${regexSource}|${originalContent}`;
-    const cachedContent = this.getCachedProcessedMessage(cacheKey);
+    const cachedContent = getCachedProcessedMessage(cacheKey);
 
     if (cachedContent !== undefined) {
       if (index === 0 || index === messageCount - 1) {
@@ -152,84 +150,15 @@ export class ChatHistoryHelper {
       });
     }
 
-    this.setCachedProcessedMessage(cacheKey, content);
+    setCachedProcessedMessage(cacheKey, content);
     return content;
-  }
+}
 
-  static getChatHistory(floorRange?: [number, number]): string {
-    try {
-      const context = getSTContext();
-      const tavernHelper = getTavernHelper();
-      const regexConfig = SettingsManager.get('apiSettings')?.regexConfig;
-      const enableNativeRegex = regexConfig?.enableNativeRegex ?? true;
-      const hasTavernHelper = !!tavernHelper;
-      const hasFormatFunc = typeof tavernHelper.formatAsTavernRegexedString === 'function';
-      const cacheSignature = `${regexProcessor.getRevision()}|${enableNativeRegex ? 1 : 0}|${hasFormatFunc ? 1 : 0}`;
+export function getChatHistory(floorRange?: [number, number]): string {
+    return getChatHistorySegments(floorRange).join('\n\n');
+}
 
-      this.resetCacheIfNeeded(cacheSignature);
-
-      if (context?.chat && Array.isArray(context.chat)) {
-        let messages: ChatHistoryMessage[] = [];
-
-        if (floorRange) {
-          const [start, end] = floorRange;
-          const effectiveStart = Math.max(1, start);
-          const sliceStart = effectiveStart - 1;
-          const sliceEnd = end;
-          messages = context.chat.slice(sliceStart, sliceEnd);
-          Logger.info('ChatHistoryHelper', 'getChatHistory 调试信息', {
-            inputRange: floorRange,
-            calcSlice: [sliceStart, sliceEnd],
-            chatLen: context.chat.length,
-            firstMsgSummary: messages[0]?.mes?.substring(0, 20) || 'undefined',
-            firstMsgIndex: messages[0] ? context.chat.indexOf(messages[0]) : -1,
-          });
-        } else {
-          const store = useMemoryStore.getState();
-          const lastFloor = store.lastSummarizedFloor;
-
-          if (lastFloor > 0) {
-            messages = context.chat.slice(lastFloor);
-            Logger.debug('ChatHistoryHelper', 'getChatHistory (Smart Incremental)', {
-              lastSummarizedFloor: lastFloor,
-              count: messages.length,
-            });
-          } else {
-            const limit = this.getDynamicChatHistoryLimit();
-            messages = context.chat.slice(-limit);
-            Logger.debug('ChatHistoryHelper', 'getChatHistory (Recent Fallback)', {
-              limit,
-              count: messages.length,
-            });
-          }
-        }
-
-        if (messages.length === 0) return '';
-
-        return messages
-          .map((message, index: number) =>
-            this.processMessage(
-              message,
-              index,
-              messages.length,
-              tavernHelper,
-              enableNativeRegex,
-              hasTavernHelper,
-              hasFormatFunc
-            )
-          )
-          .join('\n\n');
-      }
-
-      Logger.warn('ChatHistoryHelper', 'Context chat is empty or invalid');
-      return '';
-    } catch (e) {
-      Logger.debug('ChatHistoryHelper', '获取对话历史失败', e);
-      return '';
-    }
-  }
-
-  static getCurrentMessageCount(): number {
+export function getCurrentMessageCount(): number {
     try {
       const context = getSTContext();
       if (context?.chat && Array.isArray(context.chat)) {
@@ -239,11 +168,11 @@ export class ChatHistoryHelper {
     } catch (_e: unknown) {
       return 0;
     }
-  }
+}
 
-  static getDynamicChatHistoryLimit(): number {
+export function getDynamicChatHistoryLimit(): number {
     try {
-      const summarizerConfig: Partial<SummarizerConfig> = SettingsManager.get('summarizerConfig');
+      const summarizerConfig: Partial<SummarizerConfig> = get('summarizerConfig');
       const floorInterval = summarizerConfig?.floorInterval ?? 20;
       const bufferSize = summarizerConfig?.bufferSize ?? 10;
       const limit = Math.max(1, floorInterval);
@@ -257,5 +186,77 @@ export class ChatHistoryHelper {
       Logger.warn('ChatHistoryHelper', '动态计算 limit 失败，使用默认值 20', e);
       return 20;
     }
-  }
+}
+
+export function getChatHistorySegments(floorRange?: [number, number]): string[] {
+    try {
+      const context = getSTContext();
+      const tavernHelper = getTavernHelper();
+      const regexConfig = get('apiSettings')?.regexConfig;
+      const enableNativeRegex = regexConfig?.enableNativeRegex ?? true;
+      const hasTavernHelper = !!tavernHelper;
+      const hasFormatFunc = typeof tavernHelper?.formatAsTavernRegexedString === 'function';
+      const cacheSign = `${regexProcessor.getRevision()}|${enableNativeRegex ? 1 : 0}|${hasFormatFunc ? 1 : 0}`;
+
+      resetCacheIfNeeded(cacheSign);
+
+      if (!(context?.chat && Array.isArray(context.chat))) {
+        Logger.warn('ChatHistoryHelper', 'Context chat is empty or invalid');
+        return [];
+      }
+
+      let messages: ChatHistoryMessage[] = [];
+
+      if (floorRange) {
+        const [start, end] = floorRange;
+        const effectiveStart = Math.max(1, start);
+        const sliceStart = effectiveStart - 1;
+        const sliceEnd = end;
+        messages = context.chat.slice(sliceStart, sliceEnd);
+        Logger.debug('ChatHistoryHelper', 'getChatHistory 调试信息', {
+          inputRange: floorRange,
+          calcSlice: [sliceStart, sliceEnd],
+          chatLen: context.chat.length,
+          firstMsgSummary: messages[0]?.mes?.substring(0, 20) || 'undefined',
+          firstMsgIndex: messages[0] ? context.chat.indexOf(messages[0]) : -1,
+        });
+      } else {
+        const store = useMemoryStore.getState();
+        const lastFloor = store.lastSummarizedFloor;
+
+        if (lastFloor > 0) {
+          messages = context.chat.slice(lastFloor);
+          Logger.debug('ChatHistoryHelper', 'getChatHistory (Smart Incremental)', {
+            lastSummarizedFloor: lastFloor,
+            count: messages.length,
+          });
+        } else {
+          const limit = getDynamicChatHistoryLimit();
+          messages = context.chat.slice(-limit);
+          Logger.debug('ChatHistoryHelper', 'getChatHistory (Recent Fallback)', {
+            limit,
+            count: messages.length,
+          });
+        }
+      }
+
+      if (messages.length === 0) {
+        return [];
+      }
+
+      return messages.map((message, index: number) =>
+        processMessage(
+          message,
+          index,
+          messages.length,
+          tavernHelper,
+          enableNativeRegex,
+          hasTavernHelper,
+          hasFormatFunc
+        )
+      );
+    } catch (e) {
+      Logger.debug('ChatHistoryHelper', '获取对话历史失败', e);
+      return [];
+    }
 }

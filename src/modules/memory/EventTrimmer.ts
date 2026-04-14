@@ -4,7 +4,7 @@
  * V0.6: 直接调用 llmAdapter，不再依赖 Extractor
  */
 
-import { SettingsManager } from '@/config/settings';
+import { getSummarizerSettings } from '@/config/settings';
 import { DEFAULT_TRIM_CONFIG } from '@/types/config';
 import type { TrimConfig } from '@/types/memory';
 import { Logger, LogModule } from '@/core/logger';
@@ -20,22 +20,6 @@ interface TrimResult {
   deletedCount: number;
   /** 原始事件 ID 列表 */
   sourceEventIds: string[];
-}
-
-/** JSON 响应格式 */
-interface TrimResponse {
-  events: Array<{
-    summary: string;
-    meta: {
-      time_anchor?: string;
-      role?: string[];
-      location?: string;
-      event?: string;
-      logic?: string[];
-      causality?: string;
-    };
-    significance_score: number;
-  }>;
 }
 
 /**
@@ -69,7 +53,7 @@ class EventTrimmer {
   }
 
   private getStoredConfig(): Partial<TrimConfig> {
-    return SettingsManager.getSummarizerSettings()?.trimConfig || {};
+    return getSummarizerSettings()?.trimConfig || {};
   }
 
   private getEffectiveConfig(override: Partial<TrimConfig> = {}): TrimConfig {

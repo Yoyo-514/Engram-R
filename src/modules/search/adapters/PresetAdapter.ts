@@ -1,5 +1,5 @@
 import { type SearchAdapter, type SearchResult } from '../SearchService';
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { FileText } from 'lucide-react';
 
 export class PresetAdapter implements SearchAdapter {
@@ -10,7 +10,7 @@ export class PresetAdapter implements SearchAdapter {
     const results: SearchResult[] = [];
 
     // 1. Search Prompt Templates
-    const templates = SettingsManager.get('promptTemplates') || [];
+    const templates = get('promptTemplates') || [];
     templates.forEach((t) => {
       if (t.name.toLowerCase().includes(lowerQuery)) {
         results.push({

@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { RobustJsonParser } from '@/core/utils/JsonParser';
+import { parseJson } from '@/core/utils/JsonParser';
 import { type JobContext } from '../../core/JobContext';
 import { type IStep } from '../../core/Step';
 
@@ -14,7 +14,7 @@ export class ParseJson implements IStep {
       throw new Error('ParseJson: 无 LLM 响应内容');
     }
 
-    const parsed = RobustJsonParser.parse<any>(contentToparse);
+    const parsed = parseJson<any>(contentToparse);
 
     if (!parsed) {
       throw new Error('ParseJson: JSON 解析失败');

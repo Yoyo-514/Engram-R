@@ -71,8 +71,8 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
       // 获取统计
       const newStats = await embeddingService.getEmbeddingStats();
       setStats(newStats);
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '加载失败');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '加载失败');
     } finally {
       setLoading(false);
     }
@@ -111,8 +111,8 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       setLastResult(result);
       await refreshStats();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '嵌入失败');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '嵌入失败');
     } finally {
       setIsProcessing(false);
       setProgress(null);
@@ -155,8 +155,8 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       setLastResult(result);
       await refreshStats();
-    } catch (error) {
-      setError(error instanceof Error ? error.message : '重新嵌入失败');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '重新嵌入失败');
     } finally {
       setIsProcessing(false);
       setProgress(null);

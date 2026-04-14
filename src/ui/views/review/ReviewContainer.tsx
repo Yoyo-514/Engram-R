@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type { ReviewAction, ReviewRequest } from '@/core/events/ReviewBridge';
 import type { EntityNode } from '@/types/graph';
-import { EventBus, events } from '@/integrations/tavern'; // EventBus is from events.ts
+import { eventBus, events } from '@/integrations/tavern'; // eventBus is from events.ts
 import type { AgenticRecall } from '@/modules/preprocessing/types';
 import { ModernButton as Button } from '@/ui/components/core/Button';
 import {
@@ -187,7 +187,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
             onQueryChange={query !== undefined ? setQuery : undefined}
             agenticRecalls={data?.agenticRecalls}
             onAgenticRecallsChange={(newRecalls) =>
-              setData((prev) => ({ ...(prev ?? {}), agenticRecalls: newRecalls }))
+              setData((prev) => ({ ...prev, agenticRecalls: newRecalls }))
             }
             onOpenRecallModal={() => setIsRecallModalOpen(true)}
           />
@@ -267,7 +267,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
           onClose={() => setIsRecallModalOpen(false)}
           initialRecalls={data.agenticRecalls}
           onConfirm={(newRecalls) => {
-            setData((prev) => ({ ...(prev ?? {}), agenticRecalls: newRecalls }));
+            setData((prev) => ({ ...prev, agenticRecalls: newRecalls }));
             setIsRecallModalOpen(false);
           }}
         />
@@ -284,7 +284,7 @@ export const ReviewContainer: FC = () => {
   const [footerEl, setFooterEl] = useState<HTMLElement | null>(null); // State to hold ref to footer slot
 
   useEffect(() => {
-    const unsubscribe = EventBus.on(events.ENGRAM_REQUEST_REVIEW, (payload: unknown) => {
+    const unsubscribe = eventBus.on(events.ENGRAM_REQUEST_REVIEW, (payload: unknown) => {
       const req = payload as ReviewRequest;
       // Ensure ID exists (fallback for old callers though we updated Bridge)
       if (!req.id) req.id = Date.now().toString();

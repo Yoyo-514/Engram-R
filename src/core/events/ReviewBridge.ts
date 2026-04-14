@@ -1,4 +1,4 @@
-import { EventBus, events } from '@/integrations/tavern';
+import { eventBus, events } from '@/integrations/tavern';
 
 export type ReviewAction = 'confirm' | 'fill' | 'reject' | 'reroll' | 'cancel';
 export type ReviewData = unknown;
@@ -51,7 +51,7 @@ class ReviewService {
         data,
         onResult: (result) => resolve(result),
       };
-      EventBus.emit(events.ENGRAM_REQUEST_REVIEW, request);
+      eventBus.emit(events.ENGRAM_REQUEST_REVIEW, request);
     });
   }
 }

@@ -6,7 +6,7 @@
  * V0.9.12: 修复更新API路径问题，参考 JS-Slash-Runner 实现
  */
 
-import { UpdateService } from '@/core/updater/Updater';
+import { hasUpdate as updated, clearCache, getChangelog, getCurrentHash, getCurrentVersion, getExtensionRuntimeInfo, getLatestHash, getLatestVersion, markAsRead } from '@/core/updater/Updater';
 import { getTavernContext } from '@/core/utils';
 import { notificationService } from '@/ui/services/NotificationService';
 import { CheckCircle, Download, Loader2, RefreshCw, X } from 'lucide-react';
@@ -52,7 +52,7 @@ async function updateEngramExtension(): Promise<{
   try {
     const headers = getTavernRequestHeaders();
 
-    const extensionInfo = await UpdateService.getExtensionRuntimeInfo();
+    const extensionInfo = await getExtensionRuntimeInfo();
     if (!extensionInfo?.name) {
       return { success: false, message: '无法识别当前扩展目录' };
     }
@@ -106,8 +106,8 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMessage, setUpdateMessage] = useState<string | null>(null);
 
-  const currentVersion = UpdateService.getCurrentVersion();
-  const currentHash = UpdateService.getCurrentHash();
+  const currentVersion = getCurrentVersion();
+  const currentHash = getCurrentHash();
 
   useEffect(() => {
     if (isOpen) {
@@ -120,10 +120,10 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
     setIsLoading(true);
     try {
       const [latest, hash, log, update] = await Promise.all([
-        UpdateService.getLatestVersion(),
-        UpdateService.getLatestHash(),
-        UpdateService.getChangelog(),
-        UpdateService.hasUpdate(),
+        getLatestVersion(),
+        getLatestHash(),
+        getChangelog(),
+        updated(),
       ]);
       setLatestVersion(latest);
       setLatestHash(hash);
@@ -140,7 +140,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
     setIsMarking(true);
     try {
       // 不传参数，由 UpdateService 内部构建最新的 mark (latestVersion@latestHash)
-      await UpdateService.markAsRead();
+      await markAsRead();
       onClose();
     } finally {
       setIsMarking(false);
@@ -160,7 +160,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
         notificationService.success('更新成功！页面即将刷新', 'Engram 更新');
         // 标记为已读
         if (latestVersion) {
-          await UpdateService.markAsRead(latestVersion);
+          await markAsRead(latestVersion);
         }
         // 延迟刷新页面
         setTimeout(() => {
@@ -183,7 +183,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
   };
 
   const handleRefresh = () => {
-    UpdateService.clearCache();
+    clearCache();
     loadUpdateInfo();
   };
 

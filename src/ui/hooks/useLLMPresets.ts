@@ -2,7 +2,7 @@
  * useLLMPresets - LLM 预设与提示词模板管理
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, set } from '@/config/settings';
 import type { EngramAPISettings, LLMPreset, PromptTemplate } from '@/types/config';
 import {
   createDefaultLLMPreset,
@@ -73,7 +73,7 @@ export function useLLMPresets(): UseLLMPresetsReturn {
 
   // 加载配置
   useEffect(() => {
-    const savedAPISettings = SettingsManager.get('apiSettings');
+    const savedAPISettings = get('apiSettings');
     if (savedAPISettings) {
       const defaultSettings = getDefaultAPISettings();
       setSettings({
@@ -210,8 +210,8 @@ export function useLLMPresets(): UseLLMPresetsReturn {
 
   const saveLLMSettings = useCallback(() => {
     // 仅保存 LLM 相关设置，保留其他设置
-    const currentSettings = SettingsManager.get('apiSettings') || {};
-    SettingsManager.set('apiSettings', {
+    const currentSettings = get('apiSettings') || {};
+    set('apiSettings', {
       ...currentSettings,
       llmPresets: settings.llmPresets,
       selectedPresetId: settings.selectedPresetId,

@@ -6,7 +6,7 @@
  * - Memory Stats: 事件/实体统计
  * - Feature Status: 功能开关状态
  */
-import { SettingsManager, type EngramSettings } from '@/config/settings';
+import { get, set, type EngramSettings } from '@/config/settings';
 import { DEFAULT_BRAIN_RECALL_CONFIG, getDefaultAPISettings } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import { getSTContext, getCurrentChatId, getSummaries } from '@/integrations/tavern';
@@ -126,7 +126,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
   const fetchSystemHealth = useCallback(() => {
     const stContext = getSTContext();
     const summarizerStatus = summarizerService.getStatus();
-    const summarizerConfig = SettingsManager.get('summarizerConfig') || {};
+    const summarizerConfig = get('summarizerConfig') || {};
 
     if (!isMounted.current) return;
     setSystem({
@@ -141,7 +141,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
   }, []);
 
   const fetchGlobalStats = useCallback(() => {
-    const currentStats = SettingsManager.get('statistics') || {
+    const currentStats = get('statistics') || {
       firstUseAt: null,
       activeDays: [],
       totalTokens: 0,
@@ -200,12 +200,12 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
 
   const fetchFeatureStatus = useCallback(async () => {
     const defaults = getDefaultAPISettings();
-    const apiSettings = SettingsManager.get('apiSettings') || defaults;
-    const currentSummarizerConfig = SettingsManager.get('summarizerConfig') || {};
+    const apiSettings = get('apiSettings') || defaults;
+    const currentSummarizerConfig = get('summarizerConfig') || {};
     const entityConfig = apiSettings?.entityExtractConfig ?? defaults.entityExtractConfig;
     const embeddingConfig = apiSettings?.embeddingConfig ?? defaults.embeddingConfig;
     const recallConfig = apiSettings?.recallConfig ?? defaults.recallConfig;
-    const preprocessingConfig = SettingsManager.get('preprocessingConfig') as
+    const preprocessingConfig = get('preprocessingConfig') as
       | { enabled?: boolean }
       | undefined;
 
@@ -222,7 +222,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
   const fetchBrainStats = useCallback(() => {
     try {
       const snapshot = brainRecallCache.getShortTermSnapshot();
-      const brainApiSettings = SettingsManager.get('apiSettings');
+      const brainApiSettings = get('apiSettings');
       const brainConfig =
         brainApiSettings?.recallConfig?.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
 
@@ -286,8 +286,8 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
         try {
           // 1. 读取最新配置（使用完整 defaults 作为 fallback，防止丢失嵌套字段）
           const defaults = getDefaultAPISettings();
-          const currentApiSettings = SettingsManager.get('apiSettings') || defaults;
-          const currentSummarizerConfig = SettingsManager.get('summarizerConfig') || {};
+          const currentApiSettings = get('apiSettings') || defaults;
+          const currentSummarizerConfig = get('summarizerConfig') || {};
 
           // 2. 获取当前功能状态并计算新值
           let nextVal: boolean;
@@ -295,7 +295,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
           switch (feature) {
             case 'summarizer': {
               nextVal = !(currentSummarizerConfig.enabled !== false);
-              SettingsManager.set('summarizerConfig', {
+              set('summarizerConfig', {
                 ...currentSummarizerConfig,
                 enabled: nextVal,
               });
@@ -306,7 +306,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               const entityConfig =
                 currentApiSettings.entityExtractConfig ?? defaults.entityExtractConfig;
               nextVal = !(entityConfig?.enabled ?? false);
-              SettingsManager.set('apiSettings', {
+              set('apiSettings', {
                 ...currentApiSettings,
                 entityExtractConfig: {
                   ...entityConfig,
@@ -319,7 +319,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               const embeddingConfig =
                 currentApiSettings.embeddingConfig ?? defaults.embeddingConfig;
               nextVal = !(embeddingConfig?.enabled ?? false);
-              SettingsManager.set('apiSettings', {
+              set('apiSettings', {
                 ...currentApiSettings,
                 embeddingConfig: {
                   ...embeddingConfig,
@@ -331,7 +331,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
             case 'recall': {
               const recallConfig = currentApiSettings.recallConfig ?? defaults.recallConfig;
               nextVal = !(recallConfig?.enabled !== false);
-              SettingsManager.set('apiSettings', {
+              set('apiSettings', {
                 ...currentApiSettings,
                 recallConfig: {
                   ...recallConfig,
@@ -341,14 +341,14 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               break;
             }
             case 'preprocessing': {
-              const currentPreprocessingConfig = SettingsManager.get('preprocessingConfig') || {};
+              const currentPreprocessingConfig = get('preprocessingConfig') || {};
               nextVal = !(currentPreprocessingConfig as { enabled?: boolean })?.enabled;
-              SettingsManager.set('preprocessingConfig', {
+              set('preprocessingConfig', {
                 ...currentPreprocessingConfig,
                 enabled: nextVal,
               } as any);
 
-              SettingsManager.set('apiSettings', {
+              set('apiSettings', {
                 ...currentApiSettings,
                 recallConfig: {
                   ...(currentApiSettings.recallConfig ?? defaults.recallConfig),

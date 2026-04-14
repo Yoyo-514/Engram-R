@@ -1,7 +1,7 @@
 import { Logger, LogModule } from '@/core/logger';
-import { EventBus, events, getRequestHeaders, getSTContext } from '@/integrations/tavern';
+import { eventBus, events, getRequestHeaders, getSTContext } from '@/integrations/tavern';
 import { type ChatDataDump, getDbForChat, exportChatData, importChatData } from '@/data/db';
-import { SettingsManager } from '@/config/settings';
+import { getSettings } from '@/config/settings';
 import { notificationService } from '@/ui/services/NotificationService';
 import debounce from 'lodash-es/debounce';
 import type { DebouncedFunc } from 'lodash-es';
@@ -30,14 +30,14 @@ class SyncService {
   }
 
   private initEventListeners() {
-    // 动态导入 EventBus 以避免循环依赖（如果 EventBus 依赖其他模块）
-    // 这里假设 EventBus 是独立的或我们延迟绑定
+    // 动态导入 eventBus 以避免循环依赖（如果 eventBus 依赖其他模块）
+    // 这里假设 eventBus 是独立的或我们延迟绑定
     // 为确保安全，我们在第一次 getInstance 时不强依赖 Tavern 上下文，
     // 而是依靠外部调用 init 或在构造函数中尝试
     setTimeout(() => {
       void (async () => {
         // 监听聊天切换事件
-        EventBus.on(events.CHAT_CHANGED, () => {
+        eventBus.on(events.CHAT_CHANGED, () => {
           void (async () => {
             const chatId = getSTContext()?.chatId;
             if (chatId) {
@@ -122,7 +122,7 @@ class SyncService {
     }
 
     // 检查配置
-    const config = SettingsManager.getSettings().syncConfig;
+    const config = getSettings().syncConfig;
     if (!config?.enabled || !config?.autoSync) {
       this.clearPendingUpload(chatId);
       return;
@@ -134,7 +134,7 @@ class SyncService {
         this.debouncedUploads.delete(chatId);
 
         // 再次检查配置，防止在 debounce 期间被关闭
-        const currentConfig = SettingsManager.getSettings().syncConfig;
+        const currentConfig = getSettings().syncConfig;
         if (!currentConfig?.enabled || !currentConfig?.autoSync) {
           return;
         }
@@ -194,13 +194,13 @@ class SyncService {
       const base64Data = await new Promise<string>((resolve, reject) => {
         const blob = new Blob([jsonString], { type: 'application/json' });
         const reader = new FileReader();
-        reader.onload = () => {
+        reader.addEventListener('load', () => {
           const result = reader.result as string;
           // FileReader 的 result 包含 "data:application/json;base64," 前缀，需要剔除
           const base64 = result.split(',')[1];
           resolve(base64);
-        };
-        reader.onerror = () => reject(new Error('Base64 encoding failed'));
+        });
+        reader.addEventListener('error', () => reject(new Error('Base64 encoding failed')));
         reader.readAsDataURL(blob);
       });
 
@@ -374,7 +374,7 @@ class SyncService {
    * 用于切换聊天时检查
    */
   public async autoSyncDownload(chatId: string): Promise<void> {
-    const config = SettingsManager.getSettings().syncConfig;
+    const config = getSettings().syncConfig;
     if (!config?.enabled || !config?.autoSync) return;
 
     const remoteStatus = await this.getRemoteStatus(chatId);

@@ -1,10 +1,10 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import type { CustomMacro } from '@/types/prompt';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
-import { WorldInfoService } from '@/integrations/tavern';
+import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
-import { ChatHistoryHelper } from '../chat/chatHistory';
+import { getChatHistory } from '../chat/chatHistory';
 import { getSTContext } from '../core/context';
 import { processEJSMacros } from './ejsProcessor';
 import { brainRecallCache } from '@/modules/rag';
@@ -319,7 +319,7 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
 export async function refreshWorldbookCache(): Promise<void> {
   try {
     // 刷新世界书上下文 (支持 EJS)
-    const rawContext = await WorldInfoService.getActivatedWorldInfo();
+    const rawContext = await getLiveActivatedWorldInfo();
     const sanitized = await processEJSMacros([rawContext]);
     cachedWorldbookContext = sanitized[0] || '';
 
@@ -425,20 +425,6 @@ export async function refreshCacheWithNodes(
 }
 
 /**
- * 获取对话历史的代理
- */
-export function getChatHistory(floorRange?: [number, number]): string {
-  return ChatHistoryHelper.getChatHistory(floorRange);
-}
-
-/**
- * 获取当前对话消息总数
- */
-export function getCurrentMessageCount(): number {
-  return ChatHistoryHelper.getCurrentMessageCount();
-}
-
-/**
  * 刷新角色描述缓存
  */
 export function refreshCharDescription(): void {
@@ -448,13 +434,6 @@ export function refreshCharDescription(): void {
   } catch (e) {
     Logger.debug('MacroService', '刷新角色描述失败', e);
   }
-}
-
-/**
- * V0.9.2: 获取动态计算的 chatHistory 消息条数的代理
- */
-export function getDynamicChatHistoryLimit(): number {
-  return ChatHistoryHelper.getDynamicChatHistoryLimit();
 }
 
 /**
@@ -504,7 +483,7 @@ export function refreshCustomMacros(): void {
     }
 
     // 从 apiSettings 读取自定义宏
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const customMacros: CustomMacro[] = apiSettings?.customMacros || [];
 
     // 清空之前的缓存

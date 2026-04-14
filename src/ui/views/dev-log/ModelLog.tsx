@@ -4,7 +4,7 @@
  * 伪聊天式布局展示 LLM 调用记录
  */
 import { type ModelLogEntry, ModelLogger } from '@/core/logger/ModelLogger';
-import { WorldInfoService } from '@/integrations/tavern';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import {
   AlertCircle,
   Bot,
@@ -78,12 +78,12 @@ const LogCard: FC<{
     const countTokens = async () => {
       try {
         if (!sent.tokensSent && (sent.systemPrompt || sent.userPrompt)) {
-          const t1 = sent.systemPrompt ? await WorldInfoService.countTokens(sent.systemPrompt) : 0;
-          const t2 = sent.userPrompt ? await WorldInfoService.countTokens(sent.userPrompt) : 0;
+          const t1 = sent.systemPrompt ? await countWorldbookTokens(sent.systemPrompt) : 0;
+          const t2 = sent.userPrompt ? await countWorldbookTokens(sent.userPrompt) : 0;
           setCalcSentTokens(t1 + t2);
         }
         if (received?.response && !received.tokensReceived) {
-          const t = await WorldInfoService.countTokens(received.response);
+          const t = await countWorldbookTokens(received.response);
           setCalcRecvTokens(t);
         }
       } catch (e) {

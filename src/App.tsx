@@ -1,8 +1,8 @@
 import type { FC } from 'react';
 import { Suspense, lazy, useEffect, useState } from 'react';
-import { SettingsManager } from '@/config/settings';
-import { EventBus } from '@/core/events/types';
-import { UpdateService } from '@/core/updater/Updater';
+import { get, set } from '@/config/settings';
+import { EventBus } from '@/core/events';
+import { getLatestVersion, hasUnreadUpdate } from '@/core/updater/Updater';
 import { MainLayout } from '@/ui/components/layout/MainLayout';
 import { notificationService } from '@/ui/services/NotificationService';
 import { Dashboard } from '@/ui/views/dashboard';
@@ -32,14 +32,14 @@ interface AppProps {
 
 const App: FC<AppProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState(
-    () => SettingsManager.get('lastOpenedTab') || 'dashboard'
+    () => get('lastOpenedTab') || 'dashboard'
   );
 
   const handleNavigate = (path: string) => {
     const cleanPath = path.replace(/^\//, '') || 'dashboard';
     console.debug('[Engram] Navigating to:', cleanPath);
     setActiveTab(cleanPath);
-    SettingsManager.set('lastOpenedTab', cleanPath);
+    set('lastOpenedTab', cleanPath);
   };
 
   useEffect(() => {
@@ -66,12 +66,12 @@ const App: FC<AppProps> = ({ onClose }) => {
   useEffect(() => {
     const checkUpdate = async () => {
       try {
-        const hasUnread = await UpdateService.hasUnreadUpdate();
+        const hasUnread = await hasUnreadUpdate();
         if (!hasUnread) {
           return;
         }
 
-        const latestVersion = await UpdateService.getLatestVersion();
+        const latestVersion = await getLatestVersion();
         notificationService.info(`发现新版本 v${latestVersion}，点击查看更新`, 'Engram 更新', {
           action: { goto: 'settings' },
         });

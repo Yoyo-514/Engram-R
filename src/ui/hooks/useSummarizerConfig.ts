@@ -4,7 +4,7 @@
  * 管理 summarizerConfig (自动总结) 和 trimConfig (精简)
  */
 import { useState, useCallback, useEffect } from 'react';
-import { SettingsManager } from '@/config/settings';
+import { getSummarizerSettings as getSummarySettings, setSummarizerSettings as setSummarySettings } from '@/config/settings';
 import { DEFAULT_TRIM_CONFIG } from '@/types/config';
 import type { TrimConfig } from '@/types/memory';
 import { eventTrimmer, summarizerService } from '@/modules/memory';
@@ -56,7 +56,7 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
       });
 
       // 加载 Trim Config
-      const savedTrimConfig = SettingsManager.getSummarizerSettings()?.trimConfig;
+      const savedTrimConfig = getSummarySettings()?.trimConfig;
       if (savedTrimConfig) {
         setTrimConfig({ ...DEFAULT_TRIM_CONFIG, ...savedTrimConfig });
       }
@@ -95,7 +95,7 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
       });
 
       // 2. 保存 Trim Config 到 SettingsManager
-      SettingsManager.setSummarizerSettings({ trimConfig });
+      setSummarySettings({ trimConfig });
 
       // 3. 同步运行态 EventTrimmer，避免自动触发仍使用旧阈值
       eventTrimmer.updateConfig(trimConfig);

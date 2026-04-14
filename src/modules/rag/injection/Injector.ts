@@ -10,11 +10,11 @@
  * - 酒馆会 await 事件处理器，确保预处理完成后再继续
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, getPromptTemplateById, incrementStatistic } from '@/config/settings';
 import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import {
-  EventBus,
+  eventBus,
   getCurrentChatId,
   getSTContext,
   events,
@@ -56,7 +56,7 @@ class Injector {
 
     // V0.8: 使用 GENERATION_AFTER_COMMANDS 事件
     // 这个事件在命令处理后、生成开始前触发，酒馆会 await 处理器
-    EventBus.on(
+    eventBus.on(
       events.GENERATION_AFTER_COMMANDS,
       async (type: any, params: any, dryRun: any) => {
         console.info('[Injector] 🎯 GENERATION_AFTER_COMMANDS triggered', { type, dryRun });
@@ -68,7 +68,7 @@ class Injector {
     );
 
     // 聊天切换时重置状态
-    EventBus.on(events.CHAT_CHANGED, () => {
+    eventBus.on(events.CHAT_CHANGED, () => {
       Logger.debug(LogModule.RAG_INJECT, '捕获到 CHAT_CHANGED 事件');
       this.processingChats.clear();
       this.cacheInvalid = false; // 切换聊天时重置缓存状态
@@ -78,7 +78,7 @@ class Injector {
     });
 
     // V0.9.5: 监听消息编辑事件，用户编辑自己的消息后标记缓存失效
-    EventBus.on(events.MESSAGE_EDITED, (...args: unknown[]) => {
+    eventBus.on(events.MESSAGE_EDITED, (...args: unknown[]) => {
       const msgIndex = args[0] as number;
       const context = getSTContext();
       const msg = context?.chat?.[msgIndex];
@@ -223,7 +223,7 @@ class Injector {
       // 获取配置
       let apiSettings, recallConfig, preprocessorConfig;
       try {
-        apiSettings = SettingsManager.get('apiSettings');
+        apiSettings = get('apiSettings');
         recallConfig = apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
 
         if (!preprocessor) {
@@ -296,7 +296,7 @@ class Injector {
                 outputLength: preprocessResult.output.length,
               });
               // 根据模板的注入模式决定如何组合
-              const template = SettingsManager.getPromptTemplateById(preprocessorConfig.templateId);
+              const template = getPromptTemplateById(preprocessorConfig.templateId);
               const mode = template?.injectionMode || 'replace';
 
               if (mode === 'append') {
@@ -344,7 +344,7 @@ class Injector {
                     nodeCount: agenticResult.nodes.length,
                   });
                   await refreshCacheWithNodes(agenticResult.nodes);
-                  SettingsManager.incrementStatistic('totalRagInjections', 1);
+                  incrementStatistic('totalRagInjections', 1);
                   ragHandled = true;
                 } else {
                   Logger.warn(LogModule.RAG_INJECT, 'Agentic RAG 无有效结果，尝试降级');
@@ -372,7 +372,7 @@ class Injector {
                   entityCount: recallResult.recalledEntities?.length ?? 0,
                 });
                 await refreshCacheWithNodes(recallResult.nodes);
-                SettingsManager.incrementStatistic('totalRagInjections', 1);
+                incrementStatistic('totalRagInjections', 1);
               } else {
                 Logger.debug(LogModule.RAG_INJECT, '召回无结果');
               }

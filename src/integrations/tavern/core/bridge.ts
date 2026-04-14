@@ -5,7 +5,7 @@
  * 所有 window.SillyTavern、jQuery、eventSource 的调用都在这里统一管理。
  */
 import { Logger } from '@/core/logger';
-import { SettingsManager } from '@/config/settings';
+import { getRegexRules, initSettings } from '@/config/settings';
 import { regexProcessor } from '@/modules/workflow/steps';
 import { summarizerService, entityBuilder } from '@/modules/memory';
 import {
@@ -14,12 +14,12 @@ import {
   MacroServiceInit,
   mountGlobalOverlay,
   toggleMainPanel,
-  WorldBookSlotService,
   initQuickPanelButton,
+  initWorldBookSlot,
 } from '@/integrations/tavern';
-import { ThemeManager } from '@/ui/services';
+import { initThemeManager } from '@/ui/services';
 import { injector } from '@/modules/rag';
-import { CharacterDeleteService } from '@/data/CharacterCleanup';
+import { initCharacterDeleteService } from '@/data/CharacterCleanup';
 import { setupKeyboardShortcuts } from '@/core/utils';
 import { openCommandPalette, toggleQuickPanel } from '@/index';
 
@@ -33,7 +33,7 @@ export async function initializeEngram(): Promise<void> {
   Logger.info('STBridge', 'Engram 插件正在初始化...');
 
   // 初始化设置管理器
-  const settingsReady = await SettingsManager.initSettings();
+  const settingsReady = await initSettings();
   if (settingsReady) {
     Logger.info('STBridge', 'SettingsManager 初始化完成');
   } else {
@@ -41,7 +41,7 @@ export async function initializeEngram(): Promise<void> {
   }
 
   // 加载保存的正则规则到全局处理器
-  const savedRegexRules = SettingsManager.getRegexRules();
+  const savedRegexRules = getRegexRules();
   if (savedRegexRules && savedRegexRules.length > 0) {
     regexProcessor.setRules(savedRegexRules);
     Logger.info('STBridge', `已加载 ${savedRegexRules.length} 条正则规则`);
@@ -76,7 +76,7 @@ export async function initializeEngram(): Promise<void> {
   createTopBarButton();
 
   // 初始化主题系统
-  ThemeManager.init();
+  initThemeManager();
 
   // Initialize Injector Service (V0.4 - Dynamic Context)
   try {
@@ -88,7 +88,7 @@ export async function initializeEngram(): Promise<void> {
 
   // Initialize MacroService (Global ST Macros) and Worldbook Slot
   try {
-    await WorldBookSlotService.init();
+    await initWorldBookSlot();
     await MacroServiceInit();
   } catch (e) {
     Logger.warn('MacroService', '宏服务/世界书初始化失败', { error: String(e) });
@@ -107,7 +107,7 @@ export async function initializeEngram(): Promise<void> {
 
   // 初始化角色删除联动服务
   try {
-    CharacterDeleteService.init();
+    initCharacterDeleteService();
     Logger.info('STBridge', '角色联动清理服务初始化完成');
   } catch (e) {
     Logger.warn('STBridge', '角色联动清理服务初始化失败', { error: String(e) });

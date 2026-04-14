@@ -3,8 +3,7 @@
  * 入口文件
  */
 
-import { initializeEngram, setGlobalRenderer, setReactRenderer } from '@/integrations/tavern';
-import { setQuickPanelCallback } from '@/integrations/tavern';
+import { initializeEngram, setGlobalRenderer, setReactRenderer, setQuickPanelCallback } from '@/integrations/tavern';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
 import { GlobalOverlayContent } from '@/ui/components/overlay/GlobalOverlayContent';

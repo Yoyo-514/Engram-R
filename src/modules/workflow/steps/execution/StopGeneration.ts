@@ -1,7 +1,8 @@
 import { type IStep } from '../../core/Step';
 import { type JobContext } from '../../core/JobContext';
-import { Logger } from '@/core/logger';
-import { LogModule } from '@/core/logger';
+import { Logger, LogModule } from '@/core/logger';
+
+type StopGenerationMode = 'always' | 'manual_only';
 
 /**
  * 停止 SillyTavern 生成
@@ -10,7 +11,16 @@ import { LogModule } from '@/core/logger';
 export class StopGeneration implements IStep {
   name = 'StopGeneration';
 
+  constructor(private readonly mode: StopGenerationMode = 'always') {}
+
   async execute(context: JobContext): Promise<void> {
+    if (this.mode === 'manual_only' && context.trigger !== 'manual') {
+      Logger.debug(LogModule.SYSTEM, 'Skip StopGeneration for non-manual workflow trigger', {
+        trigger: context.trigger,
+      });
+      return;
+    }
+
     Logger.info(LogModule.SYSTEM, '执行 StopGeneration 步骤');
     await StopGeneration.abort(context.signal);
   }

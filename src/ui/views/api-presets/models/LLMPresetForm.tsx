@@ -2,7 +2,7 @@
  * LLM 预设编辑表单
  */
 import type { APISource, CustomAPIConfig, LLMPreset } from '@/types/llm';
-import { type ModelInfo, ModelService } from '@/integrations/llm/ModelDiscovery';
+import { fetchOllamaModels, fetchOpenAIModels, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 import { SliderField } from '@/ui/components/core/SliderField';
 import {
   FormSection,
@@ -57,10 +57,10 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
       // 根据 API 类型选择获取方式
       let models: ModelInfo[] = [];
       if (apiSource === 'ollama') {
-        models = await ModelService.fetchOllamaModels({ apiUrl });
+        models = await fetchOllamaModels({ apiUrl });
       } else {
         // OpenAI 兼容 API (openai, vllm, azure, custom)
-        models = await ModelService.fetchOpenAIModels({ apiUrl, apiKey });
+        models = await fetchOpenAIModels({ apiUrl, apiKey });
       }
       setModelList(models);
       if (models.length === 0) {

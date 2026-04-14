@@ -1,4 +1,4 @@
-import { EventBus } from '@/core/events/types';
+import { EventBus } from '@/core/events';
 import { Logger } from '@/core/logger';
 
 // cspell:ignore toastr

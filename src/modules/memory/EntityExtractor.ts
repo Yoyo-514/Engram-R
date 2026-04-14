@@ -6,7 +6,7 @@
  * - 输入从原始对话提取，而非 Summary
  */
 
-import { SettingsManager } from '@/config/settings';
+import { get, incrementStatistic } from '@/config/settings';
 import { DEFAULT_ENTITY_CONFIG } from '@/types/config';
 import type { EntityExtractConfig } from '@/types/memory';
 import { EventBus } from '@/core/events';
@@ -41,7 +41,7 @@ export class EntityBuilder {
 
   constructor(config?: Partial<EntityExtractConfig>) {
     // V0.9.10: Fix - 优先从 SettingsManager 加载持久化配置
-    const savedConfig = SettingsManager.get('apiSettings')?.entityExtractConfig;
+    const savedConfig = get('apiSettings')?.entityExtractConfig;
     this.config = { ...DEFAULT_ENTITY_CONFIG, ...savedConfig, ...config };
   }
 
@@ -162,7 +162,7 @@ export class EntityBuilder {
    */
   shouldTriggerOnFloor(currentFloor: number, lastExtractedFloor: number): boolean {
     // V0.9.12: Fix - 每次检查触发器时刷新配置，避免初始化时的 stale config
-    const savedConfig = SettingsManager.get('apiSettings')?.entityExtractConfig;
+    const savedConfig = get('apiSettings')?.entityExtractConfig;
     if (savedConfig) {
       this.config = { ...this.config, ...savedConfig };
     }
@@ -224,7 +224,7 @@ export class EntityBuilder {
 
     try {
       // V1.0.4: 使用全局 "启用修订模式" 开关 (复用 summarizerConfig)
-      const globalSettings = SettingsManager.get('summarizerConfig');
+      const globalSettings = get('summarizerConfig');
       const previewEnabled = manual || (globalSettings?.previewEnabled ?? true);
 
       // 获取聊天历史 (如果是单条楼层，则宏系统会自动处理)
@@ -347,7 +347,7 @@ export class EntityBuilder {
   /**
    * 手动提取（从当前聊天历史）
    */
-  async extractManual(dryRun = false): Promise<EntityBuildResult | null> {
+  async extractManual(_dryRun = false): Promise<EntityBuildResult | null> {
     // 获取当前聊天历史 (不传参使用默认 recent)
     // V1.0.5: 手动提取应该基于 "上次总结" 到现在的范围，
     // 这样给 LLM 提供的上下文才是完整的 (避免 "他说了什么" 这种指代不明)
@@ -398,7 +398,7 @@ export class EntityBuilder {
           profile: entity.profile || {},
         }));
         await store.saveEntities(entitiesToSave);
-        SettingsManager.incrementStatistic('totalEntities', newEntities.length);
+        incrementStatistic('totalEntities', newEntities.length);
       }
 
       // 批量保存更新实体 (并行，但引入分批处理以限制并发)

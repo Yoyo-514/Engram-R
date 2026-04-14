@@ -3,7 +3,7 @@
  * 用于在提示词模板中直接绑定额外世界书
  */
 
-import { WorldInfoService } from '@/integrations/tavern/worldbook';
+import { getWorldbookScopes } from '@/integrations/tavern';
 import { Book, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
@@ -27,7 +27,7 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
 
   // 加载可用世界书列表
   useEffect(() => {
-    const scopes = WorldInfoService.getScopes();
+    const scopes = getWorldbookScopes();
     // 合并全局 + 已安装，排除 [Engram] 开头和角色绑定的
     const allBooks = [...new Set([...scopes.global, ...scopes.installed])].filter(
       (name) => !name.startsWith('[Engram]')

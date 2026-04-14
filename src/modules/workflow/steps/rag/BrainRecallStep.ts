@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
 import type { BrainRecallConfig, RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
@@ -17,7 +17,7 @@ export class BrainRecallStep implements IStep {
     const candidates: ScoredEvent[] = context.data.candidates || [];
     const config: RecallConfig =
       context.data.recallConfig ||
-      SettingsManager.get('apiSettings')?.recallConfig ||
+      get('apiSettings')?.recallConfig ||
       DEFAULT_RECALL_CONFIG;
     const brainConfig: BrainRecallConfig = config.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
     const keywordEntityIds: { id: string; score: number }[] = context.data.keywordEntityIds || [];

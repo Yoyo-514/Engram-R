@@ -1,4 +1,4 @@
-import { UpdateService } from '@/core/updater/Updater';
+import { hasUnreadUpdate as unreadUpdated } from '@/core/updater/Updater';
 import { useConfigStore } from '@/state/configStore';
 import { UpdateNotice } from '@/ui/components/feedback/UpdateNotice';
 import Header from '@/ui/components/layout/Header';
@@ -24,7 +24,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
   useEffect(() => {
     const checkUpdate = async () => {
       try {
-        const unread = await UpdateService.hasUnreadUpdate();
+        const unread = await unreadUpdated();
         setHasUnreadUpdate(unread);
       } catch (error) {
         console.debug('[Engram] 检查更新失败', error);

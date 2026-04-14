@@ -1,4 +1,4 @@
-import { SettingsManager } from '@/config/settings';
+import { get } from '@/config/settings';
 import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
@@ -12,7 +12,7 @@ export class VectorRetrieveStep implements IStep {
   name = 'VectorRetrieveStep';
 
   get retry(): RetryConfig {
-    const vectorConfig = SettingsManager.get('apiSettings')?.vectorConfig;
+    const vectorConfig = get('apiSettings')?.vectorConfig;
     const customConfig = vectorConfig?.retryConfig;
     return {
       maxAttempts: customConfig?.maxAttempts ?? 3,
@@ -40,7 +40,7 @@ export class VectorRetrieveStep implements IStep {
     const query = (context.input?.query as string) || '';
     const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
 
-    const apiSettings = SettingsManager.get('apiSettings');
+    const apiSettings = get('apiSettings');
     const config = apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
 
     // 如果未启用向量检索，则跳过 (但不清空 keyword 结果)
@@ -72,7 +72,7 @@ export class VectorRetrieveStep implements IStep {
 
     try {
       // V1.4.1 Fix: 在嵌入前配置 Embedding 服务，防止 "config not set" 错误
-      const vectorConfig = SettingsManager.get('apiSettings')?.vectorConfig;
+      const vectorConfig = get('apiSettings')?.vectorConfig;
       Logger.debug(LogModule.RAG_RETRIEVE, 'VectorRetrieveStep: 准备设置配置', {
         hasConfig: !!vectorConfig,
       });

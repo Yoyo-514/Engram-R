@@ -6,10 +6,10 @@
  * - Injector (上下文刷新)
  * - RAG (检索触发)
  *
- * 基于 tavern/TavernEvents.ts 的 EventBus 进行封装
+ * 基于 tavern/TavernEvents.ts 的 eventBus 进行封装
  */
 
-import { EventBus, events, type Unsubscribe } from '@/integrations/tavern';
+import { eventBus, events, type Unsubscribe } from '@/integrations/tavern';
 
 /** 监听回调类型 */
 interface WatcherCallbacks {
@@ -23,108 +23,77 @@ interface WatcherCallbacks {
   onGenerationEnded?: () => void | Promise<void>;
 }
 
+type WatcherEvent = keyof WatcherCallbacks;
+type Callback = () => void | Promise<void>;
+
+const eventMap: Record<WatcherEvent, string> = {
+  onMessageReceived: 'messageReceived',
+  onChatChanged: 'chatChanged',
+  onGenerationStarted: 'generationStarted',
+  onGenerationEnded: 'generationEnded',
+};
+
 /**
- * EventWatcher 类
+ * EventWatcher
  * 统一管理事件订阅，避免重复监听
  */
-class EventWatcher {
-  private static instance: EventWatcher | null = null;
-  private unsubscribers: Unsubscribe[] = [];
-  private callbacks: Map<string, Set<() => void | Promise<void>>> = new Map();
+export function createEventWatcher() {
+  let unsubscribers: Unsubscribe[] = [];
+  const callbacks = new Map<string, Set<Callback>>();
 
-  private constructor() {
-    // 私有构造函数，使用 getInstance() 获取实例
-  }
+  const emit = (eventKey: string): void => {
+    const cbs = callbacks.get(eventKey);
+    if (!cbs) return;
 
-  /**
-   * 获取单例实例
-   */
-  static getInstance(): EventWatcher {
-    if (!EventWatcher.instance) {
-      EventWatcher.instance = new EventWatcher();
-    }
-    return EventWatcher.instance;
-  }
+    cbs.forEach((cb) => {
+      Promise.resolve(cb()).catch((e) => {
+        console.error(`[EventWatcher] Callback error for ${eventKey}:`, e);
+      });
+    });
+  };
 
-  /**
-   * 启动监听
-   * 如果已启动则跳过
-   */
-  start(): void {
-    if (this.unsubscribers.length > 0) {
+  const start = (): void => {
+    if (unsubscribers.length > 0) {
       console.info('[EventWatcher] Already started.');
       return;
     }
 
-    // 订阅核心事件
-    this.unsubscribers.push(
-      EventBus.on(events.MESSAGE_RECEIVED, () => this.emit('messageReceived')),
-      EventBus.on(events.CHAT_CHANGED, () => this.emit('chatChanged')),
-      EventBus.on(events.GENERATION_STARTED, () => this.emit('generationStarted')),
-      EventBus.on(events.GENERATION_ENDED, () => this.emit('generationEnded'))
+    unsubscribers.push(
+      eventBus.on(events.MESSAGE_RECEIVED, () => emit('messageReceived')),
+      eventBus.on(events.CHAT_CHANGED, () => emit('chatChanged')),
+      eventBus.on(events.GENERATION_STARTED, () => emit('generationStarted')),
+      eventBus.on(events.GENERATION_ENDED, () => emit('generationEnded'))
     );
 
     console.info('[EventWatcher] Started, listening to core events.');
-  }
+  };
 
-  /**
-   * 停止监听
-   */
-  stop(): void {
-    this.unsubscribers.forEach((unsub) => unsub());
-    this.unsubscribers = [];
+  const stop = (): void => {
+    unsubscribers.forEach((unsub) => unsub());
+    unsubscribers = [];
     console.info('[EventWatcher] Stopped.');
-  }
+  };
 
-  /**
-   * 注册回调
-   * @param event 事件名
-   * @param callback 回调函数
-   * @returns 取消注册函数
-   */
-  on(event: keyof WatcherCallbacks, callback: () => void | Promise<void>): Unsubscribe {
-    const eventKey = this.mapEventKey(event);
+  const on = (event: WatcherEvent, callback: Callback): Unsubscribe => {
+    const eventKey = eventMap[event];
 
-    if (!this.callbacks.has(eventKey)) {
-      this.callbacks.set(eventKey, new Set());
+    if (!callbacks.has(eventKey)) {
+      callbacks.set(eventKey, new Set());
     }
 
-    this.callbacks.get(eventKey)!.add(callback);
+    callbacks.get(eventKey)!.add(callback);
 
     return () => {
-      this.callbacks.get(eventKey)?.delete(callback);
+      callbacks.get(eventKey)?.delete(callback);
     };
-  }
+  };
 
-  /**
-   * 触发事件
-   */
-  private emit(eventKey: string): void {
-    const callbacks = this.callbacks.get(eventKey);
-    if (callbacks) {
-      callbacks.forEach((cb) => {
-        try {
-          void cb();
-        } catch (e) {
-          console.error(`[EventWatcher] Callback error for ${eventKey}:`, e);
-        }
-      });
-    }
-  }
-
-  /**
-   * 映射回调名到内部事件键
-   */
-  private mapEventKey(event: keyof WatcherCallbacks): string {
-    const map: Record<keyof WatcherCallbacks, string> = {
-      onMessageReceived: 'messageReceived',
-      onChatChanged: 'chatChanged',
-      onGenerationStarted: 'generationStarted',
-      onGenerationEnded: 'generationEnded',
-    };
-    return map[event];
-  }
+  return {
+    start,
+    stop,
+    on,
+  };
 }
 
 /** 默认实例 */
-export const eventWatcher = EventWatcher.getInstance();
+export const eventWatcher = createEventWatcher();
