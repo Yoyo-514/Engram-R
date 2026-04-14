@@ -1,4 +1,4 @@
-import { get } from '@/config/settings';
+import { get, subscribe } from '@/config/settings';
 import type { CustomMacro } from '@/types/prompt';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
@@ -6,7 +6,6 @@ import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { getChatHistory } from '../chat/chatHistory';
 import { getSTContext } from '../core/context';
-import { processEJSMacros } from './ejsProcessor';
 import { brainRecallCache } from '@/modules/rag';
 
 /**
@@ -165,11 +164,22 @@ export async function MacroServiceInit(): Promise<void> {
         refreshCache().catch((e) => Logger.warn('MacroService', '刷新缓存失败', e));
       });
 
-      // V1.0.1: 监听设置更新（通常包含人设描述变更）
+      // V1.0.1: 监听酒馆设置更新（通常包含人设描述变更）
       eventSource.on('settings_updated', () => {
-        refreshCache().catch((e) => Logger.warn('MacroService', '设置更新后刷新缓存失败', e));
+        refreshCache().catch((e) => Logger.warn('MacroService', '酒馆设置更新后刷新缓存失败', e));
       });
     }
+
+    // V1.4.7 Fix: 监听 Engram 自身设置更新，避免 worldbookContext 使用陈旧缓存
+    // 例如关闭世界书主开关 / EJS 开关后，宏应立即反映最新配置
+    subscribe(() => {
+      cachedWorldbookContext = '';
+      refreshWorldbookCache().catch((e) =>
+        Logger.warn('MacroService', 'Engram 设置更新后刷新世界书缓存失败', e)
+      );
+      refreshUserPersona();
+      refreshCustomMacros();
+    });
   } catch (e) {
     Logger.error('MacroService', '初始化失败', e);
   }
@@ -318,10 +328,8 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
  */
 export async function refreshWorldbookCache(): Promise<void> {
   try {
-    // 刷新世界书上下文 (支持 EJS)
-    const rawContext = await getLiveActivatedWorldInfo();
-    const sanitized = await processEJSMacros([rawContext]);
-    cachedWorldbookContext = sanitized[0] || '';
+    // 刷新世界书上下文
+    cachedWorldbookContext = await getLiveActivatedWorldInfo();
 
     // 刷新角色描述
     refreshCharDescription();

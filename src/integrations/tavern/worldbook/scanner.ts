@@ -1,8 +1,9 @@
 import { Logger } from '@/core/logger';
 import type { WorldbookConfig } from '@/types/prompt';
+import { getSettings } from '@/config/settings';
+import { processEJSMacros } from '../prompt/ejsProcessor';
 import { eventBus, events } from '../core/events';
 import { getEntries, type WorldbookEntryWithWorld } from './crud';
-import { getSettings } from '@/config/settings';
 import { getScopes } from './engram';
 
 const MODULE = 'Worldbook';
@@ -22,7 +23,13 @@ interface ContextualWorldInfoOptions {
 
 const CONTEXTUAL_WORLD_INFO_CACHE_LIMIT = 32;
 
+interface LiveActivatedWorldInfoEntry {
+  world: string;
+  entry: SillyTavern.FlattenedWorldInfoEntry;
+}
+
 let latestActivatedWorldInfoText = '';
+let latestActivatedWorldInfoEntries: LiveActivatedWorldInfoEntry[] = [];
 let hasActivatedWorldInfoCache = false;
 let worldInfoScanListenerInitialized = false;
 let unsubscribeWorldInfoScanListener: (() => void) | null = null;
@@ -31,6 +38,7 @@ const contextualWorldInfoCache = new Map<string, string>();
 
 function clearLiveWorldInfoCache(reason: string): void {
   latestActivatedWorldInfoText = '';
+  latestActivatedWorldInfoEntries = [];
   hasActivatedWorldInfoCache = false;
   Logger.debug(MODULE, 'Cleared live world info cache', { reason });
 }
@@ -53,6 +61,11 @@ function normalizeExtraWorldbooks(extraWorldbooks?: string[]): string[] {
   return [...new Set((extraWorldbooks || []).filter((name): name is string => !!name))];
 }
 
+function normalizeLiveEntryWorld(entryKey: string): string {
+  const separatorIndex = entryKey.lastIndexOf('.');
+  return separatorIndex === -1 ? entryKey : entryKey.slice(0, separatorIndex);
+}
+
 function ensureWorldInfoScanListener(): void {
   if (worldInfoScanListenerInitialized || !eventBus.isAvailable()) {
     return;
@@ -63,11 +76,17 @@ function ensureWorldInfoScanListener(): void {
     (eventData: unknown) => {
       const payload = eventData as WorldInfoScanDonePayload;
       latestActivatedWorldInfoText = payload.activated?.text || '';
+      latestActivatedWorldInfoEntries = Array.from(payload.activated?.entries?.entries() || []).map(
+        ([entryKey, entry]) => ({
+          world: normalizeLiveEntryWorld(entryKey),
+          entry,
+        })
+      );
       hasActivatedWorldInfoCache = true;
 
       Logger.debug(MODULE, 'Updated activated world info cache from Tavern event', {
         textLength: latestActivatedWorldInfoText.length,
-        entryCount: payload.activated?.entries?.size || 0,
+        entryCount: latestActivatedWorldInfoEntries.length,
       });
     }
   );
@@ -216,6 +235,63 @@ function shouldIncludeEntry(
   return true;
 }
 
+function shouldIncludeLiveEntry(
+  liveEntry: LiveActivatedWorldInfoEntry,
+  filterState: ReturnType<typeof loadFilteringState>
+): boolean {
+  const { config, globalWorldbooks, disabledGlobalBooks, disabledEntries } = filterState;
+  const { world, entry } = liveEntry;
+
+  if (!isWorldbookFeatureEnabled(config)) {
+    return false;
+  }
+
+  if (entry.extra?.engram === true) {
+    return true;
+  }
+
+  if (world.startsWith(ENGRAM_WORLDBOOK_PREFIX)) {
+    return false;
+  }
+
+  if (disabledGlobalBooks.includes(world)) {
+    return false;
+  }
+
+  if (globalWorldbooks.includes(world) && config?.includeGlobal === false) {
+    return false;
+  }
+
+  const bookDisabledList = disabledEntries[world];
+  if (bookDisabledList?.includes(entry.uid)) {
+    return false;
+  }
+
+  return !entry.disable;
+}
+
+async function buildLiveActivatedWorldInfo(
+  filterState: ReturnType<typeof loadFilteringState>
+): Promise<string> {
+  if (latestActivatedWorldInfoEntries.length === 0) {
+    return latestActivatedWorldInfoText;
+  }
+
+  const filteredEntries = latestActivatedWorldInfoEntries
+    .filter((liveEntry) => shouldIncludeLiveEntry(liveEntry, filterState))
+    .sort((a, b) => a.entry.order - b.entry.order || a.entry.uid - b.entry.uid);
+
+  if (filteredEntries.length === 0) {
+    return '';
+  }
+
+  const processedEntries = await processEJSMacros(
+    filteredEntries.map(({ entry }) => entry.content || '')
+  );
+
+  return processedEntries.filter(Boolean).join('\n\n');
+}
+
 /**
  * 扫描单个世界书，返回命中的条目文本
  */
@@ -306,7 +382,8 @@ export async function getLiveActivatedWorldInfo(): Promise<string> {
   try {
     ensureWorldInfoScanListener();
 
-    const { config } = loadFilteringState();
+    const filterState = loadFilteringState();
+    const { config } = filterState;
     if (!isWorldbookFeatureEnabled(config)) {
       Logger.debug(MODULE, 'Worldbook feature disabled, skipping live world info');
       return '';
@@ -317,11 +394,14 @@ export async function getLiveActivatedWorldInfo(): Promise<string> {
       return '';
     }
 
+    const resolvedWorldInfo = await buildLiveActivatedWorldInfo(filterState);
+
     Logger.debug(MODULE, 'Using Tavern activated world info cache', {
-      textLength: latestActivatedWorldInfoText.length,
+      textLength: resolvedWorldInfo.length,
+      sourceEntryCount: latestActivatedWorldInfoEntries.length,
     });
 
-    return latestActivatedWorldInfoText;
+    return resolvedWorldInfo;
   } catch (error) {
     Logger.error(MODULE, 'Failed to get live activated worldbooks', error);
     return '';
@@ -375,7 +455,8 @@ export async function getContextualWorldInfo(
       standardWorldbooks.map((worldbookName) => scanWorldbook(worldbookName, contextText))
     );
 
-    const result = [...extraScanResults, ...scanResults].filter(Boolean).join('\n\n');
+    const rawResult = [...extraScanResults, ...scanResults].filter(Boolean).join('\n\n');
+    const [result = ''] = await processEJSMacros([rawResult]);
     setContextualWorldInfoCache(cacheKey, result);
 
     Logger.debug(MODULE, 'Resolved world info via contextual scan', {

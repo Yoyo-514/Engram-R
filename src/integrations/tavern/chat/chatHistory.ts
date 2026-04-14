@@ -13,6 +13,52 @@ type ChatHistoryMessage = RawSTChatMessage & {
   message?: string;
 };
 
+const tavernHelper = getTavernHelper()
+
+function convertBuiltinChatMessage(message: ChatMessage): ChatHistoryMessage {
+  return {
+    mes: message.message,
+    message: message.message,
+    name: message.name,
+    is_user: message.role === 'user',
+    is_system: message.is_hidden || message.role === 'system',
+    extra: message.extra,
+  } as ChatHistoryMessage;
+}
+
+function getRangeMessagesFromTavernHelperApi(
+  floorRange: [number, number]
+): ChatHistoryMessage[] | null {
+  if (typeof tavernHelper?.getChatMessages !== 'function') {
+    return null;
+  }
+
+  const [start, end] = floorRange;
+  const effectiveStart = Math.max(1, start);
+  const effectiveEnd = Math.max(effectiveStart, end);
+  const range = `${effectiveStart - 1}-${effectiveEnd - 1}`;
+
+  try {
+    const builtinMessages = tavernHelper.getChatMessages(range, {
+      hide_state: 'all',
+      include_swipes: false,
+    });
+
+    if (!Array.isArray(builtinMessages)) {
+      return null;
+    }
+
+    return builtinMessages.map(convertBuiltinChatMessage);
+  } catch (error) {
+    Logger.warn('ChatHistoryHelper', 'getChatMessages 范围读取失败，回退到 context.chat', {
+      floorRange,
+      range,
+      error,
+    });
+    return null;
+  }
+}
+
 function getMessageContent(message: ChatHistoryMessage): string {
   return message.mes || message.content || message.message || '';
 }
@@ -58,7 +104,6 @@ function processMessage(
     message: ChatHistoryMessage,
     index: number,
     messageCount: number,
-    tavernHelper: ReturnType<typeof getTavernHelper>,
     enableNativeRegex: boolean,
     hasTavernHelper: boolean,
     hasFormatFunc: boolean
@@ -191,7 +236,6 @@ export function getDynamicChatHistoryLimit(): number {
 export function getChatHistorySegments(floorRange?: [number, number]): string[] {
     try {
       const context = getSTContext();
-      const tavernHelper = getTavernHelper();
       const regexConfig = get('apiSettings')?.regexConfig;
       const enableNativeRegex = regexConfig?.enableNativeRegex ?? true;
       const hasTavernHelper = !!tavernHelper;
@@ -208,17 +252,23 @@ export function getChatHistorySegments(floorRange?: [number, number]): string[] 
       let messages: ChatHistoryMessage[] = [];
 
       if (floorRange) {
-        const [start, end] = floorRange;
-        const effectiveStart = Math.max(1, start);
-        const sliceStart = effectiveStart - 1;
-        const sliceEnd = end;
-        messages = context.chat.slice(sliceStart, sliceEnd);
+        const builtinMessages = getRangeMessagesFromTavernHelperApi(floorRange);
+
+        if (builtinMessages && builtinMessages.length > 0) {
+          messages = builtinMessages;
+        } else {
+          const [start, end] = floorRange;
+          const effectiveStart = Math.max(1, start);
+          const sliceStart = effectiveStart - 1;
+          const sliceEnd = end;
+          messages = context.chat.slice(sliceStart, sliceEnd);
+        }
         Logger.debug('ChatHistoryHelper', 'getChatHistory 调试信息', {
           inputRange: floorRange,
-          calcSlice: [sliceStart, sliceEnd],
           chatLen: context.chat.length,
-          firstMsgSummary: messages[0]?.mes?.substring(0, 20) || 'undefined',
-          firstMsgIndex: messages[0] ? context.chat.indexOf(messages[0]) : -1,
+          source: builtinMessages && builtinMessages.length > 0 ? 'getChatMessages' : 'context.chat',
+          count: messages.length,
+          firstMsgSummary: getMessageContent(messages[0]).substring(0, 20) || 'undefined',
         });
       } else {
         const store = useMemoryStore.getState();
@@ -249,7 +299,6 @@ export function getChatHistorySegments(floorRange?: [number, number]): string[] 
           message,
           index,
           messages.length,
-          tavernHelper,
           enableNativeRegex,
           hasTavernHelper,
           hasFormatFunc
