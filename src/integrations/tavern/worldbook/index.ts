@@ -17,7 +17,7 @@ import {
   getWorldbookNames,
   updateEntry,
 } from './crud';
-import { findExistingWorldbook, getOrCreateWorldbook, getScopes } from './engram';
+import { getScopes } from './engram';
 import {
   countTokens,
   countTokensBatch,
@@ -173,20 +173,4 @@ export async function getWorldbookStructure(): Promise<Record<string, any[]>> {
   }
 
   return structure;
-}
-
-// =========================================================================
-// Engram 业务逻辑代理 (engram.ts)
-// =========================================================================
-
-export function findEngramWorldbook(): string | null {
-  return findExistingWorldbook();
-}
-
-export async function ensureEngramWorldbook(): Promise<string | null> {
-  return getOrCreateWorldbook();
-}
-
-export async function getChatWorldbook(): Promise<string | null> {
-  return getOrCreateWorldbook();
 }

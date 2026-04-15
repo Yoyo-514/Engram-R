@@ -1,6 +1,3 @@
-/** 世界书绑定模式 */
-export type WorldbookBindType = 'chat' | 'character';
-
 export interface WorldbookConfig {
   /** 是否启用世界书 */
   enabled: boolean;

@@ -16,7 +16,6 @@ export const DEFAULT_SUMMARIZER_CONFIG: SummarizerConfig = {
   enabled: true,
   triggerMode: 'auto',
   floorInterval: 25, // V0.9.5: 20-30 层一次
-  worldbookMode: 'chat',
   previewEnabled: true,
   promptTemplateId: null,
   llmPresetId: null,

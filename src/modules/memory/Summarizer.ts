@@ -420,7 +420,6 @@ class SummarizerService {
         sourceFloors: range,
         timestamp: Date.now(),
         tokenCount: 0, // TODO: Get from context or re-measure
-        writtenToWorldbook: true,
       };
 
       if (Array.isArray(savedEvents) && savedEvents.length > 0) {

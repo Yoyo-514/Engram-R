@@ -231,7 +231,7 @@ export const DatabaseManagementSection: FC = () => {
               <div className="min-w-0 flex-1">
                 <h4 className="truncate font-medium text-foreground">联动删除</h4>
                 <p className="line-clamp-2 text-sm text-muted-foreground">
-                  删除角色/聊天时，自动清理记忆库
+                  删除聊天时，自动清理对应的 IndexedDB 与同步残留文件
                 </p>
               </div>
             </div>
@@ -243,30 +243,9 @@ export const DatabaseManagementSection: FC = () => {
 
           {linkedDeletion.enabled && (
             <div className="space-y-3 border-t border-border pl-14 pt-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">删除前确认</span>
-                <Switch
-                  checked={linkedDeletion.showConfirmation}
-                  onChange={(checked) => persistLinkedDeletion({ showConfirmation: checked })}
-                  className="scale-90"
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-3">
-                <div className="min-w-0 flex-1">
-                  <span className="block truncate text-sm text-muted-foreground">
-                    删除聊天时同步删除 Worldbook
-                  </span>
-                  <p className="text-muted-foreground/60 line-clamp-2 text-xs">
-                    危险: 多聊天共享 Worldbook 时可能误删
-                  </p>
-                </div>
-                <Switch
-                  checked={linkedDeletion.deleteChatWorldbook ?? false}
-                  onChange={(checked) => persistLinkedDeletion({ deleteChatWorldbook: checked })}
-                  className="scale-90"
-                />
-              </div>
+              <p className="text-xs leading-5 text-muted-foreground/80">
+                联动删除负责清理聊天分片数据库与`Engram_sync_*.json` 同步文件，避免误删全局唯一的宏槽世界书。
+              </p>
             </div>
           )}
         </div>

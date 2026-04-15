@@ -1,5 +1,3 @@
-import type { WorldbookBindType } from './worldbook';
-
 /** 触发模式 */
 export type SummarizerTriggerType = 'auto' | 'manual';
 
@@ -15,8 +13,6 @@ export interface SummarizerConfig {
   triggerMode: TriggerMode;
   /** 楼层间隔：每 N 楼触发一次 */
   floorInterval: number;
-  /** 世界书绑定模式 */
-  worldbookMode: WorldbookBindType;
   /** 是否启用预览 */
   previewEnabled: boolean;
   /** 使用的提示词模板 ID */
@@ -42,10 +38,6 @@ export interface SummaryResult {
   sourceFloors: [number, number];
   /** 生成时间戳 */
   timestamp: number;
-  /** 是否已写入世界书 */
-  writtenToWorldbook: boolean;
-  /** 世界书条目 ID（如果已写入） */
-  worldbookEntryId?: string;
 }
 
 /** Summarizer 状态 */
