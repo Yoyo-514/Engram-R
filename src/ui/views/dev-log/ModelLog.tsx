@@ -20,7 +20,7 @@ import type { FC } from 'react';
  * 伪聊天式布局展示 LLM 调用记录
  */
 import { type ModelLogEntry, ModelLogger } from '@/core/logger/ModelLogger';
-import { countWorldbookTokens } from '@/integrations/tavern';
+import { countWorldbookTokens } from '@/integrations/tavern/worldbook';
 
 /** 类型标签配置 */
 const TYPE_LABELS: Record<ModelLogEntry['type'], { label: string; color: string }> = {
