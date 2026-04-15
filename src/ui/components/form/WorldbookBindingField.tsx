@@ -28,13 +28,17 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
 
   // 加载可用世界书列表
   useEffect(() => {
-    const scopes = getWorldbookScopes();
-    // 合并全局 + 已安装，排除 [Engram] 开头和角色绑定的
-    const allBooks = [...new Set([...scopes.global, ...scopes.installed])].filter(
-      (name) => !name.startsWith('[Engram]')
-    );
+    try {
+      const scopes = getWorldbookScopes();
+      // 合并全局 + 已安装，排除 [Engram] 开头和角色绑定的
+      const allBooks = [...new Set([...scopes.global, ...scopes.installed])].filter(
+        (name) => !name.startsWith('[Engram]')
+      );
 
-    setAvailableBooks(allBooks);
+      setAvailableBooks(allBooks);
+    } catch {
+      setAvailableBooks([]);
+    }
   }, [showPicker]);
 
   // 同步外部选择到本地

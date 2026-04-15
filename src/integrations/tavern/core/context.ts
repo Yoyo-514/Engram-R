@@ -14,6 +14,10 @@ const MODULE = 'STContext';
 export type RawSTChatMessage = SillyTavern.ChatMessage;
 
 function parseCharacterId(value: unknown): string {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
   if (typeof value !== 'string') {
     const strValue = String(value);
     const trimmed = strValue.trim();
@@ -74,7 +78,7 @@ export function getCurrentCharacter(): {
 } | null {
   const ctx = getSTContext();
   const character = getCurrentTavernCharacter(ctx);
-  if (!ctx || ctx.characterId === null || !character) return null;
+  if (!ctx || !ctx.characterId || !character) return null;
   return {
     name: character.name || ctx.name2,
     id: ctx.characterId,
