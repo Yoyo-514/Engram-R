@@ -1,5 +1,6 @@
-import { getSettings, loadSettings, set } from '@/config/settings';
+import { getSettings, set } from '@/config/settings';
 import { Logger } from '@/core/logger';
+
 import { type ThemeName, themes } from '../styles/themes';
 
 const MODULE = 'ThemeManager';
@@ -122,8 +123,8 @@ function applyThemeVariables(themeName: ThemeName): void {
  */
 export function initThemeManager(): void {
   // 1. 加载并应用已保存的主题
-  // 优先使用 extension_settings，如果没有则回退到 localStorage (顺便尝试迁移)
-  const settings = loadSettings();
+  // 优先使用 SettingsManager，如果没有则回退到 localStorage (顺便尝试迁移)
+  const settings = getSettings();
   let saved = settings.theme as ThemeName;
 
   if (!saved) {

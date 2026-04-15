@@ -1,10 +1,3 @@
-/**
- * ModelLog - 模型日志可视化组件
- *
- * 伪聊天式布局展示 LLM 调用记录
- */
-import { type ModelLogEntry, ModelLogger } from '@/core/logger/ModelLogger';
-import { countWorldbookTokens } from '@/integrations/tavern';
 import {
   AlertCircle,
   Bot,
@@ -20,6 +13,14 @@ import {
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
+
+/**
+ * ModelLog - 模型日志可视化组件
+ *
+ * 伪聊天式布局展示 LLM 调用记录
+ */
+import { type ModelLogEntry, ModelLogger } from '@/core/logger/ModelLogger';
+import { countWorldbookTokens } from '@/integrations/tavern';
 
 /** 类型标签配置 */
 const TYPE_LABELS: Record<ModelLogEntry['type'], { label: string; color: string }> = {
@@ -96,21 +97,21 @@ const LogCard: FC<{
   const typeConfig = TYPE_LABELS[sent.type];
 
   return (
-    <div className="border border-border rounded-lg overflow-hidden bg-card">
+    <div className="overflow-hidden rounded-lg border border-border bg-card">
       {/* 头部 */}
       <div
-        className="flex items-center gap-2 px-3 py-2 bg-muted-20 cursor-pointer hover:bg-muted-30"
+        className="flex cursor-pointer items-center gap-2 bg-muted-20 px-3 py-2 hover:bg-muted-30"
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-        <span className={`px-2 py-0.5 rounded text-xs font-medium ${typeConfig.color}`}>
+        <span className={`rounded px-2 py-0.5 text-xs font-medium ${typeConfig.color}`}>
           {typeConfig.label}
         </span>
 
         {/* Model Badge */}
         {sent.model && (
           <span
-            className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 truncate max-w-[150px]"
+            className="max-w-[150px] truncate rounded border border-indigo-500/20 bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400"
             title={`模型: ${sent.model}`}
           >
             {sent.model}
@@ -120,7 +121,7 @@ const LogCard: FC<{
         {/* Character Badge */}
         {sent.character && (
           <span
-            className="px-1.5 py-0.5 rounded text-[10px] font-medium bg-orange-500/10 text-orange-400 border border-orange-500/20 truncate max-w-[120px]"
+            className="max-w-[120px] truncate rounded border border-orange-500/20 bg-orange-500/10 px-1.5 py-0.5 text-[10px] font-medium text-orange-400"
             title={`角色: ${sent.character}`}
           >
             {sent.character.length > 8 ? sent.character.slice(0, 8) + '...' : sent.character}
@@ -133,7 +134,7 @@ const LogCard: FC<{
             楼层 #{sent.floorRange[0]}-{sent.floorRange[1]}
           </span>
         )}
-        <span className="ml-auto text-xs text-muted-foreground flex items-center gap-1">
+        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
           <Clock size={12} />
           {formatDuration(received?.duration || sent.duration)}
         </span>
@@ -143,12 +144,12 @@ const LogCard: FC<{
       {expanded && (
         <div className="flex flex-col md:flex-row">
           {/* 左侧：发送 */}
-          <div className="flex-1 border-r border-border p-3 min-w-0">
-            <div className="flex items-center gap-2 mb-2 text-sm font-medium text-blue-400">
+          <div className="min-w-0 flex-1 border-r border-border p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-400">
               <Send size={14} />
               发送
               {(sent.tokensSent || calcSentTokens !== null) && (
-                <span className="text-xs text-muted-foreground ml-auto">
+                <span className="ml-auto text-xs text-muted-foreground">
                   ~{sent.tokensSent || calcSentTokens} tokens
                 </span>
               )}
@@ -156,8 +157,8 @@ const LogCard: FC<{
 
             {sent.systemPrompt && (
               <div className="mb-3">
-                <div className="text-xs text-muted-foreground mb-1">System</div>
-                <div className="text-sm p-2 bg-muted-20 rounded max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words">
+                <div className="mb-1 text-xs text-muted-foreground">System</div>
+                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
                   {sent.systemPrompt}
                 </div>
               </div>
@@ -165,8 +166,8 @@ const LogCard: FC<{
 
             {sent.userPrompt && (
               <div>
-                <div className="text-xs text-muted-foreground mb-1">User</div>
-                <div className="text-sm p-2 bg-muted-20 rounded max-h-[500px] overflow-y-auto whitespace-pre-wrap">
+                <div className="mb-1 text-xs text-muted-foreground">User</div>
+                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap rounded bg-muted-20 p-2 text-sm">
                   {sent.userPrompt}
                 </div>
               </div>
@@ -174,25 +175,25 @@ const LogCard: FC<{
           </div>
 
           {/* 右侧：接收 */}
-          <div className="flex-1 p-3 min-w-0">
-            <div className="flex items-center gap-2 mb-2 text-sm font-medium text-green-400">
+          <div className="min-w-0 flex-1 p-3">
+            <div className="mb-2 flex items-center gap-2 text-sm font-medium text-green-400">
               <Bot size={14} />
               接收
               {(received?.tokensReceived || calcRecvTokens !== null) && (
-                <span className="text-xs text-muted-foreground ml-auto">
+                <span className="ml-auto text-xs text-muted-foreground">
                   ~{received?.tokensReceived || calcRecvTokens} tokens
                 </span>
               )}
             </div>
 
             {received?.status === 'error' && received.error && (
-              <div className="p-2 bg-red-500/10 border border-red-500/30 rounded text-sm text-red-400">
+              <div className="rounded border border-red-500/30 bg-red-500/10 p-2 text-sm text-red-400">
                 {received.error}
               </div>
             )}
 
             {received?.response && (
-              <div className="text-sm p-2 bg-muted-20 rounded max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words">
+              <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
                 {received.response}
               </div>
             )}
@@ -222,16 +223,16 @@ export const ModelLog: FC = () => {
   }, []);
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* 头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Zap size={16} className="text-primary" />
           <span className="font-medium text-foreground">模型调用日志</span>
           <span className="text-xs text-muted-foreground">({logs.length})</span>
         </div>
         <button
-          className="p-1.5 rounded-md text-muted-foreground hover:text-destructive transition-colors"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-destructive"
           onClick={() => ModelLogger.clear()}
           title="清除日志"
         >
@@ -242,13 +243,13 @@ export const ModelLog: FC = () => {
       {/* 日志列表 */}
       <div className="flex-1 overflow-y-auto p-4">
         {logs.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+          <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
             <Bot size={48} className="opacity-30" />
             <p className="text-sm">暂无模型调用记录</p>
             <p className="text-xs">触发总结或向量化后，调用记录将显示在这里</p>
           </div>
         ) : (
-          <div className="h-full flex flex-col gap-3">
+          <div className="flex h-full flex-col gap-3">
             {logs.map((log, index) => (
               <LogCard key={index} sent={log.sent} received={log.received} />
             ))}

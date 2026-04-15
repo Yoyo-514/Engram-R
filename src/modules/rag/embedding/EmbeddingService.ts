@@ -7,12 +7,12 @@
  * - 可用于 EventNode 和 EntityNode
  */
 
-import type { VectorConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { getDbForChat, tryGetDbForChat } from '@/data/db';
-import type { EventNode } from '@/types/graph';
 import { callEmbeddingAPI } from '@/integrations/embedding/EmbeddingClient';
 import { getCurrentChatId } from '@/integrations/tavern';
+import type { EventNode } from '@/types/graph';
+import type { VectorConfig } from '@/types/rag';
 
 // ==================== 类型定义 ====================
 
@@ -449,4 +449,3 @@ export function createEmbeddingService() {
 
 // 导出单例
 export const embeddingService = createEmbeddingService();
-

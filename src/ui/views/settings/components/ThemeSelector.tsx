@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
-import { getTheme, setTheme } from '@/ui/services';
-import { themes, type ThemeName } from '../../../styles/themes';
-import { set } from '@/config/settings';
 import type { FC } from 'react';
+
+import { set } from '@/config/settings';
+import { getTheme, setTheme } from '@/ui/services';
+
+import { themes, type ThemeName } from '../../../styles/themes';
 
 interface ThemeOption {
   id: ThemeName;
@@ -48,38 +50,35 @@ export const ThemeSelector: FC = () => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">主题设置</h3>
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {options.map((option) => (
           <button
             key={option.id}
             onClick={() => handleThemeChange(option.id)}
-            className={`
-                            relative group flex flex-col items-center gap-2 p-3 rounded-xl border-2 transition-all
-                            ${
-                              currentTheme === option.id
-                                ? 'border-primary bg-accent/10'
-                                : 'border-transparent hover:bg-accent/5'
-                            }
-                        `}
+            className={`group relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all ${
+              currentTheme === option.id
+                ? 'bg-accent/10 border-primary'
+                : 'hover:bg-accent/5 border-transparent'
+            } `}
           >
             {/* Circular Swatch */}
             {/* 3-Color Swatch Palette */}
-            <div className="flex items-center justify-center -space-x-3 mb-2">
+            <div className="mb-2 flex items-center justify-center -space-x-3">
               {/* Main Background */}
               <div
-                className="w-8 h-8 rounded-full border border-border shadow-sm z-10"
+                className="z-10 h-8 w-8 rounded-full border border-border shadow-sm"
                 style={{ background: option.background }}
                 title="Background"
               />
               {/* Sidebar Background */}
               <div
-                className="w-8 h-8 rounded-full border border-border shadow-sm z-20"
+                className="z-20 h-8 w-8 rounded-full border border-border shadow-sm"
                 style={{ background: option.sidebar }}
                 title="Sidebar"
               />
               {/* Primary Accent */}
               <div
-                className="w-8 h-8 rounded-full border border-border shadow-sm z-30 ring-2 ring-background"
+                className="z-30 h-8 w-8 rounded-full border border-border shadow-sm ring-2 ring-background"
                 style={{ background: option.primary }}
                 title="Primary"
               />
@@ -92,7 +91,7 @@ export const ThemeSelector: FC = () => {
             </span>
 
             {currentTheme === option.id && (
-              <div className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary" />
+              <div className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary" />
             )}
           </button>
         ))}

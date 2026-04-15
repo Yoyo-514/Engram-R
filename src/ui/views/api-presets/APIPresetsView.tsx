@@ -9,9 +9,21 @@
 import { Braces, Cpu, FileText, Key, Layers, Plus, Regex, Save } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { ElementType, FC } from 'react';
+
 // Components
 import { PageTitle } from '@/ui/components/display/PageTitle';
+import { EmptyState } from '@/ui/components/feedback/EmptyState';
+import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
+import { MasterDetailLayout } from '@/ui/components/layout/MasterDetailLayout';
+import { MobileFullscreenForm } from '@/ui/components/layout/MobileFullscreenForm'; // Added import
 import { TabPills } from '@/ui/components/layout/TabPills';
+import { useResponsive } from '@/ui/hooks/useResponsive';
+
+// Hooks
+import { useConfig } from '../../hooks/useConfig';
+import { useLLMPresets } from '../../hooks/useLLMPresets';
+import { useRegexRules } from '../../hooks/useRegexRules';
+import { useWorldInfo } from '../../hooks/useWorldInfo';
 import { LLMPresetForm } from './models/LLMPresetForm';
 import { RerankConfigForm } from './models/RerankConfigForm';
 import { VectorConfigForm } from './models/VectorConfigForm';
@@ -23,17 +35,6 @@ import { RegexRuleForm } from './regex/RegexRuleForm';
 import { RegexRuleList } from './regex/RegexRuleList';
 import { PresetCard } from './shared/PresetCard';
 import { WorldbookConfigForm } from './worldbook/WorldbookConfigForm';
-
-import { EmptyState } from '@/ui/components/feedback/EmptyState';
-import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
-import { MasterDetailLayout } from '@/ui/components/layout/MasterDetailLayout';
-import { MobileFullscreenForm } from '@/ui/components/layout/MobileFullscreenForm'; // Added import
-import { useResponsive } from '@/ui/hooks/useResponsive';
-// Hooks
-import { useConfig } from '../../hooks/useConfig';
-import { useLLMPresets } from '../../hooks/useLLMPresets';
-import { useRegexRules } from '../../hooks/useRegexRules';
-import { useWorldInfo } from '../../hooks/useWorldInfo';
 
 // Tab 类型
 type MainTabType = 'model' | 'prompt' | 'regex' | 'worldbook';
@@ -328,7 +329,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
 
   // =============== 主视图 ===============
   return (
-    <div className="flex flex-col h-full animate-in fade-in">
+    <div className="animate-in fade-in flex h-full flex-col">
       <PageTitle
         breadcrumbs={['API 配置']}
         title={currentInfo.title}
@@ -349,7 +350,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
         actions={
           hasChanges && (
             <button
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary hover:text-primary-foreground hover:bg-primary border border-primary/50 rounded transition-colors"
+              className="border-primary/50 inline-flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
               onClick={save}
             >
               <Save size={12} />
@@ -360,7 +361,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
       />
 
       <div
-        className={`flex-1 ${isMasterDetail ? 'overflow-hidden flex flex-col' : 'overflow-y-auto no-scrollbar'}`}
+        className={`flex-1 ${isMasterDetail ? 'flex flex-col overflow-hidden' : 'no-scrollbar overflow-y-auto'}`}
       >
         {/* 模型配置 Tab */}
         {mainTab === 'model' && (
@@ -385,11 +386,11 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
                 list={
                   <div className="flex flex-col gap-4">
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                      <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
                         预设列表
                       </h3>
                       <button
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-muted-foreground transition-colors hover:text-foreground"
                         onClick={addPreset}
                       >
                         <Plus size={16} />
@@ -442,7 +443,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
             list={
               <>
                 {/* V0.9.2: 子标签切换 */}
-                <div className="flex items-center gap-2 mb-4">
+                <div className="mb-4 flex items-center gap-2">
                   <button
                     onClick={() => setPromptSubTab('templates')}
                     className={`text-xs font-bold uppercase tracking-wider transition-colors ${
@@ -570,10 +571,10 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
 
         {/* 世界书配置 Tab */}
         {mainTab === 'worldbook' && (
-          <div className="flex flex-col h-full gap-2">
+          <div className="flex h-full flex-col gap-2">
             {/* V1.2.8: 移除知识库方案子标签，仅保留全局设置 */}
 
-            <div className="max-w-2xl py-4 flex-1 overflow-y-auto custom-scrollbar">
+            <div className="custom-scrollbar max-w-2xl flex-1 overflow-y-auto py-4">
               <WorldbookConfigForm
                 config={
                   worldbookConfig || {

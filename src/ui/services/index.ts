@@ -1,2 +1,2 @@
-export * from './NotificationService'
-export * from './ThemeManager'
+export * from './NotificationService';
+export * from './ThemeManager';

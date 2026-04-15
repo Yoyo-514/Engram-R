@@ -25,7 +25,7 @@ export const SliderField: FC<SliderFieldProps> = ({
   const percentage = range === 0 ? 0 : Math.min(100, Math.max(0, ((value - min) / range) * 100));
 
   return (
-    <div className={`relative h-5 flex items-center cursor-pointer group ${className}`}>
+    <div className={`group relative flex h-5 cursor-pointer items-center ${className}`}>
       {/* 轨道底 */}
       <div
         className="absolute inset-x-0 top-1/2 h-1 rounded-full bg-border"
@@ -40,7 +40,7 @@ export const SliderField: FC<SliderFieldProps> = ({
 
       {/* Thumb - 纯 div 渲染 */}
       <div
-        className="absolute top-1/2 w-3 h-3 rounded-full bg-primary shadow-sm pointer-events-none transition-transform duration-100 ease-out group-hover:scale-125"
+        className="pointer-events-none absolute top-1/2 h-3 w-3 rounded-full bg-primary shadow-sm transition-transform duration-100 ease-out group-hover:scale-125"
         style={{ left: `${percentage}%`, transform: 'translate(-50%, -50%)' }}
       />
 

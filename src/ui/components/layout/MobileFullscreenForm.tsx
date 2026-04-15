@@ -27,20 +27,20 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
   const content = (
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
-        className="fixed inset-0 z-[99999] flex flex-col animate-in slide-in-from-right-4 duration-200 bg-background/95 backdrop-blur-3xl text-foreground"
+        className="animate-in slide-in-from-right-4 bg-background/95 fixed inset-0 z-[99999] flex flex-col text-foreground backdrop-blur-3xl duration-200"
         style={{ width: '100vw', height: '100dvh' }}
       >
         {/* 头部 */}
-        <div className="flex items-center gap-3 px-4 py-3 border-b border-border shrink-0">
-          <button onClick={onClose} className="p-1 hover:bg-accent rounded">
+        <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
+          <button onClick={onClose} className="rounded p-1 hover:bg-accent">
             <ArrowLeft size={20} />
           </button>
-          <h2 className="text-lg font-light flex-1">{title}</h2>
+          <h2 className="flex-1 text-lg font-light">{title}</h2>
           {actions}
         </div>
 
         {/* 内容区域 */}
-        <div className="flex-1 overflow-y-auto p-4 no-scrollbar">{children}</div>
+        <div className="no-scrollbar flex-1 overflow-y-auto p-4">{children}</div>
       </div>
     </div>
   );

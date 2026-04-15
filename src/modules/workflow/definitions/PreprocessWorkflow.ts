@@ -1,4 +1,4 @@
-import { type WorkflowDefinition } from '../core/WorkflowEngine';
+import type { WorkflowDefinition } from '../core/WorkflowEngine';
 import {
   BuildPrompt,
   CleanRegex,
@@ -17,7 +17,7 @@ export const createPreprocessWorkflow = (): WorkflowDefinition => ({
     new KeywordRetrieveStep(),
     // 2. Unified context fetching
     new FetchContext(),
-    new BuildPrompt({ category: 'preprocessing' }),
+    new BuildPrompt({ category: 'preprocess' }),
     new LlmRequest(),
     // 1. Remove <think> blocks
     new CleanRegex('output'),

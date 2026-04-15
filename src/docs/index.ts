@@ -4,14 +4,15 @@
  */
 
 import { Play, Settings, Brain, HelpCircle, Globe } from 'lucide-react';
-import type { DocCategory } from './types';
 
+import type { DocCategory } from '@/types/docs';
+
+import Deployment from './deployment.mdx';
+import FAQ from './faq.mdx';
+import Features from './features.mdx';
+import GettingStarted from './getting-started.mdx';
 // 懒加载 MDX 文档
 import Intro from './intro.mdx';
-import GettingStarted from './getting-started.mdx';
-import Features from './features.mdx';
-import FAQ from './faq.mdx';
-import Deployment from './deployment.mdx';
 
 export const DOCS: DocCategory[] = [
   {

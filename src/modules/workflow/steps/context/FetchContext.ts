@@ -12,9 +12,9 @@ import {
   getSummaries,
 } from '@/integrations/tavern';
 import type { PreparedSummaryContext } from '@/modules/memory/SummaryPreparationCache';
-import type { WorldbookConfig } from '@/types/prompt';
-import type { JobContext } from '../../core/JobContext';
-import type { IStep } from '../../core/Step';
+import type { JobContext } from '@/types/job_context';
+import type { IStep } from '@/types/step';
+import type { WorldbookConfig } from '@/types/worldbook';
 
 const RECENT_WORLDBOOK_MESSAGE_LIMIT = 4;
 
@@ -26,7 +26,11 @@ interface TemplateWithWorldbooks {
   extraWorldbooks?: string[];
 }
 
-function getRecentWorldbookMessages(context: JobContext, history: string, isImport: boolean): string[] | undefined {
+function getRecentWorldbookMessages(
+  context: JobContext,
+  history: string,
+  isImport: boolean
+): string[] | undefined {
   if (isImport) {
     return history ? [history] : undefined;
   }
@@ -106,9 +110,10 @@ export class FetchContext implements IStep {
         const missingHistory =
           missingStart <= range[1] ? getChatHistory([missingStart, range[1]]) : '';
 
-        history = preparedHistory && missingHistory
-          ? `${preparedHistory}\n\n${missingHistory}`
-          : preparedHistory || missingHistory;
+        history =
+          preparedHistory && missingHistory
+            ? `${preparedHistory}\n\n${missingHistory}`
+            : preparedHistory || missingHistory;
 
         Logger.debug('FetchContext', 'Using partial prepared summary chat history', {
           range,
@@ -133,10 +138,10 @@ export class FetchContext implements IStep {
     try {
       let templateId = context.config.templateId as string | undefined;
       const category = context.config.category;
-      const apiSettings = get('apiSettings') as
+      const runtimeSettings = get('runtimeSettings') as
         | { promptTemplates?: TemplateWithWorldbooks[] }
         | undefined;
-      const userTemplates = apiSettings?.promptTemplates || [];
+      const userTemplates = runtimeSettings?.promptTemplates || [];
 
       if (!templateId && category) {
         const enabledTemplate = userTemplates.find(
@@ -157,10 +162,7 @@ export class FetchContext implements IStep {
           Logger.debug('FetchContext', `Template [${template.name}] has extra worldbooks`, {
             books: template.extraWorldbooks,
           });
-          resolvedExtraWorldbooks = [
-            ...resolvedExtraWorldbooks,
-            ...template.extraWorldbooks,
-          ];
+          resolvedExtraWorldbooks = [...resolvedExtraWorldbooks, ...template.extraWorldbooks];
         }
       }
     } catch (error) {
@@ -173,7 +175,7 @@ export class FetchContext implements IStep {
       ),
     ];
 
-    const wbConfig: WorldbookConfig | undefined = get('apiSettings')?.worldbookConfig;
+    const wbConfig: WorldbookConfig | undefined = get('runtimeSettings')?.worldbookConfig;
 
     let wiContent = '';
 
@@ -182,9 +184,7 @@ export class FetchContext implements IStep {
     } else {
       const worldbookMessages = getRecentWorldbookMessages(context, history, isImport);
       const useContextualWorldInfo =
-        isImport ||
-        Boolean(range) ||
-        resolvedExtraWorldbooks.length > 0;
+        isImport || Boolean(range) || resolvedExtraWorldbooks.length > 0;
 
       wiContent = useContextualWorldInfo
         ? await getContextualWorldInfo(worldbookMessages || [], {

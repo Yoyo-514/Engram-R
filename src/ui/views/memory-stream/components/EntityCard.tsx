@@ -1,3 +1,6 @@
+import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen } from 'lucide-react';
+import type { FC } from 'react';
+
 /**
  * EntityCard - 实体卡片组件
  *
@@ -6,8 +9,6 @@
  * 文本层级：heading(名称) → label(类型) → foreground(描述) → meta(别名)
  */
 import type { EntityNode } from '@/types/graph';
-import { Archive, ArchiveRestore, ChevronRight, Lock, LockOpen } from 'lucide-react';
-import type { FC } from 'react';
 
 /**
  * 根据实体类型获取对应的主题颜色类名
@@ -56,18 +57,12 @@ export const EntityCard: FC<EntityCardProps> = ({
   if (isCompact) {
     return (
       <div
-        className={`
-                    flex items-center gap-3 p-3 cursor-pointer
-                    border-b border-border
-                    transition-colors duration-150
-                    ${isSelected ? 'border-l-2 border-l-primary bg-transparent' : 'hover:border-border'}
-                    ${isArchived ? 'opacity-50 grayscale-[0.5]' : ''}
-                `}
+        className={`flex cursor-pointer items-center gap-3 border-b border-border p-3 transition-colors duration-150 ${isSelected ? 'border-l-2 border-l-primary bg-transparent' : 'hover:border-border'} ${isArchived ? 'opacity-50 grayscale-[0.5]' : ''} `}
         onClick={onSelect}
       >
         {/* 复选框 (通过包装层扩大热区并防止冒泡) */}
         <div
-          className="p-2 -m-2 flex items-center justify-center shrink-0 select-none"
+          className="-m-2 flex shrink-0 select-none items-center justify-center p-2"
           onClick={(e) => e.stopPropagation()}
         >
           <input
@@ -76,21 +71,21 @@ export const EntityCard: FC<EntityCardProps> = ({
             onChange={(e) => {
               onCheck?.(e.target.checked);
             }}
-            className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+            className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
           />
         </div>
 
         {/* 主内容 */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-heading">{entity.name}</span>
             <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full border uppercase ${getEntityTypeColor(entity.type)}`}
+              className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
             >
               {entity.type}
             </span>
           </div>
-          <p className="text-xs text-meta truncate mt-1">{entity.description}</p>
+          <p className="mt-1 truncate text-xs text-meta">{entity.description}</p>
         </div>
 
         {/* 锁定按钮 (紧凑模式) */}
@@ -107,7 +102,7 @@ export const EntityCard: FC<EntityCardProps> = ({
 
         {/* 归档按钮 (紧凑模式) */}
         <button
-          className="p-1 px-2 hover:bg-muted/50 rounded transition-colors"
+          className="hover:bg-muted/50 rounded p-1 px-2 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             onArchive?.(!isArchived);
@@ -130,22 +125,17 @@ export const EntityCard: FC<EntityCardProps> = ({
   // 桌面模式
   return (
     <div
-      className={`
-                group p-4 cursor-pointer rounded-lg h-full flex flex-col
-                transition-all duration-150
-                ${
-                  isSelected
-                    ? 'border border-primary bg-transparent shadow-sm'
-                    : 'border border-transparent hover:border-border/50 bg-secondary/5'
-                }
-                ${isArchived ? 'opacity-60 grayscale-[0.3]' : ''}
-            `}
+      className={`group flex h-full cursor-pointer flex-col rounded-lg p-4 transition-all duration-150 ${
+        isSelected
+          ? 'border border-primary bg-transparent shadow-sm'
+          : 'hover:border-border/50 bg-secondary/5 border border-transparent'
+      } ${isArchived ? 'opacity-60 grayscale-[0.3]' : ''} `}
       onClick={onSelect}
     >
       {/* 头部：复选框 + 名称 + 类型 */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="mb-2 flex items-center gap-3">
         <div
-          className="p-1.5 -m-1.5 flex items-center justify-center shrink-0 select-none"
+          className="-m-1.5 flex shrink-0 select-none items-center justify-center p-1.5"
           onClick={(e) => e.stopPropagation()}
         >
           <input
@@ -154,26 +144,23 @@ export const EntityCard: FC<EntityCardProps> = ({
             onChange={(e) => {
               onCheck?.(e.target.checked);
             }}
-            className="w-4 h-4 rounded border-border accent-primary cursor-pointer"
+            className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
           />
         </div>
         <span className="text-sm font-medium text-heading">{entity.name}</span>
         <span
-          className={`text-[10px] px-1.5 py-0.5 rounded-full border uppercase ${getEntityTypeColor(entity.type)}`}
+          className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
         >
           {entity.type}
         </span>
 
         {/* 锁定按钮 (桌面模式) */}
         <button
-          className={`
-                        ml-auto p-1.5 rounded-md transition-all
-                        ${
-                          isLocked
-                            ? 'text-emphasis bg-emphasis/10 hover:bg-emphasis/20'
-                            : 'text-muted-foreground hover:bg-muted/50 opacity-0 group-hover:opacity-100'
-                        }
-                    `}
+          className={`ml-auto rounded-md p-1.5 transition-all ${
+            isLocked
+              ? 'bg-emphasis/10 hover:bg-emphasis/20 text-emphasis'
+              : 'hover:bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100'
+          } `}
           onClick={(e) => {
             e.stopPropagation();
             onToggleLock?.(!isLocked);
@@ -185,14 +172,11 @@ export const EntityCard: FC<EntityCardProps> = ({
 
         {/* 归档按钮 (桌面模式) */}
         <button
-          className={`
-                        p-1.5 rounded-md transition-all
-                        ${
-                          isArchived
-                            ? 'text-primary bg-primary/10 hover:bg-primary/20'
-                            : 'text-muted-foreground hover:bg-muted/50 opacity-0 group-hover:opacity-100'
-                        }
-                    `}
+          className={`rounded-md p-1.5 transition-all ${
+            isArchived
+              ? 'bg-primary/10 hover:bg-primary/20 text-primary'
+              : 'hover:bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100'
+          } `}
           onClick={(e) => {
             e.stopPropagation();
             onArchive?.(!isArchived);
@@ -204,11 +188,11 @@ export const EntityCard: FC<EntityCardProps> = ({
       </div>
 
       {/* 描述文本 */}
-      <p className="text-xs text-meta line-clamp-2 leading-relaxed">{entity.description}</p>
+      <p className="line-clamp-2 text-xs leading-relaxed text-meta">{entity.description}</p>
 
       {/* 触发关键词 (原别名) */}
       {entity.aliases && entity.aliases.length > 0 && (
-        <div className="mt-auto pt-3 text-[10px] text-meta italic flex items-center gap-1 opacity-80">
+        <div className="mt-auto flex items-center gap-1 pt-3 text-[10px] italic text-meta opacity-80">
           <span className="shrink-0 font-medium">触发关键词:</span>
           <span className="truncate">{entity.aliases.join(', ')}</span>
         </div>

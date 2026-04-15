@@ -3,10 +3,11 @@
  * 用于在提示词模板中直接绑定额外世界书
  */
 
-import { getWorldbookScopes } from '@/integrations/tavern';
 import { Book, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
+
+import { getWorldbookScopes } from '@/integrations/tavern';
 
 interface WorldbookBindingFieldProps {
   selectedBooks: string[];
@@ -59,17 +60,17 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
       {/* 已选标签 */}
       <div className="flex flex-wrap gap-1.5">
         {selectedBooks.length === 0 ? (
-          <span className="text-xs text-muted-foreground italic">未绑定额外世界书</span>
+          <span className="text-xs italic text-muted-foreground">未绑定额外世界书</span>
         ) : (
           selectedBooks.map((book) => (
             <div
               key={book}
-              className="inline-flex items-center gap-1 px-2 py-0.5 bg-primary/10 text-primary text-xs rounded-full border border-primary/20"
+              className="bg-primary/10 border-primary/20 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-primary"
             >
               <span className="max-w-32 truncate">{book}</span>
               <button
                 onClick={() => handleRemove(book)}
-                className="p-0.5 hover:bg-primary/20 rounded-full transition-colors"
+                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
                 title="移除"
               >
                 <X size={10} />
@@ -81,7 +82,7 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
         {/* 添加按钮 */}
         <button
           onClick={() => setShowPicker(true)}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground border border-dashed border-border hover:border-foreground/50 rounded-full transition-colors"
+          className="hover:border-foreground/50 inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
         >
           <Plus size={12} />
           添加
@@ -94,9 +95,9 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
           {/* 透明遮罩用于点击外部关闭 */}
           <div className="fixed inset-0 z-40" onClick={() => setShowPicker(false)} />
 
-          <div className="absolute z-50 mt-1 w-64 bg-popover border border-border rounded-md shadow-md animate-in fade-in zoom-in-95 duration-100">
+          <div className="animate-in fade-in zoom-in-95 absolute z-50 mt-1 w-64 rounded-md border border-border bg-popover shadow-md duration-100">
             {/* 搜索/标题栏 */}
-            <div className="px-3 py-2 border-b border-border text-xs font-semibold text-muted-foreground flex justify-between items-center">
+            <div className="flex items-center justify-between border-b border-border px-3 py-2 text-xs font-semibold text-muted-foreground">
               <span>选择世界书</span>
               <span className="text-[10px]">{availableBooks.length} 个可用</span>
             </div>
@@ -104,7 +105,7 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
             {/* 列表 */}
             <div className="max-h-60 overflow-y-auto p-1">
               {availableBooks.length === 0 ? (
-                <div className="text-center py-4 text-muted-foreground text-xs">
+                <div className="py-4 text-center text-xs text-muted-foreground">
                   没有可用的世界书
                 </div>
               ) : (
@@ -114,7 +115,7 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
                     return (
                       <label
                         key={book}
-                        className={`flex items-center gap-2 px-2 py-1.5 rounded cursor-pointer transition-colors text-xs ${
+                        className={`flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 text-xs transition-colors ${
                           isSelected ? 'bg-primary/10 text-primary' : 'hover:bg-muted'
                         }`}
                       >
@@ -127,9 +128,9 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
                               : [...selectedBooks, book];
                             onChange(newSelection);
                           }}
-                          className="w-3.5 h-3.5 rounded border-border"
+                          className="h-3.5 w-3.5 rounded border-border"
                         />
-                        <span className="truncate flex-1" title={book}>
+                        <span className="flex-1 truncate" title={book}>
                           {book}
                         </span>
                       </label>

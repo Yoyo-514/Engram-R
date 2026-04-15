@@ -1,14 +1,15 @@
+import { Command, CornerDownLeft, Search } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FC, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { createPortal } from 'react-dom';
-import { Command, CornerDownLeft, Search } from 'lucide-react';
-import { searchService, type SearchResult } from '@/modules/search/SearchService';
+
+import { setCommandPaletteCallback } from '@/index';
 import { CommandAdapter } from '@/modules/search/adapters/CommandAdapter';
 import { LogAdapter } from '@/modules/search/adapters/LogAdapter';
 import { MemoryAdapter } from '@/modules/search/adapters/MemoryAdapter';
 import { PresetAdapter } from '@/modules/search/adapters/PresetAdapter';
 import { SettingAdapter } from '@/modules/search/adapters/SettingAdapter';
-import { setCommandPaletteCallback } from '@/index';
+import { searchService, type SearchResult } from '@/modules/search/SearchService';
 
 if (!window.__ENGRAM_SEARCH_INIT__) {
   searchService.registerAdapter(new CommandAdapter());
@@ -118,7 +119,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
   const modalContent = (
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
-        className="fixed inset-0 flex items-start justify-center pt-[15vh] px-4 animate-in fade-in duration-200"
+        className="animate-in fade-in fixed inset-0 flex items-start justify-center px-4 pt-[15vh] duration-200"
         style={{
           height: '100dvh',
           width: '100vw',
@@ -133,7 +134,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
         }}
       >
         <div
-          className="w-full max-w-xl border border-border rounded-xl shadow-2xl overflow-hidden flex flex-col animate-in zoom-in-95 slide-in-from-top-4 duration-200"
+          className="animate-in zoom-in-95 slide-in-from-top-4 flex w-full max-w-xl flex-col overflow-hidden rounded-xl border border-border shadow-2xl duration-200"
           style={{
             backgroundColor: 'var(--popover)',
             color: 'var(--popover-foreground)',
@@ -141,32 +142,32 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
             maxHeight: '70vh',
           }}
         >
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50">
-            <Search size={20} className="text-muted-foreground shrink-0" />
+          <div className="border-border/50 flex items-center gap-3 border-b px-4 py-3">
+            <Search size={20} className="shrink-0 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
-              className="flex-1 bg-transparent border-none outline-none text-lg text-foreground placeholder:text-muted-foreground/50"
+              className="placeholder:text-muted-foreground/50 flex-1 border-none bg-transparent text-lg text-foreground outline-none"
               placeholder="搜索命令、设置或页面..."
               value={query}
               onChange={(event) => setQuery(event.target.value)}
               onKeyDown={handleKeyDown}
             />
-            <div className="text-[10px] text-muted-foreground border border-border px-1.5 py-0.5 rounded bg-muted/50 hidden sm:block">
+            <div className="bg-muted/50 hidden rounded border border-border px-1.5 py-0.5 text-[10px] text-muted-foreground sm:block">
               ESC
             </div>
           </div>
 
-          <div className="overflow-y-auto p-2 scroll-smooth">
+          <div className="overflow-y-auto scroll-smooth p-2">
             {results.length > 0 && (
               <div className="space-y-1">
                 {results.map((item, index) => (
                   <div
                     key={item.id}
-                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-all duration-[var(--duration-fast)] ${
+                    className={`flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2.5 transition-all duration-[var(--duration-fast)] ${
                       index === selectedIndex
                         ? 'bg-primary/10 text-primary'
-                        : 'text-foreground hover:bg-muted/50'
+                        : 'hover:bg-muted/50 text-foreground'
                     }`}
                     onClick={() => {
                       item.action(onNavigate);
@@ -176,7 +177,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
                     onMouseEnter={() => setSelectedIndex(index)}
                   >
                     <div
-                      className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
+                      className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
                         index === selectedIndex
                           ? 'bg-primary/20'
                           : 'bg-muted/50 text-muted-foreground'
@@ -185,17 +186,17 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
                       {item.icon ? <item.icon size={16} /> : <Command size={16} />}
                     </div>
 
-                    <div className="flex-1 min-w-0">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <span className="text-sm font-medium">{item.title}</span>
                         {item.type !== 'command' && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground uppercase">
+                          <span className="rounded-full bg-muted px-1.5 py-0.5 text-[10px] uppercase text-muted-foreground">
                             {item.type}
                           </span>
                         )}
                       </div>
                       {item.description && (
-                        <div className="text-xs text-muted-foreground/80 truncate">
+                        <div className="text-muted-foreground/80 truncate text-xs">
                           {item.description}
                         </div>
                       )}
@@ -211,16 +212,16 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
 
             {query && (
               <div
-                className={`mt-2 pt-2 border-t border-border/50 flex items-center gap-3 px-3 py-2.5 rounded-lg cursor-pointer transition-colors ${
+                className={`border-border/50 mt-2 flex cursor-pointer items-center gap-3 rounded-lg border-t px-3 py-2.5 pt-2 transition-colors ${
                   selectedIndex === results.length
                     ? 'bg-primary/10 text-primary'
-                    : 'text-foreground hover:bg-muted/50'
+                    : 'hover:bg-muted/50 text-foreground'
                 }`}
                 onClick={executeSelected}
                 onMouseEnter={() => setSelectedIndex(results.length)}
               >
                 <div
-                  className={`w-8 h-8 rounded-md flex items-center justify-center shrink-0 ${
+                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${
                     selectedIndex === results.length
                       ? 'bg-primary/20'
                       : 'bg-muted/50 text-muted-foreground'
@@ -228,11 +229,11 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
                 >
                   <Search size={16} />
                 </div>
-                <div className="flex-1 min-w-0">
+                <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium">
                     全站搜索: "<span className="text-primary">{query}</span>"
                   </div>
-                  <div className="text-xs text-muted-foreground/80">在记忆和知识图谱中查找</div>
+                  <div className="text-muted-foreground/80 text-xs">在记忆和知识图谱中查找</div>
                 </div>
                 {selectedIndex === results.length && (
                   <CornerDownLeft size={16} className="text-muted-foreground/50" />
@@ -241,7 +242,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
             )}
 
             {results.length === 0 && !query && (
-              <div className="px-4 py-8 text-center text-muted-foreground text-sm">
+              <div className="px-4 py-8 text-center text-sm text-muted-foreground">
                 <Command size={32} className="mx-auto mb-2 opacity-20" />
                 <p>随时搜索，快捷键 Ctrl/Cmd + K</p>
               </div>
@@ -256,7 +257,7 @@ export const CommandPalette: FC<CommandPaletteProps> = ({ onNavigate }) => {
     <>
       <button
         onClick={() => setIsOpen(true)}
-        className="p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-all duration-[var(--duration-fast)] text-muted-foreground hover:scale-110 active:scale-95"
+        className="rounded-md p-2 text-muted-foreground transition-all duration-[var(--duration-fast)] hover:scale-110 hover:bg-accent hover:text-accent-foreground active:scale-95"
         title="搜索 (Cmd+K)"
       >
         <Search size={20} />

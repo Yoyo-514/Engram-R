@@ -5,11 +5,12 @@
  * 使用 LayoutTabs (Portal 到 Header) 实现无框流体设计
  */
 
+import { Search } from 'lucide-react';
 import { useState, useMemo, useEffect } from 'react';
 import type { FC } from 'react';
-import { Search } from 'lucide-react';
-import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
+
 import { DOCS } from '@/docs';
+import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import type { Tab } from '@/ui/components/layout/TabPills';
 
 interface DocsViewProps {
@@ -66,15 +67,13 @@ export const DocsView: FC<DocsViewProps> = ({ initialTab }) => {
         placeholder="搜索文档..."
         value={searchQuery}
         onChange={(e) => setSearchQuery(e.target.value)}
-        className="w-40 pl-8 pr-3 py-1 text-sm bg-muted/30 border border-border/50 rounded-md
-                         focus:outline-none focus:ring-1 focus:ring-primary/30 focus:border-primary/50
-                         placeholder:text-muted-foreground/60 transition-all duration-[var(--duration-fast)]"
+        className="bg-muted/30 border-border/50 focus:ring-primary/30 focus:border-primary/50 placeholder:text-muted-foreground/60 w-40 rounded-md border py-1 pl-8 pr-3 text-sm transition-all duration-[var(--duration-fast)] focus:outline-none focus:ring-1"
       />
     </div>
   );
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="flex h-full flex-col">
       {/* Portal 到 Header 的 Tabs */}
       <LayoutTabs
         tabs={tabs}
@@ -114,24 +113,13 @@ export const DocsView: FC<DocsViewProps> = ({ initialTab }) => {
                             `}</style>
               <article
                 id="engram-docs-content"
-                className="prose prose-sm dark:prose-invert max-w-none
-                                              prose-headings:font-light prose-headings:tracking-tight
-                                              prose-h1:text-2xl prose-h1:text-primary prose-h1:mb-4 prose-h1:pb-2 prose-h1:border-b prose-h1:border-primary/20
-                                              prose-h2:text-lg prose-h2:text-primary/90 prose-h2:mt-6 prose-h2:mb-3
-                                              prose-h3:text-base prose-h3:text-foreground prose-h3:mt-4 prose-h3:mb-2
-                                              prose-p:text-muted-foreground prose-p:leading-relaxed
-                                              prose-li:text-muted-foreground
-                                              prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-normal
-                                              prose-pre:bg-muted/30 prose-pre:border prose-pre:border-border
-                                              prose-blockquote:border-primary/50 prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg prose-blockquote:py-2
-                                              prose-strong:text-foreground prose-strong:font-medium
-                                              prose-a:text-primary prose-a:no-underline hover:prose-a:underline"
+                className="prose prose-sm dark:prose-invert prose-headings:font-light prose-headings:tracking-tight prose-h1:text-2xl prose-h1:text-primary prose-h1:mb-4 prose-h1:pb-2 prose-h1:border-b prose-h1:border-primary/20 prose-h2:text-lg prose-h2:text-primary/90 prose-h2:mt-6 prose-h2:mb-3 prose-h3:text-base prose-h3:text-foreground prose-h3:mt-4 prose-h3:mb-2 prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-code:bg-muted/50 prose-code:px-1.5 prose-code:py-0.5 prose-code:rounded prose-code:text-xs prose-code:font-normal prose-pre:bg-muted/30 prose-pre:border prose-pre:border-border prose-blockquote:border-primary/50 prose-blockquote:bg-primary/5 prose-blockquote:rounded-r-lg prose-blockquote:py-2 prose-strong:text-foreground prose-strong:font-medium prose-a:text-primary prose-a:no-underline hover:prose-a:underline max-w-none"
               >
                 <ActiveComponent />
               </article>
             </>
           ) : (
-            <div className="text-center text-muted-foreground py-12">暂无文档内容</div>
+            <div className="py-12 text-center text-muted-foreground">暂无文档内容</div>
           )}
         </div>
       </div>

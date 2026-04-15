@@ -1,7 +1,8 @@
 import { Plus, X } from 'lucide-react';
-import type { EventNode } from '@/types/graph';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
+
+import type { EventNode } from '@/types/graph';
 
 type EditableEventKV = Partial<EventNode['structured_kv']>;
 
@@ -252,7 +253,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
     ];
 
     return (
-      <div className="flex flex-wrap items-center gap-2 mb-3 px-1">
+      <div className="mb-3 flex flex-wrap items-center gap-2 px-1">
         {fields.map((field) => {
           const rawValue = kv[field.key];
           const value = Array.isArray(rawValue) ? rawValue.join(', ') : (rawValue ?? '');
@@ -260,15 +261,15 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
           return (
             <div
               key={field.key}
-              className={`flex items-center gap-1 px-1.5 py-0.5 rounded border ${field.color} transition-all focus-within:ring-1 focus-within:ring-offset-0 focus-within:ring-current`}
+              className={`flex items-center gap-1 rounded border px-1.5 py-0.5 ${field.color} transition-all focus-within:ring-1 focus-within:ring-current focus-within:ring-offset-0`}
             >
-              <span className="text-[9px] font-bold uppercase opacity-60 pointer-events-none select-none">
+              <span className="pointer-events-none select-none text-[9px] font-bold uppercase opacity-60">
                 {field.label}:
               </span>
               <input
                 value={value}
                 onChange={(inputEvent) => handleUpdateKV(index, field.key, inputEvent.target.value)}
-                className="bg-transparent border-none outline-none text-[10px] w-[60px] focus:w-[120px] transition-all placeholder:italic placeholder:opacity-30"
+                className="w-[60px] border-none bg-transparent text-[10px] outline-none transition-all placeholder:italic placeholder:opacity-30 focus:w-[120px]"
                 placeholder="..."
                 spellCheck={false}
               />
@@ -281,11 +282,11 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="text-sm text-muted-foreground bg-muted/20 p-3 rounded-md border border-border/50">
+      <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
         请确认生成的摘要事件列表。您可以直接在标签内修改结构化数据，或在下方修改描述。
       </div>
 
-      <div className="space-y-4 pr-2 pb-4">
+      <div className="space-y-4 pb-4 pr-2">
         {events.map((event, index) => {
           const displayTitle = isEventObject(event)
             ? (getEventKV(event).event ?? `Event ${index + 1}`)
@@ -296,23 +297,23 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
           return (
             <div
               key={index}
-              className="relative group bg-card border border-border/50 rounded-lg p-3 shadow-sm hover:border-primary/40 transition-colors"
+              className="border-border/50 hover:border-primary/40 group relative rounded-lg border bg-card p-3 shadow-sm transition-colors"
             >
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                  <div className="w-1.5 h-1.5 rounded-full bg-primary/60 shrink-0" />
+              <div className="mb-3 flex items-center justify-between">
+                <div className="flex min-w-0 flex-1 items-center gap-1.5">
+                  <div className="bg-primary/60 h-1.5 w-1.5 shrink-0 rounded-full" />
                   <input
                     value={displayTitle}
                     onChange={(inputEvent) =>
                       handleUpdateKV(index, 'event', inputEvent.target.value)
                     }
-                    className="text-xs font-medium text-heading truncate uppercase tracking-wider bg-transparent border-none outline-none focus:text-primary max-w-[200px]"
+                    className="max-w-[200px] truncate border-none bg-transparent text-xs font-medium uppercase tracking-wider text-heading outline-none focus:text-primary"
                     placeholder="事件名称"
                   />
                 </div>
                 <button
                   onClick={() => handleRemoveEvent(index)}
-                  className="p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity bg-background/50 rounded"
+                  className="bg-background/50 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                   title="移除该事件"
                 >
                   <X size={14} />
@@ -324,7 +325,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
               <textarea
                 value={summaryText}
                 onChange={(inputEvent) => handleChangeEvent(index, inputEvent.target.value)}
-                className="w-full min-h-[60px] p-2 bg-muted/20 border border-transparent hover:border-border focus:border-primary focus:bg-background rounded-md text-sm resize-none focus:outline-none transition-colors"
+                className="bg-muted/20 min-h-[60px] w-full resize-none rounded-md border border-transparent p-2 text-sm transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
                 rows={rowCount}
                 placeholder="摘要详情..."
               />
@@ -333,12 +334,12 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
         })}
 
         {events.length === 0 && (
-          <div className="text-center py-8 text-muted-foreground text-sm italic">暂无事件记录</div>
+          <div className="py-8 text-center text-sm italic text-muted-foreground">暂无事件记录</div>
         )}
 
         <button
           onClick={handleAddEvent}
-          className="flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted-foreground hover:text-primary hover:bg-muted/50 rounded-md transition-colors w-full justify-center border border-dashed border-border hover:border-primary/30"
+          className="hover:bg-muted/50 hover:border-primary/30 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
         >
           <Plus size={14} />
           添加事件

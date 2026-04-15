@@ -1,8 +1,9 @@
-import { type RegexRule } from '@/modules/workflow/steps';
-import { Switch } from '@/ui/components/core/Switch';
 import { AnimatePresence, Reorder } from 'framer-motion';
 import { GripVertical, Plus, Power, Trash2 } from 'lucide-react';
 import type { FC } from 'react';
+
+import type { RegexRule } from '@/types/regex';
+import { Switch } from '@/ui/components/core/Switch';
 
 interface RegexRuleListProps {
   rules: RegexRule[];
@@ -32,18 +33,18 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           正则规则列表
         </h3>
         <div className="flex gap-2">
           <button
-            className="text-[10px] text-muted-foreground hover:text-destructive transition-colors"
+            className="text-[10px] text-muted-foreground transition-colors hover:text-destructive"
             onClick={onReset}
           >
             重置默认
           </button>
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-primary-foreground bg-primary hover:bg-primary/90 rounded-md shadow-sm transition-all active:scale-95"
+            className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground shadow-sm transition-all active:scale-95"
             onClick={onAdd}
           >
             <Plus size={14} strokeWidth={2.5} />
@@ -53,11 +54,11 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
       </div>
 
       {/* Native Compatibility Toggle */}
-      <div className="bg-muted/10 border border-border/50 rounded-lg p-3 mb-2">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex-1 min-w-0">
+      <div className="bg-muted/10 border-border/50 mb-2 rounded-lg border p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+          <div className="min-w-0 flex-1">
             <h4 className="text-sm font-medium">酒馆原生 Regex 兼容</h4>
-            <p className="text-xs text-muted-foreground mt-0.5 break-words">
+            <p className="mt-0.5 break-words text-xs text-muted-foreground">
               启用后将应用 SillyTavern 的 Regex 脚本
             </p>
           </div>
@@ -79,34 +80,27 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.2 } }}
               transition={{ duration: 0.3 }}
-              className={`
-                                group p-3 rounded-lg transition-all duration-200 cursor-pointer border flex items-center gap-3
-                                ${
-                                  selectedId === rule.id
-                                    ? 'bg-accent/50 border-input'
-                                    : 'bg-transparent border-transparent hover:bg-muted/50 hover:border-border'
-                                }
-                                ${!rule.enabled && 'opacity-50'}
-                            `}
+              className={`group flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200 ${
+                selectedId === rule.id
+                  ? 'bg-accent/50 border-input'
+                  : 'hover:bg-muted/50 border-transparent bg-transparent hover:border-border'
+              } ${!rule.enabled && 'opacity-50'} `}
               onClick={() => onSelect(rule.id)}
             >
               {/* Drag Handle */}
-              <div className="cursor-grab active:cursor-grabbing text-muted-foreground hover:text-foreground transition-colors">
+              <div className="cursor-grab text-muted-foreground transition-colors hover:text-foreground active:cursor-grabbing">
                 <GripVertical size={14} />
               </div>
 
               {/* Status/Toggle Icon */}
               <button
-                className={`
-                                    w-8 h-8 flex items-center justify-center rounded-lg transition-colors
-                                    ${
-                                      rule.enabled
-                                        ? selectedId === rule.id
-                                          ? 'bg-primary/20 text-primary'
-                                          : 'bg-muted text-primary'
-                                        : 'bg-muted text-muted-foreground'
-                                    }
-                                `}
+                className={`flex h-8 w-8 items-center justify-center rounded-lg transition-colors ${
+                  rule.enabled
+                    ? selectedId === rule.id
+                      ? 'bg-primary/20 text-primary'
+                      : 'bg-muted text-primary'
+                    : 'bg-muted text-muted-foreground'
+                } `}
                 onClick={(e) => {
                   e.stopPropagation();
                   onToggle(rule.id);
@@ -116,16 +110,16 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
                 <Power size={14} />
               </button>
 
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between">
                   <h4
-                    className={`text-sm font-medium truncate ${selectedId === rule.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} ${!rule.enabled && 'opacity-50 line-through'}`}
+                    className={`truncate text-sm font-medium ${selectedId === rule.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} ${!rule.enabled && 'line-through opacity-50'}`}
                   >
                     {rule.name}
                   </h4>
                 </div>
                 <div className="mt-0.5 flex items-center gap-2">
-                  <code className="text-[10px] bg-muted px-1 rounded text-muted-foreground font-mono truncate max-w-[120px]">
+                  <code className="max-w-[120px] truncate rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
                     /{rule.pattern}/{rule.flags}
                   </code>
                 </div>
@@ -136,7 +130,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
                 className={`flex items-center ${selectedId === rule.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
               >
                 <button
-                  className="p-1.5 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-colors"
+                  className="hover:bg-destructive/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive"
                   onClick={(e) => {
                     e.stopPropagation();
                     onDelete(rule.id);
@@ -151,7 +145,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
       </Reorder.Group>
 
       {rules.length === 0 && (
-        <div className="text-center p-8 border border-dashed border-border rounded-lg">
+        <div className="rounded-lg border border-dashed border-border p-8 text-center">
           <p className="text-xs text-muted-foreground">无规则</p>
         </div>
       )}

@@ -10,7 +10,6 @@ import { getTavernContext } from '@/core/utils';
  * 酒馆事件常量 — 值与 @types/event.d.ts 中 tavern_events 保持一致
  *
  * 仅收录 Engram 当前消费 / 近期需要的事件；
- * 内部自定义事件统一以 ENGRAM_ 前缀。
  */
 export const events = {
   // -- Chat -------------------------------------------------------------------
@@ -34,9 +33,6 @@ export const events = {
   WORLDINFO_SCAN_DONE: 'worldinfo_scan_done',
   WORLDINFO_SETTINGS_UPDATED: 'worldinfo_settings_updated',
   WORLDINFO_UPDATED: 'worldinfo_updated',
-
-  // -- Engram (internal) ------------------------------------------------------
-  ENGRAM_REQUEST_REVIEW: 'engram:request_review',
 } as const;
 
 export type EventType = (typeof events)[keyof typeof events];

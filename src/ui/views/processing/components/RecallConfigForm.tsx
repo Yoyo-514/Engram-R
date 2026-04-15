@@ -1,6 +1,3 @@
-import type { RecallConfig, RerankConfig } from '@/types/rag';
-import { Switch } from '@/ui/components/core/Switch';
-import { NumberField } from '@/ui/components/form/FormComponents';
 import {
   AlertTriangle,
   BrainCircuit,
@@ -13,6 +10,10 @@ import {
   Zap,
 } from 'lucide-react';
 import type { FC } from 'react';
+
+import type { RecallConfig, RerankConfig } from '@/types/rag';
+import { Switch } from '@/ui/components/core/Switch';
+import { NumberField } from '@/ui/components/form/FormComponents';
 
 interface RecallConfigFormProps {
   config: RecallConfig;
@@ -30,13 +31,13 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+    <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-500">
       {/* 总开关 */}
-      <div className="bg-secondary/20 p-4 rounded-lg border border-border/50">
+      <div className="bg-secondary/20 border-border/50 rounded-lg border p-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div
-              className={`p-2 rounded-md ${config.enabled ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}
+              className={`rounded-md p-2 ${config.enabled ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}
             >
               <Network size={20} />
             </div>
@@ -51,16 +52,16 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
 
       {/* 核心策略 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider px-1">
+        <h3 className="px-1 text-sm font-medium uppercase tracking-wider text-muted-foreground">
           召回策略配置
         </h3>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {/* 关键词召回 (0 消耗) */}
           <div
-            className={`p-4 rounded-lg border transition-all ${config.useKeywordRecall ? 'bg-primary/5 border-primary/30' : 'bg-card border-border/50 hover:border-border'}`}
+            className={`rounded-lg border p-4 transition-all ${config.useKeywordRecall ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Search
                   size={16}
@@ -73,14 +74,14 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 onChange={(val) => updateConfig({ useKeywordRecall: val })}
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed italic">
+            <p className="text-xs italic leading-relaxed text-muted-foreground">
               基于 Trigger Keywords 和元数据进行正则扫描，
-              <span className="text-amber-500/80 font-medium">零 Token 消耗</span>。
+              <span className="font-medium text-amber-500/80">零 Token 消耗</span>。
             </p>
             {config.useKeywordRecall && (
-              <div className="mt-3 pt-3 border-t border-primary/10 grid grid-cols-2 gap-4">
+              <div className="border-primary/10 mt-3 grid grid-cols-2 gap-4 border-t pt-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                  <span className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground">
                     检索实体
                   </span>
                   <Switch
@@ -89,7 +90,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                   />
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-[10px] text-muted-foreground font-medium uppercase tracking-tight">
+                  <span className="text-[10px] font-medium uppercase tracking-tight text-muted-foreground">
                     检索事件
                   </span>
                   <Switch
@@ -104,7 +105,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
               !config.useAgenticRAG &&
               !config.enableEntityKeyword &&
               !config.enableEventKeyword && (
-                <p className="text-[10px] text-yellow-500 mt-2 flex items-center gap-1">
+                <p className="mt-2 flex items-center gap-1 text-[10px] text-yellow-500">
                   <AlertTriangle size={10} /> 关键词已开启但无生效项目
                 </p>
               )}
@@ -112,7 +113,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
               !config.useEmbedding &&
               !config.useAgenticRAG &&
               (config.enableEntityKeyword || config.enableEventKeyword) && (
-                <p className="text-[10px] text-primary mt-2 flex items-center gap-1">
+                <p className="mt-2 flex items-center gap-1 text-[10px] text-primary">
                   <Zap size={10} /> 当前处于纯 0 消耗模式
                 </p>
               )}
@@ -120,9 +121,9 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
 
           {/* Agentic RAG */}
           <div
-            className={`p-4 rounded-lg border transition-all overflow-hidden ${config.useAgenticRAG ? 'bg-primary/5 border-primary/30' : 'bg-card border-border/50 hover:border-border'}`}
+            className={`overflow-hidden rounded-lg border p-4 transition-all ${config.useAgenticRAG ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Zap
                   size={16}
@@ -140,16 +141,16 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 }
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed break-words">
+            <p className="break-words text-xs leading-relaxed text-muted-foreground">
               LLM 裁判式召回：精准选出档案 ID，跳过向量检索。产生 Token 消耗。
             </p>
           </div>
 
           {/* 向量检索 */}
           <div
-            className={`p-4 rounded-lg border transition-all ${config.useEmbedding ? 'bg-primary/5 border-primary/30' : 'bg-card border-border/50 hover:border-border'}`}
+            className={`rounded-lg border p-4 transition-all ${config.useEmbedding ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Database
                   size={16}
@@ -167,16 +168,16 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 }
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               使用语义向量匹配历史事件，RAG 的核心能力。产生 Token 消耗。
             </p>
           </div>
 
           {/* 预处理增强 */}
           <div
-            className={`p-4 rounded-lg border transition-all ${config.usePreprocessing ? 'bg-primary/5 border-primary/30' : 'bg-card border-border/50 hover:border-border'}`}
+            className={`rounded-lg border p-4 transition-all ${config.usePreprocessing ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <BrainCircuit
                   size={16}
@@ -189,16 +190,16 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 onChange={(val) => updateConfig({ usePreprocessing: val })}
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               使用 LLM 优化用户输入。产生 Token 消耗。
             </p>
           </div>
 
           {/* Rerank 重排序 */}
           <div
-            className={`p-4 rounded-lg border transition-all ${config.useRerank ? 'bg-primary/5 border-primary/30' : 'bg-card border-border/50 hover:border-border'}`}
+            className={`rounded-lg border p-4 transition-all ${config.useRerank ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="flex items-start justify-between mb-2">
+            <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <Layers
                   size={16}
@@ -212,10 +213,10 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 onChange={(val) => updateConfig({ useRerank: val })}
               />
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs leading-relaxed text-muted-foreground">
               对初筛结果进行二次精排。产生 Token 消耗。
               {!config.useEmbedding && (
-                <span className="text-yellow-500 mt-1 text-[10px] flex items-center gap-1">
+                <span className="mt-1 flex items-center gap-1 text-[10px] text-yellow-500">
                   <AlertTriangle size={10} /> 需要先启用向量检索
                 </span>
               )}
@@ -225,9 +226,9 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
       </div>
 
       {/* 实体召回说明 */}
-      <div className="bg-amber-500/5 border border-amber-500/20 p-3 rounded-md">
-        <p className="text-[10px] text-amber-500/90 leading-relaxed flex items-start gap-1.5">
-          <Sparkles size={12} className="shrink-0 mt-0.5" />
+      <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
+        <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-amber-500/90">
+          <Sparkles size={12} className="mt-0.5 shrink-0" />
           <span>
             💡 <strong>提示：</strong>目前实体（NPC/地点）召回仅支持基于触发词 (Trigger Keywords)
             的关键词扫描和关系链关联。这是为了保证在极低消耗下提供最高的一致性与响应准确度。
@@ -236,7 +237,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
       </div>
 
       {/* 高级参数 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-border/30">
+      <div className="border-border/30 grid grid-cols-1 gap-6 border-t pt-4 md:grid-cols-2">
         <NumberField
           label="初筛数量 (Top-K)"
           description="从向量数据库中检索的候选数量"
@@ -273,15 +274,15 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
 
       {/* 类脑召回系统 (V0.9.5 实验性) */}
       <div
-        className={`space-y-4 pt-4 border-t border-border/30 relative transition-all duration-300 ${
-          config.brainRecall?.enabled ? 'pl-4 border-l-2 border-l-primary' : ''
+        className={`border-border/30 relative space-y-4 border-t pt-4 transition-all duration-300 ${
+          config.brainRecall?.enabled ? 'border-l-2 border-l-primary pl-4' : ''
         }`}
       >
         <div className="relative">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div
-                className={`p-1.5 rounded-md transition-colors ${
+                className={`rounded-md p-1.5 transition-colors ${
                   config.brainRecall?.enabled
                     ? 'bg-primary/20 text-primary'
                     : 'bg-muted text-muted-foreground'
@@ -297,10 +298,10 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
                 类脑召回
               </h3>
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded font-medium border ${
+                className={`rounded border px-1.5 py-0.5 text-[10px] font-medium ${
                   config.brainRecall?.enabled
-                    ? 'bg-yellow-500/10 text-yellow-500 border-yellow-500/30'
-                    : 'bg-muted text-muted-foreground border-transparent'
+                    ? 'border-yellow-500/30 bg-yellow-500/10 text-yellow-500'
+                    : 'border-transparent bg-muted text-muted-foreground'
                 }`}
               >
                 实验性功能,不保证更好的召回效力
@@ -330,17 +331,17 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
               }
             />
           </div>
-          <p className="text-xs text-muted-foreground mt-2 pl-8 leading-relaxed">
+          <p className="mt-2 pl-8 text-xs leading-relaxed text-muted-foreground">
             模拟人脑记忆机制：强化、衰减、竞争淘汰、上下文感知。
-            <span className="opacity-70 ml-1">替代旧版黏性系统。</span>
+            <span className="ml-1 opacity-70">替代旧版黏性系统。</span>
           </p>
         </div>
 
         {config.brainRecall?.enabled && (
-          <div className="space-y-6 pt-2 animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="animate-in fade-in slide-in-from-top-2 space-y-6 pt-2 duration-300">
             {/* 容量配置 */}
-            <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-              <div className="flex items-center gap-2 text-xs text-primary/80 font-medium uppercase tracking-wider">
+            <div className="border-primary/20 ml-2 space-y-3 border-l-2 pl-2">
+              <div className="text-primary/80 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
                 <Layers size={12} />
                 记忆容量
               </div>
@@ -375,8 +376,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
             </div>
 
             {/* 动态参数 */}
-            <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-              <div className="flex items-center gap-2 text-xs text-primary/80 font-medium uppercase tracking-wider">
+            <div className="border-primary/20 ml-2 space-y-3 border-l-2 pl-2">
+              <div className="text-primary/80 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
                 <Zap size={12} />
                 动态参数
               </div>
@@ -411,8 +412,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
             </div>
 
             {/* 上下文感知 */}
-            <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-              <div className="flex items-center gap-2 text-xs text-primary/80 font-medium uppercase tracking-wider">
+            <div className="border-primary/20 ml-2 space-y-3 border-l-2 pl-2">
+              <div className="text-primary/80 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
                 <AlertTriangle size={12} />
                 上下文感知
               </div>
@@ -432,8 +433,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
             </div>
 
             {/* 进阶调优 (V1.2) */}
-            <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-              <div className="flex items-center gap-2 text-xs text-primary/80 font-medium uppercase tracking-wider">
+            <div className="border-primary/20 ml-2 space-y-3 border-l-2 pl-2">
+              <div className="text-primary/80 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
                 <Sliders size={12} />
                 进阶调优 (V1.2)
               </div>
@@ -481,8 +482,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
             </div>
 
             {/* 多样性与厌倦 (V1.3) */}
-            <div className="space-y-3 pl-2 border-l-2 border-primary/20 ml-2">
-              <div className="flex items-center gap-2 text-xs text-primary/80 font-medium uppercase tracking-wider">
+            <div className="border-primary/20 ml-2 space-y-3 border-l-2 pl-2">
+              <div className="text-primary/80 flex items-center gap-2 text-xs font-medium uppercase tracking-wider">
                 <Sparkles size={12} />
                 多样性与厌倦 (V1.3)
               </div>

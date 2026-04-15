@@ -1,8 +1,9 @@
-import type { WorldbookConfig } from '@/types/prompt';
-import { FormSection, SwitchField } from '@/ui/components/form/FormComponents';
 import { AlertCircle, Book, ChevronDown, ChevronRight, RefreshCw, Search } from 'lucide-react';
 import { useState } from 'react';
 import type { FC } from 'react';
+
+import type { WorldbookConfig } from '@/types/worldbook';
+import { FormSection, SwitchField } from '@/ui/components/form/FormComponents';
 
 interface WorldbookConfigFormProps {
   config: WorldbookConfig;
@@ -95,20 +96,20 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
       {config.enabled && (
         <FormSection title="世界书管理" description="精细控制每个世界书及其条目的启用状态">
           {/* 工具栏 */}
-          <div className="flex items-center justify-between mb-4 gap-4">
+          <div className="mb-4 flex items-center justify-between gap-4">
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <input
                 type="text"
                 placeholder="搜索世界书或条目..."
-                className="w-full h-9 pl-9 pr-3 rounded-md border border-input bg-transparent text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="h-9 w-full rounded-md border border-input bg-transparent pl-9 pr-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 value={filterText}
                 onChange={(e) => setFilterText(e.target.value)}
               />
             </div>
             <button
               onClick={onRefresh}
-              className="inline-flex items-center justify-center rounded-md w-9 h-9 hover:bg-accent hover:text-accent-foreground transition-colors"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md transition-colors hover:bg-accent hover:text-accent-foreground"
               title="刷新列表"
             >
               <RefreshCw size={16} />
@@ -118,7 +119,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
           {/* 世界书列表 */}
           <div className="flex flex-col gap-2">
             {filteredWorldbooks.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-8 text-muted-foreground gap-2 border border-dashed rounded-lg">
+              <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed py-8 text-muted-foreground">
                 <AlertCircle size={24} className="opacity-50" />
                 <span className="text-sm">未找到匹配的世界书</span>
               </div>
@@ -134,28 +135,28 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                 return (
                   <div
                     key={book}
-                    className={`transition-all border-b border-border last:border-0 ${isDisabled ? 'bg-muted/10 opacity-60 grayscale' : ''}`}
+                    className={`border-b border-border transition-all last:border-0 ${isDisabled ? 'bg-muted/10 opacity-60 grayscale' : ''}`}
                   >
                     {/* 世界书头部 */}
                     <div className="flex items-center justify-between p-3">
-                      <div className="flex items-center gap-3 flex-1 overflow-hidden">
+                      <div className="flex flex-1 items-center gap-3 overflow-hidden">
                         <button
                           onClick={() => toggleExpand(book)}
-                          className="p-1 hover:bg-accent rounded-sm transition-colors"
+                          className="rounded-sm p-1 transition-colors hover:bg-accent"
                         >
                           {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </button>
-                        <div className="flex items-center gap-2 min-w-0">
+                        <div className="flex min-w-0 items-center gap-2">
                           <Book
                             size={16}
                             className={isDisabled ? 'text-muted-foreground' : 'text-primary'}
                           />
                           <span
-                            className={`font-medium truncate ${isDisabled ? 'text-muted-foreground line-through' : ''}`}
+                            className={`truncate font-medium ${isDisabled ? 'text-muted-foreground line-through' : ''}`}
                           >
                             {book}
                           </span>
-                          <span className="text-xs text-muted-foreground px-2 py-0.5 bg-muted rounded-full whitespace-nowrap">
+                          <span className="whitespace-nowrap rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                             {activeEntriesCount} / {entries.length} 激活
                           </span>
                         </div>
@@ -172,9 +173,9 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
 
                     {/* 条目列表 (展开时显示) */}
                     {isExpanded && !isDisabled && (
-                      <div className="pl-4 pr-1 py-1 flex flex-col gap-0 animate-in slide-in-from-top-1 duration-200">
+                      <div className="animate-in slide-in-from-top-1 flex flex-col gap-0 py-1 pl-4 pr-1 duration-200">
                         {entries.length === 0 ? (
-                          <div className="text-xs text-muted-foreground text-center py-4">
+                          <div className="py-4 text-center text-xs text-muted-foreground">
                             暂无条目
                           </div>
                         ) : (
@@ -183,17 +184,17 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                             return (
                               <div
                                 key={entry.uid}
-                                className={`flex items-start justify-between py-2 -mx-2 px-2 rounded hover:bg-accent/40 transition-colors group ${isEntryItemDisabled ? 'opacity-40' : ''}`}
+                                className={`hover:bg-accent/40 group -mx-2 flex items-start justify-between rounded px-2 py-2 transition-colors ${isEntryItemDisabled ? 'opacity-40' : ''}`}
                               >
-                                <div className="flex flex-col gap-1 min-w-0 flex-1 pr-4">
-                                  <div className="flex items-center gap-2 flex-wrap min-w-0">
+                                <div className="flex min-w-0 flex-1 flex-col gap-1 pr-4">
+                                  <div className="flex min-w-0 flex-wrap items-center gap-2">
                                     {/* 状态指示灯 V1.2.9:
                                                                             - 蓝灯 (bg-primary): constant 常驻
                                                                             - 绿灯 (bg-emerald-500): selective 条件触发
                                                                             - 灰灯 (bg-muted-foreground/50): 世界书原本就禁用的条目
                                                                         */}
                                     <div
-                                      className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+                                      className={`h-1.5 w-1.5 flex-shrink-0 rounded-full ${
                                         entry.disabled
                                           ? 'bg-muted-foreground/50'
                                           : entry.constant
@@ -211,18 +212,18 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
 
                                     {/* 条目名称 - 添加 truncate 防止溢出 */}
                                     <span
-                                      className={`text-sm font-medium truncate max-w-full ${isEntryItemDisabled ? 'text-muted-foreground line-through' : entry.disabled ? 'text-muted-foreground' : 'text-foreground'}`}
+                                      className={`max-w-full truncate text-sm font-medium ${isEntryItemDisabled ? 'text-muted-foreground line-through' : entry.disabled ? 'text-muted-foreground' : 'text-foreground'}`}
                                     >
                                       {entry.name || `条目 #${entry.uid}`}
                                     </span>
 
                                     {/* 关键词 Badge */}
                                     {(entry.keys || []).length > 0 && (
-                                      <div className="flex items-center gap-1 ml-auto md:ml-2 overflow-hidden max-w-full">
+                                      <div className="ml-auto flex max-w-full items-center gap-1 overflow-hidden md:ml-2">
                                         {entry.keys.slice(0, 3).map((key: string, i: number) => (
                                           <span
                                             key={i}
-                                            className="text-[10px] px-1 py-0.5 rounded border border-border bg-muted/20 text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis max-w-[80px]"
+                                            className="bg-muted/20 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap rounded border border-border px-1 py-0.5 text-[10px] text-muted-foreground"
                                           >
                                             {key}
                                           </span>
@@ -238,7 +239,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
 
                                   {/* 内容预览 - 添加 break-words 和 truncate */}
                                   {(entry.comment || entry.content) && (
-                                    <p className="text-xs text-muted-foreground/80 pl-3.5 break-words line-clamp-2">
+                                    <p className="text-muted-foreground/80 line-clamp-2 break-words pl-3.5 text-xs">
                                       {entry.comment || entry.content}
                                     </p>
                                   )}

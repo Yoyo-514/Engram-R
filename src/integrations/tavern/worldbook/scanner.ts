@@ -1,8 +1,9 @@
-import { Logger } from '@/core/logger';
-import type { WorldbookConfig } from '@/types/prompt';
 import { getSettings } from '@/config/settings';
-import { processEJSMacros } from '../prompt/ejsProcessor';
+import { Logger } from '@/core/logger';
+import type { WorldbookConfig } from '@/types/worldbook';
+
 import { eventBus, events } from '../core/events';
+import { processEJSMacros } from '../prompt/ejsProcessor';
 import { getEntries, type WorldbookEntryWithWorld } from './crud';
 import { getScopes } from './engram';
 
@@ -118,7 +119,7 @@ function ensureWorldInfoScanListener(): void {
 function loadFilteringState() {
   const { global, chat } = getScopes();
   const settings = getSettings();
-  const config: WorldbookConfig | undefined = settings.apiSettings?.worldbookConfig;
+  const config: WorldbookConfig | undefined = settings.runtimeSettings?.worldbookConfig;
 
   return {
     config,
@@ -150,7 +151,8 @@ function resolveScanMessages(chatMessages?: string[]): string[] {
 }
 
 function buildFilterStateCacheKey(filterState: ReturnType<typeof loadFilteringState>): string {
-  const { config, globalWorldbooks, chatWorldbooks, disabledGlobalBooks, disabledEntries } = filterState;
+  const { config, globalWorldbooks, chatWorldbooks, disabledGlobalBooks, disabledEntries } =
+    filterState;
 
   return JSON.stringify({
     enabled: config?.enabled !== false,
@@ -329,7 +331,9 @@ export async function scanWorldbook(
   const lowerContext = contextText.toLowerCase();
 
   for (const entry of entries) {
-    if (!shouldIncludeEntry(entry, globalWorldbooks, disabledGlobalBooks, disabledEntries, config)) {
+    if (
+      !shouldIncludeEntry(entry, globalWorldbooks, disabledGlobalBooks, disabledEntries, config)
+    ) {
       continue;
     }
 

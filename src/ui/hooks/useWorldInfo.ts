@@ -1,13 +1,10 @@
+import { useCallback, useEffect, useState } from 'react';
+
 import { get, set } from '@/config/settings';
-import type {
-  EngramAPISettings,
-  WorldbookConfig,
-  WorldbookConfigProfile,
-} from '@/types/config';
-import { getDefaultAPISettings } from '@/types/config';
 import { getTavernHelper } from '@/core/utils';
 import { getWorldbookScopes, getWorldbookStructure } from '@/integrations/tavern';
-import { useCallback, useEffect, useState } from 'react';
+import type { EngramRuntimeSettings } from '@/types/config';
+import type { WorldbookConfig, WorldbookProfile } from '@/types/worldbook';
 
 export interface UseWorldInfoReturn {
   worldbookStructure: Record<string, any[]>;
@@ -15,15 +12,15 @@ export interface UseWorldInfoReturn {
   disabledWorldbooks: string[];
   currentCharWorldbook: string | null;
   worldbookConfig: WorldbookConfig | undefined;
-  worldbookProfiles: WorldbookConfigProfile[];
+  worldbookProfiles: WorldbookProfile[];
   worldbookScopes: { global: string[]; chat: string[]; installed: string[] };
 
   toggleWorldbook: (name: string, disabled: boolean) => void;
   toggleEntry: (worldbook: string, uid: number, disabled: boolean) => void;
   updateWorldbookConfig: (config: WorldbookConfig) => void;
 
-  addProfile: (profile: WorldbookConfigProfile) => void;
-  updateProfile: (id: string, updates: Partial<WorldbookConfigProfile>) => void;
+  addProfile: (profile: WorldbookProfile) => void;
+  updateProfile: (id: string, updates: Partial<WorldbookProfile>) => void;
   deleteProfile: (id: string) => void;
 
   refreshWorldbooks: () => Promise<void>;
@@ -34,15 +31,15 @@ export interface UseWorldInfoReturn {
 export function useWorldInfo(): UseWorldInfoReturn {
   const [worldbookStructure, setWorldbookStructure] = useState<Record<string, unknown[]>>({});
   const [disabledEntries, setDisabledEntries] = useState<Record<string, number[]>>(
-    get('apiSettings')?.worldbookConfig?.disabledEntries || {}
+    get('runtimeSettings')?.worldbookConfig?.disabledEntries || {}
   );
   const [disabledWorldbooks, setDisabledWorldbooks] = useState<string[]>([]);
   const [currentCharWorldbook, setCurrentCharWorldbook] = useState<string | null>(null);
-  const [worldbookConfig, setWorldbookConfig] = useState<WorldbookConfig | undefined>(
-    get('apiSettings')?.worldbookConfig || getDefaultAPISettings().worldbookConfig
+  const [worldbookConfig, setWorldbookConfig] = useState<WorldbookConfig>(
+    get('runtimeSettings')?.worldbookConfig
   );
-  const [worldbookProfiles, setWorldbookProfiles] = useState<WorldbookConfigProfile[]>(
-    get('apiSettings')?.worldbookProfiles || []
+  const [worldbookProfiles, setWorldbookProfiles] = useState<WorldbookProfile[]>(
+    get('runtimeSettings')?.worldbookProfiles || []
   );
   const [worldbookScopes, setWorldbookScopes] = useState<{
     global: string[];
@@ -68,8 +65,8 @@ export function useWorldInfo(): UseWorldInfoReturn {
     }
 
     // 3. 加载设置
-    const apiSettings = get('apiSettings');
-    const config = apiSettings?.worldbookConfig;
+    const runtimeSettings = get('runtimeSettings');
+    const config = runtimeSettings?.worldbookConfig;
     setWorldbookConfig(config);
     if (config?.disabledWorldbooks) {
       setDisabledWorldbooks(config.disabledWorldbooks);
@@ -77,7 +74,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
     if (config?.disabledEntries) {
       setDisabledEntries(config.disabledEntries);
     }
-    setWorldbookProfiles(apiSettings?.worldbookProfiles || []);
+    setWorldbookProfiles(runtimeSettings?.worldbookProfiles || []);
   }, []);
 
   useEffect(() => {
@@ -87,11 +84,10 @@ export function useWorldInfo(): UseWorldInfoReturn {
   const toggleWorldbook = useCallback((name: string, disabled: boolean) => {
     setDisabledWorldbooks((prev) => {
       const next = disabled ? [...new Set([...prev, name])] : prev.filter((n) => n !== name);
-      setWorldbookConfig((prevConfig: WorldbookConfig | undefined) =>
-        prevConfig
-          ? { ...prevConfig, disabledWorldbooks: next }
-          : { ...getDefaultAPISettings().worldbookConfig, disabledWorldbooks: next }
-      );
+      setWorldbookConfig((prevConfig: WorldbookConfig) => ({
+        ...prevConfig,
+        disabledWorldbooks: next,
+      }));
       return next;
     });
     setHasChanges(true);
@@ -116,12 +112,12 @@ export function useWorldInfo(): UseWorldInfoReturn {
     setHasChanges(true);
   }, []);
 
-  const addProfile = useCallback((profile: WorldbookConfigProfile) => {
+  const addProfile = useCallback((profile: WorldbookProfile) => {
     setWorldbookProfiles((prev) => [...prev, profile]);
     setHasChanges(true);
   }, []);
 
-  const updateProfile = useCallback((id: string, updates: Partial<WorldbookConfigProfile>) => {
+  const updateProfile = useCallback((id: string, updates: Partial<WorldbookProfile>) => {
     setWorldbookProfiles((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...updates, updatedAt: Date.now() } : p))
     );
@@ -135,7 +131,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
 
   const saveWorldInfo = useCallback(async () => {
     // 保存全局配置和Profiles
-    const currentSettings = (get('apiSettings') || {}) as EngramAPISettings;
+    const currentSettings = (get('runtimeSettings') || {}) as EngramRuntimeSettings;
     const newWorldbookConfig = {
       ...currentSettings.worldbookConfig,
       ...worldbookConfig,
@@ -143,7 +139,7 @@ export function useWorldInfo(): UseWorldInfoReturn {
       disabledEntries: disabledEntries,
     };
 
-    set('apiSettings', {
+    set('runtimeSettings', {
       ...currentSettings,
       worldbookConfig: newWorldbookConfig,
       worldbookProfiles: worldbookProfiles,

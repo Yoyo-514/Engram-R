@@ -1,7 +1,9 @@
-import type { EntityNode } from '@/types/graph';
-import { EmptyState } from '@/ui/components/feedback/EmptyState';
 import { ChevronDown, RefreshCw, Search, Users } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';
+
+import type { EntityNode } from '@/types/graph';
+import { EmptyState } from '@/ui/components/feedback/EmptyState';
+
 import { EntityCard } from '../components/EntityCard';
 import type { EntityGroupMode, EntitySortMode, ViewMode } from '../hooks/useMemoryStream';
 import type { EntityGroup } from '../utils/streamProcessors';
@@ -76,9 +78,9 @@ export const EntityList: FC<EntityListProps> = ({
   };
 
   return (
-    <div className="flex flex-col min-h-0 h-full w-full">
+    <div className="flex h-full min-h-0 w-full flex-col">
       {viewMode === 'browse' && (
-        <div className="mb-4 shrink-0 px-1 space-y-3">
+        <div className="mb-4 shrink-0 space-y-3 px-1">
           <div className="relative">
             <Search
               size={14}
@@ -100,7 +102,7 @@ export const EntityList: FC<EntityListProps> = ({
                 width: '100%',
                 color: 'var(--foreground)',
               }}
-              className="placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
+              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
             />
           </div>
 
@@ -108,7 +110,7 @@ export const EntityList: FC<EntityListProps> = ({
             <select
               value={entityGroupMode}
               onChange={(e) => setEntityGroupMode(e.target.value as EntityGroupMode)}
-              className="px-2 py-1 text-xs rounded border border-border bg-background text-foreground"
+              className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
             >
               {Object.entries(groupModeLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -120,7 +122,7 @@ export const EntityList: FC<EntityListProps> = ({
             <select
               value={entitySortMode}
               onChange={(e) => setEntitySortMode(e.target.value as EntitySortMode)}
-              className="px-2 py-1 text-xs rounded border border-border bg-background text-foreground"
+              className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
             >
               {Object.entries(sortModeLabels).map(([value, label]) => (
                 <option key={value} value={value}>
@@ -134,9 +136,9 @@ export const EntityList: FC<EntityListProps> = ({
         </div>
       )}
 
-      <div className="flex-1 min-h-0 pb-4 pr-1 flex flex-col overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto pb-4 pr-1">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw size={24} className="animate-spin" />
             <p className="text-sm font-light">加载中...</p>
           </div>
@@ -151,10 +153,10 @@ export const EntityList: FC<EntityListProps> = ({
             {groupedEntities.map((group) => {
               const isCollapsed = collapsedGroups.has(group.key);
               return (
-                <div key={group.key} className="border border-border/40 rounded-md overflow-hidden">
+                <div key={group.key} className="border-border/40 overflow-hidden rounded-md border">
                   <button
                     onClick={() => toggleGroup(group.key)}
-                    className="w-full px-3 py-2 text-left bg-muted/20 hover:bg-muted/30 transition-colors flex items-center gap-2"
+                    className="bg-muted/20 hover:bg-muted/30 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
                   >
                     <ChevronDown
                       size={14}
@@ -165,10 +167,10 @@ export const EntityList: FC<EntityListProps> = ({
                   </button>
 
                   {!isCollapsed && (
-                    <div className="p-2 space-y-3">
+                    <div className="space-y-3 p-2">
                       {group.children.map((sub) => (
                         <div key={sub.key} className="space-y-2">
-                          <div className="text-[11px] text-muted-foreground px-1">
+                          <div className="px-1 text-[11px] text-muted-foreground">
                             {sub.title}（{sub.entities.length}）
                           </div>
 
@@ -177,7 +179,7 @@ export const EntityList: FC<EntityListProps> = ({
                               className={
                                 viewMode === 'edit'
                                   ? 'flex flex-col gap-3'
-                                  : 'grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3'
+                                  : 'grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'
                               }
                             >
                               {sub.entities.map((entity: EntityNode) => (

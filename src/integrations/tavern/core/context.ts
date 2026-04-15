@@ -7,7 +7,7 @@
 
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter, getTavernContext } from '@/core/utils';
-import type { TavernContext, TavernCharacter } from '@/core/utils'
+import type { TavernContext, TavernCharacter } from '@/core/utils';
 
 const MODULE = 'STContext';
 
@@ -87,8 +87,8 @@ export function getCurrentCharacter(): {
  */
 export function getCurrentModel(): string | undefined {
   try {
-    const ctx = getSTContext()
-    const model = ctx?.getChatCompletionModel()
+    const ctx = getSTContext();
+    const model = ctx?.getChatCompletionModel();
     return model || undefined;
   } catch {
     return undefined;

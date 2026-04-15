@@ -20,7 +20,7 @@
  * Apply base variables and resets here.
  */
 .engram-app-root {
-  @apply border-border text-foreground box-border;
+  @apply box-border border-border text-foreground;
   /* Do NOT apply bg-background here blindly, overlay needs to be transparent */
 
   /* Ensure we don't inherit weird line-heights or fonts globally unless we want to */
@@ -83,7 +83,7 @@
 .engram-app-root *,
 .engram-app-root ::before,
 .engram-app-root ::after {
-  @apply border-border box-border;
+  @apply box-border border-border;
 
   /* Inject these here too just in case */
   --tw-border-spacing-x: 0;
@@ -233,7 +233,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-muted rounded-full;
+  @apply rounded-full bg-muted;
 }
 
 ::-webkit-scrollbar-thumb:hover {

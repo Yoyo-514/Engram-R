@@ -6,50 +6,12 @@
  * - Boredom Penalty: 改为排序时的临时减分 (Penalty * (Count - Threshold))
  */
 
-import { DEFAULT_BRAIN_RECALL_CONFIG } from '@/types/config';
-import type { BrainRecallConfig } from '@/types/rag';
+import { DEFAULT_BRAIN_RECALL_CONFIG } from '@/config/rag/defaults';
 import { Logger, LogModule } from '@/core/logger';
+import type { MemorySlot } from '@/types/memory';
+import type { BrainRecallConfig, RecallCandidate } from '@/types/rag';
 
 const MODULE = 'BrainRecallCache';
-
-/**
- * 记忆槽位
- */
-export interface MemorySlot {
-  id: string;
-  label: string; // V1.3.4: 可读名称 (Event Type 或 Entity Name)
-  category: 'event' | 'entity'; // V1.4: 区分实体和事件
-
-  // 双轨强度
-  embeddingStrength: number;
-  rerankStrength: number;
-
-  // 最终计算分 (基础分，不含临时加成)
-  finalScore: number;
-
-  // 时间与计数
-  firstRound: number;
-  lastRound: number;
-  recallCount: number;
-
-  // 连胜计数
-  consecutiveWorkingCount: number;
-
-  // 层级
-  tier: 'working' | 'shortTerm';
-
-  // 向量缓存
-  embeddingVector?: number[];
-}
-
-export interface RecallCandidate {
-  id: string;
-  label?: string; // V1.3.4: 可读名称
-  category?: 'event' | 'entity'; // V1.4: 类型区分，默认 event
-  embeddingScore: number;
-  rerankScore?: number;
-  embeddingVector?: number[];
-}
 
 export class BrainRecallCache {
   private shortTermMemory: Map<string, MemorySlot> = new Map();
@@ -174,14 +136,7 @@ export class BrainRecallCache {
     // 6. 选取工作记忆 (Sorting Logic)
     const workingMemory = this.selectWorkingMemory();
 
-    // 7. 更新连胜计数 (由 selectWorkingMemoryMMR 处理更准确?
-    // 不，selectWorkingMemoryMMR 只返回了选中的。
-    // 我们需要遍历所有 shortTermMemory：
-    //   - 如果在 workingMemory 中 -> count++
-    //   - 否则 -> count = 0 (或者按照 MMR 逻辑减 1，为了简化逻辑且符合"连胜"定义，这里统一切断连胜)
-    // 用户建议：如果被 MMR 淘汰，count - 1。如果纯粹分低？count 归零。
-    // 为了实现这个区分，我们在 selectWorkingMemoryMMR 里不好做。
-    // 简化策略：只要没进 Working，连胜就断。这是最符合直觉的。
+    // 7. 更新连胜计数
     this.updateConsecutiveCounts(workingMemory);
 
     Logger.info(LogModule.RAG_CACHE, '类脑召回完成', {

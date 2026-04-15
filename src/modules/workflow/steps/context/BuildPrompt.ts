@@ -1,13 +1,13 @@
-import { getBuiltInTemplateByCategory } from '@/types/config';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { getBuiltInTemplateByCategory } from '@/config/prompt/templates';
+import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { getTavernContext } from '@/core/utils';
+import { tryGetDbForChat } from '@/data/db';
 import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
-import type { JobContext } from '../../core/JobContext';
-import type { IStep } from '../../core/Step';
-import { tryGetDbForChat } from '@/data/db';
-import { get } from '@/config/settings';
-import { getTavernContext } from '@/core/utils';
+import type { JobContext } from '@/types/job_context';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import type { IStep } from '@/types/step';
 
 interface BuildPromptConfig {
   templateId?: string;
@@ -90,7 +90,7 @@ export class BuildPrompt implements IStep {
       ? contextConfig.category
       : this.config.category;
 
-    const allTemplates = get('apiSettings')?.promptTemplates ?? [];
+    const allTemplates = get('runtimeSettings')?.promptTemplates ?? [];
 
     initPromptLoader();
     const builtInTemplates = getAllTemplates();

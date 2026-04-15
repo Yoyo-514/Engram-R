@@ -1,6 +1,8 @@
-import { type SearchAdapter, type SearchResult } from '../SearchService';
-import { get } from '@/config/settings';
 import { FileText } from 'lucide-react';
+
+import { get } from '@/config/settings';
+
+import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class PresetAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {

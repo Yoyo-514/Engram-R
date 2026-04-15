@@ -1,11 +1,12 @@
-import type { EntityNode, EventNode } from '@/types/graph';
-import { type AgenticRecall } from '@/modules/preprocessing/types';
-import { useMemoryStore } from '@/state/memoryStore';
-import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
 import { CheckSquare, Database, MessageSquare, Search, Square } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 import { Virtuoso } from 'react-virtuoso';
+
+import { useMemoryStore } from '@/state/memoryStore';
+import type { EntityNode, EventNode } from '@/types/graph';
+import type { AgenticRecall } from '@/types/preprocess';
+import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
 
 type RecalledEntity = EntityNode & {
   recallWeight?: number;
@@ -111,19 +112,19 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
   // --- 渲染渲染函数 ---
 
   const renderFooter = () => (
-    <div className="flex items-center justify-between w-full">
+    <div className="flex w-full items-center justify-between">
       <span className="text-sm text-muted-foreground">
-        已选中 <strong className="text-value font-mono">{editedRecalls.length}</strong> 条即将注入
+        已选中 <strong className="font-mono text-value">{editedRecalls.length}</strong> 条即将注入
       </span>
       <div className="flex gap-2">
         <button
-          className="px-4 py-1.5 text-sm rounded-md bg-transparent border-border text-muted-foreground hover:bg-muted transition-colors"
+          className="rounded-md border-border bg-transparent px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted"
           onClick={onClose}
         >
           取消
         </button>
         <button
-          className="px-4 py-1.5 text-sm rounded-md bg-primary text-bg-app shadow-[0_4px_12px_rgba(var(--primary-rgb),0.25)] hover:brightness-110 transition-all"
+          className="text-bg-app rounded-md bg-primary px-4 py-1.5 text-sm shadow-[0_4px_12px_rgba(var(--primary-rgb),0.25)] transition-all hover:brightness-110"
           onClick={handleConfirm}
         >
           确认激活
@@ -140,40 +141,40 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
       maxWidth="max-w-3xl"
       footer={renderFooter()}
     >
-      <div className="flex flex-col h-[70vh] engram-animate-fade-up">
+      <div className="engram-animate-fade-up flex h-[70vh] flex-col">
         {/* === 上半部: 已激活列表 === */}
-        <div className="p-4 border-b border-border bg-card/20 shrink-0">
-          <h4 className="text-sm font-medium text-heading mb-3 flex items-center justify-between">
+        <div className="bg-card/20 shrink-0 border-b border-border p-4">
+          <h4 className="mb-3 flex items-center justify-between text-sm font-medium text-heading">
             <span>已激活 ({activeEvents.length})</span>
           </h4>
-          <div className="space-y-3 max-h-[30vh] overflow-y-auto pr-2">
+          <div className="max-h-[30vh] space-y-3 overflow-y-auto pr-2">
             {activeEvents.map((evt) => (
               <div
                 key={evt.id}
-                className="group flex flex-col gap-1 p-2 rounded hover:bg-muted/20 transition-colors"
+                className="hover:bg-muted/20 group flex flex-col gap-1 rounded p-2 transition-colors"
               >
                 <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-start gap-2 flex-1">
+                  <div className="flex flex-1 items-start gap-2">
                     <button
-                      className="mt-0.5 text-primary cursor-pointer hover:text-destructive transition-colors shrink-0"
+                      className="mt-0.5 shrink-0 cursor-pointer text-primary transition-colors hover:text-destructive"
                       onClick={() => handleRemoveActive(evt.id)}
                       title="取消激活"
                     >
                       <CheckSquare size={16} />
                     </button>
                     <p
-                      className="text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap"
+                      className="text-foreground/90 whitespace-pre-wrap break-words text-sm leading-relaxed"
                       title={evt.summary}
                     >
-                      <span className="text-[10px] uppercase px-1 py-0.5 rounded bg-muted text-label mr-2 select-none">
+                      <span className="mr-2 select-none rounded bg-muted px-1 py-0.5 text-[10px] uppercase text-label">
                         {evt.typeLabel}
                       </span>
                       {evt.summary}
                     </p>
                   </div>
 
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground font-mono w-10 text-right">
+                  <div className="flex shrink-0 items-center gap-2">
+                    <span className="w-10 text-right font-mono text-xs text-muted-foreground">
                       Score:
                     </span>
                     <input
@@ -181,22 +182,22 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                       min="0"
                       max="1"
                       step="0.1"
-                      className="w-14 bg-transparent border-none border-b border-border/50 text-value text-right font-mono text-sm p-0 focus:ring-0 focus:border-primary transition-colors hover:border-muted-foreground"
+                      className="border-border/50 w-14 border-b border-none bg-transparent p-0 text-right font-mono text-sm text-value transition-colors hover:border-muted-foreground focus:border-primary focus:ring-0"
                       value={evt.score}
                       onChange={(e) => handleUpdateScore(evt.id, parseFloat(e.target.value) || 0)}
                     />
                   </div>
                 </div>
-                <div className="pl-6 flex items-start gap-1.5 mt-1">
-                  <MessageSquare size={12} className="text-muted-foreground/50 shrink-0 mt-[3px]" />
-                  <p className="text-xs text-emphasis leading-snug break-words opacity-80 group-hover:opacity-100 transition-opacity">
+                <div className="mt-1 flex items-start gap-1.5 pl-6">
+                  <MessageSquare size={12} className="text-muted-foreground/50 mt-[3px] shrink-0" />
+                  <p className="break-words text-xs leading-snug text-emphasis opacity-80 transition-opacity group-hover:opacity-100">
                     {evt.reason}
                   </p>
                 </div>
               </div>
             ))}
             {activeEvents.length === 0 && (
-              <p className="text-xs text-muted-foreground italic py-2 text-center">
+              <p className="py-2 text-center text-xs italic text-muted-foreground">
                 暂无激活的事件
               </p>
             )}
@@ -204,27 +205,27 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
 
           {/* V1.4: 被唤醒的实体展示 (只读) */}
           {recalledEntities.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-border/40">
-              <h5 className="text-[11px] font-semibold text-muted-foreground flex items-center gap-1.5 mb-2 uppercase tracking-wider">
+            <div className="border-border/40 mt-4 border-t pt-4">
+              <h5 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <Database size={12} className="text-primary/60" />
                 已唤醒实体 ({recalledEntities.length})
               </h5>
-              <div className="flex flex-wrap gap-2 max-h-[15vh] overflow-y-auto pr-1">
+              <div className="flex max-h-[15vh] flex-wrap gap-2 overflow-y-auto pr-1">
                 {recalledEntities.map((ent) => (
                   <div
                     key={ent.id}
-                    className="px-2 py-1 bg-primary/5 border border-primary/20 rounded text-[10px] text-primary/80 flex items-center gap-1.5 hover:bg-primary/10 transition-colors cursor-default"
+                    className="bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 flex cursor-default items-center gap-1.5 rounded border px-2 py-1 text-[10px] transition-colors"
                     title={ent.description || ent.name}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-primary/40" />
+                    <span className="bg-primary/40 h-1.5 w-1.5 rounded-full" />
                     <span className="font-medium">{ent.name}</span>
                     {ent.recallWeight && (
-                      <span className="opacity-40 font-mono">({ent.recallWeight.toFixed(2)})</span>
+                      <span className="font-mono opacity-40">({ent.recallWeight.toFixed(2)})</span>
                     )}
                   </div>
                 ))}
               </div>
-              <p className="mt-2 text-[10px] text-muted-foreground italic">
+              <p className="mt-2 text-[10px] italic text-muted-foreground">
                 * 实体将根据关键词匹配或关系联想自动注入对话上下文。
               </p>
             </div>
@@ -232,41 +233,41 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
         </div>
 
         {/* === 下半部: 未激活列表 (虚拟滚动) */}
-        <div className="flex flex-col flex-1 min-h-0 bg-background">
-          <div className="p-3 border-b border-border flex items-center justify-between shrink-0 bg-background/80 backdrop-blur top-0 z-10 sticky">
+        <div className="flex min-h-0 flex-1 flex-col bg-background">
+          <div className="bg-background/80 sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border p-3 backdrop-blur">
             <h4 className="text-sm font-medium text-heading">待选事件 ({inactiveEvents.length})</h4>
             <div className="relative w-64">
               <Search className="absolute left-2 top-1.5 text-muted-foreground" size={14} />
               <input
                 type="text"
                 placeholder="搜索归档事件 summary..."
-                className="w-full bg-transparent border-none border-b border-border/50 pl-7 pr-2 py-1 text-sm text-foreground focus:ring-0 focus:border-primary transition-colors placeholder:text-muted-foreground/30"
+                className="border-border/50 placeholder:text-muted-foreground/30 w-full border-b border-none bg-transparent py-1 pl-7 pr-2 text-sm text-foreground transition-colors focus:border-primary focus:ring-0"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
             </div>
           </div>
 
-          <div className="flex-1 p-2 min-h-0">
+          <div className="min-h-0 flex-1 p-2">
             <Virtuoso
               style={{ height: '100%' }}
               data={inactiveEvents}
               itemContent={(_index, evt) => (
-                <div className="flex flex-col gap-1 p-2 rounded hover:bg-muted/20 transition-colors mb-1 border-b border-border/20 last:border-0 border-transparent">
+                <div className="hover:bg-muted/20 border-border/20 mb-1 flex flex-col gap-1 rounded border-b border-transparent p-2 transition-colors last:border-0">
                   <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2 flex-1">
+                    <div className="flex flex-1 items-start gap-2">
                       <button
-                        className="mt-0.5 text-muted-foreground/50 cursor-pointer hover:text-primary transition-colors shrink-0"
+                        className="text-muted-foreground/50 mt-0.5 shrink-0 cursor-pointer transition-colors hover:text-primary"
                         onClick={() => handleToggleInactive(evt.id, 0.5)}
                         title="添加激活"
                       >
                         <Square size={16} />
                       </button>
                       <p
-                        className="text-sm text-foreground/90 leading-relaxed break-words whitespace-pre-wrap"
+                        className="text-foreground/90 whitespace-pre-wrap break-words text-sm leading-relaxed"
                         title={evt.summary}
                       >
-                        <span className="text-[10px] uppercase px-1 py-0.5 rounded bg-muted text-label mr-2 select-none">
+                        <span className="mr-2 select-none rounded bg-muted px-1 py-0.5 text-[10px] uppercase text-label">
                           {evt.structured_kv.event}
                         </span>
                         {evt.summary}
@@ -274,7 +275,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                     </div>
 
                     {/* 快捷打分 */}
-                    <div className="flex items-center gap-1 shrink-0 px-2 py-1 bg-muted/20 rounded">
+                    <div className="bg-muted/20 flex shrink-0 items-center gap-1 rounded px-2 py-1">
                       {[
                         { label: '低', val: 0.3 },
                         { label: '中', val: 0.6 },
@@ -283,7 +284,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                         <button
                           key={btn.label}
                           onClick={() => handleToggleInactive(evt.id, btn.val)}
-                          className="px-2 py-0.5 text-[10px] text-muted-foreground bg-transparent hover:bg-accent hover:text-foreground transition-colors rounded"
+                          className="rounded bg-transparent px-2 py-0.5 text-[10px] text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
                         >
                           {btn.label}
                         </button>
@@ -295,7 +296,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                         max="1"
                         step="0.1"
                         placeholder="0.0"
-                        className="w-10 bg-transparent border-none border-b border-border/50 text-value text-right font-mono text-xs p-0 focus:ring-0 focus:border-primary transition-colors"
+                        className="border-border/50 w-10 border-b border-none bg-transparent p-0 text-right font-mono text-xs text-value transition-colors focus:border-primary focus:ring-0"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = parseFloat((e.target as HTMLInputElement).value) || 0.5;

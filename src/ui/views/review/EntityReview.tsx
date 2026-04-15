@@ -1,9 +1,11 @@
-import { type EntityNode, EntityType } from '@/types/graph';
-import { deepClone, stringifyYaml } from '@/core/utils';
-import { ModernButton as Button } from '@/ui/components/core/Button';
 import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
+
+import { EntityType } from '@/config/memory/defaults';
+import { deepClone, stringifyYaml } from '@/core/utils';
+import type { EntityNode } from '@/types/graph';
+import { ModernButton as Button } from '@/ui/components/core/Button';
 
 interface EntityReviewProps {
   data: {
@@ -117,12 +119,12 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-6 font-sans">
-      <div className="text-sm text-muted-foreground bg-muted/20 p-3 rounded-md border border-border/50">
+      <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
         请确认本次提取的结果。点击卡片可进行编辑，点击右上角删除可移除。
       </div>
 
       {data.error && (
-        <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md">
+        <div className="bg-destructive/10 border-destructive/20 flex items-center gap-2 rounded-md border p-3 text-sm text-destructive">
           <AlertTriangle size={16} />
           <span>提取过程发生错误: {data.error}</span>
         </div>
@@ -130,20 +132,20 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
       {/* Editing Modal/Overlay */}
       {editingEntity && (
-        <div className="fixed inset-0 z-[12000] flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in">
-          <div className="w-full max-w-6xl mx-auto bg-popover border border-border rounded-lg shadow-2xl p-6 flex flex-col gap-4 animate-in zoom-in-95 h-[90dvh] overflow-hidden">
-            <div className="flex items-center justify-between border-b pb-2 mb-2 shrink-0">
+        <div className="bg-background/80 animate-in fade-in fixed inset-0 z-[12000] flex items-center justify-center p-4 backdrop-blur-sm">
+          <div className="animate-in zoom-in-95 mx-auto flex h-[90dvh] w-full max-w-6xl flex-col gap-4 overflow-hidden rounded-lg border border-border bg-popover p-6 shadow-2xl">
+            <div className="mb-2 flex shrink-0 items-center justify-between border-b pb-2">
               <h3 className="text-lg font-bold">编辑实体</h3>
               <div className="text-xs text-muted-foreground">
                 保存时将自动使用右侧预览的 YAML 格式
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 shrink-0">
+            <div className="grid shrink-0 grid-cols-2 gap-4">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted-foreground">名称 (Name)</label>
                 <input
-                  className="p-2 rounded-md bg-muted border border-border text-sm"
+                  className="rounded-md border border-border bg-muted p-2 text-sm"
                   value={editingEntity.entity.name}
                   onChange={(e) =>
                     setEditingEntity({
@@ -156,7 +158,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted-foreground">类型 (Type)</label>
                 <select
-                  className="p-2 rounded-md bg-muted border border-border text-sm"
+                  className="rounded-md border border-border bg-muted p-2 text-sm"
                   value={editingEntity.entity.type}
                   onChange={(e) =>
                     setEditingEntity({
@@ -175,13 +177,13 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
             </div>
 
             {/* Vertical Edit & Preview View */}
-            <div className="flex-1 min-h-0 flex flex-col gap-4 overflow-hidden w-full">
+            <div className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden">
               {/* Profile JSON Editor Panel */}
               <div
-                className={`flex flex-col gap-2 border border-border rounded-md p-4 bg-muted/10 transition-all ${isEditorExpanded ? 'flex-1 min-h-0' : 'shrink-0'}`}
+                className={`bg-muted/10 flex flex-col gap-2 rounded-md border border-border p-4 transition-all ${isEditorExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
               >
                 <button
-                  className="flex items-center justify-between w-full group cursor-pointer"
+                  className="group flex w-full cursor-pointer items-center justify-between"
                   onClick={() => setIsEditorExpanded(!isEditorExpanded)}
                 >
                   <div className="flex items-center gap-2 text-xs font-bold text-foreground">
@@ -195,7 +197,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
                 {isEditorExpanded && (
                   <textarea
-                    className="flex-1 min-h-0 w-full p-3 rounded-md bg-muted/50 border border-border/50 text-xs font-mono resize-none focus:ring-2 focus:ring-primary/20 outline-none custom-scrollbar whitespace-pre-wrap break-all"
+                    className="bg-muted/50 border-border/50 focus:ring-primary/20 custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-all rounded-md border p-3 font-mono text-xs outline-none focus:ring-2"
                     value={JSON.stringify(editingEntity.entity.profile, null, 2)}
                     onChange={(e) => {
                       try {
@@ -220,14 +222,14 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
               {/* New Description Preview Panel */}
               <div
-                className={`flex flex-col gap-2 border border-primary/20 rounded-md p-4 bg-primary/5 transition-all ${isPreviewExpanded ? 'flex-1 min-h-0' : 'shrink-0'}`}
+                className={`border-primary/20 bg-primary/5 flex flex-col gap-2 rounded-md border p-4 transition-all ${isPreviewExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
               >
                 <button
-                  className="flex items-center justify-between w-full group cursor-pointer"
+                  className="group flex w-full cursor-pointer items-center justify-between"
                   onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
                 >
                   <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                    <span className="w-2 h-2 rounded-full bg-primary inline-block"></span>
+                    <span className="inline-block h-2 w-2 rounded-full bg-primary"></span>
                     新烧录文本预览 (New Description Preview)
                   </div>
                   <div className="text-muted-foreground group-hover:text-primary">
@@ -236,14 +238,14 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
                 </button>
 
                 {isPreviewExpanded && (
-                  <div className="flex-1 min-h-0 w-full p-3 bg-background/50 border border-primary/10 rounded-md text-xs font-mono overflow-y-auto overflow-x-hidden custom-scrollbar select-text whitespace-pre-wrap break-all text-foreground">
+                  <div className="bg-background/50 border-primary/10 custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-all rounded-md border p-3 font-mono text-xs text-foreground">
                     {previewDescription}
                   </div>
                 )}
               </div>
             </div>
 
-            <div className="flex justify-end gap-2 mt-2 shrink-0 pt-2 border-t border-border">
+            <div className="mt-2 flex shrink-0 justify-end gap-2 border-t border-border pt-2">
               <Button label="取消" onClick={handleEditCancel} />
               <Button label="确认更新" onClick={handleEditSave} primary icon={Save} />
             </div>
@@ -254,12 +256,12 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
       {/* Updated Entities Section (Show first as they are usually more critical) */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium text-amber-500">
-          <span className="w-2 h-2 rounded-full bg-amber-500" />
+          <span className="h-2 w-2 rounded-full bg-amber-500" />
           更新实体 ({updatedEntities.length})
         </div>
 
         {updatedEntities.length === 0 ? (
-          <div className="text-xs text-muted-foreground italic pl-4">无实体变更</div>
+          <div className="pl-4 text-xs italic text-muted-foreground">无实体变更</div>
         ) : (
           <div className="grid grid-cols-1 gap-3">
             {updatedEntities.map((entity, idx) => (
@@ -278,14 +280,14 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
       {/* New Entities Section */}
       <div className="space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium text-green-500">
-          <span className="w-2 h-2 rounded-full bg-green-500" />
+          <span className="h-2 w-2 rounded-full bg-green-500" />
           新增实体 ({newEntities.length})
         </div>
 
         {newEntities.length === 0 ? (
-          <div className="text-xs text-muted-foreground italic pl-4">无新增实体</div>
+          <div className="pl-4 text-xs italic text-muted-foreground">无新增实体</div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
             {newEntities.map((entity, idx) => (
               <EntityCard
                 key={idx}
@@ -325,16 +327,16 @@ const EntityCard: FC<{
 
   return (
     <div
-      className={`relative group p-4 rounded-lg border ${borderColor} ${bgColor} hover:bg-opacity-20 transition-all cursor-pointer`}
+      className={`group relative rounded-lg border p-4 ${borderColor} ${bgColor} cursor-pointer transition-all hover:bg-opacity-20`}
       onClick={onEdit}
     >
-      <div className="absolute top-2 right-2 flex items-center gap-1 opacity-100 sm:opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="absolute right-2 top-2 flex items-center gap-1 opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-0">
         <button
           onClick={(e) => {
             e.stopPropagation();
             onEdit();
           }}
-          className="p-1.5 bg-background/50 hover:bg-background rounded-md text-muted-foreground hover:text-foreground transition-colors"
+          className="bg-background/50 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           title="编辑"
         >
           <Edit2 size={14} />
@@ -344,18 +346,18 @@ const EntityCard: FC<{
             e.stopPropagation();
             onRemove();
           }}
-          className="p-1.5 bg-background/50 hover:bg-background rounded-md text-muted-foreground hover:text-destructive transition-colors"
+          className="bg-background/50 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-destructive"
           title="移除"
         >
           <Trash2 size={14} />
         </button>
       </div>
 
-      <div className="flex flex-col gap-2 min-w-0">
+      <div className="flex min-w-0 flex-col gap-2">
         <div className="flex items-center gap-2">
           <span className="text-base font-bold text-foreground">{entity.name}</span>
           <span
-            className={`text-[10px] px-1.5 py-0.5 rounded border border-current opacity-80 uppercase ${textColor}`}
+            className={`rounded border border-current px-1.5 py-0.5 text-[10px] uppercase opacity-80 ${textColor}`}
           >
             {entity.type}
           </span>
@@ -363,30 +365,30 @@ const EntityCard: FC<{
 
         {/* Diff View for Updated Entities */}
         {isUpdated && entity._diff ? (
-          <div className="flex flex-col gap-1 mt-1 bg-background/50 p-2.5 rounded text-xs font-mono">
+          <div className="bg-background/50 mt-1 flex flex-col gap-1 rounded p-2.5 font-mono text-xs">
             {entity._diff.map((op, i) => (
-              <div key={i} className="flex gap-2 break-all items-baseline">
+              <div key={i} className="flex items-baseline gap-2 break-all">
                 {/* Path */}
-                <span className="font-medium text-foreground/80 shrink-0 min-w-[30px]">
+                <span className="text-foreground/80 min-w-[30px] shrink-0 font-medium">
                   {op.path}
                 </span>
 
-                <div className="flex flex-wrap gap-1.5 items-center">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {/* Old Value (Red) - for replace/remove */}
                   {(op.op === 'replace' || op.op === 'remove') && op.oldValue !== undefined && (
-                    <span className="text-destructive line-through decoration-destructive/40 bg-destructive/5 px-1 rounded border border-destructive/10">
+                    <span className="decoration-destructive/40 bg-destructive/5 border-destructive/10 rounded border px-1 text-destructive line-through">
                       {formatValue(op.oldValue)}
                     </span>
                   )}
 
                   {/* Arrow for replace */}
                   {op.op === 'replace' && (
-                    <span className="text-muted-foreground text-[10px]">➜</span>
+                    <span className="text-[10px] text-muted-foreground">➜</span>
                   )}
 
                   {/* New Value (Green) - for replace/add */}
                   {(op.op === 'replace' || op.op === 'add') && op.value !== undefined && (
-                    <span className="text-green-600 dark:text-green-400 bg-green-500/10 px-1 rounded border border-green-500/20 font-semibold">
+                    <span className="rounded border border-green-500/20 bg-green-500/10 px-1 font-semibold text-green-600 dark:text-green-400">
                       {formatValue(op.value)}
                     </span>
                   )}
@@ -395,7 +397,7 @@ const EntityCard: FC<{
             ))}
           </div>
         ) : (
-          <div className="text-xs text-muted-foreground line-clamp-3 leading-relaxed break-words">
+          <div className="line-clamp-3 break-words text-xs leading-relaxed text-muted-foreground">
             {entity.description}
           </div>
         )}

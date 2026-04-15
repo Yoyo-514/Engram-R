@@ -1,5 +1,6 @@
-import { type SearchAdapter, type SearchResult } from '../SearchService';
 import { Terminal, Bug } from 'lucide-react';
+
+import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class LogAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {

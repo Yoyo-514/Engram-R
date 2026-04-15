@@ -27,19 +27,19 @@ export const SimpleModal: FC<SimpleModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+    <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200">
       <div
-        className={`w-full ${maxWidth} bg-background border border-border rounded-lg shadow-xl flex flex-col max-h-[90vh]`}
+        className={`w-full ${maxWidth} flex max-h-[90vh] flex-col rounded-lg border border-border bg-background shadow-xl`}
       >
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
-          <h3 className="text-sm font-medium flex items-center gap-2 text-foreground">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
+          <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
             {icon && <span className="text-primary">{icon}</span>}
             {title}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            className="hover:bg-muted/50 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
             title="关闭"
           >
             <X size={16} />
@@ -51,7 +51,7 @@ export const SimpleModal: FC<SimpleModalProps> = ({
 
         {/* Footer (Optional) */}
         {footer && (
-          <div className="px-4 py-3 border-t border-border bg-muted/20 shrink-0">{footer}</div>
+          <div className="bg-muted/20 shrink-0 border-t border-border px-4 py-3">{footer}</div>
         )}
       </div>
     </div>

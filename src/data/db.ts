@@ -6,8 +6,9 @@
  */
 
 import Dexie, { type Table } from 'dexie';
-import type { EntityNode, EventNode } from '../types/graph';
+
 import { Logger } from '../core/logger';
+import type { EntityNode, EventNode } from '../types/graph';
 import { syncService } from './SyncService';
 
 /**

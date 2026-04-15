@@ -1,35 +1,21 @@
 /**
  * useSummarizerConfig - 摘要和精简配置管理 Hook
  *
- * 管理 summarizerConfig (自动总结) 和 trimConfig (精简)
+ * 管理 summarizerService 运行态配置与 trimmerConfig 持久化字段
  */
 import { useState, useCallback, useEffect } from 'react';
-import { getSummarizerSettings as getSummarySettings, setSummarizerSettings as setSummarySettings } from '@/config/settings';
-import { DEFAULT_TRIM_CONFIG } from '@/types/config';
-import type { TrimConfig } from '@/types/memory';
+
+import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
+import { get, set } from '@/config/settings';
 import { eventTrimmer, summarizerService } from '@/modules/memory';
-
-// 兼容旧的 Summarizer Config 接口
-interface SummarizerSettings {
-  autoEnabled: boolean;
-  floorInterval: number;
-  bufferSize: number;
-  autoHide: boolean;
-}
-
-const DEFAULT_SUMMARIZER_SETTINGS: SummarizerSettings = {
-  autoEnabled: true,
-  floorInterval: 10,
-  bufferSize: 3,
-  autoHide: false,
-};
+import type { SummarizerConfig, TrimmerConfig } from '@/types/memory';
 
 export interface UseSummarizerConfigReturn {
-  summarizerSettings: SummarizerSettings;
-  trimConfig: TrimConfig;
+  summarizerSettings: SummarizerConfig;
+  trimConfig: TrimmerConfig;
 
-  updateSummarizerSettings: (settings: SummarizerSettings) => void;
-  updateTrimConfig: (config: TrimConfig) => void;
+  updateSummarizerSettings: (settings: SummarizerConfig) => void;
+  updateTrimmerConfig: (config: TrimmerConfig) => void;
 
   saveSummarizerConfig: () => Promise<void>;
   hasChanges: boolean;
@@ -37,28 +23,42 @@ export interface UseSummarizerConfigReturn {
 
 export function useSummarizerConfig(): UseSummarizerConfigReturn {
   // 状态
-  const [summarizerSettings, setSummarizerSettings] = useState<SummarizerSettings>(
-    DEFAULT_SUMMARIZER_SETTINGS
-  );
-  const [trimConfig, setTrimConfig] = useState<TrimConfig>(DEFAULT_TRIM_CONFIG);
+  const [summarizerSettings, setSummarizerSettings] =
+    useState<SummarizerConfig>(DEFAULT_SUMMARIZER_CONFIG);
+  const [trimConfig, setTrimmerConfig] = useState<TrimmerConfig>(DEFAULT_TRIMMER_CONFIG);
   const [hasChanges, setHasChanges] = useState(false);
 
   // 加载初始配置
   const loadConfig = useCallback(async (): Promise<void> => {
     try {
       // 加载 Summarizer Service 状态
-      const config = summarizerService.getConfig();
+      const {
+        enabled,
+        triggerMode,
+        floorInterval,
+        worldbookMode,
+        previewEnabled,
+        promptTemplateId,
+        llmPresetId,
+        bufferSize,
+        autoHide,
+      } = summarizerService.getConfig();
       setSummarizerSettings({
-        autoEnabled: config.enabled,
-        floorInterval: config.floorInterval,
-        bufferSize: config.bufferSize || 3,
-        autoHide: config.autoHide || false,
+        enabled,
+        triggerMode,
+        floorInterval,
+        worldbookMode,
+        previewEnabled,
+        promptTemplateId,
+        llmPresetId,
+        bufferSize,
+        autoHide,
       });
 
-      // 加载 Trim Config
-      const savedTrimConfig = getSummarySettings()?.trimConfig;
-      if (savedTrimConfig) {
-        setTrimConfig({ ...DEFAULT_TRIM_CONFIG, ...savedTrimConfig });
+      // 加载 Trimmer Config
+      const savedTrimmerConfig = get('trimmerConfig');
+      if (savedTrimmerConfig) {
+        setTrimmerConfig({ ...DEFAULT_TRIMMER_CONFIG, ...savedTrimmerConfig });
       }
     } catch (e) {
       console.error('Failed to load summarizer config:', e);
@@ -70,7 +70,7 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
   }, [loadConfig]);
 
   // 更新 Summarizer Settings
-  const updateSummarizerSettings = useCallback((settings: SummarizerSettings) => {
+  const updateSummarizerSettings = useCallback((settings: SummarizerConfig) => {
     setSummarizerSettings(settings);
     setHasChanges(true);
     // 注意：SummarizerService 的更新通常是即时的，这里只是 UI 状态
@@ -78,8 +78,8 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
   }, []);
 
   // 更新 Trim Config
-  const updateTrimConfig = useCallback((config: TrimConfig) => {
-    setTrimConfig(config);
+  const updateTrimmerConfig = useCallback((config: TrimmerConfig) => {
+    setTrimmerConfig(config);
     setHasChanges(true);
   }, []);
 
@@ -87,15 +87,32 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
   const saveSummarizerConfig = useCallback(async (): Promise<void> => {
     try {
       // 1. 保存 Summarizer Service 配置
+      const {
+        enabled,
+        triggerMode,
+        floorInterval,
+        worldbookMode,
+        previewEnabled,
+        promptTemplateId,
+        llmPresetId,
+        bufferSize,
+        autoHide,
+      } = summarizerSettings;
+
       summarizerService.updateConfig({
-        enabled: summarizerSettings.autoEnabled,
-        floorInterval: summarizerSettings.floorInterval,
-        bufferSize: summarizerSettings.bufferSize,
-        autoHide: summarizerSettings.autoHide,
+        enabled,
+        triggerMode,
+        floorInterval,
+        worldbookMode,
+        previewEnabled,
+        promptTemplateId,
+        llmPresetId,
+        bufferSize,
+        autoHide,
       });
 
-      // 2. 保存 Trim Config 到 SettingsManager
-      setSummarySettings({ trimConfig });
+      // 2. 保存 Trimmer Config 到 SettingsManager
+      set('trimmerConfig', trimConfig);
 
       // 3. 同步运行态 EventTrimmer，避免自动触发仍使用旧阈值
       eventTrimmer.updateConfig(trimConfig);
@@ -110,7 +127,7 @@ export function useSummarizerConfig(): UseSummarizerConfigReturn {
     summarizerSettings,
     trimConfig,
     updateSummarizerSettings,
-    updateTrimConfig,
+    updateTrimmerConfig,
     saveSummarizerConfig,
     hasChanges,
   };

@@ -1,11 +1,3 @@
-/**
- * ProcessingView - 处理中心视图容器
- *
- * 只负责框架和 Tab 切换，具体业务逻辑在子组件中
- * 类似 APIPresetsView 的架构设计
- */
-import { useState } from 'react';
-import type { FC } from 'react';
 import {
   FileText,
   Database,
@@ -16,19 +8,28 @@ import {
   Search,
   Save,
 } from 'lucide-react';
-import { type Tab } from '@/ui/components/layout/TabPills';
-import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
-import { Divider } from '@/ui/components/layout/Divider';
-import { QuickLinks, type QuickLink } from '@/ui/components/layout/QuickLinks';
+/**
+ * ProcessingView - 处理中心视图容器
+ *
+ * 只负责框架和 Tab 切换，具体业务逻辑在子组件中
+ * 类似 APIPresetsView 的架构设计
+ */
+import { useState } from 'react';
+import type { FC } from 'react';
+
 import { PageTitle } from '@/ui/components/display/PageTitle';
+import { Divider } from '@/ui/components/layout/Divider';
+import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
+import { QuickLinks, type QuickLink } from '@/ui/components/layout/QuickLinks';
+import { type Tab } from '@/ui/components/layout/TabPills';
 import { useConfig } from '@/ui/hooks/useConfig';
 import { useSummarizerConfig } from '@/ui/hooks/useSummarizerConfig';
 
+import { BatchProcessingPanel } from './BatchProcessingPanel';
+import { EntityConfigPanel } from './EntityConfigPanel';
+import { RecallPanel } from './RecallPanel';
 import { SummaryPanel } from './SummaryPanel';
 import { VectorizationPanel } from './VectorizationPanel';
-import { RecallPanel } from './RecallPanel';
-import { EntityConfigPanel } from './EntityConfigPanel';
-import { BatchProcessingPanel } from './BatchProcessingPanel';
 
 type ProcessingTab = 'summary' | 'vectorization' | 'recall' | 'entity' | 'batch';
 
@@ -88,7 +89,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
     summarizerSettings,
     trimConfig,
     updateSummarizerSettings,
-    updateTrimConfig,
+    updateTrimmerConfig,
     saveSummarizerConfig,
     hasChanges: summarizerHasChanges,
   } = useSummarizerConfig();
@@ -104,7 +105,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
   const hasChanges = configHasChanges || summarizerHasChanges;
 
   return (
-    <div className="flex flex-col h-full w-full overflow-x-hidden animate-in fade-in">
+    <div className="animate-in fade-in flex h-full w-full flex-col overflow-x-hidden">
       {/* 页面标题 - 统一样式：大标题 + 简短介绍 */}
       <PageTitle
         breadcrumbs={['数据处理']}
@@ -123,7 +124,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             {hasChanges && (
               <button
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary hover:text-primary-foreground hover:bg-primary border border-primary/50 rounded transition-colors"
+                className="border-primary/50 inline-flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                 onClick={handleSave}
               >
                 <Save size={12} />
@@ -136,14 +137,14 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
       />
 
       {/* 内容区域 */}
-      <div className="flex-1 overflow-y-auto no-scrollbar">
+      <div className="no-scrollbar flex-1 overflow-y-auto">
         {/* 记忆摘要 Tab - 使用 SummaryPanel 组件 */}
         {activeTab === 'summary' && (
           <SummaryPanel
             summarizerSettings={summarizerSettings}
             trimConfig={trimConfig}
             onSummarizerSettingsChange={updateSummarizerSettings}
-            onTrimConfigChange={updateTrimConfig}
+            onTrimmerConfigChange={updateTrimmerConfig}
           />
         )}
 

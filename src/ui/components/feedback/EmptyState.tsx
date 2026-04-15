@@ -1,6 +1,6 @@
-import type { ElementType, ReactNode, FC } from 'react';
 import type { LucideIcon } from 'lucide-react';
 import { PackageOpen } from 'lucide-react';
+import type { ElementType, ReactNode, FC } from 'react';
 
 interface EmptyStateProps {
   /** 显示的图标组件 */
@@ -29,15 +29,15 @@ export const EmptyState: FC<EmptyStateProps> = ({
 }) => {
   return (
     <div
-      className={`flex flex-col items-center justify-center p-8 text-muted-foreground gap-4 h-full min-h-[200px] animate-in fade-in duration-300 ${className}`}
+      className={`animate-in fade-in flex h-full min-h-[200px] flex-col items-center justify-center gap-4 p-8 text-muted-foreground duration-300 ${className}`}
     >
-      <div className="p-4 bg-muted/30 rounded-full">
-        <Icon size={48} className="opacity-20 text-foreground" />
+      <div className="bg-muted/30 rounded-full p-4">
+        <Icon size={48} className="text-foreground opacity-20" />
       </div>
-      <div className="text-center space-y-1 max-w-[280px]">
+      <div className="max-w-[280px] space-y-1 text-center">
         <h3 className="text-sm font-medium text-foreground">{title}</h3>
         {description && (
-          <p className="text-xs text-muted-foreground/80 leading-relaxed">{description}</p>
+          <p className="text-muted-foreground/80 text-xs leading-relaxed">{description}</p>
         )}
       </div>
       {action && <div className="mt-2">{action}</div>}

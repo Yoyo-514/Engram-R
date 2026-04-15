@@ -1,13 +1,18 @@
-import type { PreprocessingConfig, RegexRule } from '@/types/data_processing';
-import type { EngramAPISettings } from '@/types/config';
-import { getBuiltInTemplateById } from '@/types/config';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
-import { deepClone } from '@/core/utils';
-import { Logger } from '@/core/logger';
-import { getRawSTContext } from '@/integrations/tavern/core';
-import type { TavernContext } from '@/core/utils';
-import type { SummarizerConfig } from '@/modules/memory/types';
 import type { JsonObject } from 'type-fest';
+
+import { getDefaultRuntimeSettings } from '@/config/api/defaults';
+import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
+import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
+import { getBuiltInTemplateById } from '@/config/prompt/templates';
+import { Logger } from '@/core/logger';
+import { deepClone } from '@/core/utils';
+import type { TavernContext } from '@/core/utils';
+import { getRawSTContext } from '@/integrations/tavern/core';
+import type { EngramRuntimeSettings } from '@/types/config';
+import type { SummarizerConfig, TrimmerConfig } from '@/types/memory';
+import type { PreprocessConfig } from '@/types/preprocess';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import type { RegexRule } from '@/types/regex';
 
 type EngramContextSettings = Record<string, EngramSettings | undefined>;
 
@@ -30,11 +35,11 @@ export interface EngramSettings {
   promptTemplates: PromptTemplate[]; // 提示词模板列表
   lastReadVersion: string; // 最后已读的版本号
   lastOpenedTab: string; // 上次打开的主界面页面
-  summarizerConfig: Partial<SummarizerConfig> & { trimConfig?: unknown }; // 总结器配置 (Legacy)
-  trimmerConfig: JsonObject; // 精简器配置
+  summarizerConfig: SummarizerConfig; // 总结器运行配置（持久化层）
+  trimmerConfig: TrimmerConfig; // 事件精简配置
   regexRules: RegexRule[]; // 正则清洗规则列表
-  apiSettings: EngramAPISettings | null; // API 配置（LLM 预设、向量化、重排序等）
-  preprocessingConfig: PreprocessingConfig | null; // 输入预处理配置
+  runtimeSettings: EngramRuntimeSettings; // 运行时业务配置（模型、提示词、世界书、召回等）
+  preprocessConfig: PreprocessConfig; // 输入预处理配置
   linkedDeletion: {
     enabled: boolean; // 是否启用联动删除
     deleteWorldbook: boolean; // 删除角色时同步删除 Engram 世界书
@@ -70,11 +75,11 @@ const defaultSettings: EngramSettings = Object.freeze({
   promptTemplates: [],
   lastReadVersion: '0.0.0',
   lastOpenedTab: 'dashboard',
-  summarizerConfig: {},
-  trimmerConfig: {},
+  summarizerConfig: DEFAULT_SUMMARIZER_CONFIG,
+  trimmerConfig: DEFAULT_TRIMMER_CONFIG,
   regexRules: [],
-  apiSettings: null,
-  preprocessingConfig: null, // V0.8: 默认关闭预处理
+  runtimeSettings: getDefaultRuntimeSettings(),
+  preprocessConfig: DEFAULT_PREPROCESS_CONFIG,
   linkedDeletion: {
     enabled: true,
     deleteWorldbook: true,
@@ -288,10 +293,6 @@ export function getSettings(): EngramSettings {
   return resolved.settings;
 }
 
-function getExtensionSettings(): EngramSettings {
-  return getSettings();
-}
-
 /**
  * 初始化设置（在扩展加载时调用）
  * 确保所有必需的字段都存在
@@ -322,7 +323,7 @@ export async function initSettings(): Promise<boolean> {
  * Get a specific setting value
  */
 export function get<K extends keyof EngramSettings>(key: K): EngramSettings[K] {
-  const settings = getExtensionSettings();
+  const settings = getSettings();
   const value = settings[key];
   // 如果值不存在，返回默认值
   return value !== undefined ? value : defaultSettings[key];
@@ -359,22 +360,14 @@ export function save(): void {
 }
 
 /**
- * Load settings from SillyTavern global state
- * 兼容旧代码的接口
- */
-export function loadSettings(): EngramSettings {
-  return getExtensionSettings();
-}
-
-/**
  * 获取指定分类下已启用的提示词模板
  * @param category 模板分类
  * @returns 启用的模板，如果没有则返回 null
  */
 export function getEnabledPromptTemplate(category: PromptCategory): PromptTemplate | null {
-  // 优先从 apiSettings.promptTemplates 读取（这是 useAPIPresets 保存的位置）
-  const apiSettings = get('apiSettings');
-  const templates = apiSettings?.promptTemplates || [];
+  // 优先从 runtimeSettings.promptTemplates 读取
+  const runtimeSettings = get('runtimeSettings');
+  const templates = runtimeSettings?.promptTemplates || [];
   return templates.find((t: PromptTemplate) => t.category === category && t.enabled) || null;
 }
 
@@ -384,41 +377,13 @@ export function getEnabledPromptTemplate(category: PromptCategory): PromptTempla
  * @returns 模板对象，如果未找到则返回 null
  */
 export function getPromptTemplateById(id: string): PromptTemplate | null {
-  const apiSettings = get('apiSettings');
-  const templates = apiSettings?.promptTemplates || [];
+  const runtimeSettings = get('runtimeSettings');
+  const templates = runtimeSettings?.promptTemplates || [];
   // 尝试精确匹配 ID
   const byId = templates.find((t: PromptTemplate) => t.id === id);
   if (byId) return byId;
 
-  // Fallback: 尝试查找内置模板
-  const builtIn = getBuiltInTemplateById(id);
-  if (builtIn) {
-    // 注意：这里返回的内置模板可能没有用户覆盖的配置（如 enabled），
-    // 但如果它被 QuickPanel 选中为当前模板，说明用户意图是使用它。
-    // 它的 enabled 状态可能在 Settings 里没保存，但在运行时 context 下它是有效的。
-    return builtIn;
-  }
-
-  // 向下兼容：如果 ID 实际上是 category (旧版配置可能会这样)，尝试按分类查找启用的模板
-  // 这种情况主要发生在旧配置未完全迁移时
-  return templates.find((t: PromptTemplate) => t.category === id && t.enabled) || null;
-}
-
-/**
- * 获取总结器设置
- * @returns summarizerConfig 对象
- */
-export function getSummarizerSettings(): EngramSettings['summarizerConfig'] {
-  return get('summarizerConfig') || {};
-}
-
-/**
- * 设置总结器设置（合并更新）
- * @param config 要合并的配置对象
- */
-export function setSummarizerSettings(config: Partial<EngramSettings['summarizerConfig']>): void {
-  const current = getSummarizerSettings();
-  set('summarizerConfig', { ...current, ...config });
+  return getBuiltInTemplateById(id) ?? null;
 }
 
 /**

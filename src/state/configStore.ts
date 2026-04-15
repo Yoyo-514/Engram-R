@@ -1,16 +1,11 @@
-import { get as getExtSettings, set as setExtSerrings } from '@/config/settings';
-import {
-  DEFAULT_EMBEDDING_CONFIG,
-  getDefaultAPISettings,
-  type CustomMacro,
-  type EmbeddingConfig,
-  type GlobalRegexConfig,
-  type RecallConfig,
-  type RerankConfig,
-  type VectorConfig,
-} from '@/types/config';
-import type { EntityExtractConfig } from '@/types/memory';
 import { create } from 'zustand';
+
+import { DEFAULT_EMBEDDING_CONFIG } from '@/config/rag/defaults';
+import { get as getExtSettings, set as setExtSerrings } from '@/config/settings';
+import type { CustomMacro } from '@/types/macro';
+import type { EntityExtractConfig } from '@/types/memory';
+import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
+import type { GlobalRegexConfig } from '@/types/regex';
 
 export interface ConfigState {
   vectorConfig: VectorConfig;
@@ -56,25 +51,17 @@ export interface ConfigState {
   saveConfig: () => void;
 }
 
-const defaults = getDefaultAPISettings();
-const savedContext: any = getExtSettings('apiSettings') || {};
+const savedContext = getExtSettings('runtimeSettings');
 
 export const useConfigStore = create<ConfigState>((set, get) => ({
-  vectorConfig: savedContext.vectorConfig || defaults.vectorConfig,
-  rerankConfig: savedContext.rerankConfig || defaults.rerankConfig,
-  recallConfig: savedContext.recallConfig || defaults.recallConfig!,
-  regexConfig: savedContext.regexConfig || defaults.regexConfig,
-  entityExtractConfig: savedContext.entityExtractConfig ||
-    defaults.entityExtractConfig || {
-      enabled: false,
-      trigger: 'floor',
-      floorInterval: 10,
-      keepRecentCount: 5,
-    },
-  embeddingConfig:
-    savedContext.embeddingConfig || defaults.embeddingConfig || DEFAULT_EMBEDDING_CONFIG,
-  customMacros: savedContext.customMacros || defaults.customMacros || [],
-  enableAnimations: savedContext.enableAnimations ?? defaults.enableAnimations ?? true,
+  vectorConfig: savedContext.vectorConfig,
+  rerankConfig: savedContext.rerankConfig,
+  recallConfig: savedContext.recallConfig,
+  regexConfig: savedContext.regexConfig,
+  entityExtractConfig: savedContext.entityExtractConfig,
+  embeddingConfig: savedContext.embeddingConfig || DEFAULT_EMBEDDING_CONFIG,
+  customMacros: savedContext.customMacros || [],
+  enableAnimations: savedContext.enableAnimations ?? true,
   hasChanges: false,
 
   updateVectorConfig: (config) => set({ vectorConfig: config, hasChanges: true }),
@@ -122,8 +109,8 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
   saveConfig: () => {
     const state = get();
     // Option to add Schema Check here before saving
-    const currentSettings = getExtSettings('apiSettings') || {};
-    setExtSerrings('apiSettings', {
+    const currentSettings = getExtSettings('runtimeSettings') || {};
+    setExtSerrings('runtimeSettings', {
       ...currentSettings,
       vectorConfig: state.vectorConfig,
       rerankConfig: state.rerankConfig,
@@ -133,7 +120,7 @@ export const useConfigStore = create<ConfigState>((set, get) => ({
       embeddingConfig: state.embeddingConfig,
       customMacros: state.customMacros,
       enableAnimations: state.enableAnimations,
-    } as any);
+    });
     set({ hasChanges: false });
   },
 }));

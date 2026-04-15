@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+
 import { type CoreState, createCoreSlice } from './memory/slices/coreSlice';
 import { type EntityState, createEntitySlice } from './memory/slices/entitySlice';
 import { type EventState, createEventSlice } from './memory/slices/eventSlice';

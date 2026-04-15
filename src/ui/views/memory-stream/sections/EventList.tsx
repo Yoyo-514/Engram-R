@@ -1,9 +1,11 @@
-import type { EventNode } from '@/types/graph';
-import { ErrorBoundary } from '@/ui/components/core/ErrorBoundary';
-import { EmptyState } from '@/ui/components/feedback/EmptyState';
 import { Brain, RefreshCw, Search } from 'lucide-react';
 import type { FC } from 'react';
 import { GroupedVirtuoso } from 'react-virtuoso';
+
+import type { EventNode } from '@/types/graph';
+import { ErrorBoundary } from '@/ui/components/core/ErrorBoundary';
+import { EmptyState } from '@/ui/components/feedback/EmptyState';
+
 import { EventCard } from '../components/EventCard';
 import type { GroupedEvent, ViewMode } from '../hooks/useMemoryStream';
 
@@ -49,7 +51,7 @@ export const EventList: FC<EventListProps> = ({
   onDelete,
 }) => {
   return (
-    <div className="flex flex-col min-h-0 h-full w-full">
+    <div className="flex h-full min-h-0 w-full flex-col">
       {/* 搜索框 */}
       {viewMode === 'browse' && (
         <div className="relative mb-4 shrink-0 px-1">
@@ -73,15 +75,15 @@ export const EventList: FC<EventListProps> = ({
               width: '100%',
               color: 'var(--foreground)',
             }}
-            className="placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
+            className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
           />
         </div>
       )}
 
       {/* List View */}
-      <div className="flex-1 min-h-0 pb-4 pr-1 flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col pb-4 pr-1">
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-48 text-muted-foreground gap-2">
+          <div className="flex h-48 flex-col items-center justify-center gap-2 text-muted-foreground">
             <RefreshCw size={24} className="animate-spin" />
             <p className="text-sm font-light">加载中...</p>
           </div>
@@ -93,7 +95,7 @@ export const EventList: FC<EventListProps> = ({
           />
         ) : (
           <GroupedVirtuoso
-            className="flex-1 min-h-0"
+            className="min-h-0 flex-1"
             style={{ height: '100%' }}
             groupCounts={groupedEvents.map((g) => g.events.length)}
             groupContent={(index) => {
@@ -103,7 +105,7 @@ export const EventList: FC<EventListProps> = ({
               const someChecked = group.events.some((e) => checkedIds.has(e.id));
 
               return (
-                <div className="flex items-center gap-3 mb-4 sticky top-0 z-10 py-2 bg-background/80 backdrop-blur-sm">
+                <div className="bg-background/80 sticky top-0 z-10 mb-4 flex items-center gap-3 py-2 backdrop-blur-sm">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -113,10 +115,10 @@ export const EventList: FC<EventListProps> = ({
                       }
                     }}
                     onChange={(e) => onGroupCheck(group, e.target.checked)}
-                    className="w-4 h-4 rounded border-border accent-primary shrink-0"
+                    className="h-4 w-4 shrink-0 rounded border-border accent-primary"
                   />
                   <div
-                    className="text-xs font-medium text-foreground px-3 py-1.5 rounded-full border border-border/50 shadow-sm backdrop-blur-md"
+                    className="border-border/50 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
                     style={{
                       backgroundColor:
                         'var(--SmartThemeChatColor, var(--bg-color, var(--background, #1e1e1e)))',
@@ -124,8 +126,8 @@ export const EventList: FC<EventListProps> = ({
                   >
                     {group.title}
                   </div>
-                  <div className="h-[1px] flex-1 bg-border/50" />
-                  <span className="text-[10px] text-muted-foreground mr-2">
+                  <div className="bg-border/50 h-[1px] flex-1" />
+                  <span className="mr-2 text-[10px] text-muted-foreground">
                     {group.events.length} 项
                   </span>
                 </div>
@@ -141,17 +143,17 @@ export const EventList: FC<EventListProps> = ({
               const isLast = itemIndex === group.events.length - 1;
 
               return (
-                <div className="relative pl-6 pt-1 pb-3 group/card">
+                <div className="group/card relative pb-3 pl-6 pt-1">
                   {/* 垂直主干线 */}
                   <div
-                    className="absolute left-3 top-[-10px] w-[2px] bg-foreground transition-colors opacity-20 group-hover/card:bg-primary group-hover/card:opacity-50 z-0"
+                    className="absolute left-3 top-[-10px] z-0 w-[2px] bg-foreground opacity-20 transition-colors group-hover/card:bg-primary group-hover/card:opacity-50"
                     style={{ height: isLast ? 'calc(50% + 10px - 6px)' : 'calc(100% + 10px)' }}
                   />
                   {/* 横向分支线 */}
-                  <div className="absolute left-3 top-[calc(50%-6px)] w-3 h-[2px] bg-foreground transition-colors opacity-20 group-hover/card:bg-primary group-hover/card:opacity-50 z-0" />
+                  <div className="absolute left-3 top-[calc(50%-6px)] z-0 h-[2px] w-3 bg-foreground opacity-20 transition-colors group-hover/card:bg-primary group-hover/card:opacity-50" />
 
                   {/* 圆点指示器 */}
-                  <div className="absolute left-[9px] top-[calc(50%-8px)] w-[6px] h-[6px] rounded-full bg-foreground opacity-30 transition-colors group-hover/card:bg-primary z-10" />
+                  <div className="absolute left-[9px] top-[calc(50%-8px)] z-10 h-[6px] w-[6px] rounded-full bg-foreground opacity-30 transition-colors group-hover/card:bg-primary" />
 
                   <div className="relative z-10 w-full pl-3">
                     <ErrorBoundary>

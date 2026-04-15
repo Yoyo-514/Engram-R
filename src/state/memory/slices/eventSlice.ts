@@ -1,9 +1,11 @@
-import { generateShortUUID } from '@/core/utils';
-import type { EventNode } from '@/types/graph';
-import { countWorldbookTokens } from '@/integrations/tavern';
-import { type StateCreator } from 'zustand';
-import { type CoreState, getCurrentDb, tryGetCurrentDb } from './coreSlice';
 import Dexie from 'dexie';
+import { type StateCreator } from 'zustand';
+
+import { generateShortUUID } from '@/core/utils';
+import { countWorldbookTokens } from '@/integrations/tavern';
+import type { EventNode } from '@/types/graph';
+
+import { type CoreState, getCurrentDb, tryGetCurrentDb } from './coreSlice';
 
 export interface EventState {
   saveEvent: (

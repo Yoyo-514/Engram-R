@@ -7,7 +7,6 @@
  * - 移动端：全屏详情
  */
 
-import { RecallLogService } from '@/core/logger/RecallLogger';
 import { motion } from 'framer-motion';
 import {
   ArrowLeft,
@@ -22,7 +21,9 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
-import type { RecallLogEntry, RecallResultItem } from './types';
+
+import { RecallLogService } from '@/core/logger/RecallLogger';
+import type { RecallLogEntry, RecallResultItem } from '@/types/recall_log';
 
 // 响应式断点
 const DESKTOP_BREAKPOINT = 768;
@@ -60,16 +61,13 @@ const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
       animate={{ opacity: 1, x: 0 }}
       exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
       transition={{ duration: 0.3 }}
-      className={`
-                px-3 py-2 cursor-pointer border-b border-border/30 transition-colors
-                ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-muted/30'}
-            `}
+      className={`border-border/30 cursor-pointer border-b px-3 py-2 transition-colors ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-muted/30'} `}
       onClick={onSelect}
     >
       {/* 头部：标签 + 时间 */}
-      <div className="flex items-center gap-2 mb-1">
+      <div className="mb-1 flex items-center gap-2">
         <span
-          className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
             entry.mode === 'agentic'
               ? 'bg-amber-500/20 text-amber-400'
               : entry.mode === 'hybrid'
@@ -82,28 +80,28 @@ const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
         <span className="text-[10px] text-muted-foreground">
           {entry.stats.rerankCount}/{entry.stats.topKCount} 条
         </span>
-        <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-1">
+        <span className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground">
           <Clock size={10} />
           {formatTime(entry.timestamp)}
         </span>
       </div>
 
       {/* 查询预览 */}
-      <div className="relative group/query">
+      <div className="group/query relative">
         <p
-          className={`text-sm text-foreground/90 break-words whitespace-pre-wrap transition-all duration-300 ${isSelected ? '' : 'line-clamp-3'}`}
+          className={`text-foreground/90 whitespace-pre-wrap break-words text-sm transition-all duration-300 ${isSelected ? '' : 'line-clamp-3'}`}
         >
           {entry.query}
         </p>
         {!isSelected && entry.query.length > 100 && (
-          <div className="absolute bottom-0 right-0 px-1 bg-background/80 text-[10px] text-primary opacity-0 group-hover/query:opacity-100 transition-opacity">
+          <div className="bg-background/80 absolute bottom-0 right-0 px-1 text-[10px] text-primary opacity-0 transition-opacity group-hover/query:opacity-100">
             点击查看全部...
           </div>
         )}
       </div>
 
       {/* 耗时 */}
-      <div className="flex items-center gap-2 mt-1 text-[10px] text-muted-foreground">
+      <div className="mt-1 flex items-center gap-2 text-[10px] text-muted-foreground">
         <Zap size={10} />
         {formatDuration(entry.stats.latencyMs)}
       </div>
@@ -128,14 +126,14 @@ const ScoreBar: FC<{
   const percentage = Math.min(100, score * 100);
   return (
     <div className="flex items-center gap-2 text-xs">
-      <span className="text-muted-foreground w-16 shrink-0">{label}</span>
-      <div className="flex-1 h-1.5 bg-muted/30 rounded-full overflow-hidden">
+      <span className="w-16 shrink-0 text-muted-foreground">{label}</span>
+      <div className="bg-muted/30 h-1.5 flex-1 overflow-hidden rounded-full">
         <div
           className={`h-full ${color} rounded-full transition-all duration-300`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-muted-foreground w-14 text-right font-mono shrink-0">
+      <span className="w-14 shrink-0 text-right font-mono text-muted-foreground">
         {score.toFixed(3)}
       </span>
     </div>
@@ -148,31 +146,27 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
 
   return (
     <div
-      className={`
-                border-b border-border/30 py-3 px-4 cursor-pointer
-                hover:bg-muted/10 transition-colors
-                ${item.isReranked ? 'bg-purple-500/5' : item.isTopK ? 'bg-blue-500/5' : ''}
-            `}
+      className={`border-border/30 hover:bg-muted/10 cursor-pointer border-b px-4 py-3 transition-colors ${item.isReranked ? 'bg-purple-500/5' : item.isTopK ? 'bg-blue-500/5' : ''} `}
       onClick={() => setExpanded(!expanded)}
     >
       {/* 徽章 */}
-      <div className="flex items-center gap-2 mb-1.5">
+      <div className="mb-1.5 flex items-center gap-2">
         {item.isReranked && (
-          <span className="px-1.5 py-0.5 text-[10px] bg-purple-500/20 text-purple-400 rounded">
+          <span className="rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] text-purple-400">
             Rerank
           </span>
         )}
         {item.isTopK && !item.isReranked && (
-          <span className="px-1.5 py-0.5 text-[10px] bg-blue-500/20 text-blue-400 rounded">
+          <span className="rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] text-blue-400">
             TopK
           </span>
         )}
         {item.keywordScore != null && (
-          <span className="px-1.5 py-0.5 text-[10px] bg-green-500/20 text-green-400 rounded">
+          <span className="rounded bg-green-500/20 px-1.5 py-0.5 text-[10px] text-green-400">
             Keyword
           </span>
         )}
-        <span className="text-[10px] text-muted-foreground truncate max-w-[150px]">
+        <span className="max-w-[150px] truncate text-[10px] text-muted-foreground">
           {item.category}
         </span>
         {item.sourceFloor && (
@@ -186,14 +180,14 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
 
       {/* 摘要 */}
       <p
-        className={`text-sm text-foreground/90 break-words whitespace-pre-wrap ${expanded ? '' : 'line-clamp-2'}`}
+        className={`text-foreground/90 whitespace-pre-wrap break-words text-sm ${expanded ? '' : 'line-clamp-2'}`}
       >
         {item.summary}
       </p>
 
       {/* 分数（展开时显示） */}
       {expanded && (
-        <div className="mt-3 space-y-1.5 pt-2 border-t border-border/20">
+        <div className="border-border/20 mt-3 space-y-1.5 border-t pt-2">
           <ScoreBar label="Embedding" score={item.embeddingScore} color="bg-blue-500" />
           {item.keywordScore != null && (
             <ScoreBar label="Keyword" score={item.keywordScore} color="bg-green-500" />
@@ -205,7 +199,7 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
             <ScoreBar label="Hybrid" score={item.hybridScore} color="bg-purple-500" />
           )}
           {item.reason && (
-            <div className="mt-2 text-xs text-muted-foreground italic">💬 {item.reason}</div>
+            <div className="mt-2 text-xs italic text-muted-foreground">💬 {item.reason}</div>
           )}
         </div>
       )}
@@ -267,7 +261,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
 
   if (!entry) {
     return (
-      <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3">
+      <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
         <Target size={32} className="opacity-30" />
         <p className="text-sm font-light">选择一条召回日志查看详情</p>
       </div>
@@ -275,12 +269,12 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
   }
 
   return (
-    <div className={`flex flex-col h-full ${isFullScreen ? 'p-4' : ''}`}>
+    <div className={`flex h-full flex-col ${isFullScreen ? 'p-4' : ''}`}>
       {/* 移动端返回按钮 */}
       {isFullScreen && onClose && (
         <button
           onClick={onClose}
-          className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4"
+          className="mb-4 flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground"
         >
           <ArrowLeft size={16} />
           返回列表
@@ -288,10 +282,10 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
       )}
 
       {/* 头部信息 */}
-      <div className="mb-4 pb-4 border-b border-border shrink-0">
-        <div className="flex items-center gap-2 mb-2">
+      <div className="mb-4 shrink-0 border-b border-border pb-4">
+        <div className="mb-2 flex items-center gap-2">
           <span
-            className={`px-2 py-0.5 rounded text-xs font-medium ${
+            className={`rounded px-2 py-0.5 text-xs font-medium ${
               entry.mode === 'agentic'
                 ? 'bg-amber-500/20 text-amber-400'
                 : entry.mode === 'hybrid'
@@ -308,7 +302,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
           <span className="text-xs text-muted-foreground">{formatTime(entry.timestamp)}</span>
         </div>
 
-        <p className="text-sm text-foreground/90 break-words whitespace-pre-wrap mb-2">
+        <p className="text-foreground/90 mb-2 whitespace-pre-wrap break-words text-sm">
           {entry.query}
         </p>
 
@@ -317,7 +311,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
         )}
 
         {/* 统计 */}
-        <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
+        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
           <span>候选: {entry.stats.totalCandidates}</span>
           <span>TopK: {entry.stats.topKCount}</span>
           <span>Rerank: {entry.stats.rerankCount}</span>
@@ -329,36 +323,36 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
 
         {/* V1.3.1: 类脑召回详情 */}
         {entry.brainStats && (
-          <div className="mt-4 pt-3 border-t border-border/30">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="border-border/30 mt-4 border-t pt-3">
+            <div className="mb-2 flex items-center gap-2">
               <span className="text-xs font-medium text-foreground">类脑状态</span>
-              <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 第 {entry.brainStats.round} 轮
               </span>
             </div>
 
-            <div className="bg-muted/20 rounded border border-border/30 overflow-hidden">
-              <table className="w-full text-[10px] text-left">
+            <div className="bg-muted/20 border-border/30 overflow-hidden rounded border">
+              <table className="w-full text-left text-[10px]">
                 <thead className="bg-muted/30 text-muted-foreground">
                   <tr>
                     <th className="p-1.5 font-medium">Event</th>
                     <th className="p-1.5 font-medium">Tier</th>
-                    <th className="p-1.5 font-medium text-right">Score</th>
-                    <th className="p-1.5 font-medium text-right">Count</th>
+                    <th className="p-1.5 text-right font-medium">Score</th>
+                    <th className="p-1.5 text-right font-medium">Count</th>
                   </tr>
                 </thead>
                 <tbody>
                   {entry.brainStats.snapshot.map((slot) => (
                     <tr
                       key={slot.id}
-                      className="border-t border-border/10 hover:bg-muted/20 transition-colors"
+                      className="border-border/10 hover:bg-muted/20 border-t transition-colors"
                     >
-                      <td className="p-1.5 truncate max-w-[80px]" title={slot.id}>
+                      <td className="max-w-[80px] truncate p-1.5" title={slot.id}>
                         {slot.label || slot.id.slice(0, 8)}
                       </td>
                       <td className="p-1.5">
                         <span
-                          className={`px-1 rounded ${slot.tier === 'working' ? 'bg-green-500/10 text-green-500' : 'text-muted-foreground'}`}
+                          className={`rounded px-1 ${slot.tier === 'working' ? 'bg-green-500/10 text-green-500' : 'text-muted-foreground'}`}
                         >
                           {slot.tier === 'working' ? 'WM' : 'STM'}
                         </span>
@@ -370,7 +364,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
                 </tbody>
               </table>
               {entry.brainStats.snapshot.length === 0 && (
-                <div className="p-2 text-center text-[10px] text-muted-foreground italic">
+                <div className="p-2 text-center text-[10px] italic text-muted-foreground">
                   短期记忆为空
                 </div>
               )}
@@ -380,25 +374,25 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
 
         {/* V1.4: 被激活的实体 */}
         {entry.recalledEntities && entry.recalledEntities.length > 0 && (
-          <div className="mt-4 pt-3 border-t border-border/30">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="border-border/30 mt-4 border-t pt-3">
+            <div className="mb-2 flex items-center gap-2">
               <span className="text-xs font-medium text-foreground">已唤醒实体</span>
-              <span className="text-[10px] text-muted-foreground px-1.5 py-0.5 bg-muted rounded">
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 {entry.recalledEntities.length}
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
               {entry.recalledEntities.map((ent: any) => (
                 <div key={ent.id} className="group relative">
-                  <div className="px-2 py-1 bg-primary/10 border border-primary/20 rounded-md text-[10px] text-primary flex items-center gap-1.5 hover:bg-primary/20 transition-colors">
+                  <div className="bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-primary transition-colors">
                     <Database size={10} />
                     {ent.name}
                     {ent._recallWeight && (
-                      <span className="opacity-60 font-mono">({ent._recallWeight.toFixed(2)})</span>
+                      <span className="font-mono opacity-60">({ent._recallWeight.toFixed(2)})</span>
                     )}
                   </div>
-                  <div className="hidden group-hover:block absolute z-50 bottom-full left-0 mb-2 w-48 bg-popover border border-border rounded-lg shadow-xl p-2 text-[10px] text-foreground/80 leading-relaxed pointer-events-none">
-                    <div className="font-bold mb-1">
+                  <div className="text-foreground/80 pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed shadow-xl group-hover:block">
+                    <div className="mb-1 font-bold">
                       {ent.name} ({ent.type || '未知'})
                     </div>
                     <div className="line-clamp-4">{ent.description || '无描述'}</div>
@@ -411,14 +405,14 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
       </div>
 
       {/* 过滤和排序工具栏 */}
-      <div className="flex items-center gap-3 flex-wrap mb-3 shrink-0">
+      <div className="mb-3 flex shrink-0 flex-wrap items-center gap-3">
         {/* 视图模式 */}
         <div className="flex items-center gap-1 text-xs">
           <Filter size={12} className="text-muted-foreground" />
           {(['all', 'topK', 'reranked'] as ViewMode[]).map((mode) => (
             <button
               key={mode}
-              className={`px-2 py-1 rounded transition-colors ${
+              className={`rounded px-2 py-1 transition-colors ${
                 viewMode === mode
                   ? 'bg-primary/20 text-primary'
                   : 'text-muted-foreground hover:text-foreground'
@@ -430,14 +424,14 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
           ))}
         </div>
 
-        <div className="w-px h-4 bg-border" />
+        <div className="h-4 w-px bg-border" />
 
         {/* 排序模式 */}
         <div className="flex items-center gap-1 text-xs">
           {(['hybrid', 'keyword', 'embedding', 'rerank'] as SortMode[]).map((mode) => (
             <button
               key={mode}
-              className={`px-2 py-1 rounded transition-colors ${
+              className={`rounded px-2 py-1 transition-colors ${
                 sortMode === mode
                   ? 'bg-primary/20 text-primary'
                   : 'text-muted-foreground hover:text-foreground'
@@ -449,7 +443,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
           ))}
         </div>
 
-        <div className="w-px h-4 bg-border" />
+        <div className="h-4 w-px bg-border" />
 
         {/* 搜索 */}
         <div className="flex items-center gap-1.5 text-muted-foreground">
@@ -459,15 +453,15 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
             placeholder="搜索结果..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="bg-transparent border-none outline-none text-xs text-foreground placeholder:text-muted-foreground w-24"
+            className="w-24 border-none bg-transparent text-xs text-foreground outline-none placeholder:text-muted-foreground"
           />
         </div>
       </div>
 
       {/* 结果列表 */}
-      <div className="flex-1 overflow-y-auto -mx-4 md:mx-0">
+      <div className="-mx-4 flex-1 overflow-y-auto md:mx-0">
         {displayedResults.length === 0 ? (
-          <div className="py-8 text-center text-muted-foreground text-sm">无匹配结果</div>
+          <div className="py-8 text-center text-sm text-muted-foreground">无匹配结果</div>
         ) : (
           <div className="flex flex-col">
             {displayedResults.map((item, index) => (
@@ -478,7 +472,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
       </div>
 
       {/* 状态栏 */}
-      <div className="text-[10px] text-muted-foreground py-2 border-t border-border mt-2 shrink-0">
+      <div className="mt-2 shrink-0 border-t border-border py-2 text-[10px] text-muted-foreground">
         显示 {displayedResults.length} / {entry.results.length} 条结果
       </div>
     </div>
@@ -536,16 +530,16 @@ export const RecallLog: FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       {/* 头部 */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+      <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
         <div className="flex items-center gap-2">
           <Target size={16} className="text-primary" />
           <span className="font-medium text-foreground">召回日志</span>
           <span className="text-xs text-muted-foreground">({logs.length})</span>
         </div>
         <button
-          className="p-1.5 rounded-md text-muted-foreground hover:text-destructive transition-colors"
+          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-destructive"
           onClick={() => RecallLogService.clear()}
           title="清除日志"
         >
@@ -554,17 +548,13 @@ export const RecallLog: FC = () => {
       </div>
 
       {/* 主内容区 - Master-Detail 布局 */}
-      <div className="flex-1 flex min-h-0">
+      <div className="flex min-h-0 flex-1">
         {/* 左侧：日志列表 */}
         <div
-          className={`
-                    ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'}
-                    overflow-y-auto
-                    ${!isMobile ? 'border-r border-border/50' : ''}
-                `}
+          className={` ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'} overflow-y-auto ${!isMobile ? 'border-border/50 border-r' : ''} `}
         >
           {logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-3 p-4">
+            <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-muted-foreground">
               <Database size={32} className="opacity-30" />
               <p className="text-sm font-light">暂无召回记录</p>
               <p className="text-xs opacity-70">触发 RAG 召回后显示</p>

@@ -6,14 +6,16 @@
  * - Memory Stats: 事件/实体统计
  * - Feature Status: 功能开关状态
  */
+
+import { useCallback, useEffect, useRef, useState } from 'react';
+
+import { DEFAULT_BRAIN_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get, set, type EngramSettings } from '@/config/settings';
-import { DEFAULT_BRAIN_RECALL_CONFIG, getDefaultAPISettings } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
+import { tryGetDbForChat } from '@/data/db';
 import { getSTContext, getCurrentChatId, getSummaries } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { tryGetDbForChat } from '@/data/db';
 
 // ==================== 类型定义 ====================
 
@@ -22,7 +24,7 @@ export interface FeatureStatus {
   entity: boolean;
   embedding: boolean;
   recall: boolean;
-  preprocessing: boolean;
+  preprocess: boolean;
 }
 
 export interface MemoryStats {
@@ -96,7 +98,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
     entity: false,
     embedding: false,
     recall: true,
-    preprocessing: false,
+    preprocess: false,
   });
   const [brainStats, setBrainStats] = useState<BrainStats>({
     shortTermCount: 0,
@@ -126,7 +128,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
   const fetchSystemHealth = useCallback(() => {
     const stContext = getSTContext();
     const summarizerStatus = summarizerService.getStatus();
-    const summarizerConfig = get('summarizerConfig') || {};
+    const summarizerConfig = summarizerService.getConfig();
 
     if (!isMounted.current) return;
     setSystem({
@@ -199,15 +201,12 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
   }, []);
 
   const fetchFeatureStatus = useCallback(async () => {
-    const defaults = getDefaultAPISettings();
-    const apiSettings = get('apiSettings') || defaults;
-    const currentSummarizerConfig = get('summarizerConfig') || {};
-    const entityConfig = apiSettings?.entityExtractConfig ?? defaults.entityExtractConfig;
-    const embeddingConfig = apiSettings?.embeddingConfig ?? defaults.embeddingConfig;
-    const recallConfig = apiSettings?.recallConfig ?? defaults.recallConfig;
-    const preprocessingConfig = get('preprocessingConfig') as
-      | { enabled?: boolean }
-      | undefined;
+    const runtimeSettings = get('runtimeSettings');
+    const currentSummarizerConfig = summarizerService.getConfig();
+    const entityConfig = runtimeSettings?.entityExtractConfig;
+    const embeddingConfig = runtimeSettings?.embeddingConfig;
+    const recallConfig = runtimeSettings?.recallConfig;
+    const preprocessConfig = get('preprocessConfig') as { enabled?: boolean } | undefined;
 
     if (!isMounted.current) return;
     setFeatures({
@@ -215,16 +214,16 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
       entity: !!entityConfig?.enabled,
       embedding: !!embeddingConfig?.enabled,
       recall: recallConfig?.enabled !== false,
-      preprocessing: !!preprocessingConfig?.enabled,
+      preprocess: !!preprocessConfig?.enabled,
     });
   }, []);
 
   const fetchBrainStats = useCallback(() => {
     try {
       const snapshot = brainRecallCache.getShortTermSnapshot();
-      const brainApiSettings = get('apiSettings');
+      const brainruntimeSettings = get('runtimeSettings');
       const brainConfig =
-        brainApiSettings?.recallConfig?.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
+        brainruntimeSettings?.recallConfig?.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
 
       const workingItems = snapshot.filter((s) => s.tier === 'working');
       const topActiveItems = snapshot.slice(0, 3).map((s) => ({
@@ -285,9 +284,8 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
       void (async () => {
         try {
           // 1. 读取最新配置（使用完整 defaults 作为 fallback，防止丢失嵌套字段）
-          const defaults = getDefaultAPISettings();
-          const currentApiSettings = get('apiSettings') || defaults;
-          const currentSummarizerConfig = get('summarizerConfig') || {};
+          const runtimeSettings = get('runtimeSettings');
+          const currentSummarizerConfig = summarizerService.getConfig();
 
           // 2. 获取当前功能状态并计算新值
           let nextVal: boolean;
@@ -295,66 +293,60 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
           switch (feature) {
             case 'summarizer': {
               nextVal = !(currentSummarizerConfig.enabled !== false);
-              set('summarizerConfig', {
-                ...currentSummarizerConfig,
-                enabled: nextVal,
-              });
               summarizerService.updateConfig({ enabled: nextVal });
               break;
             }
             case 'entity': {
-              const entityConfig =
-                currentApiSettings.entityExtractConfig ?? defaults.entityExtractConfig;
+              const entityConfig = runtimeSettings.entityExtractConfig;
               nextVal = !(entityConfig?.enabled ?? false);
-              set('apiSettings', {
-                ...currentApiSettings,
+              set('runtimeSettings', {
+                ...runtimeSettings,
                 entityExtractConfig: {
                   ...entityConfig,
                   enabled: nextVal,
                 },
-              } as any);
+              });
               break;
             }
             case 'embedding': {
-              const embeddingConfig =
-                currentApiSettings.embeddingConfig ?? defaults.embeddingConfig;
+              const embeddingConfig = runtimeSettings.embeddingConfig;
               nextVal = !(embeddingConfig?.enabled ?? false);
-              set('apiSettings', {
-                ...currentApiSettings,
+              set('runtimeSettings', {
+                ...runtimeSettings,
                 embeddingConfig: {
-                  ...embeddingConfig,
+                  ...embeddingConfig!,
                   enabled: nextVal,
                 },
-              } as any);
+              });
               break;
             }
             case 'recall': {
-              const recallConfig = currentApiSettings.recallConfig ?? defaults.recallConfig;
+              const recallConfig = runtimeSettings.recallConfig;
               nextVal = !(recallConfig?.enabled !== false);
-              set('apiSettings', {
-                ...currentApiSettings,
+              set('runtimeSettings', {
+                ...runtimeSettings,
                 recallConfig: {
                   ...recallConfig,
                   enabled: nextVal,
                 },
-              } as any);
+              });
               break;
             }
-            case 'preprocessing': {
-              const currentPreprocessingConfig = get('preprocessingConfig') || {};
+            case 'preprocess': {
+              const currentPreprocessingConfig = get('preprocessConfig') || {};
               nextVal = !(currentPreprocessingConfig as { enabled?: boolean })?.enabled;
-              set('preprocessingConfig', {
+              set('preprocessConfig', {
                 ...currentPreprocessingConfig,
                 enabled: nextVal,
-              } as any);
+              });
 
-              set('apiSettings', {
-                ...currentApiSettings,
+              set('runtimeSettings', {
+                ...runtimeSettings,
                 recallConfig: {
-                  ...(currentApiSettings.recallConfig ?? defaults.recallConfig),
+                  ...runtimeSettings.recallConfig,
                   usePreprocessing: nextVal,
                 },
-              } as any);
+              });
               break;
             }
             default:

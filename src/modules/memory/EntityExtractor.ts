@@ -6,18 +6,18 @@
  * - 输入从原始对话提取，而非 Summary
  */
 
+import { DEFAULT_ENTITY_CONFIG } from '@/config/memory/defaults';
 import { get, incrementStatistic } from '@/config/settings';
-import { DEFAULT_ENTITY_CONFIG } from '@/types/config';
-import type { EntityExtractConfig } from '@/types/memory';
-import { EventBus } from '@/core/events';
+import { engramEventBus } from '@/core/events';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
-import type { EntityNode } from '@/types/graph';
 import { getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
+import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
 import { useMemoryStore } from '@/state/memoryStore';
+import type { EntityNode } from '@/types/graph';
+import type { EntityExtractConfig } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
-import { createEntityWorkflow, WorkflowEngine } from '@/modules/workflow';
 
 /**
  * 实体构建结果
@@ -41,7 +41,7 @@ export class EntityBuilder {
 
   constructor(config?: Partial<EntityExtractConfig>) {
     // V0.9.10: Fix - 优先从 SettingsManager 加载持久化配置
-    const savedConfig = get('apiSettings')?.entityExtractConfig;
+    const savedConfig = get('runtimeSettings')?.entityExtractConfig;
     this.config = { ...DEFAULT_ENTITY_CONFIG, ...savedConfig, ...config };
   }
 
@@ -62,6 +62,11 @@ export class EntityBuilder {
    */
   getConfig(): EntityExtractConfig {
     return { ...this.config };
+  }
+
+  private getPreviewEnabled(): boolean {
+    const previewEnabled = get('summarizerConfig')?.previewEnabled;
+    return previewEnabled ?? true;
   }
 
   // ==================== Event Listening (V0.9.14) ====================
@@ -162,7 +167,7 @@ export class EntityBuilder {
    */
   shouldTriggerOnFloor(currentFloor: number, lastExtractedFloor: number): boolean {
     // V0.9.12: Fix - 每次检查触发器时刷新配置，避免初始化时的 stale config
-    const savedConfig = get('apiSettings')?.entityExtractConfig;
+    const savedConfig = get('runtimeSettings')?.entityExtractConfig;
     if (savedConfig) {
       this.config = { ...this.config, ...savedConfig };
     }
@@ -223,9 +228,8 @@ export class EntityBuilder {
     );
 
     try {
-      // V1.0.4: 使用全局 "启用修订模式" 开关 (复用 summarizerConfig)
-      const globalSettings = get('summarizerConfig');
-      const previewEnabled = manual || (globalSettings?.previewEnabled ?? true);
+      // V1.0.4: 复用总结器运行时配置中的修订开关
+      const previewEnabled = manual || this.getPreviewEnabled();
 
       // 获取聊天历史 (如果是单条楼层，则宏系统会自动处理)
       const chatHistory = getChatHistory(range || [floor, floor]);
@@ -243,7 +247,7 @@ export class EntityBuilder {
         });
       }
 
-      const contextPromise = WorkflowEngine.run(createEntityWorkflow(), {
+      const contextPromise = runWorkflow(createEntityWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
         signal,
         config: {
@@ -317,7 +321,7 @@ export class EntityBuilder {
         notificationService.error(`实体提取异常: ${errorMsg}`, 'Engram 错误');
       }
       // Fix P3: 抛出事件以供其他模块感知和处理
-      EventBus.emit({
+      engramEventBus.emit({
         type: 'WORKFLOW_FAILED',
         payload: { workflowName: 'EntityWorkflow', error: e },
       });
@@ -483,7 +487,7 @@ export class EntityBuilder {
         await store.archiveEntities(ids);
 
         // V1.4.3: 广播事件，通知 UI (如 EntityConfigPanel) 刷新状态
-        EventBus.emit({ type: 'ENTITY_ARCHIVED', payload: { archivedIds: ids } });
+        engramEventBus.emit({ type: 'ENTITY_ARCHIVED', payload: { archivedIds: ids } });
       }
     } catch (error) {
       Logger.error(LogModule.MEMORY_ENTITY, '执行实体自动归档失败', { error });

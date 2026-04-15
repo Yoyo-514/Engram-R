@@ -1,4 +1,6 @@
-import { EntityType, type EntityNode, type EventNode } from '@/types/graph';
+import { EntityType } from '@/config/memory/defaults';
+import type { EntityNode, EventNode } from '@/types/graph';
+
 import type {
   EntityGroupMode,
   EntitySortMode,

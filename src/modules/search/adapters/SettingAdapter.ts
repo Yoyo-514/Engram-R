@@ -1,5 +1,6 @@
-import { type SearchAdapter, type SearchResult } from '../SearchService';
 import { Sliders, Key, Database, Cpu, MessageSquare } from 'lucide-react';
+
+import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class SettingAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {
@@ -20,7 +21,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '配置 API Key',
         description: '设置 LLM 连接凭证',
         icon: Key,
-        action: (nav) => nav('/api'), // Default to API page
+        action: (nav) => nav('presets:model'),
         keywords: ['api', 'key', 'token', 'credential'],
         score: 8,
       },
@@ -30,7 +31,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '切换模型 (Model)',
         description: '更改当前使用的 LLM 模型',
         icon: Cpu,
-        action: (nav) => nav('/api'),
+        action: (nav) => nav('presets:model'),
         keywords: ['model', 'llm', 'change', 'switch'],
         score: 8,
       },
@@ -41,7 +42,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '调整温度 (Temperature)',
         description: '控制生成的随机性',
         icon: Sliders,
-        action: (nav) => nav('/api'),
+        action: (nav) => nav('presets:model'),
         keywords: ['temp', 'temperature', 'random', 'creativity'],
         score: 7,
       },
@@ -51,7 +52,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '调整 Top P',
         description: '核采样参数',
         icon: Sliders,
-        action: (nav) => nav('/api'),
+        action: (nav) => nav('presets:model'),
         keywords: ['top', 'p', 'nucleus', 'sampling'],
         score: 7,
       },
@@ -62,7 +63,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '向量化配置 (Vectorization)',
         description: '管理向量模型和存储',
         icon: Database,
-        action: (nav) => nav('/processing'), // processing:vectorization ideally
+        action: (nav) => nav('processing:vectorization'),
         keywords: ['vector', 'embedding', 'db', 'store'],
         score: 7,
       },
@@ -72,7 +73,7 @@ export class SettingAdapter implements SearchAdapter {
         title: '召回设置 (Recall)',
         description: '调整 RAG 召回参数和模式',
         icon: MessageSquare,
-        action: (nav) => nav('/processing'), // processing:recall
+        action: (nav) => nav('processing:recall'),
         keywords: ['recall', 'rag', 'retrieval', 'search'],
         score: 7,
       },

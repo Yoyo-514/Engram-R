@@ -5,10 +5,12 @@
  * Each chat_id has its own database, so we just need to track the current chatId.
  */
 
+import { DEFAULT_SCOPE_STATE } from '@/config/memory/defaults';
 import { Logger } from '@/core/logger';
-import { getDbForChat, type ChatDatabase } from './db';
 import { getCurrentChatId, getCurrentCharacter } from '@/integrations/tavern';
-import { DEFAULT_SCOPE_STATE, type ScopeState } from '../types/graph';
+
+import type { ScopeState } from '../types/graph';
+import { getDbForChat, type ChatDatabase } from './db';
 
 /** Meta 表中的状态 key */
 const STATE_KEY = 'scope_state';

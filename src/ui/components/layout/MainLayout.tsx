@@ -1,12 +1,13 @@
+import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect, useState } from 'react';
+import type { FC, ReactNode } from 'react';
+
 import { hasUnreadUpdate as unreadUpdated } from '@/core/updater/Updater';
 import { useConfigStore } from '@/state/configStore';
 import { UpdateNotice } from '@/ui/components/feedback/UpdateNotice';
 import Header from '@/ui/components/layout/Header';
 import { Sidebar } from '@/ui/components/layout/Sidebar';
 import { GlobalStyles } from '@/ui/styles/GlobalStyles';
-import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import type { FC, ReactNode } from 'react';
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -45,7 +46,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
 
   return (
     <div
-      className={`flex absolute inset-0 w-full h-full bg-background text-foreground overflow-hidden font-sans selection:bg-primary/30 selection:text-primary ${!enableAnimations ? 'engram-no-animations' : ''}`}
+      className={`selection:bg-primary/30 absolute inset-0 flex h-full w-full overflow-hidden bg-background font-sans text-foreground selection:text-primary ${!enableAnimations ? 'engram-no-animations' : ''}`}
       id="engram-layout-root"
     >
       <GlobalStyles />
@@ -71,7 +72,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
       />
 
       <div className="flex flex-1 flex-col overflow-hidden">
-        <div className="flex flex-col flex-shrink-0 border-b border-border bg-sidebar/95 backdrop-blur z-50 transition-all duration-300">
+        <div className="bg-sidebar/95 z-50 flex flex-shrink-0 flex-col border-b border-border backdrop-blur transition-all duration-300">
           <Header
             onToggleSidebar={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
             isMobile={false}
@@ -85,7 +86,7 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
           />
         </div>
 
-        <main className="flex-1 flex flex-col relative w-full overflow-hidden bg-background">
+        <main className="relative flex w-full flex-1 flex-col overflow-hidden bg-background">
           {enableAnimations ? (
             <AnimatePresence mode="popLayout" initial={false}>
               <motion.div
@@ -94,14 +95,14 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -15, scale: 0.98 }}
                 transition={{ duration: 0.3, ease: 'easeOut' }}
-                className="flex-1 overflow-y-auto overflow-x-hidden pt-0 px-4 md:px-8 lg:px-12 scroll-smooth w-full h-full pb-8 md:pb-12 lg:pb-16"
+                className="h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8 pt-0 md:px-8 md:pb-12 lg:px-12 lg:pb-16"
               >
-                <div className="max-w-6xl mx-auto min-h-full pb-20">{children}</div>
+                <div className="mx-auto min-h-full max-w-6xl pb-20">{children}</div>
               </motion.div>
             </AnimatePresence>
           ) : (
-            <div className="flex-1 overflow-y-auto overflow-x-hidden pt-0 px-4 md:px-8 lg:px-12 scroll-smooth w-full h-full pb-8 md:pb-12 lg:pb-16">
-              <div className="max-w-6xl mx-auto min-h-full pb-20">{children}</div>
+            <div className="h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8 pt-0 md:px-8 md:pb-12 lg:px-12 lg:pb-16">
+              <div className="mx-auto min-h-full max-w-6xl pb-20">{children}</div>
             </div>
           )}
         </main>

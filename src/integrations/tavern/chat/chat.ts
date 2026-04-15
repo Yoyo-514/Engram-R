@@ -1,5 +1,6 @@
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter, getTavernHelper } from '@/core/utils';
+
 import { getSTContext, type RawSTChatMessage } from '../core/context';
 
 const MODULE = 'TavernChat';
@@ -66,12 +67,10 @@ export async function injectMessage(
       throw new Error('Chat array unavailable');
     }
 
-    const char = getCurrentTavernCharacter()
+    const char = getCurrentTavernCharacter();
 
     const forceAvatar =
-      role === 'char' && typeof ctx.characterId === 'number'
-        ? char?.avatar
-        : undefined;
+      role === 'char' && typeof ctx.characterId === 'number' ? char?.avatar : undefined;
 
     const newMessage: RawSTChatMessage = {
       name: senderName,

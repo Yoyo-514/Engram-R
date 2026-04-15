@@ -1,13 +1,13 @@
+import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
-import type { BrainRecallConfig, RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
-import { brainRecallCache, type RecallCandidate } from '@/modules/rag/retrieval/BrainRecallCache';
+import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import type { ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
+import { type JobContext } from '@/types/job_context';
+import type { BrainRecallConfig, RecallCandidate, RecallConfig } from '@/types/rag';
+import { type IStep } from '@/types/step';
 
 export class BrainRecallStep implements IStep {
   name = 'BrainRecallStep';
@@ -16,9 +16,7 @@ export class BrainRecallStep implements IStep {
     context.data = context.data || {};
     const candidates: ScoredEvent[] = context.data.candidates || [];
     const config: RecallConfig =
-      context.data.recallConfig ||
-      get('apiSettings')?.recallConfig ||
-      DEFAULT_RECALL_CONFIG;
+      context.data.recallConfig || get('runtimeSettings')?.recallConfig || DEFAULT_RECALL_CONFIG;
     const brainConfig: BrainRecallConfig = config.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
     const keywordEntityIds: { id: string; score: number }[] = context.data.keywordEntityIds || [];
 

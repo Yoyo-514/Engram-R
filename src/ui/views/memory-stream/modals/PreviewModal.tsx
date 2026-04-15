@@ -1,6 +1,7 @@
-import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
 import { FileText } from 'lucide-react';
 import type { FC } from 'react';
+
+import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
 
 interface PreviewModalProps {
   isOpen: boolean;
@@ -24,7 +25,7 @@ export const PreviewModal: FC<PreviewModalProps> = ({ isOpen, onClose, content }
       }
     >
       <div className="p-4">
-        <pre className="text-xs font-mono whitespace-pre-wrap leading-relaxed text-muted-foreground bg-muted/30 p-4 rounded border border-border/50">
+        <pre className="bg-muted/30 border-border/50 whitespace-pre-wrap rounded border p-4 font-mono text-xs leading-relaxed text-muted-foreground">
           {content}
         </pre>
       </div>

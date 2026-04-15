@@ -1,3 +1,4 @@
+import { ExternalLink, type LucideIcon } from 'lucide-react';
 /**
  * QuickLinks - 快速跳转链接组件
  *
@@ -5,7 +6,6 @@
  * 支持自定义图标和跳转目标
  */
 import type { FC } from 'react';
-import { ExternalLink, type LucideIcon } from 'lucide-react';
 
 export interface QuickLink {
   id: string;
@@ -24,13 +24,13 @@ export const QuickLinks: FC<QuickLinksProps> = ({ links, onNavigate, className =
   if (links.length === 0) return null;
 
   return (
-    <div className={`hidden sm:flex items-center gap-4 ${className}`}>
+    <div className={`hidden items-center gap-4 sm:flex ${className}`}>
       {links.map((link) => {
         const Icon = link.icon || ExternalLink;
         return (
           <button
             key={link.id}
-            className="group inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-[var(--duration-fast)]"
+            className="group inline-flex items-center gap-1.5 text-xs text-muted-foreground transition-colors duration-[var(--duration-fast)] hover:text-foreground"
             onClick={() => onNavigate(link.linkTo)}
             title={link.label}
           >

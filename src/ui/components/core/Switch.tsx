@@ -37,30 +37,19 @@ export const Switch: FC<SwitchProps> = ({
       aria-checked={checked}
       onClick={handleClick}
       disabled={disabled}
-      className={`
-                relative inline-flex h-3.5 w-9 shrink-0 cursor-pointer items-center rounded-full border
-                transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)]
-                focus:outline-none active:scale-95
-                ${
-                  checked
-                    ? 'bg-primary/20 border-primary/50 shadow-[0_0_10px_rgba(var(--primary),0.2)]'
-                    : 'bg-black/20 border-border shadow-inner'
-                }
-                ${disabled ? 'opacity-50 cursor-not-allowed' : ''}
-                ${className}
-            `}
+      className={`relative inline-flex h-3.5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)] focus:outline-none active:scale-95 ${
+        checked
+          ? 'bg-primary/20 border-primary/50 shadow-[0_0_10px_rgba(var(--primary),0.2)]'
+          : 'border-border bg-black/20 shadow-inner'
+      } ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${className} `}
     >
       {/* 辉光 Thumb */}
       <span
-        className={`
-                    pointer-events-none inline-block h-2.5 w-2.5 transform rounded-full shadow-sm ring-0
-                    transition-all duration-[var(--duration-normal)] ease-[var(--ease-spring)]
-                    ${
-                      checked
-                        ? 'bg-primary shadow-[0_0_8px_rgba(var(--primary),0.8)] border border-primary-foreground/20'
-                        : 'bg-muted-foreground border border-transparent opacity-60'
-                    }
-                `}
+        className={`pointer-events-none inline-block h-2.5 w-2.5 transform rounded-full shadow-sm ring-0 transition-all duration-[var(--duration-normal)] ease-[var(--ease-spring)] ${
+          checked
+            ? 'border-primary-foreground/20 border bg-primary shadow-[0_0_8px_rgba(var(--primary),0.8)]'
+            : 'border border-transparent bg-muted-foreground opacity-60'
+        } `}
         style={{ transform: checked ? 'translateX(24px)' : 'translateX(2px)' }}
       />
     </button>

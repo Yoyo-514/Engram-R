@@ -1,4 +1,4 @@
-import { EventBus } from '@/core/events';
+import { engramEventBus } from '@/core/events';
 import { Logger } from '@/core/logger';
 
 // cspell:ignore toastr
@@ -198,7 +198,7 @@ class NotificationService {
    */
   private navigate(path: string): void {
     Logger.info('Notification', `触发导航: ${path}`);
-    EventBus.emit({ type: 'UI_NAVIGATE_REQUEST', payload: path });
+    engramEventBus.emit({ type: 'UI_NAVIGATE_REQUEST', payload: path });
   }
 
   /**

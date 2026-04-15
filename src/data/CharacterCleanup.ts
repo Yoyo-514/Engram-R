@@ -3,6 +3,7 @@ import { Logger, LogModule } from '@/core/logger';
 import { getSTContext, callPopup } from '@/integrations/tavern';
 import { deleteWorldbook, getWorldbookNames } from '@/integrations/tavern/worldbook';
 import { notificationService } from '@/ui/services/NotificationService';
+
 import { databaseExists, deleteDatabase } from './db';
 import { syncService } from './SyncService';
 

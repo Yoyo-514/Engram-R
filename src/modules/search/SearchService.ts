@@ -1,5 +1,10 @@
 import type { ElementType } from 'react';
 
+import { CommandAdapter } from './adapters/CommandAdapter';
+import { DocAdapter } from './adapters/DocAdapter';
+import { MemoryAdapter } from './adapters/MemoryAdapter';
+import { SettingAdapter } from './adapters/SettingAdapter';
+
 export interface SearchResult {
   id: string;
   type: 'command' | 'setting' | 'log' | 'memory' | 'navigation' | 'doc';
@@ -30,12 +35,10 @@ class SearchServiceImpl {
   }
 }
 
-// ... (在文件开头添加导入)
-import { DocAdapter } from './adapters/DocAdapter';
-
 export const searchService = new SearchServiceImpl();
 
 // 注册默认适配器
-import { CommandAdapter } from './adapters/CommandAdapter';
 searchService.registerAdapter(new CommandAdapter());
+searchService.registerAdapter(new SettingAdapter());
+searchService.registerAdapter(new MemoryAdapter());
 searchService.registerAdapter(new DocAdapter());

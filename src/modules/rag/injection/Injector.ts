@@ -10,8 +10,8 @@
  * - 酒馆会 await 事件处理器，确保预处理完成后再继续
  */
 
+import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get, getPromptTemplateById, incrementStatistic } from '@/config/settings';
-import { DEFAULT_RECALL_CONFIG } from '@/types/config';
 import { Logger, LogModule } from '@/core/logger';
 import {
   eventBus,
@@ -23,10 +23,10 @@ import {
   refreshEngramCache,
   refreshCacheWithNodes,
 } from '@/integrations/tavern';
-import { preprocessor } from '@/modules/preprocessing';
-import type { PreprocessingResult } from '@/modules/preprocessing/types';
+import { preprocessor } from '@/modules/preprocess';
 import { retriever } from '@/modules/rag/retrieval/Retriever';
-import { regexProcessor } from '@/modules/workflow/steps/processing/RegexProcessor';
+import { regexProcessor } from '@/modules/workflow/steps/preprocess/RegexProcessor';
+import type { PreprocessResult } from '@/types/preprocess';
 interface GenerationAfterCommandsParams {
   automatic_trigger?: boolean;
   force_name2?: boolean;
@@ -56,16 +56,13 @@ class Injector {
 
     // V0.8: 使用 GENERATION_AFTER_COMMANDS 事件
     // 这个事件在命令处理后、生成开始前触发，酒馆会 await 处理器
-    eventBus.on(
-      events.GENERATION_AFTER_COMMANDS,
-      async (type: any, params: any, dryRun: any) => {
-        console.info('[Injector] 🎯 GENERATION_AFTER_COMMANDS triggered', { type, dryRun });
-        Logger.debug(LogModule.RAG_INJECT, '捕获 GENERATION_AFTER_COMMANDS', { type });
+    eventBus.on(events.GENERATION_AFTER_COMMANDS, async (type: any, params: any, dryRun: any) => {
+      console.info('[Injector] 🎯 GENERATION_AFTER_COMMANDS triggered', { type, dryRun });
+      Logger.debug(LogModule.RAG_INJECT, '捕获 GENERATION_AFTER_COMMANDS', { type });
 
-        // 重要！必须 await 处理，才能阻塞酒馆的生成流程
-        await this.handleGenerationAfterCommands(type, params, dryRun);
-      }
-    );
+      // 重要！必须 await 处理，才能阻塞酒馆的生成流程
+      await this.handleGenerationAfterCommands(type, params, dryRun);
+    });
 
     // 聊天切换时重置状态
     eventBus.on(events.CHAT_CHANGED, () => {
@@ -221,10 +218,10 @@ class Injector {
       }
 
       // 获取配置
-      let apiSettings, recallConfig, preprocessorConfig;
+      let runtimeSettings, recallConfig, preprocessorConfig;
       try {
-        apiSettings = get('apiSettings');
-        recallConfig = apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
+        runtimeSettings = get('runtimeSettings');
+        recallConfig = runtimeSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
 
         if (!preprocessor) {
           throw new Error('Preprocessor service is undefined');
@@ -274,7 +271,7 @@ class Injector {
 
       let finalOutput = userInput;
       const queries: string[] = [];
-      let preprocessResult: PreprocessingResult | null = null;
+      let preprocessResult: PreprocessResult | null = null;
 
       try {
         // 1. 预处理 (如果启用 且 自动触发开启)

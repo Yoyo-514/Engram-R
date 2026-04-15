@@ -1,12 +1,14 @@
+import * as jsonpatch from 'fast-json-patch';
+import { z } from 'zod';
+
+import { EntityType } from '@/config/memory/defaults';
 import { Logger } from '@/core/logger';
 import { deepClone, stringifyYaml } from '@/core/utils';
 import { parseJson } from '@/core/utils/JsonParser';
-import { type EntityNode, EntityType } from '@/types/graph';
 import { useMemoryStore } from '@/state/memoryStore';
-import * as jsonpatch from 'fast-json-patch';
-import { z } from 'zod';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
+import type { EntityNode } from '@/types/graph';
+import { type JobContext } from '@/types/job_context';
+import type { IStep } from '@/types/step';
 
 // V1.3: 统一 JSON Patch 格式
 // 新实体: { op: "add", path: "/entities/{name}", value: {...} }
@@ -21,24 +23,6 @@ const PatchOpSchema = z.object({
 
 const UnifiedPatchSchema = z.object({
   patches: z.array(PatchOpSchema),
-});
-
-// 向后兼容的 Legacy Schema
-const LegacyEntitySchema = z.object({
-  name: z.string(),
-  type: z.string(),
-  aliases: z.array(z.string()).optional(),
-  profile: z.record(z.string(), z.unknown()).optional(),
-});
-
-const LegacyPatchSchema = z.object({
-  name: z.string(),
-  ops: z.array(PatchOpSchema),
-});
-
-const LegacySchema = z.object({
-  entities: z.array(LegacyEntitySchema).optional(),
-  patches: z.array(LegacyPatchSchema).optional(),
 });
 
 const ProcessedResultSchema = z.object({
@@ -299,38 +283,20 @@ export class SaveEntity implements IStep {
         updatedEntities
       );
     } else {
-      // 尝试解析为统一 Patch 格式
       const unifiedResult = UnifiedPatchSchema.safeParse(sourceContent);
 
-      if (unifiedResult.success && this.isUnifiedFormat(unifiedResult.data.patches)) {
-        // V1.3 统一格式
-        await this.processUnifiedPatches(
-          unifiedResult.data.patches,
-          existingEntities,
-          store,
-          isDryRun,
-          newEntities,
-          updatedEntities
-        );
-      } else {
-        // 向后兼容 Legacy 格式
-        const legacyResult = LegacySchema.safeParse(sourceContent);
-        if (legacyResult.success) {
-          await this.processLegacyFormat(
-            legacyResult.data,
-            existingEntities,
-            store,
-            isDryRun,
-            newEntities,
-            updatedEntities
-          );
-        } else {
-          // 如果既不是 Processed，也不是 Patch，也不是 Legacy，那可能是个空对象或者格式错乱
-          // 但如果是空对象 (UserReview return empty entities)，legacyResult.success 会是 true (fields optional)
-          // 所以只有完全无法解析的才会到这里
-          throw new Error(`SaveEntity: Zod Validation Failed - 无法解析为统一或旧版格式`);
-        }
+      if (!unifiedResult.success || !this.isUnifiedFormat(unifiedResult.data.patches)) {
+        throw new Error('SaveEntity: Zod Validation Failed - 无法解析为统一 Patch 格式');
       }
+
+      await this.processUnifiedPatches(
+        unifiedResult.data.patches,
+        existingEntities,
+        store,
+        isDryRun,
+        newEntities,
+        updatedEntities
+      );
     }
 
     context.output = { newEntities, updatedEntities };
@@ -655,83 +621,6 @@ export class SaveEntity implements IStep {
     }
 
     return relativeOps;
-  }
-
-  /** 向后兼容: 处理旧版 entities + patches 格式 */
-  private async processLegacyFormat(
-    data: z.infer<typeof LegacySchema>,
-    existingEntities: EntityNode[],
-    store: ReturnType<typeof useMemoryStore.getState>,
-    isDryRun: boolean,
-    newEntities: EntityNode[],
-    updatedEntities: EntityNode[]
-  ): Promise<void> {
-    const entityIndexes = this.buildEntityIndexes(existingEntities);
-
-    // 1. Process New Entities
-    if (data.entities) {
-      for (const extracted of data.entities) {
-        const exists =
-          entityIndexes.byName.get(extracted.name) ||
-          this.pickAliasMatch(extracted.name, entityIndexes.byAlias);
-        if (exists) continue;
-
-        const entityDraft = this.buildEntityDraft(extracted.name, extracted);
-
-        if (!isDryRun) {
-          const saved = await store.saveEntity(entityDraft);
-          newEntities.push(saved);
-          this.indexEntity(entityIndexes, saved);
-        } else {
-          const entity = {
-            ...entityDraft,
-            id: `temp-${Date.now()}`,
-            last_updated_at: Date.now(),
-          } satisfies EntityNode;
-          newEntities.push(entity);
-          this.indexEntity(entityIndexes, entity);
-        }
-      }
-    }
-
-    // 2. Process Patches
-    if (data.patches) {
-      for (const patch of data.patches) {
-        if (!patch.name) {
-          Logger.warn('SaveEntity', 'Skipping legacy patch due to missing name field', { patch });
-          continue;
-        }
-        const target = entityIndexes.byName.get(patch.name) || entityIndexes.byId.get(patch.name);
-        if (!target) continue;
-
-        try {
-          const targetDoc: EntityPatchDocument = deepClone(target);
-          jsonpatch.applyPatch(targetDoc, patch.ops as jsonpatch.Operation[]);
-
-          if (!isDryRun) {
-            const description = this.profileToYaml(
-              targetDoc.name,
-              targetDoc.type,
-              targetDoc.profile || {}
-            );
-            await store.updateEntity(target.id, {
-              profile: targetDoc.profile,
-              aliases: targetDoc.aliases,
-              description,
-              name: targetDoc.name,
-              type: targetDoc.type,
-            });
-            updatedEntities.push(targetDoc);
-          } else {
-            // DryRun: Attach diffs with old/new values
-            targetDoc._diff = this.buildDiffOperations(patch.ops as jsonpatch.Operation[], target);
-            updatedEntities.push(targetDoc);
-          }
-        } catch (error) {
-          Logger.warn('SaveEntity', `Patch failed for ${patch.name}`, error);
-        }
-      }
-    }
   }
 
   private buildEntityIndexes(entities: EntityNode[]): EntityIndexes {

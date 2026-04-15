@@ -152,7 +152,7 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
         ref={panelRef}
-        className="fixed z-[11000] flex flex-col rounded-lg shadow-2xl border border-border overflow-hidden engram-animate-scale-in"
+        className="engram-animate-scale-in fixed z-[11000] flex flex-col overflow-hidden rounded-lg border border-border shadow-2xl"
         style={{
           left: position.x,
           top: position.y,
@@ -165,7 +165,7 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
         }}
       >
         <div
-          className="flex items-center justify-between px-3 py-2 border-b border-border select-none"
+          className="flex select-none items-center justify-between border-b border-border px-3 py-2"
           onMouseDown={handleMouseDown}
           style={{
             cursor: isDragging ? 'grabbing' : 'grab',
@@ -178,7 +178,7 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
           </div>
           <button
             onClick={onClose}
-            className="p-1 text-muted-foreground hover:text-foreground rounded transition-all duration-[var(--duration-fast)] hover:rotate-90 hover:bg-accent"
+            className="rounded p-1 text-muted-foreground transition-all duration-[var(--duration-fast)] hover:rotate-90 hover:bg-accent hover:text-foreground"
             style={{ backgroundColor: 'transparent' }}
             aria-label="关闭"
             onMouseDown={(event) => event.stopPropagation()}
@@ -191,7 +191,7 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
 
         {resizable && (
           <div
-            className="absolute bottom-0 right-0 w-4 h-4 cursor-se-resize"
+            className="absolute bottom-0 right-0 h-4 w-4 cursor-se-resize"
             onMouseDown={handleResizeStart}
             style={{
               background: 'linear-gradient(135deg, transparent 50%, var(--border, #333) 50%)',

@@ -1,6 +1,6 @@
+import { ChevronRight } from 'lucide-react';
 import type { ReactNode, FC } from 'react';
 import { Fragment } from 'react';
-import { ChevronRight } from 'lucide-react';
 
 interface PageTitleProps {
   title: string;
@@ -18,23 +18,23 @@ export const PageTitle: FC<PageTitleProps> = ({
   className = '',
 }) => (
   <div
-    className={`mb-8 px-4 md:px-0 flex justify-between items-start animate-in fade-in slide-in-from-bottom-2 duration-500 ${className}`}
+    className={`animate-in fade-in slide-in-from-bottom-2 mb-8 flex items-start justify-between px-4 duration-500 md:px-0 ${className}`}
   >
     <div>
-      <h1 className="text-3xl font-light tracking-tight text-foreground flex items-center gap-2">
+      <h1 className="flex items-center gap-2 text-3xl font-light tracking-tight text-foreground">
         {breadcrumbs.map((crumb, index) => (
           <Fragment key={index}>
-            <span className="text-muted-foreground/60 hover:text-foreground/80 transition-colors text-xl">
+            <span className="text-muted-foreground/60 hover:text-foreground/80 text-xl transition-colors">
               {crumb}
             </span>
             <ChevronRight size={20} className="text-muted-foreground/30 px-0.5" />
           </Fragment>
         ))}
-        <span className="drop-shadow-[0_0_15px_rgba(255,255,255,0.2)] text-foreground">
+        <span className="text-foreground drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
           {title}
         </span>
       </h1>
-      {subtitle && <p className="mt-2 text-muted-foreground text-sm font-light">{subtitle}</p>}
+      {subtitle && <p className="mt-2 text-sm font-light text-muted-foreground">{subtitle}</p>}
     </div>
     {actions && <div className="flex gap-2">{actions}</div>}
   </div>

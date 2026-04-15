@@ -1,3 +1,8 @@
+import { AlertCircle, CheckCircle2, Loader2, Play, RefreshCw, Square } from 'lucide-react';
+import { useCallback, useEffect, useState } from 'react';
+import type { FC } from 'react';
+
+import { embeddingService } from '@/modules/rag';
 /**
  * VectorizationPanel - 向量化面板组件
  *
@@ -8,7 +13,6 @@
  * - 进度显示
  */
 import type { EmbeddingConfig, VectorConfig } from '@/types/rag';
-import { embeddingService } from '@/modules/rag';
 import {
   NumberField,
   SelectField,
@@ -16,9 +20,6 @@ import {
   TextField,
 } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
-import { AlertCircle, CheckCircle2, Loader2, Play, RefreshCw, Square } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import type { FC } from 'react';
 
 // ==================== 类型 ====================
 
@@ -176,7 +177,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-48 text-muted-foreground gap-2">
+      <div className="flex h-48 items-center justify-center gap-2 text-muted-foreground">
         <Loader2 size={20} className="animate-spin" />
         <span className="text-sm font-light">加载中...</span>
       </div>
@@ -186,38 +187,38 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
   return (
     <div className="py-4">
       {/* 统计信息 */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-3 gap-4">
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">总事件</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">总事件</span>
           <span className="text-2xl font-light">{stats.total}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">已嵌入</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">已嵌入</span>
           <span className="text-2xl font-light text-primary">{stats.embedded}</span>
         </div>
         <div className="flex flex-col gap-1">
-          <span className="text-xs text-muted-foreground uppercase tracking-wider">待处理</span>
+          <span className="text-xs uppercase tracking-wider text-muted-foreground">待处理</span>
           <span className="text-2xl font-light text-warning">{stats.pending}</span>
         </div>
       </div>
 
       {/* 进度条 */}
       {progress && (
-        <div className="mb-6 p-4 bg-muted/30 rounded-lg">
-          <div className="flex items-center justify-between mb-2">
+        <div className="bg-muted/30 mb-6 rounded-lg p-4">
+          <div className="mb-2 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               嵌入进度 {progress.current}/{progress.total}
             </span>
             <span className="text-sm font-medium">{progressPercent}%</span>
           </div>
-          <div className="h-2 bg-muted rounded-full overflow-hidden">
+          <div className="h-2 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
           {progress.errors > 0 && (
-            <p className="text-xs text-destructive mt-2">{progress.errors} 个错误</p>
+            <p className="mt-2 text-xs text-destructive">{progress.errors} 个错误</p>
           )}
         </div>
       )}
@@ -225,7 +226,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
       {/* 结果提示 */}
       {lastResult && (
         <div
-          className={`mb-6 p-3 rounded-lg flex items-center gap-2 ${
+          className={`mb-6 flex items-center gap-2 rounded-lg p-3 ${
             lastResult.failed > 0 ? 'bg-warning/10 text-warning' : 'bg-primary/10 text-primary'
           }`}
         >
@@ -239,7 +240,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 错误提示 */}
       {error && (
-        <div className="mb-6 p-3 bg-destructive/10 text-destructive rounded-lg flex items-center gap-2">
+        <div className="bg-destructive/10 mb-6 flex items-center gap-2 rounded-lg p-3 text-destructive">
           <AlertCircle size={16} />
           <span className="text-sm">{error}</span>
         </div>
@@ -247,17 +248,17 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 向量配置状态 */}
       {!isVectorConfigValid && (
-        <div className="mb-6 p-3 bg-muted/50 rounded-lg">
+        <div className="bg-muted/50 mb-6 rounded-lg p-3">
           <p className="text-sm text-muted-foreground">
             请在
-            <span className="text-primary mx-1">API 配置 → 模型配置 → 向量化</span>
+            <span className="mx-1 text-primary">API 配置 → 模型配置 → 向量化</span>
             中设置向量化服务
           </p>
         </div>
       )}
 
       {/* 范围选择 */}
-      <div className="grid grid-cols-2 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-2 gap-4">
         <TextField
           label="起始消息序号"
           value={rangeStart}
@@ -277,11 +278,11 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
       </div>
 
       {/* 操作按钮 */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="mb-6 flex flex-wrap gap-3">
         {isProcessing ? (
           <button
             onClick={handleStopEmbedding}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+            className="hover:bg-destructive/90 inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-destructive-foreground transition-colors"
           >
             <Square size={16} />
             停止
@@ -291,7 +292,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
             <button
               onClick={handleStartEmbedding}
               disabled={stats.pending === 0 || !isVectorConfigValid}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play size={16} />
               嵌入未处理 ({stats.pending})
@@ -299,7 +300,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
             <button
               onClick={handleReembedAll}
               disabled={stats.total === 0 || !isVectorConfigValid}
-              className="inline-flex items-center gap-2 px-4 py-2 border border-border text-foreground rounded-md hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 rounded-md border border-border px-4 py-2 text-foreground transition-colors hover:bg-muted disabled:cursor-not-allowed disabled:opacity-50"
             >
               <RefreshCw size={16} />
               重新嵌入所有
@@ -308,7 +309,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
               onClick={() => {
                 void refreshStats();
               }}
-              className="inline-flex items-center gap-2 px-3 py-2 text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-2 px-3 py-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <RefreshCw size={16} />
             </button>
@@ -320,7 +321,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 配置区域 */}
       <div className="space-y-4">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
+        <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
           嵌入设置
         </h3>
 
@@ -353,12 +354,12 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
         />
 
         {vectorConfig && (
-          <div className="p-3 bg-muted/30 rounded-lg">
-            <p className="text-xs text-muted-foreground mb-1">当前向量配置</p>
+          <div className="bg-muted/30 rounded-lg p-3">
+            <p className="mb-1 text-xs text-muted-foreground">当前向量配置</p>
             <p className="text-sm">
               <span className="text-primary">{vectorConfig.source}</span>
               {vectorConfig.model && (
-                <span className="text-muted-foreground ml-2">/ {vectorConfig.model}</span>
+                <span className="ml-2 text-muted-foreground">/ {vectorConfig.model}</span>
               )}
             </p>
           </div>

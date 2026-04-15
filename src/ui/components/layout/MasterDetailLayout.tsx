@@ -1,7 +1,9 @@
-import { useConfigStore } from '@/state/configStore';
-import { useResponsive } from '@/ui/hooks/useResponsive';
 import { AnimatePresence, motion } from 'framer-motion';
 import type { ReactNode, FC, CSSProperties, RefObject } from 'react';
+
+import { useConfigStore } from '@/state/configStore';
+import { useResponsive } from '@/ui/hooks/useResponsive';
+
 import { MobileFullscreenForm } from './MobileFullscreenForm';
 
 interface MasterDetailLayoutProps {
@@ -63,12 +65,12 @@ export const MasterDetailLayout: FC<MasterDetailLayoutProps> = ({
   }
 
   return (
-    <div className={`flex flex-col h-full overflow-hidden ${className}`} style={style}>
+    <div className={`flex h-full flex-col overflow-hidden ${className}`} style={style}>
       {/* 顶部工具栏 (搜索框等) */}
-      {header && <div className="shrink-0 mb-4 px-1">{header}</div>}
+      {header && <div className="mb-4 shrink-0 px-1">{header}</div>}
 
       {/* 主内容区 - 双栏布局 */}
-      <div className="flex-1 flex gap-6 min-h-0 overflow-hidden relative">
+      <div className="relative flex min-h-0 flex-1 gap-6 overflow-hidden">
         {/* 左侧：列表区域 - 使用 framer-motion layout 平滑改变宽度 */}
         <motion.div
           layout={enableAnimations}
@@ -80,10 +82,7 @@ export const MasterDetailLayout: FC<MasterDetailLayoutProps> = ({
           transition={
             enableAnimations ? { type: 'spring', bounce: 0.1, duration: 0.4 } : { duration: 0 }
           }
-          className={`
-                        flex flex-col min-h-0 shrink-0
-                        ${isMobile ? 'w-full' : 'border-r border-border/50 pr-4'}
-                    `}
+          className={`flex min-h-0 shrink-0 flex-col ${isMobile ? 'w-full' : 'border-border/50 border-r pr-4'} `}
           ref={listRef}
         >
           {list}
@@ -101,7 +100,7 @@ export const MasterDetailLayout: FC<MasterDetailLayoutProps> = ({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 20, position: 'absolute', right: 0 }}
                     transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-                    className="flex-1 flex flex-col min-h-0 min-w-0"
+                    className="flex min-h-0 min-w-0 flex-1 flex-col"
                   >
                     {detail}
                   </motion.div>
@@ -109,7 +108,7 @@ export const MasterDetailLayout: FC<MasterDetailLayoutProps> = ({
               </AnimatePresence>
             ) : (
               detail && (
-                <div key="detail-pane" className="flex-1 flex flex-col min-h-0 min-w-0">
+                <div key="detail-pane" className="flex min-h-0 min-w-0 flex-1 flex-col">
                   {detail}
                 </div>
               )

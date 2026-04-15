@@ -6,8 +6,6 @@
  * - 支持默认展开/折叠
  */
 
-import type { FC } from 'react';
-import { useState, useEffect, useMemo, createElement } from 'react';
 import {
   ChevronRight,
   ChevronDown,
@@ -26,7 +24,12 @@ import {
   CloudCog,
   type LucideIcon,
 } from 'lucide-react';
-import { type LogEntry, LogLevel, LogLevelConfig } from '@/core/logger';
+import type { FC } from 'react';
+import { useState, useEffect, useMemo, createElement } from 'react';
+
+import { LogLevel } from '@/config/logger/defaults';
+import { LogLevelConfig } from '@/config/logger/presentation';
+import type { LogEntry } from '@/types/logger';
 
 interface LogEntryItemProps {
   entry: LogEntry;
@@ -128,46 +131,39 @@ export const LogEntryItem: FC<LogEntryItemProps> = ({ entry, defaultExpanded = f
   return (
     <div className="group">
       <div
-        className={`
-                    flex items-start gap-3 px-2 py-1 rounded-sm transition-colors
-                    hover:bg-white/[0.02]
-                    ${hasData ? 'cursor-pointer' : ''}
-                `}
+        className={`flex items-start gap-3 rounded-sm px-2 py-1 transition-colors hover:bg-white/[0.02] ${hasData ? 'cursor-pointer' : ''} `}
         onClick={() => hasData && setExpanded(!expanded)}
       >
         {/* 展开箭头 */}
-        <span className="flex items-center text-zinc-600 shrink-0 mt-0.5 w-3">
+        <span className="mt-0.5 flex w-3 shrink-0 items-center text-zinc-600">
           {hasData ? expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} /> : null}
         </span>
 
         {/* 时间戳 - 加深颜色 */}
-        <span className="text-zinc-500 shrink-0 tabular-nums text-[11px]">
+        <span className="shrink-0 text-[11px] tabular-nums text-zinc-500">
           {formatTime(entry.timestamp)}
         </span>
 
         {/* 级别标签 - 紧凑样式 */}
         <span
-          className={`
-                    shrink-0 text-[10px] font-medium px-1.5 py-0.5 rounded
-                    ${levelStyle.text} ${levelStyle.bg}
-                `}
+          className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.text} ${levelStyle.bg} `}
         >
           {levelConfig.label}
         </span>
 
         {/* 模块标签 - 加深颜色 */}
-        <span className="text-zinc-400 shrink-0 text-[11px]">{entry.module}</span>
+        <span className="shrink-0 text-[11px] text-zinc-400">{entry.module}</span>
 
         {/* 消息内容 */}
-        <span className="text-zinc-300 text-[11px] break-words flex-1 leading-relaxed">
+        <span className="flex-1 break-words text-[11px] leading-relaxed text-zinc-300">
           {entry.message}
         </span>
       </div>
 
       {/* 展开的数据详情 */}
       {expanded && hasData && (
-        <div className="ml-10 mr-2 mb-1 px-3 py-2 bg-zinc-900/50 border-l-2 border-zinc-700 rounded-r text-[10px]">
-          <pre className="m-0 text-zinc-400 whitespace-pre-wrap break-words font-mono">
+        <div className="mb-1 ml-10 mr-2 rounded-r border-l-2 border-zinc-700 bg-zinc-900/50 px-3 py-2 text-[10px]">
+          <pre className="m-0 whitespace-pre-wrap break-words font-mono text-zinc-400">
             {JSON.stringify(entry.data, null, 2)}
           </pre>
         </div>
@@ -216,14 +212,14 @@ export const LogGroup: FC<LogGroupProps> = ({
   }
 
   return (
-    <div className="border-l-2 border-transparent hover:border-zinc-700 transition-colors">
+    <div className="border-l-2 border-transparent transition-colors hover:border-zinc-700">
       {/* 分组头 */}
       <div
-        className="flex items-center gap-2 px-2 py-1.5 cursor-pointer text-[11px] hover:bg-white/[0.02] rounded-sm transition-colors"
+        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[11px] transition-colors hover:bg-white/[0.02]"
         onClick={() => setExpanded(!expanded)}
       >
         {/* 展开箭头 */}
-        <span className="text-zinc-500 shrink-0">
+        <span className="shrink-0 text-zinc-500">
           {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
         </span>
 
@@ -238,13 +234,13 @@ export const LogGroup: FC<LogGroupProps> = ({
 
         {/* 计数标签 */}
         <span
-          className={`px-1.5 py-0.5 rounded text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
+          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
         >
           {entryCount} 条
         </span>
 
         {/* 时间范围 - 加深颜色 */}
-        <span className="text-zinc-500 ml-auto tabular-nums">{timeRange}</span>
+        <span className="ml-auto tabular-nums text-zinc-500">{timeRange}</span>
       </div>
 
       {/* 展开的日志列表 */}

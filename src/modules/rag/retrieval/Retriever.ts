@@ -11,19 +11,24 @@
  * - keyword_only: 仅关键词扫描
  */
 
+import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { RecallLogService } from '@/core/logger/RecallLogger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
-
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/types/config';
-import type { BrainRecallConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
+import { createRetrievalWorkflow, runWorkflow } from '@/modules/workflow';
 import type { EventNode } from '@/types/graph';
-import type { AgenticRecall } from '@/modules/preprocessing/types';
-import { WorkflowEngine } from '@/modules/workflow/core/WorkflowEngine';
-import { createRetrievalWorkflow } from '@/modules/workflow';
-import { brainRecallCache, type RecallCandidate } from './BrainRecallCache';
+import type { AgenticRecall } from '@/types/preprocess';
+import type {
+  BrainRecallConfig,
+  RecallCandidate,
+  RecallConfig,
+  RerankConfig,
+  VectorConfig,
+} from '@/types/rag';
+
+import { brainRecallCache } from './BrainRecallCache';
 
 // ==================== 类型定义 ====================
 
@@ -42,8 +47,8 @@ class Retriever {
    * 获取召回配置
    */
   private getRecallConfig(): RecallConfig {
-    const apiSettings = get('apiSettings');
-    return apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
+    const runtimeSettings = get('runtimeSettings');
+    return runtimeSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
   }
 
   // Fix P1: 缓存 hasVectorizedNodes 结果，避免每次都扫全表
@@ -82,16 +87,16 @@ class Retriever {
    * 获取全局向量配置
    */
   private getVectorConfig(): VectorConfig | undefined {
-    const apiSettings = get('apiSettings');
-    return apiSettings?.vectorConfig;
+    const runtimeSettings = get('runtimeSettings');
+    return runtimeSettings?.vectorConfig;
   }
 
   /**
    * 获取 Rerank 配置
    */
   private getRerankConfig(): RerankConfig | null {
-    const apiSettings = get('apiSettings');
-    return apiSettings?.rerankConfig || null;
+    const runtimeSettings = get('runtimeSettings');
+    return runtimeSettings?.rerankConfig || null;
   }
 
   /**
@@ -105,8 +110,8 @@ class Retriever {
       unifiedCount: unifiedQueries?.length || 0,
     });
 
-    const apiSettings = get('apiSettings');
-    const recallConfig = apiSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
+    const runtimeSettings = get('runtimeSettings');
+    const recallConfig = runtimeSettings?.recallConfig || DEFAULT_RECALL_CONFIG;
 
     // 未启用召回，使用滚动窗口策略
     if (!recallConfig.enabled && !recallConfig.useKeywordRecall) {
@@ -188,7 +193,7 @@ class Retriever {
     Logger.debug(LogModule.RAG_INJECT, '--- 进入 Hybrid Search 工作流 ---');
 
     try {
-      const context = await WorkflowEngine.run(createRetrievalWorkflow(), {
+      const context = await runWorkflow(createRetrievalWorkflow(), {
         input: {
           query: userInput,
           unifiedQueries,

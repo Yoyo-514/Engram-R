@@ -1,7 +1,9 @@
+import { Moon, Palette, Sun } from 'lucide-react';
+
 import { COMMANDS } from '@/constants/commands';
 import { NAV_ITEMS, type NavItem } from '@/constants/navigation';
 import { useThemeStore } from '@/state/themeStore';
-import { Moon, Palette, Sun } from 'lucide-react';
+
 import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class CommandAdapter implements SearchAdapter {

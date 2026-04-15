@@ -6,8 +6,8 @@ import { summarizerService } from '@/modules/memory';
 import { entityBuilder } from '@/modules/memory/EntityExtractor';
 import { eventTrimmer } from '@/modules/memory/EventTrimmer';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
+import type { BatchTask, BatchTaskType, IBatchTaskHandler } from '@/types/batch';
 import { notificationService } from '@/ui/services/NotificationService';
-import { type BatchTask, type BatchTaskType, type IBatchTaskHandler } from '../types';
 
 /**
  * 同步补全历史聊天记录的长程任务处理器

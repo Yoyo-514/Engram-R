@@ -1,6 +1,8 @@
+import { type StateCreator } from 'zustand';
+
 import { generateShortUUID } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
-import { type StateCreator } from 'zustand';
+
 import { getCurrentDb, tryGetCurrentDb } from './coreSlice';
 
 function toYamlScalar(value: unknown, fallback: string): string {

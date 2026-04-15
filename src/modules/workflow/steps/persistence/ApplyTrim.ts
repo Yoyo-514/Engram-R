@@ -1,12 +1,12 @@
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { type EventNode } from '@/types/graph';
 import { refreshCache } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag';
 import { useMemoryStore } from '@/state/memoryStore';
+import { type EventNode } from '@/types/graph';
+import { type JobContext } from '@/types/job_context';
+import { type IStep } from '@/types/step';
 import { notificationService } from '@/ui/services/NotificationService';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
 
 export class ApplyTrim implements IStep {
   name = 'ApplyTrim';
@@ -58,7 +58,7 @@ export class ApplyTrim implements IStep {
 
     // 2. 联动嵌入 (Trim Linkage)
     const sourceEventIds = eventsToMerge.map((e) => e.id);
-    const settings = get('apiSettings');
+    const settings = get('runtimeSettings');
     // @ts-ignore
     const embeddingConfig = settings?.embeddingConfig;
 

@@ -3,8 +3,17 @@
  *
  * 提供 SillyTavern 事件、消息、世界书等功能的封装
  */
-import { eventBus, isNativeWorldbookTokenCountAvailable, isWorldInfoAvailable,  } from '@/integrations/tavern';
-import { getFloorCount, isMessageServiceAvailable, getCurrentCharacterName as getCurrentCharName  } from './Message';
+import {
+  eventBus,
+  isNativeWorldbookTokenCountAvailable,
+  isWorldInfoAvailable,
+} from '@/integrations/tavern';
+
+import {
+  getFloorCount,
+  isMessageServiceAvailable,
+  getCurrentCharacterName as getCurrentCharName,
+} from './Message';
 
 /**
  * 检查酒馆接口对接状态

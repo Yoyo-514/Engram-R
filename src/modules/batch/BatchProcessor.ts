@@ -7,11 +7,12 @@
  * - 具体的导入解析逻辑下发到 tasks/ 实现
  */
 
+import type { BatchProgressCallback, BatchQueue, BatchTaskType } from '@/types/batch';
 import { notificationService } from '@/ui/services/NotificationService';
+
 import { BatchEngine } from './engine/BatchEngine';
 import { HistoryTask } from './tasks/HistoryTask';
 import { type ImportConfig, ImportTextTask } from './tasks/ImportTextTask';
-import { type BatchProgressCallback, type BatchQueue, type BatchTaskType } from './types';
 
 class BatchProcessor {
   private engine: BatchEngine;

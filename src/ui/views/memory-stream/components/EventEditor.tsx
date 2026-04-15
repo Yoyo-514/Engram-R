@@ -1,14 +1,3 @@
-/**
- * EventEditor - 事件编辑面板
- *
- * V0.8.5:
- * - KV 自动烧录进 summary（始终开启）
- * - 编辑即时反馈到父组件
- */
-import type { EventNode } from '@/types/graph';
-import { TextField } from '@/ui/components/form/FormComponents';
-import { Divider } from '@/ui/components/layout/Divider';
-import { useResponsive } from '@/ui/hooks/useResponsive';
 import debounce from 'lodash-es/debounce';
 import { Archive, ArrowLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
 import {
@@ -21,6 +10,18 @@ import {
   useState,
 } from 'react';
 import type { CSSProperties, CompositionEvent } from 'react';
+
+/**
+ * EventEditor - 事件编辑面板
+ *
+ * V0.8.5:
+ * - KV 自动烧录进 summary（始终开启）
+ * - 编辑即时反馈到父组件
+ */
+import type { EventNode } from '@/types/graph';
+import { TextField } from '@/ui/components/form/FormComponents';
+import { Divider } from '@/ui/components/layout/Divider';
+import { useResponsive } from '@/ui/hooks/useResponsive';
 
 // ==================== 类型定义 ====================
 
@@ -287,7 +288,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
 
     if (!event) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-meta gap-2 p-8">
+        <div className="flex h-full flex-col items-center justify-center gap-2 p-8 text-meta">
           <p className="text-sm font-light">选择一个事件查看详情</p>
         </div>
       );
@@ -307,14 +308,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setEventType, 'eventType')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 focus:border-primary transition-colors text-heading"
+            className="placeholder:text-meta/40 text-heading transition-colors focus:border-primary"
             placeholder="如：任务确认、战斗结束"
           />
         </div>
 
         {/* 摘要 */}
         <div className="flex flex-col gap-1">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <label className="text-xs text-meta">摘要内容</label>
             <button
               onClick={() => {
@@ -371,7 +372,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setTimeAnchor, 'timeAnchor')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 focus:border-primary transition-colors"
+            className="placeholder:text-meta/40 transition-colors focus:border-primary"
             placeholder="如：太阳历1023年4月4日"
           />
         </div>
@@ -387,7 +388,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setLocation, 'location')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 focus:border-primary transition-colors text-value"
+            className="placeholder:text-meta/40 text-value transition-colors focus:border-primary"
             placeholder="地点（逗号分隔多个），如：边境公会大厅, 小镇酒馆"
           />
         </div>
@@ -403,7 +404,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setRoleText, 'roleText')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 focus:border-primary transition-colors text-emphasis"
+            className="placeholder:text-meta/40 text-emphasis transition-colors focus:border-primary"
             placeholder="如：{{user}}, 赫伯"
           />
         </div>
@@ -419,28 +420,28 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setLogicText, 'logicText')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 focus:border-primary transition-colors text-label"
+            className="placeholder:text-meta/40 text-label transition-colors focus:border-primary"
             placeholder="如：起点, 伏笔"
           />
         </div>
 
         {/* 重要性分数 */}
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <label className="text-xs text-meta">重要性分数</label>
             <span
-              className={`text-xs font-mono ${score >= 0.8 ? 'text-emphasis' : score >= 0.5 ? 'text-value' : 'text-label'}`}
+              className={`font-mono text-xs ${score >= 0.8 ? 'text-emphasis' : score >= 0.5 ? 'text-value' : 'text-label'}`}
             >
               {score.toFixed(2)}
             </span>
           </div>
-          <div className="relative h-4 flex items-center group cursor-pointer">
+          <div className="group relative flex h-4 cursor-pointer items-center">
             <div
               className="absolute inset-x-0 h-[1px]"
               style={{ backgroundColor: 'var(--border)' }}
             />
             <div
-              className={`absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full shadow-sm pointer-events-none transition-transform duration-75 ease-out group-hover:scale-125 ${
+              className={`pointer-events-none absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full shadow-sm transition-transform duration-75 ease-out group-hover:scale-125 ${
                 score >= 0.8 ? 'bg-emphasis' : score >= 0.5 ? 'bg-value' : 'bg-label'
               }`}
               style={{ left: `${score * 100}%`, transform: `translate(-50%, -50%)` }}
@@ -459,14 +460,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
               onMouseUp={() => syncToParent({ score })}
               onTouchEnd={() => syncToParent({ score })}
               onKeyUp={() => syncToParent({ score })}
-              className="absolute inset-x-0 w-full h-full opacity-0 cursor-pointer z-10 m-0"
+              className="absolute inset-x-0 z-10 m-0 h-full w-full cursor-pointer opacity-0"
               style={{ appearance: 'none', WebkitAppearance: 'none' }}
             />
           </div>
         </div>
 
         {/* 锁定状态 */}
-        <div className="flex justify-between items-center py-2">
+        <div className="flex items-center justify-between py-2">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-meta">锁定此事件</span>
@@ -476,14 +477,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                 <LockOpen size={12} className="text-meta/60" />
               )}
             </div>
-            <span className="text-[10px] text-meta/60">
+            <span className="text-meta/60 text-[10px]">
               锁定后将防止该记忆在自动精简或清理时被删除
             </span>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
-              className="sr-only peer"
+              className="peer sr-only"
               checked={isLocked}
               onChange={(e) => {
                 const val = e.target.checked;
@@ -492,25 +493,25 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                 syncToParent({ isLocked: val });
               }}
             />
-            <div className="w-9 h-5 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emphasis transition-colors"></div>
+            <div className="peer h-5 w-9 rounded-full bg-border transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-border after:bg-white after:transition-all after:content-[''] peer-checked:bg-emphasis peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
           </label>
         </div>
 
         {/* 归档状态 */}
-        <div className="flex justify-between items-center py-2">
+        <div className="flex items-center justify-between py-2">
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
               <span className="text-xs text-meta">归档此事件</span>
               <Archive size={12} className={isArchived ? 'text-primary' : 'text-meta/60'} />
             </div>
-            <span className="text-[10px] text-meta/60">
+            <span className="text-meta/60 text-[10px]">
               归档后将不再参与自动摘要生成和实时上下文
             </span>
           </div>
-          <label className="relative inline-flex items-center cursor-pointer">
+          <label className="relative inline-flex cursor-pointer items-center">
             <input
               type="checkbox"
-              className="sr-only peer"
+              className="peer sr-only"
               checked={isArchived}
               onChange={(e) => {
                 const val = e.target.checked;
@@ -519,7 +520,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                 syncToParent({ isArchived: val });
               }}
             />
-            <div className="w-9 h-5 bg-border rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-primary transition-colors"></div>
+            <div className="peer h-5 w-9 rounded-full bg-border transition-colors after:absolute after:left-[2px] after:top-[2px] after:h-4 after:w-4 after:rounded-full after:border after:border-border after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white"></div>
           </label>
         </div>
 
@@ -531,7 +532,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             ID: <span className="font-mono">{event.id.substring(0, 8)}...</span>
           </p>
           <p>
-            Level: <span className="text-value font-medium">{event.level}</span>
+            Level: <span className="font-medium text-value">{event.level}</span>
           </p>
           {event.source_range && (
             <p>
@@ -552,16 +553,16 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
     // 全屏模式（移动端）
     if (isFullScreen) {
       return (
-        <div className="h-full flex flex-col bg-transparent">
+        <div className="flex h-full flex-col bg-transparent">
           {/* 头部 */}
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 shrink-0">
+          <div className="border-border/50 flex shrink-0 items-center gap-3 border-b px-4 py-3">
             <button
               onClick={onClose}
-              className="p-1.5 text-meta hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
-            <h2 className="text-sm font-medium text-foreground flex-1">编辑事件</h2>
+            <h2 className="flex-1 text-sm font-medium text-foreground">编辑事件</h2>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => {
@@ -570,7 +571,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isArchived: val }, true);
                 }}
-                className={`p-1.5 rounded transition-colors ${isArchived ? 'text-primary bg-primary/10' : 'text-meta hover:bg-muted/50'}`}
+                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-meta'}`}
                 title={isArchived ? '取消归档' : '归档'}
               >
                 <Archive size={16} className={isArchived ? 'fill-current' : ''} />
@@ -582,14 +583,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isLocked: val }, true);
                 }}
-                className={`p-1.5 rounded transition-colors ${isLocked ? 'text-emphasis bg-emphasis/10' : 'text-meta hover:bg-muted/50'}`}
+                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta'}`}
                 title={isLocked ? '解锁' : '锁定'}
               >
                 {isLocked ? <Lock size={16} /> : <LockOpen size={16} />}
               </button>
               <button
                 onClick={handleDelete}
-                className="p-1.5 text-destructive hover:bg-destructive/10 rounded ml-1"
+                className="hover:bg-destructive/10 ml-1 rounded p-1.5 text-destructive"
                 title="删除"
               >
                 <Trash2 size={16} />
@@ -598,13 +599,13 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
           </div>
 
           {/* 表单内容 */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">{formContent}</div>
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">{formContent}</div>
 
           {/* 底部操作栏 */}
-          <div className="p-4 border-t border-border shrink-0">
+          <div className="shrink-0 border-t border-border p-4">
             <button
               onClick={onClose}
-              className="w-full py-2 text-sm border border-border rounded-md text-meta hover:text-foreground hover:border-foreground/30 transition-colors"
+              className="hover:border-foreground/30 w-full rounded-md border border-border py-2 text-sm text-meta transition-colors hover:text-foreground"
             >
               返回列表
             </button>
@@ -615,17 +616,17 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
 
     // 侧边栏模式（桌面端）
     return (
-      <div className="h-full flex flex-col min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* 头部 (桌面端显示，移动端由外部 Layout 处理) */}
         {!isMobile && (
-          <div className="flex items-center gap-2 pb-4 border-b border-border shrink-0">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border pb-4">
             <button
               onClick={onClose}
-              className="p-1.5 text-meta hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
-            <h3 className="text-sm font-medium text-primary flex-1">编辑事件</h3>
+            <h3 className="flex-1 text-sm font-medium text-primary">编辑事件</h3>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => {
@@ -634,7 +635,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isArchived: val }, true);
                 }}
-                className={`p-1.5 rounded transition-colors ${isArchived ? 'text-primary bg-primary/10' : 'text-meta hover:bg-muted/50'}`}
+                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-meta'}`}
                 title={isArchived ? '取消归档' : '归档'}
               >
                 <Archive size={16} className={isArchived ? 'fill-current' : ''} />
@@ -646,14 +647,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isLocked: val }, true);
                 }}
-                className={`p-1.5 rounded transition-colors ${isLocked ? 'text-emphasis bg-emphasis/10' : 'text-meta hover:bg-muted/50'}`}
+                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta'}`}
                 title={isLocked ? '解锁' : '锁定'}
               >
                 {isLocked ? <Lock size={16} /> : <LockOpen size={16} />}
               </button>
               <button
                 onClick={handleDelete}
-                className="p-1.5 text-destructive hover:bg-destructive/10 rounded ml-1"
+                className="hover:bg-destructive/10 ml-1 rounded p-1.5 text-destructive"
                 title="删除"
               >
                 <Trash2 size={16} />
@@ -663,7 +664,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
         )}
 
         {/* 表单内容 - 独立滚动 */}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">{formContent}</div>
+        <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto py-4">{formContent}</div>
       </div>
     );
   }

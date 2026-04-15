@@ -9,6 +9,7 @@
   "arrowParens": "always",
   "bracketSpacing": true,
   "endOfLine": "lf",
+  "sortImports": {},
   "experimentalSortPackageJson": false,
-  "experimentalTailwindcss": true
+  "sortTailwindcss": {}
 }

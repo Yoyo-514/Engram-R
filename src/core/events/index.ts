@@ -1,3 +1,3 @@
 export * from './EventWatcher';
-export * from './ReviewBridge';
-export * from './types';
+export * from './ReviewService';
+export * from './event-bus';

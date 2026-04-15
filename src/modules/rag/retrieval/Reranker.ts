@@ -6,8 +6,8 @@
  */
 
 import { get } from '@/config/settings';
-import type { RerankConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
+import type { RerankConfig } from '@/types/rag';
 
 // ==================== 类型定义 ====================
 
@@ -47,8 +47,8 @@ class RerankService {
    * 获取 Rerank 配置
    */
   private getConfig(): RerankConfig | null {
-    const apiSettings = get('apiSettings');
-    return apiSettings?.rerankConfig || null;
+    const runtimeSettings = get('runtimeSettings');
+    return runtimeSettings?.rerankConfig || null;
   }
 
   /**

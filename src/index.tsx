@@ -3,11 +3,19 @@
  * 入口文件
  */
 
-import { initializeEngram, setGlobalRenderer, setReactRenderer, setQuickPanelCallback } from '@/integrations/tavern';
 import { createElement } from 'react';
 import { createRoot } from 'react-dom/client';
+
+import {
+  initializeEngram,
+  setGlobalRenderer,
+  setReactRenderer,
+  setQuickPanelCallback,
+} from '@/integrations/tavern';
 import { GlobalOverlayContent } from '@/ui/components/overlay/GlobalOverlayContent';
+
 import App from './App';
+
 import './ui/styles/main.css';
 
 // 全局 QuickPanel 状态

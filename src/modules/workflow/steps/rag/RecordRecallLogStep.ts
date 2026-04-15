@@ -2,8 +2,8 @@ import { Logger, LogModule } from '@/core/logger';
 import { RecallLogService } from '@/core/logger/RecallLogger';
 import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
 import { type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
+import type { JobContext } from '@/types/job_context';
+import type { IStep } from '@/types/step';
 
 export class RecordRecallLogStep implements IStep {
   name = 'RecordRecallLogStep';

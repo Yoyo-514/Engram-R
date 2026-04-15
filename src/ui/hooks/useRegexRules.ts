@@ -3,8 +3,14 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { type RegexRule, DEFAULT_REGEX_RULES, regexProcessor } from '@/modules/workflow';
-import { getRegexRules as getSettingsRegexRules, setRegexRules as setSettingsRegexRules } from '@/config/settings';
+
+import { DEFAULT_REGEX_RULES } from '@/config/regex/defaults';
+import {
+  getRegexRules as getSettingsRegexRules,
+  setRegexRules as setSettingsRegexRules,
+} from '@/config/settings';
+import { regexProcessor } from '@/modules/workflow';
+import type { RegexRule } from '@/types/regex';
 
 export interface UseRegexRulesReturn {
   regexRules: RegexRule[];

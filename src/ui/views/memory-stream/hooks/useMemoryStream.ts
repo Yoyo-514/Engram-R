@@ -1,8 +1,13 @@
+import dexie from 'dexie';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+
+import { EntityType } from '@/config/memory/defaults';
 import { get } from '@/config/settings';
-import { EntityType, type EntityNode, type EventNode } from '@/types/graph';
+import { refreshEngramCache } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import { useMemoryStore, getCurrentDb } from '@/state/memoryStore';
+import type { EntityNode, EventNode } from '@/types/graph';
 import { notificationService } from '@/ui/services/NotificationService';
 import {
   filterEntities,
@@ -10,9 +15,6 @@ import {
   groupEntities,
   groupEvents,
 } from '@/ui/views/memory-stream/utils/streamProcessors';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import dexie from 'dexie';
-import { refreshEngramCache } from '@/integrations/tavern';
 
 const DESKTOP_BREAKPOINT = 768;
 
@@ -397,8 +399,8 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   }, [checkedIds, viewTab, store]);
 
   const handleReembedAll = useCallback(async () => {
-    const apiSettings = get('apiSettings');
-    const vectorConfig = apiSettings?.vectorConfig;
+    const runtimeSettings = get('runtimeSettings');
+    const vectorConfig = runtimeSettings?.vectorConfig;
 
     if (!vectorConfig) {
       notificationService.error('请先在 API 配置中配置向量化服务', 'MemoryStream');
@@ -410,7 +412,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     setIsReembedding(true);
     try {
       embeddingService.setConfig(vectorConfig);
-      const config = apiSettings?.embeddingConfig;
+      const config = runtimeSettings?.embeddingConfig;
       if (config?.concurrency) {
         embeddingService.setConcurrency(config.concurrency);
       }

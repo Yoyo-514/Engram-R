@@ -1,3 +1,5 @@
+import { useConfigStore } from '@/state/configStore';
+import type { CustomMacro } from '@/types/macro';
 /**
  * useConfig - 通用配置管理 Hook (代理 useConfigStore)
  *
@@ -5,17 +7,9 @@
  * V1.0: 迁移至 Zustand 全局共享状态，彻底消除挂载时的数据孤岛与保存闭包陷阱。
  * 为了控制渲染粒度，建议新组件直接通过 useConfigStore 选择所需切片，此 hook 仅供向下兼容及简易聚合使用。
  */
-
-import type {
-  CustomMacro,
-  EmbeddingConfig,
-  GlobalRegexConfig,
-  RecallConfig,
-  RerankConfig,
-  VectorConfig,
-} from '@/types/config';
-import { type EntityExtractConfig } from '@/types/memory';
-import { useConfigStore } from '@/state/configStore';
+import type { EntityExtractConfig } from '@/types/memory';
+import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
+import type { GlobalRegexConfig } from '@/types/regex';
 
 export interface UseConfigReturn {
   vectorConfig: VectorConfig;

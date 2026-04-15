@@ -5,8 +5,8 @@
  */
 
 import { VERSION } from '@/constants';
-import type { RecallLogEntry } from '@/ui/views/dev-log/types';
 import { Logger } from '@/core/logger';
+import type { RecallLogEntry } from '@/types/recall_log';
 
 type RecallLogSubscriber = (logs: RecallLogEntry[]) => void;
 

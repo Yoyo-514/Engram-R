@@ -1,6 +1,6 @@
-import { type IStep } from '../../core/Step';
-import { type JobContext } from '../../core/JobContext';
 import { Logger, LogModule } from '@/core/logger';
+import { type JobContext } from '@/types/job_context';
+import { type IStep } from '@/types/step';
 
 type StopGenerationMode = 'always' | 'manual_only';
 

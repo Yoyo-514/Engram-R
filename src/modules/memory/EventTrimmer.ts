@@ -4,14 +4,14 @@
  * V0.6: 直接调用 llmAdapter，不再依赖 Extractor
  */
 
-import { getSummarizerSettings } from '@/config/settings';
-import { DEFAULT_TRIM_CONFIG } from '@/types/config';
-import type { TrimConfig } from '@/types/memory';
+import { DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
+import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
-import type { EventNode } from '@/types/graph';
+import { createTrimmerWorkflow, runWorkflow } from '@/modules/workflow';
 import { useMemoryStore } from '@/state/memoryStore';
+import type { EventNode } from '@/types/graph';
+import type { TrimmerConfig } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
-import { createTrimmerWorkflow, WorkflowEngine } from '@/modules/workflow';
 
 interface TrimResult {
   /** 精简后的事件 */
@@ -38,27 +38,27 @@ export interface TrimmerStatus {
  * EventTrimmer 类
  */
 class EventTrimmer {
-  private config: TrimConfig;
+  private config: TrimmerConfig;
   private isTrimming = false;
 
-  constructor(config?: Partial<TrimConfig>) {
+  constructor(config?: Partial<TrimmerConfig>) {
     this.config = this.getEffectiveConfig(config);
   }
 
   /**
    * 更新配置
    */
-  updateConfig(config: Partial<TrimConfig>): void {
+  updateConfig(config: Partial<TrimmerConfig>): void {
     this.config = this.getEffectiveConfig(config);
   }
 
-  private getStoredConfig(): Partial<TrimConfig> {
-    return getSummarizerSettings()?.trimConfig || {};
+  private getStoredConfig(): Partial<TrimmerConfig> {
+    return get('trimmerConfig') || {};
   }
 
-  private getEffectiveConfig(override: Partial<TrimConfig> = {}): TrimConfig {
+  private getEffectiveConfig(override: Partial<TrimmerConfig> = {}): TrimmerConfig {
     return {
-      ...DEFAULT_TRIM_CONFIG,
+      ...DEFAULT_TRIMMER_CONFIG,
       ...this.getStoredConfig(),
       ...this.config,
       ...override,
@@ -97,7 +97,7 @@ class EventTrimmer {
     try {
       // Lazy import
       const config = this.getEffectiveConfig();
-      const context = await WorkflowEngine.run(createTrimmerWorkflow(), {
+      const context = await runWorkflow(createTrimmerWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
         config: {
           keepRecentCount: config.keepRecentCount,
@@ -132,7 +132,7 @@ class EventTrimmer {
   /**
    * 获取配置
    */
-  getConfig(): TrimConfig {
+  getConfig(): TrimmerConfig {
     return this.getEffectiveConfig();
   }
 

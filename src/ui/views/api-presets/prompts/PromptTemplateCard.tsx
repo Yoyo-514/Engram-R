@@ -1,14 +1,4 @@
 import {
-  createPromptTemplate,
-  getBuiltInTemplateByCategory,
-  getBuiltInTemplateById,
-} from '@/types/config';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
-import { PROMPT_CATEGORIES } from '@/types/prompt';
-import { parseYaml, stringifyYaml } from '@/core/utils';
-import { Logger, LogModule } from '@/core/logger';
-import { notificationService } from '@/ui/services/NotificationService';
-import {
   BrainCircuit,
   Clapperboard,
   Copy,
@@ -24,6 +14,14 @@ import {
 } from 'lucide-react';
 import { useRef } from 'react';
 import type { FC, MouseEvent, ChangeEvent } from 'react';
+
+import { PROMPT_CATEGORIES } from '@/config/prompt/defaults';
+import { createPromptTemplate } from '@/config/prompt/factories';
+import { getBuiltInTemplateByCategory, getBuiltInTemplateById } from '@/config/prompt/templates';
+import { Logger, LogModule } from '@/core/logger';
+import { parseYaml, stringifyYaml } from '@/core/utils';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { notificationService } from '@/ui/services/NotificationService';
 
 interface PromptTemplateCardProps {
   template: PromptTemplate;
@@ -45,7 +43,7 @@ function getCategoryColorClass(category: PromptCategory): string {
       return 'text-label bg-label/10 border border-label/20';
     case 'trim':
       return 'text-emphasis bg-emphasis/10 border border-emphasis/20';
-    case 'preprocessing':
+    case 'preprocess':
       return 'text-value bg-value/10 border border-value/20';
     default:
       return 'text-muted-foreground bg-muted border border-border';
@@ -177,33 +175,26 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     }
   };
 
-  const isPreprocessing = template.category === 'preprocessing';
+  const isPreprocessing = template.category === 'preprocess';
 
   return (
     <div
-      className={`
-                group relative p-3 rounded-lg border cursor-pointer transition-all duration-200
-                ${
-                  isSelected
-                    ? 'bg-accent/50 border-input'
-                    : 'bg-transparent border-transparent hover:bg-muted/50 hover:border-border'
-                }
-                ${!template.enabled && !isPreprocessing && 'opacity-50'}
-            `}
+      className={`group relative cursor-pointer rounded-lg border p-3 transition-all duration-200 ${
+        isSelected
+          ? 'bg-accent/50 border-input'
+          : 'hover:bg-muted/50 border-transparent bg-transparent hover:border-border'
+      } ${!template.enabled && !isPreprocessing && 'opacity-50'} `}
       onClick={onSelect}
     >
       <div className="flex items-start gap-3">
         {/* 状态图标 */}
         {!isPreprocessing ? (
           <button
-            className={`
-                            w-8 h-8 flex items-center justify-center rounded-lg transition-colors flex-shrink-0
-                            ${
-                              template.enabled
-                                ? 'bg-primary/10 text-primary'
-                                : 'bg-muted text-muted-foreground hover:bg-muted/80'
-                            }
-                        `}
+            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
+              template.enabled
+                ? 'bg-primary/10 text-primary'
+                : 'hover:bg-muted/80 bg-muted text-muted-foreground'
+            } `}
             onClick={(e) => {
               e.stopPropagation();
               onToggleEnabled?.(!template.enabled);
@@ -224,7 +215,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
             const Icon = BUILTIN_ICON_MAP[template.id] || Wand2;
             return (
               <div
-                className="w-8 h-8 flex items-center justify-center rounded-lg bg-value/10 text-value flex-shrink-0"
+                className="bg-value/10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-value"
                 title="预处理模板 (在快捷面板中激活)"
               >
                 <Icon size={16} />
@@ -233,31 +224,31 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
           })()
         )}
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h4
-              className={`text-sm font-medium truncate ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && !isPreprocessing && 'line-through'}`}
+              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && !isPreprocessing && 'line-through'}`}
             >
               {template.name}
             </h4>
 
             {/* 标签 */}
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex flex-shrink-0 items-center gap-1.5">
               <span
-                className={`text-[10px] px-1.5 py-0.5 rounded-sm font-medium ${getCategoryColorClass(template.category)}`}
+                className={`rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${getCategoryColorClass(template.category)}`}
               >
                 {getCategoryLabel(template.category)}
               </span>
               {template.isBuiltIn && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground">
+                <span className="rounded-sm bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                   BUILTIN
                 </span>
               )}
             </div>
           </div>
 
-          <div className="mt-1 flex items-center justify-between text-[10px] text-muted-foreground/70 font-mono">
-            <span className="truncate max-w-[120px]">
+          <div className="text-muted-foreground/70 mt-1 flex items-center justify-between font-mono text-[10px]">
+            <span className="max-w-[120px] truncate">
               {template.boundPresetId ? `BOUND: ${template.boundPresetId}` : 'DEFAULT PRESET'}
             </span>
           </div>
@@ -269,21 +260,21 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         className={`mt-2 flex justify-end gap-1 ${isSelected || 'opacity-0 group-hover:opacity-100'} transition-opacity`}
       >
         <button
-          className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+          className="rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
           onClick={handleImportClick}
           title="Import"
         >
           <FolderInput size={12} />
         </button>
         <button
-          className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+          className="rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
           onClick={handleExport}
           title="Export"
         >
           <Download size={12} />
         </button>
         <button
-          className="p-1.5 rounded text-muted-foreground hover:text-foreground transition-colors"
+          className="rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"
           onClick={(e) => {
             e.stopPropagation();
             onCopy?.();
@@ -294,7 +285,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         </button>
         {template.isBuiltIn && (
           <button
-            className="p-1.5 hover:bg-emphasis/10 rounded text-muted-foreground hover:text-emphasis transition-colors"
+            className="hover:bg-emphasis/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-emphasis"
             onClick={(e) => {
               e.stopPropagation();
               // 优先尝试通过 ID 精确匹配 (V0.8.6 Fix)
@@ -325,7 +316,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         )}
         {!template.isBuiltIn && (
           <button
-            className="p-1.5 hover:bg-destructive/10 rounded text-muted-foreground hover:text-destructive transition-colors"
+            className="hover:bg-destructive/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               onDelete?.();

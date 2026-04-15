@@ -1,18 +1,18 @@
+import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
-import { DEFAULT_RECALL_CONFIG } from '@/types/config';
-import type { RecallConfig } from '@/types/rag';
 import { Logger, LogModule } from '@/core/logger';
 import { mergeResults, scoreAndSort, type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import { rerankService } from '@/modules/rag/retrieval/Reranker';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep, type RetryConfig } from '../../core/Step';
+import type { JobContext } from '@/types/job_context';
+import type { RecallConfig } from '@/types/rag';
+import type { IStep, RetryConfig } from '@/types/step';
 
 export class RerankMergeStep implements IStep {
   name = 'RerankMergeStep';
   ignoreFailure = true;
 
   get retry(): RetryConfig {
-    const rerankConfig = get('apiSettings')?.rerankConfig;
+    const rerankConfig = get('runtimeSettings')?.rerankConfig;
     const customConfig = rerankConfig?.retryConfig;
 
     return {
@@ -59,8 +59,7 @@ export class RerankMergeStep implements IStep {
     }
 
     const candidates = Array.from(candidateMap.values());
-    const activeConfig =
-      config || get('apiSettings')?.recallConfig || DEFAULT_RECALL_CONFIG;
+    const activeConfig = config || get('runtimeSettings')?.recallConfig || DEFAULT_RECALL_CONFIG;
 
     if (candidates.length === 0) {
       Logger.info(LogModule.RAG_INJECT, '没有合并候选，跳过 RerankMergeStep');

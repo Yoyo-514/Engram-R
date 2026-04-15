@@ -1,12 +1,13 @@
 import { get, subscribe } from '@/config/settings';
-import type { CustomMacro } from '@/types/prompt';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
 import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
+import { brainRecallCache } from '@/modules/rag';
 import { useMemoryStore } from '@/state/memoryStore';
+import type { CustomMacro } from '@/types/macro';
+
 import { getChatHistory } from '../chat/chatHistory';
 import { getSTContext } from '../core/context';
-import { brainRecallCache } from '@/modules/rag';
 
 /**
  * MacroService 类
@@ -480,7 +481,7 @@ export function refreshUserPersona(): void {
 
 /**
  * V0.9.2: 刷新并注册自定义宏
- * 从 apiSettings.customMacros 读取用户定义的宏
+ * 从 runtimeSettings.customMacros 读取用户定义的宏
  */
 export function refreshCustomMacros(): void {
   try {
@@ -490,9 +491,9 @@ export function refreshCustomMacros(): void {
       return;
     }
 
-    // 从 apiSettings 读取自定义宏
-    const apiSettings = get('apiSettings');
-    const customMacros: CustomMacro[] = apiSettings?.customMacros || [];
+    // 从 runtimeSettings 读取自定义宏
+    const runtimeSettings = get('runtimeSettings');
+    const customMacros: CustomMacro[] = runtimeSettings?.customMacros || [];
 
     // 清空之前的缓存
     cachedCustomMacros.clear();

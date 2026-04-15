@@ -1,25 +1,24 @@
+import { Save, Trash2 } from 'lucide-react';
+import { useRef } from 'react';
+import type { FC } from 'react';
+
 import { PageTitle } from '@/ui/components/display/PageTitle';
 import { Divider } from '@/ui/components/layout/Divider';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { MasterDetailLayout } from '@/ui/components/layout/MasterDetailLayout';
 import { MobileFullscreenForm } from '@/ui/components/layout/MobileFullscreenForm';
-import { Save, Trash2 } from 'lucide-react';
-import { useRef } from 'react';
-import type { FC } from 'react';
 
+// Editor Components
+import { EntityEditor } from './components/EntityEditor';
+import { EventEditor, type EventEditorHandle } from './components/EventEditor';
 // Hooks
 import { useMemoryStream } from './hooks/useMemoryStream';
-
 // Sections & Modals
 import { ImportModal } from './modals/ImportModal';
 import { PreviewModal } from './modals/PreviewModal';
 import { ActionBar } from './sections/ActionBar';
 import { EntityList } from './sections/EntityList';
 import { EventList } from './sections/EventList';
-
-// Editor Components
-import { EntityEditor } from './components/EntityEditor';
-import { EventEditor, type EventEditorHandle } from './components/EventEditor';
 
 const VIEW_TABS = [
   { id: 'list', label: '列表', icon: <span className="i-lucide-list text-[14px]" /> },
@@ -53,7 +52,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               {ms.hasChanges && (
                 <button
                   onClick={ms.handleBatchSave}
-                  className="p-1.5 hover:bg-primary/10 rounded text-primary mr-1 transition-colors"
+                  className="hover:bg-primary/10 mr-1 rounded p-1.5 text-primary transition-colors"
                   title="保存"
                 >
                   <Save size={16} />
@@ -61,7 +60,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               )}
               <button
                 onClick={() => ms.selectedId && ms.handleDelete(ms.selectedId)}
-                className="p-1.5 hover:bg-destructive/10 rounded text-destructive mr-1 transition-colors"
+                className="hover:bg-destructive/10 mr-1 rounded p-1.5 text-destructive transition-colors"
               >
                 <Trash2 size={16} />
               </button>
@@ -90,7 +89,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               {ms.hasChanges && (
                 <button
                   onClick={ms.handleBatchSave}
-                  className="p-1.5 hover:bg-primary/10 rounded text-primary mr-1 transition-colors"
+                  className="hover:bg-primary/10 mr-1 rounded p-1.5 text-primary transition-colors"
                   title="保存"
                 >
                   <Save size={16} />
@@ -98,7 +97,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               )}
               <button
                 onClick={() => ms.selectedId && ms.handleDelete(ms.selectedId)}
-                className="p-1.5 hover:bg-destructive/10 rounded text-destructive mr-1 transition-colors"
+                className="hover:bg-destructive/10 mr-1 rounded p-1.5 text-destructive transition-colors"
               >
                 <Trash2 size={16} />
               </button>
@@ -118,7 +117,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
   }
 
   return (
-    <div className="absolute inset-0 flex flex-col animate-in fade-in overflow-hidden p-4 md:p-6">
+    <div className="animate-in fade-in absolute inset-0 flex flex-col overflow-hidden p-4 md:p-6">
       <PageTitle
         breadcrumbs={['记忆编辑']}
         title={currentInfo.title}
@@ -165,7 +164,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
       />
 
       {/* View Area */}
-      <div className="flex-1 min-h-0 overflow-hidden relative">
+      <div className="relative min-h-0 flex-1 overflow-hidden">
         <MasterDetailLayout
           listWidth={ms.viewMode === 'edit' ? '320px' : '100%'}
           mobileDetailOpen={false} // 我们手动在同级外挂移动端全屏表单

@@ -5,14 +5,16 @@
  * 替代 console.log，确保调试信息可追踪、可导出。
  */
 
-import { generateShortUUID } from '@/core/utils';
 import { Subject } from 'rxjs';
+
+import { DEFAULT_LOGGER_CONFIG, LogLevel } from '@/config/logger/defaults';
+import { generateShortUUID } from '@/core/utils';
+import type { LogEntry, LoggerConfig } from '@/types/logger';
+
 import manifest from '../../../manifest.json';
-import { EventBus } from '../events';
+import { engramEventBus } from '../events';
 import type { EngramEvent } from '../events';
 import type { LogModule } from './LogModule';
-import { DEFAULT_LOGGER_CONFIG, LogLevel } from '@/types/logger';
-import type { LogEntry, LoggerConfig } from '@/types/logger';
 
 // 日志流 Subject (RxJS)
 const logSubject = new Subject<LogEntry>();
@@ -68,7 +70,7 @@ function writeLog(level: LogLevel, module: string, message: string, data?: unkno
  * 将系统核心事件自动转换为日志
  */
 function setupEventBusListener(): void {
-  EventBus.subscribe((event: EngramEvent) => {
+  engramEventBus.subscribe((event: EngramEvent) => {
     const levelMap: Record<string, LogLevel> = {
       INGESTION_START: LogLevel.INFO,
       INGESTION_COMPLETE: LogLevel.SUCCESS,
@@ -81,7 +83,7 @@ function setupEventBusListener(): void {
     };
 
     const level = levelMap[event.type] ?? LogLevel.DEBUG;
-    writeLog(level, 'EventBus', `${event.type}`, event.payload);
+    writeLog(level, 'EngramEventBus', `${event.type}`, event.payload);
   });
 }
 

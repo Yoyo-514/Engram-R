@@ -1,10 +1,13 @@
-/**
- * RegexRuleForm - 正则规则编辑表单
- */
-import { REGEX_SCOPE_OPTIONS, RegexProcessor, type RegexRule } from '@/modules/workflow/steps';
 import { AlertCircle, CheckCircle, Info, Play } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
+
+/**
+ * RegexRuleForm - 正则规则编辑表单
+ */
+import { REGEX_SCOPE_OPTIONS } from '@/config/regex/defaults';
+import { RegexProcessor } from '@/modules/workflow/steps';
+import type { RegexRule } from '@/types/regex';
 
 interface RegexRuleFormProps {
   rule: RegexRule;
@@ -60,7 +63,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
           <label className="text-sm font-medium text-foreground">规则名称</label>
           <input
             type="text"
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             value={rule.name}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder="例如：移除思维链"
@@ -71,7 +74,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
           <label className="text-sm font-medium text-foreground">描述（可选）</label>
           <input
             type="text"
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             value={rule.description || ''}
             onChange={(e) => onChange({ description: e.target.value })}
             placeholder="简短描述此规则的用途"
@@ -85,10 +88,10 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
             {REGEX_SCOPE_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                className={`flex-1 px-3 py-2 text-sm rounded-md border transition-colors ${
+                className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
                   rule.scope === opt.value
-                    ? 'bg-primary-20 border-primary text-primary'
-                    : 'bg-background border-border text-muted-foreground hover:bg-muted'
+                    ? 'border-primary bg-primary-20 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => onChange({ scope: opt.value })}
                 title={opt.description}
@@ -104,7 +107,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
       </div>
 
       {/* 正则表达式 */}
-      <div className="flex flex-col gap-3 p-4 bg-card border border-border rounded-lg">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-foreground">正则表达式</label>
@@ -116,7 +119,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
           </div>
           <input
             type="text"
-            className={`w-full px-3 py-2 rounded-md border bg-background text-foreground font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 ${
+            className={`w-full rounded-md border bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 ${
               validation.valid
                 ? 'border-input focus:ring-ring'
                 : 'border-destructive focus:ring-destructive'
@@ -134,7 +137,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
           <label className="text-sm font-medium text-foreground">替换为</label>
           <input
             type="text"
-            className="w-full px-3 py-2 rounded-md border border-input bg-background text-foreground font-mono text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             value={rule.replacement}
             onChange={(e) => onChange({ replacement: e.target.value })}
             placeholder="留空表示删除匹配内容"
@@ -148,10 +151,10 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
             {FLAGS_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
-                className={`px-2 py-1 text-xs rounded-md border transition-colors ${
+                className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                   rule.flags.includes(opt.value)
-                    ? 'bg-primary-20 border-primary text-primary'
-                    : 'bg-background border-border text-muted-foreground hover:bg-muted'
+                    ? 'border-primary bg-primary-20 text-primary'
+                    : 'border-border bg-background text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => handleFlagToggle(opt.value)}
                 title={opt.description}
@@ -164,7 +167,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
       </div>
 
       {/* 测试区域 */}
-      <div className="flex flex-col gap-3 p-4 bg-muted-20 border border-border rounded-lg">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-20 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Play size={14} />
           测试正则
@@ -173,7 +176,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
         <div className="flex flex-col gap-1.5">
           <label className="text-xs text-muted-foreground">输入文本</label>
           <textarea
-            className="w-full min-h-[80px] px-3 py-2 rounded-md border border-input bg-background text-foreground text-sm resize-y focus:outline-none focus:ring-2 focus:ring-ring"
+            className="min-h-[80px] w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             value={testInput}
             onChange={(e) => setTestInput(e.target.value)}
             placeholder="在此输入测试文本，例如：&#10;<think>这是思考内容</think>&#10;正常对话内容"
@@ -183,20 +186,20 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
         {testInput && validation.valid && (
           <div className="flex flex-col gap-1.5">
             <label className="text-xs text-muted-foreground">处理结果</label>
-            <div className="min-h-[60px] px-3 py-2 rounded-md border border-border bg-background text-sm whitespace-pre-wrap">
-              {testOutput || <span className="text-muted-foreground italic">（无内容）</span>}
+            <div className="min-h-[60px] whitespace-pre-wrap rounded-md border border-border bg-background px-3 py-2 text-sm">
+              {testOutput || <span className="italic text-muted-foreground">（无内容）</span>}
             </div>
           </div>
         )}
       </div>
 
       {/* 提示 */}
-      <div className="flex items-start gap-2 p-3 bg-label/10 border border-label/20 rounded-lg text-sm text-label">
-        <Info size={16} className="shrink-0 mt-0.5" />
+      <div className="bg-label/10 border-label/20 flex items-start gap-2 rounded-lg border p-3 text-sm text-label">
+        <Info size={16} className="mt-0.5 shrink-0" />
         <div>
           <strong>输入</strong>：清洗发给 LLM 的聊天内容。
           <strong>输出</strong>：清洗 LLM 返回的内容（如移除{' '}
-          <code className="bg-label/20 px-1 rounded">&lt;think&gt;</code>）。
+          <code className="bg-label/20 rounded px-1">&lt;think&gt;</code>）。
         </div>
       </div>
     </div>

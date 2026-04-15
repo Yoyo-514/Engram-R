@@ -1,8 +1,8 @@
-import { type IStep } from '../../core/Step';
-import { type JobContext } from '../../core/JobContext';
-import { useMemoryStore } from '@/state/memoryStore';
 import { Logger } from '@/core/logger';
+import { useMemoryStore } from '@/state/memoryStore';
 import { type EventNode } from '@/types/graph';
+import { type JobContext } from '@/types/job_context';
+import { type IStep } from '@/types/step';
 
 export class FetchEventsToTrim implements IStep {
   name = 'FetchEventsToTrim';

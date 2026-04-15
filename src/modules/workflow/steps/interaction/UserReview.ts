@@ -1,11 +1,11 @@
-import { reviewService } from '@/core/events/ReviewBridge';
+import { reviewService } from '@/core/events/ReviewService';
 import { Logger } from '@/core/logger';
-import { countWorldbookTokens } from '@/integrations/tavern';
-import type { AgenticRecall } from '@/modules/preprocessing/types';
-import { notificationService } from '@/ui/services/NotificationService';
-import type { JobContext } from '../../core/JobContext';
-import type { IStep, StepResult } from '../../core/Step';
 import { parseJson } from '@/core/utils';
+import { countWorldbookTokens } from '@/integrations/tavern';
+import type { JobContext } from '@/types/job_context';
+import type { AgenticRecall } from '@/types/preprocess';
+import type { IStep, StepResult } from '@/types/step';
+import { notificationService } from '@/ui/services/NotificationService';
 
 interface UserReviewConfig {
   title: string;

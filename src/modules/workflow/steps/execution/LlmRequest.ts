@@ -1,18 +1,18 @@
-import { type IStep, type RetryConfig } from '../../core/Step';
-import { type JobContext } from '../../core/JobContext';
-import { llmAdapter } from '@/integrations/llm/Adapter';
-import { ModelLogger } from '@/core/logger/ModelLogger';
-import { getCurrentCharacter, getCurrentModel } from '@/integrations/tavern';
-import { Logger } from '@/core/logger';
 import { get } from '@/config/settings';
+import { Logger } from '@/core/logger';
+import { ModelLogger } from '@/core/logger/ModelLogger';
+import { llmAdapter } from '@/integrations/llm/Adapter';
+import { getCurrentCharacter, getCurrentModel } from '@/integrations/tavern';
+import { type JobContext } from '@/types/job_context';
+import { type IStep, type RetryConfig } from '@/types/step';
 
 export class LlmRequest implements IStep {
   name = 'LlmRequest';
 
   get retry(): RetryConfig {
-    const apiSettings = get('apiSettings') as any;
-    const presets = apiSettings?.llmPresets || [];
-    const activePresetId = apiSettings?.activeLLMPresetId;
+    const runtimeSettings = get('runtimeSettings') as any;
+    const presets = runtimeSettings?.llmPresets || [];
+    const activePresetId = runtimeSettings?.activeLLMPresetId;
     const activePreset = presets.find((p: any) => p.id === activePresetId) || presets[0];
     const customConfig = activePreset?.retryConfig;
 

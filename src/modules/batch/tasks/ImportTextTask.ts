@@ -1,16 +1,12 @@
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
-import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
-import { WorkflowEngine } from '@/modules/workflow/core/WorkflowEngine';
-import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
-import { ParseJson } from '@/modules/workflow/steps/processing/ParseJson';
-import { type BatchTask, type IBatchTaskHandler } from '../types';
 import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
-import { createEntityWorkflow } from '@/modules/workflow';
-
-/** 外部导入模式 */
-export type ImportMode = 'fast' | 'detailed';
+import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
+import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
+import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
+import { ParseJson } from '@/modules/workflow/steps/preprocess/ParseJson';
+import type { BatchTask, IBatchTaskHandler, ImportMode } from '@/types/batch';
 
 /** 外部导入配置 */
 export interface ImportConfig {
@@ -81,7 +77,7 @@ export class ImportTextTask implements IBatchTaskHandler {
 
           if (llmResult) {
             // 使用 Workflow Engine 解析 JSON 并存储
-            const savedEvents = await WorkflowEngine.run(
+            const savedEvents = await runWorkflow(
               {
                 name: 'ImportFlow',
                 steps: [new ParseJson(), new SaveEvent()],
@@ -104,7 +100,7 @@ export class ImportTextTask implements IBatchTaskHandler {
             if (Array.isArray(savedEvents) && savedEvents.length > 0) {
               // Pipeline 已处理存储，只需嵌入
               // V1.2.2: 联动嵌入前确保配置已加载
-              const vectorConfig = get('apiSettings')?.vectorConfig;
+              const vectorConfig = get('runtimeSettings')?.vectorConfig;
               if (vectorConfig) {
                 embeddingService.setConfig(vectorConfig);
               }
@@ -115,7 +111,7 @@ export class ImportTextTask implements IBatchTaskHandler {
 
               // V1.0.8: 外部导入文本复用执行实体提取 (由于 FetchContext 已经旁路了，这里可以直接塞原文进去让它以为是聊天记录)
               try {
-                await WorkflowEngine.run(createEntityWorkflow(), {
+                await runWorkflow(createEntityWorkflow(), {
                   trigger: 'auto',
                   config: {
                     previewEnabled: false,
@@ -158,7 +154,7 @@ export class ImportTextTask implements IBatchTaskHandler {
         }
 
         // 快速模式 或 降级：直接存储原文/抢救文
-        const fallbackEvents = await WorkflowEngine.run(
+        const fallbackEvents = await runWorkflow(
           {
             name: 'ImportFastFlow',
             steps: [new SaveEvent()],
@@ -186,7 +182,7 @@ export class ImportTextTask implements IBatchTaskHandler {
         if (checkStopSignal()) return;
 
         if (Array.isArray(fallbackEvents) && fallbackEvents.length > 0) {
-          const vectorConfig = get('apiSettings')?.vectorConfig;
+          const vectorConfig = get('runtimeSettings')?.vectorConfig;
           if (vectorConfig) {
             embeddingService.setConfig(vectorConfig);
           }

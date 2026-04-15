@@ -1,6 +1,7 @@
 import { Logger } from '@/core/logger';
-import { getSTContext } from '../core/context';
 import { getTavernHelper } from '@/core/utils';
+
+import { getSTContext } from '../core/context';
 
 const MODULE = 'Worldbook';
 const ENGRAM_GLOBAL_WORLDBOOK_NAME = '[Engram] Global';

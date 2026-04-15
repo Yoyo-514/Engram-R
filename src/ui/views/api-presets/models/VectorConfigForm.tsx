@@ -1,17 +1,25 @@
+import { AlertCircle, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import type { FC } from 'react';
+
+import {
+  fetchOllamaModels,
+  fetchOpenAIModels,
+  fetchVLLMModels,
+  getPresetModels,
+  type ModelAPIType,
+  type ModelInfo,
+} from '@/integrations/llm/ModelDiscovery';
 /**
  * 向量化配置表单
  */
 import type { VectorConfig, VectorSource } from '@/types/rag';
-import { fetchOllamaModels, fetchOpenAIModels, fetchVLLMModels, getPresetModels, type ModelAPIType, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 import {
   FormSection,
   SearchableSelectField,
   SelectField,
   TextField,
 } from '@/ui/components/form/FormComponents';
-import { AlertCircle, AlertTriangle, Loader2, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
-import type { FC } from 'react';
 
 /**
  * 部署诊断组件 (针对 Failed to fetch 常见错误进行实时提示)
@@ -51,11 +59,11 @@ const DeploymentDiagnostics: FC<{ url: string }> = ({ url }) => {
   if (alerts.length === 0) return null;
 
   return (
-    <div className="mt-2 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+    <div className="animate-in fade-in slide-in-from-top-1 mt-2 space-y-2 duration-200">
       {alerts.map((alert, i) => (
         <div
           key={i}
-          className={`p-2 rounded border text-[10px] flex gap-2 ${
+          className={`flex gap-2 rounded border p-2 text-[10px] ${
             alert.type === 'error'
               ? 'bg-destructive/10 border-destructive/20 text-destructive'
               : 'bg-warning/10 border-warning/20 text-warning'
@@ -63,8 +71,8 @@ const DeploymentDiagnostics: FC<{ url: string }> = ({ url }) => {
         >
           <div className="mt-0.5 flex-shrink-0">{alert.icon}</div>
           <div className="flex-1">
-            <div className="font-bold underline mb-0.5">{alert.title}</div>
-            <div className="opacity-90 leading-tight">{alert.content}</div>
+            <div className="mb-0.5 font-bold underline">{alert.title}</div>
+            <div className="leading-tight opacity-90">{alert.content}</div>
           </div>
         </div>
       ))}
@@ -202,12 +210,12 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
                 {config.source === 'ollama' ? 'API Endpoint' : 'API Base URL'}
               </label>
               {config.source !== 'ollama' && (
-                <label className="flex items-center gap-1.5 text-[10px] text-muted-foreground cursor-pointer select-none">
+                <label className="flex cursor-pointer select-none items-center gap-1.5 text-[10px] text-muted-foreground">
                   <input
                     type="checkbox"
                     checked={config.autoSuffix !== false}
                     onChange={(e) => updateConfig({ autoSuffix: e.target.checked })}
-                    className="w-3 h-3 rounded border-border accent-primary cursor-pointer"
+                    className="h-3 w-3 cursor-pointer rounded border-border accent-primary"
                   />
                   自动后缀
                 </label>
@@ -231,9 +239,9 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
                 color: 'var(--foreground)',
                 outline: 'none',
               }}
-              className="placeholder:text-muted-foreground/40 focus:border-primary transition-colors"
+              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
             />
-            <p className="text-[10px] text-muted-foreground/70 break-all">
+            <p className="text-muted-foreground/70 break-all text-[10px]">
               {config.source === 'ollama'
                 ? '填写 base URL 即可，会自动拼接 /api/embeddings'
                 : config.autoSuffix !== false && config.apiUrl
@@ -259,7 +267,7 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
         <div className="flex flex-col gap-2">
           <div className="flex items-end gap-2">
             {modelList.length > 0 ? (
-              <div className="flex-1 relative">
+              <div className="relative flex-1">
                 <SearchableSelectField
                   className="!mb-0"
                   label="模型名称"
@@ -272,7 +280,7 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
               </div>
             ) : (
               <TextField
-                className="flex-1 !mb-0"
+                className="!mb-0 flex-1"
                 label="模型名称"
                 value={config.model || ''}
                 onChange={(value) => updateConfig({ model: value })}
@@ -283,7 +291,7 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
             {(needsUrl || needsKey) && (
               <button
                 type="button"
-                className="h-[42px] w-[42px] min-w-[42px] flex items-center justify-center border-none rounded-md bg-muted text-muted-foreground cursor-pointer transition-all hover:bg-accent hover:text-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex h-[42px] w-[42px] min-w-[42px] cursor-pointer items-center justify-center rounded-md border-none bg-muted text-muted-foreground transition-all hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
                 onClick={fetchModelList}
                 disabled={isLoadingModels}
                 title="获取模型列表"

@@ -3,9 +3,9 @@ import { parseJson } from '@/core/utils';
 import { hideMessageRange, refreshEngramCache } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { type EventNode } from '@/types/graph';
+import { type JobContext } from '@/types/job_context';
+import { type IStep } from '@/types/step';
 import { notificationService } from '@/ui/services/NotificationService';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
 
 type EventKvInput = Partial<EventNode['structured_kv']> & {
   characters?: string | string[];
@@ -119,8 +119,7 @@ function buildBurnedSummary(event: ParsedEventInput): string {
     metaParts.push(kv.location.join(', '));
   }
 
-  const rolesArray =
-    kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
+  const rolesArray = kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
   if (rolesArray.length > 0) metaParts.push(rolesArray.join(', '));
   const metaLine = metaParts.length > 0 ? `(${metaParts.join(' | ')}) ` : '';
 
@@ -221,7 +220,10 @@ export class SaveEvent implements IStep {
         Logger.success('SaveEvent', 'Summarized messages hidden successfully');
       } catch (error) {
         Logger.error('SaveEvent', 'Auto-hide failed after summary save', error);
-        notificationService.warning('Summary saved, but auto-hide failed. Please check the chat state.', 'Engram');
+        notificationService.warning(
+          'Summary saved, but auto-hide failed. Please check the chat state.',
+          'Engram'
+        );
       }
     }
 

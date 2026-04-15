@@ -1,7 +1,9 @@
-import { type SearchAdapter, type SearchResult } from '../SearchService';
-import { getCurrentChatId } from '@/integrations/tavern';
-import { tryGetDbForChat } from '@/data/db';
 import { FileText } from 'lucide-react';
+
+import { tryGetDbForChat } from '@/data/db';
+import { getCurrentChatId } from '@/integrations/tavern';
+
+import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class MemoryAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {

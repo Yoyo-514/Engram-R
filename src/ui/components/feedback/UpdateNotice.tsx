@@ -6,14 +6,25 @@
  * V0.9.12: 修复更新API路径问题，参考 JS-Slash-Runner 实现
  */
 
-import { hasUpdate as updated, clearCache, getChangelog, getCurrentHash, getCurrentVersion, getExtensionRuntimeInfo, getLatestHash, getLatestVersion, markAsRead } from '@/core/updater/Updater';
-import { getTavernContext } from '@/core/utils';
-import { notificationService } from '@/ui/services/NotificationService';
 import { CheckCircle, Download, Loader2, RefreshCw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+
+import {
+  hasUpdate as updated,
+  clearCache,
+  getChangelog,
+  getCurrentHash,
+  getCurrentVersion,
+  getExtensionRuntimeInfo,
+  getLatestHash,
+  getLatestVersion,
+  markAsRead,
+} from '@/core/updater/Updater';
+import { getTavernContext } from '@/core/utils';
+import { notificationService } from '@/ui/services/NotificationService';
 
 interface UpdateNoticeProps {
   isOpen: boolean;
@@ -195,11 +206,11 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="animate-in zoom-in-95 relative flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-border/50">
+        <div className="border-border/50 flex items-center justify-between border-b px-5 py-4">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+            <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
               <Download size={16} className="text-primary" />
             </div>
             <div>
@@ -212,14 +223,14 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
           <div className="flex items-center gap-2">
             <button
               onClick={handleRefresh}
-              className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+              className="hover:bg-muted/50 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground"
               title="刷新"
             >
               <RefreshCw size={16} className={isLoading ? 'animate-spin' : ''} />
             </button>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-muted/50 text-muted-foreground hover:text-foreground transition-colors"
+              className="hover:bg-muted/50 rounded-lg p-2 text-muted-foreground transition-colors hover:text-foreground"
             >
               <X size={16} />
             </button>
@@ -230,21 +241,18 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
         <div className="flex-1 overflow-y-auto p-5">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-              <RefreshCw size={24} className="animate-spin mb-3" />
+              <RefreshCw size={24} className="mb-3 animate-spin" />
               <p className="text-sm">正在检查更新...</p>
             </div>
           ) : (
             <div className="space-y-4">
               {/* Version Status */}
               <div
-                className={`
-                                p-4 rounded-lg border
-                                ${
-                                  hasUpdate
-                                    ? 'bg-primary/5 border-primary/20'
-                                    : 'bg-green-500/5 border-green-500/20'
-                                }
-                            `}
+                className={`rounded-lg border p-4 ${
+                  hasUpdate
+                    ? 'bg-primary/5 border-primary/20'
+                    : 'border-green-500/20 bg-green-500/5'
+                } `}
               >
                 <div className="flex items-center gap-3">
                   {hasUpdate ? (
@@ -258,7 +266,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
                         ? `发现新版本: v${latestVersion}${latestHash ? ` (${latestHash})` : ''}`
                         : '已是最新版本'}
                     </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
+                    <p className="mt-0.5 text-xs text-muted-foreground">
                       {hasUpdate ? '点击下方按钮一键更新' : '无需更新'}
                     </p>
                   </div>
@@ -268,17 +276,13 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
               {/* Update Message */}
               {updateMessage && (
                 <div
-                  className={`
-                                    p-3 rounded-lg text-sm
-                                    ${
-                                      updateMessage.includes('成功')
-                                        ? 'bg-green-500/10 text-green-600 border border-green-500/20'
-                                        : updateMessage.includes('失败') ||
-                                            updateMessage.includes('出错')
-                                          ? 'bg-red-500/10 text-red-600 border border-red-500/20'
-                                          : 'bg-muted/30 text-muted-foreground'
-                                    }
-                                `}
+                  className={`rounded-lg p-3 text-sm ${
+                    updateMessage.includes('成功')
+                      ? 'border border-green-500/20 bg-green-500/10 text-green-600'
+                      : updateMessage.includes('失败') || updateMessage.includes('出错')
+                        ? 'border border-red-500/20 bg-red-500/10 text-red-600'
+                        : 'bg-muted/30 text-muted-foreground'
+                  } `}
                 >
                   {updateMessage}
                 </div>
@@ -287,17 +291,17 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
               {/* Changelog */}
               {changelog && (
                 <div className="space-y-2">
-                  <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                  <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                     更新日志
                   </h3>
-                  <div className="bg-muted/20 rounded-lg p-4 max-h-64 overflow-y-auto engram-changelog-content text-sm">
+                  <div className="bg-muted/20 engram-changelog-content max-h-64 overflow-y-auto rounded-lg p-4 text-sm">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>{changelog}</ReactMarkdown>
                   </div>
                 </div>
               )}
 
               {!changelog && !isLoading && (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="py-8 text-center text-muted-foreground">
                   <p className="text-sm">无法获取更新日志</p>
                 </div>
               )}
@@ -306,10 +310,10 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Footer - 更新按钮始终可见 */}
-        <div className="px-5 py-4 border-t border-border/50 flex justify-end gap-3">
+        <div className="border-border/50 flex justify-end gap-3 border-t px-5 py-4">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+            className="px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
             关闭
           </button>
@@ -318,7 +322,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
             <button
               onClick={handleMarkAsRead}
               disabled={isMarking || isUpdating}
-              className="px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors disabled:opacity-50"
+              className="rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
             >
               稍后再说
             </button>
@@ -327,10 +331,10 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
           <button
             onClick={handleUpdate}
             disabled={isUpdating || isMarking}
-            className={`px-4 py-2 text-sm rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 ${
+            className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm transition-colors disabled:opacity-50 ${
               hasUpdate
-                ? 'bg-primary text-primary-foreground hover:bg-primary/90'
-                : 'border border-border text-muted-foreground hover:text-foreground hover:border-muted-foreground'
+                ? 'hover:bg-primary/90 bg-primary text-primary-foreground'
+                : 'border border-border text-muted-foreground hover:border-muted-foreground hover:text-foreground'
             }`}
           >
             {isUpdating ? (

@@ -4,8 +4,8 @@ import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { matchEvent, scanEntities } from '@/modules/memory/EntityScanner';
 import { type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
-import { type JobContext } from '../../core/JobContext';
-import { type IStep } from '../../core/Step';
+import { type JobContext } from '@/types/job_context';
+import { type IStep } from '@/types/step';
 
 const MODULE = 'KeywordRetrieveStep';
 
@@ -35,8 +35,8 @@ export class KeywordRetrieveStep implements IStep {
     if (!db) return;
 
     const startTime = Date.now();
-    const apiSettings = get('apiSettings');
-    const recallConfig = apiSettings?.recallConfig;
+    const runtimeSettings = get('runtimeSettings');
+    const recallConfig = runtimeSettings?.recallConfig;
 
     // P0 & P1 Fix: 此处不再因为无归档事件而直接返回
     // 归档事件检查应仅限制在“事件扫描”部分，不能连累实体扫描

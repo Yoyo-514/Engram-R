@@ -11,10 +11,10 @@
  */
 
 import { getSettings, incrementStatistic } from '@/config/settings';
-import type { LLMPreset } from '@/types/llm';
 import { Logger } from '@/core/logger';
-import { regexProcessor } from '@/modules/workflow';
 import { getTavernHelper } from '@/core/utils';
+import { regexProcessor } from '@/modules/workflow';
+import type { LLMPreset } from '@/types/llm';
 
 const MODULE = 'LLMAdapter';
 
@@ -209,12 +209,12 @@ class LLMAdapter {
       let preset: LLMPreset | undefined;
 
       if (request.presetId) {
-        preset = settings.apiSettings?.llmPresets?.find((p) => p.id === request.presetId);
+        preset = settings.runtimeSettings?.llmPresets?.find((p) => p.id === request.presetId);
       }
 
-      if (!preset && settings.apiSettings?.selectedPresetId) {
-        preset = settings.apiSettings?.llmPresets?.find(
-          (p) => p.id === settings.apiSettings?.selectedPresetId
+      if (!preset && settings.runtimeSettings?.selectedPresetId) {
+        preset = settings.runtimeSettings?.llmPresets?.find(
+          (p) => p.id === settings.runtimeSettings?.selectedPresetId
         );
       }
 
@@ -318,9 +318,9 @@ class LLMAdapter {
     // 这里基于 SettingsManager 直接根据 context 取一下当前在跑哪个 preset
     const settings = getSettings();
     const currentPreset = request.presetId
-      ? settings.apiSettings?.llmPresets?.find((p) => p.id === request.presetId)
-      : settings.apiSettings?.llmPresets?.find(
-          (p) => p.id === settings.apiSettings?.selectedPresetId
+      ? settings.runtimeSettings?.llmPresets?.find((p) => p.id === request.presetId)
+      : settings.runtimeSettings?.llmPresets?.find(
+          (p) => p.id === settings.runtimeSettings?.selectedPresetId
         );
 
     const generationOptions = {
@@ -374,10 +374,7 @@ class LLMAdapter {
     incrementStatistic('totalLlmCalls', 1);
     const estimatedPromptTokens = this.estimateTokens(finalSystemPrompt + finalUserPrompt);
     const estimatedCompletionTokens = this.estimateTokens(content);
-    incrementStatistic(
-      'totalTokens',
-      estimatedPromptTokens + estimatedCompletionTokens
-    );
+    incrementStatistic('totalTokens', estimatedPromptTokens + estimatedCompletionTokens);
 
     return {
       success: true,

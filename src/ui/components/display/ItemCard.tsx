@@ -1,3 +1,4 @@
+import { Check, Power } from 'lucide-react';
 /**
  * ItemCard - 通用列表项卡片组件
  *
@@ -7,7 +8,6 @@
  * - 用空间和层级区分区域
  */
 import type { MouseEvent, ReactNode, FC } from 'react';
-import { Check, Power } from 'lucide-react';
 
 // 操作按钮配置
 interface ItemAction {
@@ -80,16 +80,7 @@ export const ItemCard: FC<ItemCardProps> = ({
 
   return (
     <div
-      className={`
-                group relative flex items-center gap-3
-                ${compact ? 'py-2 px-2' : 'py-3 px-3'}
-                rounded-lg cursor-pointer
-                transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)]
-                hover:translate-y-[-1px] hover:shadow-sm
-                ${selected ? 'bg-accent/60' : 'hover:bg-muted/40'}
-                ${disabled ? 'opacity-50 pointer-events-none' : ''}
-                ${className}
-            `}
+      className={`group relative flex items-center gap-3 ${compact ? 'px-2 py-2' : 'px-3 py-3'} cursor-pointer rounded-lg transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:translate-y-[-1px] hover:shadow-sm ${selected ? 'bg-accent/60' : 'hover:bg-muted/40'} ${disabled ? 'pointer-events-none opacity-50' : ''} ${className} `}
       onClick={onClick}
     >
       {/* 左侧：图标或开关 */}
@@ -97,14 +88,9 @@ export const ItemCard: FC<ItemCardProps> = ({
         <div className="flex-shrink-0">
           {hasToggle ? (
             <button
-              className={`
-                                w-7 h-7 flex items-center justify-center rounded-md transition-colors
-                                ${
-                                  toggle.checked
-                                    ? 'text-primary'
-                                    : 'text-muted-foreground hover:text-foreground'
-                                }
-                            `}
+              className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                toggle.checked ? 'text-primary' : 'text-muted-foreground hover:text-foreground'
+              } `}
               onClick={(e) => {
                 e.stopPropagation();
                 toggle.onChange(!toggle.checked);
@@ -114,14 +100,9 @@ export const ItemCard: FC<ItemCardProps> = ({
             </button>
           ) : (
             <div
-              className={`
-                            w-7 h-7 flex items-center justify-center rounded-md transition-colors
-                            ${
-                              selected
-                                ? 'text-primary'
-                                : 'text-muted-foreground group-hover:text-foreground'
-                            }
-                        `}
+              className={`flex h-7 w-7 items-center justify-center rounded-md transition-colors ${
+                selected ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'
+              } `}
             >
               {icon}
             </div>
@@ -130,15 +111,11 @@ export const ItemCard: FC<ItemCardProps> = ({
       )}
 
       {/* 中间：内容区 */}
-      <div className="flex-1 min-w-0">
+      <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           {/* 标题 */}
           <span
-            className={`
-                        text-sm font-medium truncate transition-colors
-                        ${selected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}
-                        ${toggle && !toggle.checked ? 'line-through opacity-60' : ''}
-                    `}
+            className={`truncate text-sm font-medium transition-colors ${selected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} ${toggle && !toggle.checked ? 'line-through opacity-60' : ''} `}
           >
             {title}
           </span>
@@ -147,10 +124,7 @@ export const ItemCard: FC<ItemCardProps> = ({
           {badges.map((badge, i) => (
             <span
               key={i}
-              className={`
-                                text-[10px] px-1.5 py-0.5 rounded-sm font-medium flex-shrink-0
-                                ${BADGE_COLORS[badge.color || 'default']}
-                            `}
+              className={`flex-shrink-0 rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${BADGE_COLORS[badge.color || 'default']} `}
             >
               {badge.text}
             </span>
@@ -159,7 +133,7 @@ export const ItemCard: FC<ItemCardProps> = ({
 
         {/* 副标题/元信息 */}
         {(subtitle || meta) && (
-          <div className="flex items-center justify-between mt-0.5 text-[11px] text-muted-foreground/70">
+          <div className="text-muted-foreground/70 mt-0.5 flex items-center justify-between text-[11px]">
             {subtitle && <span className="truncate">{subtitle}</span>}
             {meta && <span className="flex-shrink-0 font-mono">{meta}</span>}
           </div>
@@ -168,29 +142,22 @@ export const ItemCard: FC<ItemCardProps> = ({
 
       {/* 右侧：选中指示器 */}
       {selected && !visibleActions.length && (
-        <Check size={14} className="text-primary flex-shrink-0" />
+        <Check size={14} className="flex-shrink-0 text-primary" />
       )}
 
       {/* 右侧：操作按钮 */}
       {visibleActions.length > 0 && (
         <div
-          className={`
-                    flex items-center gap-0.5 flex-shrink-0
-                    ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}
-                    transition-opacity
-                `}
+          className={`flex flex-shrink-0 items-center gap-0.5 ${selected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity`}
         >
           {visibleActions.map((action, i) => (
             <button
               key={i}
-              className={`
-                                p-1.5 rounded transition-colors
-                                ${
-                                  action.danger
-                                    ? 'text-muted-foreground hover:text-destructive hover:bg-destructive/10'
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-                                }
-                            `}
+              className={`rounded p-1.5 transition-colors ${
+                action.danger
+                  ? 'hover:bg-destructive/10 text-muted-foreground hover:text-destructive'
+                  : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+              } `}
               onClick={(e) => {
                 e.stopPropagation();
                 action.onClick(e);

@@ -3,8 +3,9 @@
  * V0.9.2: 右侧详情页编辑（类似提示词模板）
  */
 import type { FC } from 'react';
+
+import type { CustomMacro } from '@/types/macro';
 import { TextField, FormSection } from '@/ui/components/form/FormComponents';
-import type { CustomMacro } from '@/types/prompt';
 
 interface CustomMacroFormProps {
   macro: CustomMacro;
@@ -39,14 +40,14 @@ export const CustomMacroForm: FC<CustomMacroFormProps> = ({ macro, onChange }) =
       </FormSection>
 
       {/* 使用说明 */}
-      <div className="px-3 py-2 bg-muted/30 rounded border border-border">
-        <div className="text-[10px] text-muted-foreground mb-2 font-medium uppercase tracking-wider">
+      <div className="bg-muted/30 rounded border border-border px-3 py-2">
+        <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
           使用方式
         </div>
-        <div className="text-xs text-muted-foreground leading-relaxed">
+        <div className="text-xs leading-relaxed text-muted-foreground">
           <p>
             在任意提示词模板中使用{' '}
-            <code className="px-1 py-0.5 bg-muted rounded text-primary font-mono">{`{{${macro.name || '宏名称'}}}`}</code>{' '}
+            <code className="rounded bg-muted px-1 py-0.5 font-mono text-primary">{`{{${macro.name || '宏名称'}}}`}</code>{' '}
             即可引用此宏的内容。
           </p>
           <p className="mt-1">宏内容会在每次刷新缓存时自动同步到 SillyTavern 宏系统。</p>

@@ -1,15 +1,16 @@
-/**
- * 提示词模板编辑表单
- */
-import { countWorldbookTokens } from '@/integrations/tavern';
-import type { LLMPreset } from '@/types/llm';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
-import { PROMPT_CATEGORIES } from '@/types/prompt';
-import { FormSection, SelectField, TextField } from '@/ui/components/form/FormComponents';
-import { WorldbookBindingField } from '@/ui/components/form/WorldbookBindingField';
 import { Check, Copy } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { FC } from 'react';
+
+/**
+ * 提示词模板编辑表单
+ */
+import { PROMPT_CATEGORIES } from '@/config/prompt/defaults';
+import { countWorldbookTokens } from '@/integrations/tavern';
+import type { LLMPreset } from '@/types/llm';
+import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import { FormSection, SelectField, TextField } from '@/ui/components/form/FormComponents';
+import { WorldbookBindingField } from '@/ui/components/form/WorldbookBindingField';
 
 interface PromptTemplateFormProps {
   template: PromptTemplate;
@@ -80,14 +81,14 @@ const MacroItem = ({ macro }: { macro: MacroDef }) => {
   };
 
   return (
-    <div className="flex items-center justify-between gap-2 p-1.5 rounded hover:bg-muted/50 group transition-colors">
+    <div className="hover:bg-muted/50 group flex items-center justify-between gap-2 rounded p-1.5 transition-colors">
       <div className="flex flex-col gap-0.5">
-        <code className="text-[11px] text-primary font-mono font-medium">{macro.name}</code>
+        <code className="font-mono text-[11px] font-medium text-primary">{macro.name}</code>
         <span className="text-[10px] text-muted-foreground">{macro.desc}</span>
       </div>
       <button
         onClick={handleCopy}
-        className="opacity-0 group-hover:opacity-100 transition-opacity p-1 hover:bg-muted rounded text-muted-foreground hover:text-foreground"
+        className="rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:bg-muted hover:text-foreground group-hover:opacity-100"
         title="复制宏"
       >
         {copied ? <Check size={12} className="text-value" /> : <Copy size={12} />}
@@ -203,7 +204,7 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
           description="选择用于此模板的 LLM 预设"
         />
 
-        {template.category === 'preprocessing' && (
+        {template.category === 'preprocess' && (
           <SelectField
             label="注入模式"
             value={template.injectionMode || 'replace'}
@@ -230,8 +231,8 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
           multiline
           rows={4}
           description={
-            <span className="flex items-center gap-1 text-muted-foreground mt-1">
-              约 <strong className="text-value font-mono font-medium">{sysTokens}</strong> Tokens
+            <span className="mt-1 flex items-center gap-1 text-muted-foreground">
+              约 <strong className="font-mono font-medium text-value">{sysTokens}</strong> Tokens
             </span>
           }
         />
@@ -254,25 +255,25 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
           multiline
           rows={6}
           description={
-            <span className="flex items-center gap-1 text-muted-foreground mt-1">
-              约 <strong className="text-value font-mono font-medium">{userTokens}</strong> Tokens
+            <span className="mt-1 flex items-center gap-1 text-muted-foreground">
+              约 <strong className="font-mono font-medium text-value">{userTokens}</strong> Tokens
             </span>
           }
         />
       </FormSection>
 
       {/* 可用宏提示 */}
-      <div className="px-3 py-3 bg-muted/20 rounded-md border border-border/50 space-y-3">
-        <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-2">
+      <div className="bg-muted/20 border-border/50 space-y-3 rounded-md border px-3 py-3">
+        <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <span>可用宏变量</span>
-          <div className="h-px bg-border flex-1"></div>
+          <div className="h-px flex-1 bg-border"></div>
         </div>
 
         <div className="flex flex-col gap-4">
           {Object.entries(groupedMacros).map(([category, macros]) => (
             <div key={category} className="flex flex-col gap-1">
-              <div className="text-[10px] text-primary/70 font-medium px-1 mb-0.5">{category}</div>
-              <div className="grid grid-cols-1 gap-px bg-border/20 rounded overflow-hidden">
+              <div className="text-primary/70 mb-0.5 px-1 text-[10px] font-medium">{category}</div>
+              <div className="bg-border/20 grid grid-cols-1 gap-px overflow-hidden rounded">
                 {macros.map((m) => (
                   <div key={m.name} className="bg-background/50">
                     <MacroItem macro={m} />

@@ -1,15 +1,3 @@
-/**
- * EntityEditor - 实体编辑面板
- *
- * 功能：
- * 1. 编辑实体基本信息 (Name/Type/Aliases)
- * 2. 编辑 Profile JSON (核心)
- * 3. 自动同步/手动修改 Description (YAML from Profile)
- */
-import type { EntityNode, EntityType } from '@/types/graph';
-import { Divider } from '@/ui/components/layout/Divider';
-import { useResponsive } from '@/ui/hooks/useResponsive';
-import { stringifyYaml } from '@/core/utils';
 import debounce from 'lodash-es/debounce';
 import { AlertTriangle, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
 import {
@@ -22,6 +10,20 @@ import {
   useState,
 } from 'react';
 import type { CSSProperties } from 'react';
+
+import type { EntityType } from '@/config/memory/defaults';
+import { stringifyYaml } from '@/core/utils';
+/**
+ * EntityEditor - 实体编辑面板
+ *
+ * 功能：
+ * 1. 编辑实体基本信息 (Name/Type/Aliases)
+ * 2. 编辑 Profile JSON (核心)
+ * 3. 自动同步/手动修改 Description (YAML from Profile)
+ */
+import type { EntityNode } from '@/types/graph';
+import { Divider } from '@/ui/components/layout/Divider';
+import { useResponsive } from '@/ui/hooks/useResponsive';
 
 /**
  * 根据实体类型获取对应的文字颜色类名
@@ -225,7 +227,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
 
     if (!entity) {
       return (
-        <div className="flex flex-col items-center justify-center h-full text-meta gap-2">
+        <div className="flex h-full flex-col items-center justify-center gap-2 text-meta">
           <p className="text-sm font-light">选择一个实体查看详情</p>
         </div>
       );
@@ -246,7 +248,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
               }}
               onBlur={handleBlur}
               style={inputStyle}
-              className="placeholder:text-meta/40 focus:border-primary transition-colors font-medium text-lg text-heading"
+              className="placeholder:text-meta/40 text-lg font-medium text-heading transition-colors focus:border-primary"
             />
           </div>
 
@@ -260,7 +262,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
                   setIsDirty(true);
                   handleBlur(); // Trigger sync
                 }}
-                className={`w-full py-2 bg-transparent border-b border-border outline-none text-sm appearance-none cursor-pointer transition-colors ${getEntityTextTypeColor(type)}`}
+                className={`w-full cursor-pointer appearance-none border-b border-border bg-transparent py-2 text-sm outline-none transition-colors ${getEntityTextTypeColor(type)}`}
               >
                 {ENTITY_TYPES.map((t) => (
                   <option key={t.value} value={t.value} className="bg-popover text-foreground">
@@ -288,13 +290,13 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
         </div>
         <Divider spacing="lg" />
         {/* Profile JSON Editor */}
-        <div className="flex flex-col gap-2 flex-1 min-h-[200px]">
-          <div className="flex justify-between items-center">
-            <label className="text-xs text-meta font-medium uppercase tracking-wider">
+        <div className="flex min-h-[200px] flex-1 flex-col gap-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-medium uppercase tracking-wider text-meta">
               元数据 Profile (JSON)
             </label>
             {jsonError && (
-              <span className="text-xs text-destructive flex items-center gap-1">
+              <span className="flex items-center gap-1 text-xs text-destructive">
                 <AlertTriangle size={12} />
                 格式错误
               </span>
@@ -304,19 +306,14 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
             value={profileJson}
             onChange={(e) => handleJsonChange(e.target.value)}
             onBlur={handleBlur}
-            className={`
-                        flex-1 w-full p-4 font-mono text-xs leading-relaxed
-                        bg-muted/50 border rounded-md resize-none outline-none
-                        transition-colors
-                        ${jsonError ? 'border-destructive focus:border-destructive' : 'border-border focus:border-value'}
-                    `}
+            className={`bg-muted/50 w-full flex-1 resize-none rounded-md border p-4 font-mono text-xs leading-relaxed outline-none transition-colors ${jsonError ? 'border-destructive focus:border-destructive' : 'border-border focus:border-value'} `}
             spellCheck={false}
           />
         </div>
         <Divider spacing="lg" />
         {/* Description (Burn-in) */}
         <div className="flex flex-col gap-2">
-          <div className="flex justify-between items-center">
+          <div className="flex items-center justify-between">
             <label className="text-xs text-meta">烧录描述 (YAML/Text)</label>
             <button
               onClick={handleGenerateDesc}
@@ -334,7 +331,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
             }}
             onBlur={handleBlur}
             rows={6}
-            className="w-full p-3 text-sm bg-transparent border border-border rounded-md outline-none focus:border-primary transition-colors resize-vertical"
+            className="resize-vertical w-full rounded-md border border-border bg-transparent p-3 text-sm outline-none transition-colors focus:border-primary"
             placeholder="用于提交给 LLM 的实体描述信息..."
           />
           <p className="text-[10px] text-meta">*RAG 检索时将直接使用此字段的内容作为上下文</p>
@@ -346,49 +343,49 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     // Render logic matches EventEditor (Mobile/Desktop modes)
     if (isFullScreen) {
       return (
-        <div className="h-full flex flex-col bg-transparent">
-          <div className="flex items-center gap-3 px-4 py-3 border-b border-border/50 shrink-0">
+        <div className="flex h-full flex-col bg-transparent">
+          <div className="border-border/50 flex shrink-0 items-center gap-3 border-b px-4 py-3">
             <button
               onClick={onClose}
-              className="p-1.5 text-meta hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
-            <h2 className="text-sm font-medium flex-1">编辑实体</h2>
+            <h2 className="flex-1 text-sm font-medium">编辑实体</h2>
             <button
               onClick={() => isFullScreen && onDelete?.(entity.id)}
-              className="p-1.5 text-destructive hover:bg-destructive/10 rounded"
+              className="hover:bg-destructive/10 rounded p-1.5 text-destructive"
             >
               <Trash2 size={16} />
             </button>
           </div>
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">{formContent}</div>
+          <div className="flex-1 space-y-4 overflow-y-auto p-4">{formContent}</div>
         </div>
       );
     }
 
     return (
-      <div className="h-full flex flex-col min-h-0">
+      <div className="flex h-full min-h-0 flex-col">
         {/* 桌面端内部 Header，移动端使用外部 MobileFullscreenForm Header */}
         {!isMobile && (
-          <div className="flex items-center gap-2 pb-4 border-b border-border shrink-0">
+          <div className="flex shrink-0 items-center gap-2 border-b border-border pb-4">
             <button
               onClick={onClose}
-              className="p-1.5 text-meta hover:text-foreground hover:bg-muted/50 rounded transition-colors"
+              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
               title="返回"
             >
               <ArrowLeft size={18} />
             </button>
-            <h3 className="text-sm font-medium text-primary flex-1">编辑实体</h3>
+            <h3 className="flex-1 text-sm font-medium text-primary">编辑实体</h3>
             <button
               onClick={() => onDelete?.(entity.id)}
-              className="p-1.5 text-destructive hover:bg-destructive/10 rounded"
+              className="hover:bg-destructive/10 rounded p-1.5 text-destructive"
             >
               <Trash2 size={16} />
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto py-4 space-y-4 no-scrollbar">{formContent}</div>
+        <div className="no-scrollbar flex-1 space-y-4 overflow-y-auto py-4">{formContent}</div>
       </div>
     );
   }

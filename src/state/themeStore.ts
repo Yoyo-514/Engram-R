@@ -4,9 +4,10 @@
  * 替换原有的 ThemeContext，提供更简洁的状态管理
  */
 
+import { create } from 'zustand';
+
 import { getTheme, setTheme as setGlobalTheme } from '@/ui/services';
 import { type ThemeName } from '@/ui/styles/themes';
-import { create } from 'zustand';
 
 interface ThemeState {
   /** 当前主题名称 */

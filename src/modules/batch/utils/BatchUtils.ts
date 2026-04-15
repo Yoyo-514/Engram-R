@@ -1,4 +1,5 @@
-import { getBuiltInTemplateByCategory } from '@/types/config';
+import { getBuiltInTemplateByCategory } from '@/config/prompt/templates';
+import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { llmAdapter } from '@/integrations/llm/Adapter';
 import {
@@ -8,7 +9,6 @@ import {
   refreshCache,
   setUserInput,
 } from '@/integrations/tavern';
-import { get } from '@/config/settings';
 
 /**
  * 将长文本切分为带重叠区的小块
@@ -45,7 +45,7 @@ export async function summarizeChunk(chunk: string, chunkIndex: number): Promise
   await refreshCache(); // 刷新其他宏 (如 chatHistory)
 
   // 2. 获取模板 (优先使用用户启用的 summary 模板)
-  const allTemplates = get('apiSettings')?.promptTemplates || [];
+  const allTemplates = get('runtimeSettings')?.promptTemplates || [];
   const userTemplate = allTemplates.find((t) => t.category === 'summary' && t.enabled);
   const builtInTemplate = getBuiltInTemplateByCategory('summary');
 

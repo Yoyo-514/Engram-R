@@ -1,8 +1,16 @@
+import { Loader2, RefreshCw } from 'lucide-react';
+import { useState } from 'react';
+import type { FC } from 'react';
+
+import {
+  fetchOllamaModels,
+  fetchOpenAIModels,
+  type ModelInfo,
+} from '@/integrations/llm/ModelDiscovery';
 /**
  * LLM 预设编辑表单
  */
 import type { APISource, CustomAPIConfig, LLMPreset } from '@/types/llm';
-import { fetchOllamaModels, fetchOpenAIModels, type ModelInfo } from '@/integrations/llm/ModelDiscovery';
 import { SliderField } from '@/ui/components/core/SliderField';
 import {
   FormSection,
@@ -10,9 +18,6 @@ import {
   SwitchField,
   TextField,
 } from '@/ui/components/form/FormComponents';
-import { Loader2, RefreshCw } from 'lucide-react';
-import { useState } from 'react';
-import type { FC } from 'react';
 
 interface LLMPresetFormProps {
   preset: LLMPreset;
@@ -171,7 +176,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               </label>
               <button
                 type="button"
-                className="p-0.5 border-none bg-transparent text-muted-foreground cursor-pointer transition-colors hover:text-primary disabled:opacity-40 disabled:cursor-not-allowed"
+                className="cursor-pointer border-none bg-transparent p-0.5 text-muted-foreground transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-40"
                 onClick={fetchModelList}
                 disabled={isLoadingModels || !preset.custom?.apiUrl}
                 title="获取模型列表"
@@ -217,7 +222,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
         <div className="space-y-8">
           {/* Temperature */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               模型的温度为
               <input
                 type="number"
@@ -226,7 +231,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={0.1}
                 value={preset.parameters.temperature}
                 onChange={(e) => updateParameters('temperature', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-12 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-12 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -236,14 +241,14 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.temperature}
               onChange={(val) => updateParameters('temperature', val)}
             />
-            <div className="text-xs text-muted-foreground/70">
+            <div className="text-muted-foreground/70 text-xs">
               较高的值使输出更随机，较低的值使输出更确定。
             </div>
           </div>
 
           {/* Top-P */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               核采样阈值 (Top-P) 为
               <input
                 type="number"
@@ -252,7 +257,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={0.05}
                 value={preset.parameters.topP}
                 onChange={(e) => updateParameters('topP', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-12 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-12 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -262,12 +267,12 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.topP}
               onChange={(val) => updateParameters('topP', val)}
             />
-            <div className="text-xs text-muted-foreground/70">控制候选 token 的累积概率截断。</div>
+            <div className="text-muted-foreground/70 text-xs">控制候选 token 的累积概率截断。</div>
           </div>
 
           {/* Top-K */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               候选词采样截断 (Top-K) 为
               <input
                 type="number"
@@ -276,7 +281,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={1}
                 value={preset.parameters.topK ?? 60}
                 onChange={(e) => updateParameters('topK', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-12 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-12 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -286,14 +291,14 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.topK ?? 60}
               onChange={(val) => updateParameters('topK', val)}
             />
-            <div className="text-xs text-muted-foreground/70">
+            <div className="text-muted-foreground/70 text-xs">
               只从前 K 个最可能的结果中进行概率抽取（建议保留 0 为关闭或 60 默认）。
             </div>
           </div>
 
           {/* Max Tokens */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               最大输出 Token 为
               <input
                 type="number"
@@ -302,7 +307,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={64}
                 value={preset.parameters.maxTokens}
                 onChange={(e) => updateParameters('maxTokens', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-16 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-16 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -316,7 +321,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
 
           {/* Max Context */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               上下文 Token 上限为
               <input
                 type="number"
@@ -325,7 +330,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={1000}
                 value={preset.parameters.maxContext ?? 150000}
                 onChange={(e) => updateParameters('maxContext', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-20 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-20 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -335,14 +340,14 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.maxContext ?? 150000}
               onChange={(val) => updateParameters('maxContext', val)}
             />
-            <div className="text-xs text-muted-foreground/70">
+            <div className="text-muted-foreground/70 text-xs">
               建议值: 150000。限制传给大模型的最大上下文 Token 长度。
             </div>
           </div>
 
           {/* Frequency Penalty */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               频率惩罚为
               <input
                 type="number"
@@ -351,7 +356,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={0.1}
                 value={preset.parameters.frequencyPenalty}
                 onChange={(e) => updateParameters('frequencyPenalty', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-12 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-12 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -361,12 +366,12 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.frequencyPenalty}
               onChange={(val) => updateParameters('frequencyPenalty', val)}
             />
-            <div className="text-xs text-muted-foreground/70">降低重复 token 的概率。</div>
+            <div className="text-muted-foreground/70 text-xs">降低重复 token 的概率。</div>
           </div>
 
           {/* Presence Penalty */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground flex items-center">
+            <div className="flex items-center text-xs text-muted-foreground">
               存在惩罚为
               <input
                 type="number"
@@ -375,7 +380,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
                 step={0.1}
                 value={preset.parameters.presencePenalty}
                 onChange={(e) => updateParameters('presencePenalty', Number(e.target.value))}
-                className="bg-transparent border-b border-transparent hover:border-border focus:border-primary outline-none text-base font-medium text-foreground mx-1 text-center w-12 transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none p-0"
+                className="mx-1 w-12 border-b border-transparent bg-transparent p-0 text-center text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] hover:border-border focus:border-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
               />
             </div>
             <SliderField
@@ -385,7 +390,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.presencePenalty}
               onChange={(val) => updateParameters('presencePenalty', val)}
             />
-            <div className="text-xs text-muted-foreground/70">鼓励模型讨论新主题。</div>
+            <div className="text-muted-foreground/70 text-xs">鼓励模型讨论新主题。</div>
           </div>
         </div>
       </FormSection>

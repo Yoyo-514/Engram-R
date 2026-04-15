@@ -3,9 +3,11 @@
  * V0.9.11
  */
 
-import { type SearchAdapter, type SearchResult } from '../SearchService';
-import { DOCS } from '@/docs';
 import { BookOpen } from 'lucide-react';
+
+import { DOCS } from '@/docs';
+
+import { type SearchAdapter, type SearchResult } from '../SearchService';
 
 export class DocAdapter implements SearchAdapter {
   async search(query: string): Promise<SearchResult[]> {

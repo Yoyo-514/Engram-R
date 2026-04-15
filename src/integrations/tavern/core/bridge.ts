@@ -1,3 +1,4 @@
+import { getRegexRules, initSettings } from '@/config/settings';
 /**
  * STBridge - SillyTavern API 桥接层
  *
@@ -5,9 +6,9 @@
  * 所有 window.SillyTavern、jQuery、eventSource 的调用都在这里统一管理。
  */
 import { Logger } from '@/core/logger';
-import { getRegexRules, initSettings } from '@/config/settings';
-import { regexProcessor } from '@/modules/workflow/steps';
-import { summarizerService, entityBuilder } from '@/modules/memory';
+import { setupKeyboardShortcuts } from '@/core/utils';
+import { initCharacterDeleteService } from '@/data/CharacterCleanup';
+import { openCommandPalette, toggleQuickPanel } from '@/index';
 import {
   checkTavernIntegration,
   createTopBarButton,
@@ -17,11 +18,10 @@ import {
   initQuickPanelButton,
   initWorldBookSlot,
 } from '@/integrations/tavern';
-import { initThemeManager } from '@/ui/services';
+import { summarizerService, entityBuilder } from '@/modules/memory';
 import { injector } from '@/modules/rag';
-import { initCharacterDeleteService } from '@/data/CharacterCleanup';
-import { setupKeyboardShortcuts } from '@/core/utils';
-import { openCommandPalette, toggleQuickPanel } from '@/index';
+import { regexProcessor } from '@/modules/workflow/steps';
+import { initThemeManager } from '@/ui/services';
 
 /**
  * 初始化 Engram 插件

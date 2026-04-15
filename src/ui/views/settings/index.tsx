@@ -1,23 +1,25 @@
-import { getSettings, loadSettings, set } from '@/config/settings';
-import { Logger, LogModule } from '@/core/logger';
-import { getCurrentChatId } from '@/integrations/tavern';
-import { summarizerService } from '@/modules/memory';
-import { preprocessor } from '@/modules/preprocessing';
-import { DEFAULT_PREPROCESSING_CONFIG } from '@/modules/preprocessing/types';
-import { useMemoryStore } from '@/state/memoryStore';
-import { Switch } from '@/ui/components/core/Switch';
-import { PageTitle } from '@/ui/components/display/PageTitle';
-import { notificationService } from '@/ui/services/NotificationService';
-import { NumberField } from '@/ui/components/form/FormComponents';
+import { Dexie } from 'dexie';
 import { Eye, RefreshCw, Settings as SettingsIcon, Sparkles, Trash2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
-import { useConfigStore } from '@/state/configStore';
-import { ThemeSelector } from './components/ThemeSelector';
+
+import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
+import { getSettings, set } from '@/config/settings';
+import { Logger, LogModule } from '@/core/logger';
 import { deleteDatabase, listAllDatabases } from '@/data/db';
-import { Dexie } from 'dexie';
-import { getTheme, setTheme } from '@/ui/services';
 import { syncService } from '@/data/SyncService';
+import { getCurrentChatId } from '@/integrations/tavern';
+import { summarizerService } from '@/modules/memory';
+import { preprocessor } from '@/modules/preprocess';
+import { useConfigStore } from '@/state/configStore';
+import { useMemoryStore } from '@/state/memoryStore';
+import { Switch } from '@/ui/components/core/Switch';
+import { PageTitle } from '@/ui/components/display/PageTitle';
+import { NumberField } from '@/ui/components/form/FormComponents';
+import { getTheme, setTheme } from '@/ui/services';
+import { notificationService } from '@/ui/services/NotificationService';
+
+import { ThemeSelector } from './components/ThemeSelector';
 
 export const Settings: FC = () => {
   const { enableAnimations, updateEnableAnimations, saveConfig } = useConfigStore();
@@ -25,14 +27,14 @@ export const Settings: FC = () => {
     getSettings().summarizerConfig?.previewEnabled ?? true
   );
   const [preprocessingPreviewEnabled, setPreprocessingPreviewEnabled] = useState(
-    getSettings().preprocessingConfig?.preview ?? DEFAULT_PREPROCESSING_CONFIG.preview
+    getSettings().preprocessConfig?.preview ?? DEFAULT_PREPROCESS_CONFIG.preview
   );
 
   // HACK: 强制刷新引用
   const [, forceUpdate] = useState({});
 
   useEffect(() => {
-    loadSettings();
+    getSettings();
   }, []);
 
   const [linkedDeletion, setLinkedDeletion] = useState(getSettings().linkedDeletion);
@@ -40,27 +42,27 @@ export const Settings: FC = () => {
   const refreshTheme = () => setTheme(getTheme());
 
   return (
-    <div className="flex flex-col h-full animate-in fade-in">
+    <div className="animate-in fade-in flex h-full flex-col">
       <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="扩展全局选项与外观配置" />
-      <div className="px-4 py-6 md:p-6 space-y-8 overflow-x-hidden">
+      <div className="space-y-8 overflow-x-hidden px-4 py-6 md:p-6">
         {/* Theme Section */}
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             外观
           </h3>
           <div className="space-y-4">
             <ThemeSelector />
 
             {/* 动画设置开关 (V1.4.6) */}
-            <div className="bg-muted/30 border border-border rounded-lg p-4">
+            <div className="bg-muted/30 rounded-lg border border-border p-4">
               <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0 flex-1">
-                  <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
+                  <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
                     <Sparkles size={20} />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h4 className="font-medium text-foreground truncate">启用 UI 动画</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2">
+                    <h4 className="truncate font-medium text-foreground">启用 UI 动画</h4>
+                    <p className="line-clamp-2 text-sm text-muted-foreground">
                       开启或关闭开场、切页及交互动画，关闭可提升低配设备的响应速度
                     </p>
                   </div>
@@ -79,15 +81,15 @@ export const Settings: FC = () => {
 
         {/* Glass Settings Section (Visual) */}
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             毛玻璃特效 (Glass Effect)
           </h3>
-          <div className="bg-muted/30 border border-border rounded-lg p-4 space-y-6">
+          <div className="bg-muted/30 space-y-6 rounded-lg border border-border p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-medium text-foreground truncate">启用毛玻璃</h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <h4 className="truncate font-medium text-foreground">启用毛玻璃</h4>
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
                     开启后，面板背景将具有磨砂质感
                   </p>
                 </div>
@@ -152,19 +154,19 @@ export const Settings: FC = () => {
 
         {/* Summarizer Section */}
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             功能
           </h3>
 
-          <div className="bg-muted/30 border border-border rounded-lg p-4">
+          <div className="bg-muted/30 rounded-lg border border-border p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
                   <Eye size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-medium text-heading truncate">启用修订模式</h4>
-                  <p className="text-sm text-meta line-clamp-2">在写入长期记忆前，弹出预览窗口</p>
+                  <h4 className="truncate font-medium text-heading">启用修订模式</h4>
+                  <p className="line-clamp-2 text-sm text-meta">在写入长期记忆前，弹出预览窗口</p>
                 </div>
               </div>
               <Switch
@@ -180,18 +182,18 @@ export const Settings: FC = () => {
 
         {/* Preprocessing Section */}
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             输入预处理
           </h3>
-          <div className="bg-muted/30 border border-border rounded-lg p-4">
+          <div className="bg-muted/30 rounded-lg border border-border p-4">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
                   <Eye size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-medium text-heading truncate">预处理修订模式</h4>
-                  <p className="text-sm text-meta line-clamp-2">在注入用户输入前，弹出预览窗口</p>
+                  <h4 className="truncate font-medium text-heading">预处理修订模式</h4>
+                  <p className="line-clamp-2 text-sm text-meta">在注入用户输入前，弹出预览窗口</p>
                 </div>
               </div>
               <Switch
@@ -211,20 +213,20 @@ export const Settings: FC = () => {
 
         {/* Data Management Section */}
         <section>
-          <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider mb-4">
+          <h3 className="mb-4 text-sm font-medium uppercase tracking-wider text-muted-foreground">
             数据管理
           </h3>
 
-          <div className="bg-muted/30 border border-border rounded-lg p-4 space-y-4">
+          <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
             {/* 联动删除 */}
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3 min-w-0 flex-1">
-                <div className="p-2 rounded-lg bg-red-500/10 text-red-500 flex-shrink-0">
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                <div className="flex-shrink-0 rounded-lg bg-red-500/10 p-2 text-red-500">
                   <Trash2 size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="font-medium text-foreground truncate">联动删除</h4>
-                  <p className="text-sm text-muted-foreground line-clamp-2">
+                  <h4 className="truncate font-medium text-foreground">联动删除</h4>
+                  <p className="line-clamp-2 text-sm text-muted-foreground">
                     删除角色/聊天时，自动清理记忆库
                   </p>
                 </div>
@@ -240,7 +242,7 @@ export const Settings: FC = () => {
             </div>
 
             {linkedDeletion.enabled && (
-              <div className="pl-14 space-y-3 border-t border-border pt-3">
+              <div className="space-y-3 border-t border-border pl-14 pt-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-muted-foreground">删除前确认</span>
                   <Switch
@@ -258,10 +260,10 @@ export const Settings: FC = () => {
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <div className="min-w-0 flex-1">
-                    <span className="text-sm text-muted-foreground block truncate">
+                    <span className="block truncate text-sm text-muted-foreground">
                       删除聊天时同步删除 Worldbook
                     </span>
-                    <p className="text-xs text-muted-foreground/60 line-clamp-2">
+                    <p className="text-muted-foreground/60 line-clamp-2 text-xs">
                       危险: 多聊天共享 Worldbook 时可能误删
                     </p>
                   </div>
@@ -290,8 +292,8 @@ export const Settings: FC = () => {
         </section>
 
         {/* Future settings sections can go here */}
-        <div className="mt-8 pt-8 border-t border-border">
-          <div className="flex flex-col items-center justify-center text-muted-foreground gap-2 py-8 opacity-50">
+        <div className="mt-8 border-t border-border pt-8">
+          <div className="flex flex-col items-center justify-center gap-2 py-8 text-muted-foreground opacity-50">
             <SettingsIcon size={32} />
             <p className="text-sm">更多设置开发中...</p>
           </div>
@@ -380,10 +382,10 @@ const SyncSection: FC = () => {
   };
 
   return (
-    <div className="bg-muted/30 border border-border rounded-lg p-4 mt-4">
-      <div className="flex items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+    <div className="bg-muted/30 mt-4 rounded-lg border border-border p-4">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
             <svg
               width="20"
               height="20"
@@ -402,7 +404,7 @@ const SyncSection: FC = () => {
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <h4 className="font-medium text-heading truncate">多端数据同步 (Beta)</h4>
+              <h4 className="truncate font-medium text-heading">多端数据同步 (Beta)</h4>
               {syncStatus !== 'idle' && (
                 <span
                   className={`text-xs ${
@@ -410,14 +412,14 @@ const SyncSection: FC = () => {
                       ? 'text-red-500'
                       : syncStatus === 'success'
                         ? 'text-green-500'
-                        : 'text-blue-500 animate-pulse'
+                        : 'animate-pulse text-blue-500'
                   }`}
                 >
                   {syncMessage}
                 </span>
               )}
             </div>
-            <p className="text-sm text-muted-foreground line-clamp-2">
+            <p className="line-clamp-2 text-sm text-muted-foreground">
               利用酒馆文件读写接口存储与同步
             </p>
           </div>
@@ -426,11 +428,11 @@ const SyncSection: FC = () => {
       </div>
 
       {syncConfig.enabled && (
-        <div className="pl-14 space-y-3 border-t border-border pt-3">
+        <div className="space-y-3 border-t border-border pl-14 pt-3">
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <span className="text-sm text-muted-foreground">自动同步</span>
-              <p className="text-xs text-muted-foreground/60">数据变动3秒后自动上传</p>
+              <p className="text-muted-foreground/60 text-xs">数据变动3秒后自动上传</p>
             </div>
             <Switch
               checked={syncConfig.autoSync}
@@ -442,20 +444,20 @@ const SyncSection: FC = () => {
           <div className="flex items-center justify-between">
             <div className="min-w-0 flex-1">
               <span className="text-sm text-muted-foreground">上次同步</span>
-              <p className="text-xs text-muted-foreground/60">
+              <p className="text-muted-foreground/60 text-xs">
                 {lastSyncTime > 0 ? new Date(lastSyncTime).toLocaleString() : '暂无记录'}
               </p>
             </div>
             <button
               onClick={handleManualSync}
               disabled={syncStatus === 'syncing'}
-              className="px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted transition-colors disabled:opacity-50"
+              className="rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted disabled:opacity-50"
             >
               立即同步
             </button>
           </div>
 
-          <ul className="mt-2 text-xs text-muted-foreground/60 p-2 bg-background/50 rounded list-disc list-inside">
+          <ul className="text-muted-foreground/60 bg-background/50 mt-2 list-inside list-disc rounded p-2 text-xs">
             <li>
               数据存储路径: `data/default-user/files/Engram_sync_
               {chatId ?? '未知'}.json`
@@ -466,7 +468,7 @@ const SyncSection: FC = () => {
         </div>
       )}
       {/* 强制操作区 - 仅用于调试或手动恢复 */}
-      <div className="flex flex-col sm:flex-row gap-2 sm:justify-end pt-2 border-t border-border/50">
+      <div className="border-border/50 flex flex-col gap-2 border-t pt-2 sm:flex-row sm:justify-end">
         <button
           onClick={async () => {
             try {
@@ -489,7 +491,7 @@ const SyncSection: FC = () => {
               setSyncMessage('上传错误: ' + String(e));
             }
           }}
-          className="w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-blue-500/10 text-muted-foreground hover:text-blue-500 transition-colors"
+          className="w-full rounded border border-border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-blue-500/10 hover:text-blue-500 sm:w-auto"
         >
           强制上传 (覆盖服务端)
         </button>
@@ -515,7 +517,7 @@ const SyncSection: FC = () => {
               setSyncMessage('下载错误: ' + String(e));
             }
           }}
-          className="w-full sm:w-auto px-2 py-1 text-[10px] font-medium rounded bg-background border border-border hover:bg-orange-500/10 text-muted-foreground hover:text-orange-500 transition-colors"
+          className="w-full rounded border border-border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-orange-500/10 hover:text-orange-500 sm:w-auto"
         >
           强制下载 (覆盖本地)
         </button>
@@ -653,48 +655,48 @@ const DatabaseOperations: FC = () => {
   };
 
   return (
-    <div className="bg-muted/30 border border-border rounded-lg p-4 mt-4 space-y-4">
+    <div className="bg-muted/30 mt-4 space-y-4 rounded-lg border border-border p-4">
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0 flex-1">
-          <div className="p-2 rounded-lg bg-primary/10 text-primary flex-shrink-0">
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
             <RefreshCw size={20} />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-medium text-heading truncate">手动维护</h4>
-            <p className="text-sm text-meta line-clamp-2">手动清空或删除当前聊天的数据库</p>
+            <h4 className="truncate font-medium text-heading">手动维护</h4>
+            <p className="line-clamp-2 text-sm text-meta">手动清空或删除当前聊天的数据库</p>
           </div>
         </div>
       </div>
 
-      <div className="pl-0 sm:pl-14 flex flex-col sm:flex-row gap-3 sm:gap-4">
+      <div className="flex flex-col gap-3 pl-0 sm:flex-row sm:gap-4 sm:pl-14">
         <button
           onClick={handleReset}
-          className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-yellow-600 transition-colors"
+          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-yellow-600 transition-colors hover:bg-muted sm:w-auto"
         >
           重置当前数据 (保留DB)
         </button>
         <button
           onClick={handleDelete}
-          className="w-full sm:w-auto px-3 py-1.5 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors"
+          className="w-full rounded-md border border-border bg-background px-3 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 sm:w-auto"
         >
           删除数据库 (删库)
         </button>
       </div>
 
-      <div className="pl-0 sm:pl-14 space-y-3 border-t border-border pt-4">
+      <div className="space-y-3 border-t border-border pl-0 pt-4 sm:pl-14">
         <div>
           <h5 className="text-sm font-medium text-foreground">历史数据库清理</h5>
-          <p className="text-xs text-muted-foreground mt-1">
+          <p className="mt-1 text-xs text-muted-foreground">
             可手动删除当前聊天之外的残留 Engram 数据库，用于清理失效角色卡或历史会话遗留数据
           </p>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-3 sm:items-center min-w-0">
+        <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center">
           <select
             value={selectedDatabase}
             onChange={(e) => setSelectedDatabase(e.target.value)}
             disabled={isLoadingDatabases || availableDatabases.length === 0}
-            className="w-full min-w-0 sm:flex-1 p-2 text-sm bg-background border border-border rounded focus:ring-1 focus:ring-primary outline-none text-foreground disabled:opacity-50"
+            className="w-full min-w-0 rounded border border-border bg-background p-2 text-sm text-foreground outline-none focus:ring-1 focus:ring-primary disabled:opacity-50 sm:flex-1"
           >
             {availableDatabases.length === 0 ? (
               <option value="">未发现可清理的历史数据库</option>
@@ -710,7 +712,7 @@ const DatabaseOperations: FC = () => {
           <button
             onClick={loadAvailableDatabases}
             disabled={isLoadingDatabases}
-            className="w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-muted text-foreground transition-colors disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50 sm:w-auto"
           >
             刷新列表
           </button>
@@ -718,7 +720,7 @@ const DatabaseOperations: FC = () => {
           <button
             onClick={handleDeleteSelectedDatabase}
             disabled={isDeletingSelected || availableDatabases.length === 0 || !selectedDatabase}
-            className="w-full sm:w-auto px-3 py-2 text-xs font-medium rounded-md bg-background border border-border hover:bg-red-500/10 text-red-600 transition-colors disabled:opacity-50"
+            className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 disabled:opacity-50 sm:w-auto"
           >
             删除所选历史库
           </button>

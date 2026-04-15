@@ -4,4 +4,4 @@
 
 export * from './Summarizer';
 export * from './EventTrimmer';
-export * from './EntityExtractor'
+export * from './EntityExtractor';

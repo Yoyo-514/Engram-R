@@ -1,7 +1,8 @@
-import { Switch } from '@/ui/components/core/Switch';
 import { ChevronDown, Search, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import type { ReactNode, FC, CSSProperties } from 'react';
+
+import { Switch } from '@/ui/components/core/Switch';
 
 interface FormSectionProps {
   title: string | ReactNode;
@@ -25,13 +26,13 @@ export const FormSection: FC<FormSectionProps> = ({
   return (
     <div className={`mb-8 ${className}`}>
       <div
-        className={`mb-4 ${collapsible ? 'cursor-pointer select-none flex items-center justify-between group' : ''}`}
+        className={`mb-4 ${collapsible ? 'group flex cursor-pointer select-none items-center justify-between' : ''}`}
         onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
       >
         <div>
-          <h3 className="text-sm font-medium text-primary flex items-center gap-2">{title}</h3>
+          <h3 className="flex items-center gap-2 text-sm font-medium text-primary">{title}</h3>
           {description && (
-            <p className="text-xs text-muted-foreground mt-1 break-words">{description}</p>
+            <p className="mt-1 break-words text-xs text-muted-foreground">{description}</p>
           )}
         </div>
         {collapsible && (
@@ -103,7 +104,7 @@ export const TextField: FC<TextFieldProps> = ({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <label className="text-xs text-muted-foreground flex items-center gap-1">
+      <label className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {required && <span className="text-destructive">*</span>}
       </label>
@@ -116,7 +117,7 @@ export const TextField: FC<TextFieldProps> = ({
           readOnly={readOnly}
           rows={rows}
           style={inputStyle}
-          className="font-mono resize-y min-h-[80px] placeholder:text-muted-foreground/40 disabled:opacity-50 focus:border-primary transition-colors"
+          className="placeholder:text-muted-foreground/40 min-h-[80px] resize-y font-mono transition-colors focus:border-primary disabled:opacity-50"
         />
       ) : (
         <input
@@ -127,11 +128,11 @@ export const TextField: FC<TextFieldProps> = ({
           disabled={disabled}
           readOnly={readOnly}
           style={inputStyle}
-          className="placeholder:text-muted-foreground/40 disabled:opacity-50 focus:border-primary transition-colors"
+          className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary disabled:opacity-50"
         />
       )}
       {description && (
-        <p className="text-[10px] text-muted-foreground/70 break-words">{description}</p>
+        <p className="text-muted-foreground/70 break-words text-[10px]">{description}</p>
       )}
       {error && <p className="text-[10px] text-destructive">{error}</p>}
     </div>
@@ -167,8 +168,8 @@ export const NumberField: FC<NumberFieldProps> = ({
 }) => {
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex justify-between items-center">
-        <label className="text-xs text-muted-foreground flex items-center gap-1">
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {label}
           {required && <span className="text-destructive">*</span>}
         </label>
@@ -180,14 +181,14 @@ export const NumberField: FC<NumberFieldProps> = ({
             step={step}
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="bg-transparent border-0 border-b border-transparent focus:border-border outline-none transition-colors text-base font-medium text-foreground mx-0.5 text-right w-16 px-0 py-0 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none focus:text-primary"
+            className="mx-0.5 w-16 border-0 border-b border-transparent bg-transparent px-0 py-0 text-right text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] focus:border-border focus:text-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           {suffix && <span className="text-sm font-medium text-muted-foreground">{suffix}</span>}
         </div>
       </div>
 
       {description && (
-        <p className="text-[10px] text-muted-foreground/70 break-words">{description}</p>
+        <p className="text-muted-foreground/70 break-words text-[10px]">{description}</p>
       )}
       {error && <p className="text-[10px] text-destructive">{error}</p>}
     </div>
@@ -243,7 +244,7 @@ export const SelectField: FC<SelectFieldProps> = ({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`}>
-      <label className="text-xs text-muted-foreground flex items-center gap-1">
+      <label className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {required && <span className="text-destructive">*</span>}
       </label>
@@ -253,7 +254,7 @@ export const SelectField: FC<SelectFieldProps> = ({
           onChange={(e) => onChange(e.target.value)}
           disabled={disabled}
           style={selectStyle}
-          className="disabled:opacity-50 disabled:cursor-not-allowed focus:border-primary transition-colors"
+          className="transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
         >
           <option value="" disabled className="bg-popover text-muted-foreground">
             {placeholder}
@@ -266,11 +267,11 @@ export const SelectField: FC<SelectFieldProps> = ({
         </select>
         <ChevronDown
           size={14}
-          className="absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground/50 pointer-events-none"
+          className="text-muted-foreground/50 pointer-events-none absolute right-0 top-1/2 -translate-y-1/2"
         />
       </div>
       {description && (
-        <p className="text-[10px] text-muted-foreground/70 break-words">{description}</p>
+        <p className="text-muted-foreground/70 break-words text-[10px]">{description}</p>
       )}
       {error && <p className="text-[10px] text-destructive">{error}</p>}
     </div>
@@ -300,20 +301,20 @@ export const SwitchField: FC<SwitchFieldProps> = ({
 }) => {
   return (
     <div
-      className={`flex items-start justify-between gap-4 ${compact ? 'py-0' : 'py-1'} ${className} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`flex items-start justify-between gap-4 ${compact ? 'py-0' : 'py-1'} ${className} ${disabled ? 'pointer-events-none opacity-50' : ''}`}
     >
       {label && (
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <label
-            className="text-xs text-foreground cursor-pointer block truncate"
+            className="block cursor-pointer truncate text-xs text-foreground"
             onClick={() => !disabled && onChange(!checked)}
           >
             {label}
           </label>
           {description && (
-            <p className="text-[10px] text-muted-foreground/70 mt-0.5 break-words">{description}</p>
+            <p className="text-muted-foreground/70 mt-0.5 break-words text-[10px]">{description}</p>
           )}
-          {error && <p className="text-[10px] text-destructive mt-0.5">{error}</p>}
+          {error && <p className="mt-0.5 text-[10px] text-destructive">{error}</p>}
         </div>
       )}
 
@@ -393,7 +394,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
 
   return (
     <div className={`flex flex-col gap-1 ${className}`} ref={containerRef}>
-      <label className="text-xs text-muted-foreground flex items-center gap-1">
+      <label className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {required && <span className="text-destructive">*</span>}
       </label>
@@ -403,37 +404,37 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
         type="button"
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className="relative w-full text-left py-2 pr-6 border-0 border-b border-border bg-transparent text-sm text-foreground cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed focus:border-primary transition-colors"
+        className="relative w-full cursor-pointer border-0 border-b border-border bg-transparent py-2 pr-6 text-left text-sm text-foreground transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
         <span className={value ? '' : 'text-muted-foreground'}>{selectedLabel}</span>
         <ChevronDown
           size={14}
-          className={`absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground/50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
+          className={`text-muted-foreground/50 absolute right-0 top-1/2 -translate-y-1/2 transition-transform ${isOpen ? 'rotate-180' : ''}`}
         />
       </button>
 
       {/* 下拉面板 - 使用 glass-panel 实现正确的模糊效果 */}
       {isOpen && (
         <div
-          className="glass-panel absolute z-50 mt-1 w-full max-h-64 border border-border rounded-lg shadow-xl overflow-hidden flex flex-col animate-in fade-in slide-in-from-top-1 duration-150"
+          className="glass-panel animate-in fade-in slide-in-from-top-1 absolute z-50 mt-1 flex max-h-64 w-full flex-col overflow-hidden rounded-lg border border-border shadow-xl duration-150"
           style={{ top: '100%', left: 0, right: 0 }}
         >
           {/* 搜索框 */}
-          <div className="p-2 border-b border-border flex items-center gap-2">
-            <Search size={14} className="text-muted-foreground flex-shrink-0" />
+          <div className="flex items-center gap-2 border-b border-border p-2">
+            <Search size={14} className="flex-shrink-0 text-muted-foreground" />
             <input
               ref={inputRef}
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜索模型..."
-              className="flex-1 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/50"
+              className="placeholder:text-muted-foreground/50 flex-1 border-none bg-transparent text-sm text-foreground outline-none"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch('')}
-                className="p-0.5 hover:bg-muted rounded"
+                className="rounded p-0.5 hover:bg-muted"
               >
                 <X size={12} className="text-muted-foreground" />
               </button>
@@ -441,16 +442,16 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
           </div>
 
           {/* 选项列表 */}
-          <div className="overflow-y-auto max-h-48">
+          <div className="max-h-48 overflow-y-auto">
             {filteredOptions.length > 0 ? (
               filteredOptions.map((opt) => (
                 <div
                   key={opt.value}
                   onClick={() => handleSelect(opt.value)}
-                  className={`px-3 py-2 cursor-pointer text-sm truncate transition-colors ${
+                  className={`cursor-pointer truncate px-3 py-2 text-sm transition-colors ${
                     opt.value === value
                       ? 'bg-primary/15 text-primary'
-                      : 'hover:bg-muted text-foreground'
+                      : 'text-foreground hover:bg-muted'
                   }`}
                   title={opt.label}
                 >
@@ -466,7 +467,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
 
           {/* 选项计数 */}
           {options.length > 10 && (
-            <div className="px-3 py-1 border-t border-border text-xs text-muted-foreground/70">
+            <div className="text-muted-foreground/70 border-t border-border px-3 py-1 text-xs">
               {filteredOptions.length} / {options.length} 个模型
             </div>
           )}
@@ -474,7 +475,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
       )}
 
       {description && (
-        <p className="text-[10px] text-muted-foreground/70 break-words">{description}</p>
+        <p className="text-muted-foreground/70 break-words text-[10px]">{description}</p>
       )}
       {error && <p className="text-[10px] text-destructive">{error}</p>}
     </div>

@@ -1,6 +1,8 @@
-import type { RecallConfig, RerankConfig } from '@/types/config';
-import type { EntityNode, EventNode } from '@/types/graph';
 import { useState, type FC } from 'react';
+
+import type { EntityNode, EventNode } from '@/types/graph';
+import type { RecallCandidate, RecallConfig, RerankConfig } from '@/types/rag';
+
 import { RecallConfigForm } from './components/RecallConfigForm';
 
 interface RecallPanelProps {
@@ -10,15 +12,15 @@ interface RecallPanelProps {
   onRerankConfigChange: (config: RerankConfig) => void;
 }
 
+import { BrainCircuit, Database, History, Loader2, Play, Search, Zap } from 'lucide-react';
+
 import { scanEntities, scanEvents } from '@/modules/memory/EntityScanner';
-import { preprocessor } from '@/modules/preprocessing';
-import { type AgenticRecall } from '@/modules/preprocessing/types';
-import { type RecallCandidate } from '@/modules/rag/retrieval/BrainRecallCache';
+import { preprocessor } from '@/modules/preprocess';
 import { retriever } from '@/modules/rag/retrieval/Retriever';
 import { useMemoryStore } from '@/state/memoryStore';
+import type { AgenticRecall } from '@/types/preprocess';
 import { notificationService } from '@/ui/services/NotificationService';
 import { RecallDecisionModal } from '@/ui/views/review/RecallDecisionModal';
-import { BrainCircuit, Database, History, Loader2, Play, Search, Zap } from 'lucide-react';
 
 export const RecallPanel: FC<RecallPanelProps> = ({
   recallConfig,
@@ -162,7 +164,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
   };
 
   return (
-    <div className="p-1 space-y-4">
+    <div className="space-y-4 p-1">
       <RecallConfigForm
         config={recallConfig}
         onChange={onRecallConfigChange}
@@ -171,36 +173,36 @@ export const RecallPanel: FC<RecallPanelProps> = ({
       />
 
       {/* 静态扫描快速测试（零消耗） */}
-      <div className="pt-6 border-t border-border mt-6">
-        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+      <div className="mt-6 border-t border-border pt-6">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
           <Zap size={16} className="text-amber-500" />
           Keyword Scan Dry Run
-          <span className="text-[10px] bg-amber-500/10 text-amber-500/80 px-1.5 py-0.5 rounded ml-1 font-normal">
+          <span className="ml-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-normal text-amber-500/80">
             零消耗・正则测试
           </span>
         </h3>
 
         <div className="flex gap-2">
-          <div className="flex-1 flex flex-col gap-2">
+          <div className="flex flex-1 flex-col gap-2">
             <textarea
               value={scanQuery}
               onChange={(e) => setScanQuery(e.target.value)}
               placeholder="输入文本测试匹配 (实际检索会自动回溯最近 5 条消息)..."
-              className="min-h-[80px] p-3 rounded-md bg-secondary/20 border border-border/40 text-sm focus:outline-none focus:border-primary/50 transition-colors resize-y"
+              className="bg-secondary/20 border-border/40 focus:border-primary/50 min-h-[80px] resize-y rounded-md border p-3 text-sm transition-colors focus:outline-none"
             />
 
             {/* 扫描匹配结果直接在这里渲染，不使用弹窗 */}
             {(matchedEntities.length > 0 || matchedEvents.length > 0) && (
-              <div className="flex flex-col gap-2 p-2 bg-muted/20 rounded border border-border/20">
+              <div className="bg-muted/20 border-border/20 flex flex-col gap-2 rounded border p-2">
                 {matchedEntities.length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    <div className="text-[10px] text-muted-foreground w-full mb-1 flex items-center gap-1">
+                    <div className="mb-1 flex w-full items-center gap-1 text-[10px] text-muted-foreground">
                       <Database size={10} /> 命中的实体:
                     </div>
                     {matchedEntities.map((ent) => (
                       <span
                         key={ent.id}
-                        className="px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 rounded text-[10px] font-medium"
+                        className="bg-primary/10 border-primary/20 rounded border px-1.5 py-0.5 text-[10px] font-medium text-primary"
                       >
                         {ent.name}
                       </span>
@@ -209,13 +211,13 @@ export const RecallPanel: FC<RecallPanelProps> = ({
                 )}
                 {matchedEvents.length > 0 && (
                   <div className="flex flex-col gap-1">
-                    <div className="text-[10px] text-muted-foreground w-full mb-1 flex items-center gap-1">
+                    <div className="mb-1 flex w-full items-center gap-1 text-[10px] text-muted-foreground">
                       <History size={10} /> 命中的事件摘要:
                     </div>
                     {matchedEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="text-[10px] text-foreground/70 bg-secondary/30 p-1.5 rounded truncate border-l-2 border-primary/40"
+                        className="text-foreground/70 bg-secondary/30 border-primary/40 truncate rounded border-l-2 p-1.5 text-[10px]"
                       >
                         {evt.summary}
                       </div>
@@ -228,27 +230,24 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           <button
             onClick={handleScanDryRun}
             disabled={!scanQuery.trim()}
-            className={`
-                            px-4 rounded-md font-medium text-sm transition-all flex flex-col items-center justify-center gap-1 min-w-[80px]
-                            ${
-                              !scanQuery.trim()
-                                ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                                : 'bg-primary/80 text-primary-foreground hover:bg-primary shadow-sm'
-                            }
-                        `}
+            className={`flex min-w-[80px] flex-col items-center justify-center gap-1 rounded-md px-4 text-sm font-medium transition-all ${
+              !scanQuery.trim()
+                ? 'cursor-not-allowed bg-muted text-muted-foreground'
+                : 'bg-primary/80 text-primary-foreground shadow-sm hover:bg-primary'
+            } `}
           >
             <Search size={18} />
             <span className="text-xs">扫描测试</span>
           </button>
         </div>
-        <p className="text-[10px] text-muted-foreground mt-2 pl-1 italic">
+        <p className="mt-2 pl-1 text-[10px] italic text-muted-foreground">
           * 基于实体别名(Trigger Keywords)与事件元数据(Role/Loc)的正则匹配，完全本地执行。
         </p>
       </div>
 
       {/* 模型召回测试（有消耗） */}
-      <div className="pt-6 border-t border-border mt-8">
-        <h3 className="text-sm font-medium mb-3 flex items-center gap-2">
+      <div className="mt-8 border-t border-border pt-6">
+        <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
           {isAgenticMode ? (
             <>
               <BrainCircuit size={16} className="text-primary" />
@@ -260,7 +259,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
               Vector/Hybrid Retrieval Test
             </>
           )}
-          <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded ml-1 font-normal italic">
+          <span className="bg-primary/10 ml-1 rounded px-1.5 py-0.5 text-[10px] font-normal italic text-primary">
             注意: 产生 Token 消耗
           </span>
         </h3>
@@ -274,25 +273,22 @@ export const RecallPanel: FC<RecallPanelProps> = ({
                 ? '模拟用户输入触发 Agentic 预处理...'
                 : '模拟 User Input 触发向量召回预览...'
             }
-            className="flex-1 min-h-[80px] p-3 rounded-md bg-secondary/30 border border-border/50 text-sm focus:outline-none focus:border-primary/50 transition-colors resize-y"
+            className="bg-secondary/30 border-border/50 focus:border-primary/50 min-h-[80px] flex-1 resize-y rounded-md border p-3 text-sm transition-colors focus:outline-none"
           />
           <div className="flex flex-col gap-2">
             <button
               onClick={handlePreviewTest}
               disabled={!testQuery.trim() || isTesting}
-              className={`
-                                px-4 py-3 rounded-md font-medium text-sm transition-all flex flex-col items-center justify-center gap-1 min-w-[100px] flex-1
-                                ${
-                                  !testQuery.trim() || isTesting
-                                    ? 'bg-muted text-muted-foreground cursor-not-allowed'
-                                    : 'bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm'
-                                }
-                            `}
+              className={`flex min-w-[100px] flex-1 flex-col items-center justify-center gap-1 rounded-md px-4 py-3 text-sm font-medium transition-all ${
+                !testQuery.trim() || isTesting
+                  ? 'cursor-not-allowed bg-muted text-muted-foreground'
+                  : 'hover:bg-primary/90 bg-primary text-primary-foreground shadow-sm'
+              } `}
             >
               {isTesting ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
-                  <span className="text-xs text-center">
+                  <span className="text-center text-xs">
                     检索并
                     <br />
                     推理中
@@ -309,9 +305,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
               <button
                 onClick={() => setIsModalOpen(true)}
                 disabled={isTesting}
-                className={`
-                                    py-2 rounded-md font-medium text-[10px] transition-all flex items-center justify-center gap-1 border border-border bg-transparent text-muted-foreground hover:bg-muted/50
-                                `}
+                className={`hover:bg-muted/50 flex items-center justify-center gap-1 rounded-md border border-border bg-transparent py-2 text-[10px] font-medium text-muted-foreground transition-all`}
               >
                 <BrainCircuit size={14} />
                 <span>审阅结果</span>
@@ -319,7 +313,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2 pl-1">
+        <p className="mt-2 pl-1 text-xs text-muted-foreground">
           * 将执行一次真实的召回流程并弹窗确认，用于校验 Rerank 与 Agentic 评估效果。
           {isAgenticMode && (
             <>

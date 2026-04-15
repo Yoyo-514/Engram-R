@@ -10,7 +10,7 @@ export async function processEJSMacros(entries: string[]): Promise<string[]> {
   const ejs = getEjsTemplate();
   const mvu = getMvu();
 
-  const enableEJS = get('apiSettings')?.worldbookConfig?.enableEJS ?? true;
+  const enableEJS = get('runtimeSettings')?.worldbookConfig?.enableEJS ?? true;
   if (!enableEJS) {
     Logger.debug('EjsProcessor', 'EJS processing disabled by worldbook settings');
     return entries;

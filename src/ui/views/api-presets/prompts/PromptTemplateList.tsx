@@ -1,9 +1,11 @@
-import { createPromptTemplate } from '@/types/config';
-import type { PromptTemplate } from '@/types/prompt';
-import { PROMPT_CATEGORIES } from '@/types/prompt';
 import { AnimatePresence, motion } from 'framer-motion';
 import { FileText, Plus, RotateCcw } from 'lucide-react';
 import type { FC } from 'react';
+
+import { PROMPT_CATEGORIES } from '@/config/prompt/defaults';
+import { createPromptTemplate } from '@/config/prompt/factories';
+import type { PromptTemplate } from '@/types/prompt';
+
 import { PromptTemplateCard } from './PromptTemplateCard';
 
 interface PromptTemplateListProps {
@@ -67,16 +69,16 @@ export const PromptTemplateList: FC<PromptTemplateListProps> = ({
   })).filter((group) => group.templates.length > 0);
 
   return (
-    <div className="flex flex-col gap-4 h-full">
+    <div className="flex h-full flex-col gap-4">
       {/* 头部操作栏 */}
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           提示词模板
         </h3>
         <div className="flex items-center gap-1">
           {onResetAll && (
             <button
-              className="text-muted-foreground hover:text-foreground transition-colors p-1"
+              className="p-1 text-muted-foreground transition-colors hover:text-foreground"
               onClick={() => {
                 if (
                   confirm(
@@ -92,7 +94,7 @@ export const PromptTemplateList: FC<PromptTemplateListProps> = ({
             </button>
           )}
           <button
-            className="text-muted-foreground hover:text-foreground transition-colors p-1"
+            className="p-1 text-muted-foreground transition-colors hover:text-foreground"
             onClick={handleAdd}
             title="新建模板"
           >
@@ -102,15 +104,15 @@ export const PromptTemplateList: FC<PromptTemplateListProps> = ({
       </div>
 
       {/* 模板列表 */}
-      <div className="flex flex-col gap-6 overflow-y-auto flex-1 no-scrollbar">
+      <div className="no-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto">
         {groupedTemplates.map((group) => (
           <motion.div layout key={group.value} className="flex flex-col gap-2">
             <motion.div
               layout
-              className="text-[10px] items-center gap-2 text-muted-foreground font-medium px-1 uppercase tracking-wider flex"
+              className="flex items-center gap-2 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground"
             >
               {group.label}
-              <div className="h-px bg-border flex-1"></div>
+              <div className="h-px flex-1 bg-border"></div>
             </motion.div>
             <motion.div layout className="flex flex-col gap-1">
               <AnimatePresence initial={false}>
@@ -141,7 +143,7 @@ export const PromptTemplateList: FC<PromptTemplateListProps> = ({
         ))}
 
         {templates.length === 0 && (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground gap-2 border border-dashed border-border rounded-lg">
+          <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-12 text-muted-foreground">
             <FileText size={24} className="opacity-50" />
             <p className="text-xs">暂无模板</p>
           </div>

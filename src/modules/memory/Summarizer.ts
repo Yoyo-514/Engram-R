@@ -2,19 +2,20 @@
  * SummarizerService - 剧情总结核心服务
  */
 
+import { DEFAULT_SUMMARIZER_CONFIG } from '@/config/memory/defaults';
 import { get, incrementStatistic, set } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
-import { getSTContext, initWorldBookSlot,  } from '@/integrations/tavern';
-import { useMemoryStore } from '@/state/memoryStore'; // Used for setLastSummarizedFloor
-import { notificationService } from '@/ui/services/NotificationService';
-import type { JobContext } from '@/modules/workflow/core/JobContext';
-import type { SummarizerConfig, SummarizerStatus, SummaryResult } from './types';
-import { DEFAULT_SUMMARIZER_CONFIG } from './types';
-import { chatManager } from '@/data/ChatManager';
-import { createSummaryWorkflow, StopGeneration, WorkflowEngine } from '@/modules/workflow';
-import { eventTrimmer } from './EventTrimmer';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
+import { chatManager } from '@/data/ChatManager';
+import { getSTContext, initWorldBookSlot } from '@/integrations/tavern';
+import { createSummaryWorkflow, runWorkflow, StopGeneration } from '@/modules/workflow';
+import { useMemoryStore } from '@/state/memoryStore'; // Used for setLastSummarizedFloor
+import type { JobContext } from '@/types/job_context';
+import type { SummarizerConfig, SummarizerStatus, SummaryResult } from '@/types/memory';
+import { notificationService } from '@/ui/services/NotificationService';
+
+import { eventTrimmer } from './EventTrimmer';
 import {
   getCurrentSummaryPreparationChatId,
   summaryPreparationCache,
@@ -388,7 +389,7 @@ class SummarizerService {
       // 2. Run Workflow
       await initWorldBookSlot();
 
-      const context = await WorkflowEngine.run(createSummaryWorkflow(), {
+      const context = await runWorkflow(createSummaryWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
         signal: cancelSignal,
         config: {

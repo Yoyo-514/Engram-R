@@ -2,8 +2,10 @@
  * useWorkflow - 批处理工作流 Hook
  */
 
-import { batchProcessor, type BatchQueue, type BatchTaskStatus } from '@/modules/batch';
 import { useCallback, useEffect, useState } from 'react';
+
+import { batchProcessor } from '@/modules/batch';
+import type { BatchQueue, BatchTaskStatus } from '@/types/batch';
 
 export type WorkflowStatus = BatchTaskStatus | 'idle';
 

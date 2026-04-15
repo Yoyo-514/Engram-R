@@ -144,6 +144,15 @@ export interface RecallConfig {
   brainRecall?: BrainRecallConfig;
 }
 
+export interface RecallCandidate {
+  id: string;
+  label?: string; // 可读名称
+  category?: 'event' | 'entity'; // 类型区分，默认 event
+  embeddingScore: number;
+  rerankScore?: number;
+  embeddingVector?: number[];
+}
+
 export type EmbeddingTriggerType = 'with_trim' | 'standalone' | 'manual';
 
 export interface EmbeddingConfig {

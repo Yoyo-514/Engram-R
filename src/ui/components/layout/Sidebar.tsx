@@ -1,3 +1,7 @@
+import { motion } from 'framer-motion';
+import { Bell, Github, X } from 'lucide-react';
+import type { FC } from 'react';
+
 /**
  * Sidebar - 统一侧边栏组件
  *
@@ -5,9 +9,7 @@
  */
 import { NAV_ITEMS } from '@/constants/navigation';
 import { EngramTextLogo } from '@/ui/assets/icons/EngramTextLogo';
-import { motion } from 'framer-motion';
-import { Bell, Github, X } from 'lucide-react';
-import type { FC } from 'react';
+
 import manifest from '../../../../manifest.json';
 
 interface SidebarProps {
@@ -43,11 +45,11 @@ export const Sidebar: FC<SidebarProps> = ({
 
   // 统一的底部区域组件（三行布局）
   const BottomArea = () => (
-    <div className="pt-4 border-t border-border/30 mt-2 space-y-2">
+    <div className="border-border/30 mt-2 space-y-2 border-t pt-4">
       {/* 第一行：更新通知 */}
       <button
         onClick={onShowUpdateNotice}
-        className="w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-[var(--duration-fast)] text-muted-foreground hover:text-foreground hover:bg-muted/10 text-left"
+        className="hover:bg-muted/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-muted-foreground transition-all duration-[var(--duration-fast)] hover:text-foreground"
       >
         <div className="relative">
           <Bell
@@ -56,12 +58,12 @@ export const Sidebar: FC<SidebarProps> = ({
             className={hasUnreadUpdate ? 'engram-animate-bell-ring' : ''}
           />
           {hasUnreadUpdate && (
-            <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full engram-animate-pulse" />
+            <span className="engram-animate-pulse absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
           )}
         </div>
         <span className="text-xs">更新通知</span>
         {hasUnreadUpdate && (
-          <span className="ml-auto text-[10px] px-1.5 py-0.5 bg-primary/20 text-primary rounded-full">
+          <span className="bg-primary/20 ml-auto rounded-full px-1.5 py-0.5 text-[10px] text-primary">
             NEW
           </span>
         )}
@@ -72,16 +74,16 @@ export const Sidebar: FC<SidebarProps> = ({
         href="https://github.com/shiyue137mh-netizen/Engram"
         target="_blank"
         rel="noopener noreferrer"
-        className="group w-full flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-200 text-muted-foreground hover:text-foreground hover:bg-muted/10"
+        className="hover:bg-muted/10 group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground transition-all duration-200 hover:text-foreground"
         title="点个星⭐支持一下"
       >
         <Github
           size={16}
           strokeWidth={1.5}
-          className="group-hover:text-primary transition-colors"
+          className="transition-colors group-hover:text-primary"
         />
         <span className="text-xs">GitHub</span>
-        <span className="ml-auto text-[10px] text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+        <span className="ml-auto text-[10px] text-primary opacity-0 transition-opacity group-hover:opacity-100">
           Star ⭐
         </span>
       </a>
@@ -89,7 +91,7 @@ export const Sidebar: FC<SidebarProps> = ({
       {/* 第三行：Logo + 版本号 */}
       <div className="flex items-center gap-2 px-2 py-1 opacity-50">
         <EngramTextLogo height={12} />
-        <span className="text-[10px] text-muted-foreground font-mono">v{manifest.version}</span>
+        <span className="font-mono text-[10px] text-muted-foreground">v{manifest.version}</span>
       </div>
     </div>
   );
@@ -104,10 +106,10 @@ export const Sidebar: FC<SidebarProps> = ({
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
         transition={{ duration: 0.4, ease: 'easeOut' }}
-        className="[display:none] md:flex w-36 flex-shrink-0 bg-sidebar flex-col z-40 pt-4 px-2 border-r border-border/50"
+        className="border-border/50 z-40 w-36 flex-shrink-0 flex-col border-r bg-sidebar px-2 pt-4 [display:none] md:flex"
       >
         <motion.nav
-          className="flex-1 w-full flex flex-col gap-1 overflow-y-auto no-scrollbar"
+          className="no-scrollbar flex w-full flex-1 flex-col gap-1 overflow-y-auto"
           initial="hidden"
           animate="show"
           variants={{
@@ -129,15 +131,11 @@ export const Sidebar: FC<SidebarProps> = ({
                 }}
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`
-                                    group w-full flex items-center gap-2 px-2 py-2 rounded-lg text-left
-                                    transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)]
-                                    ${
-                                      isActive
-                                        ? 'bg-primary/10 text-primary'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-muted/10'
-                                    }
-                                `}
+                className={`group flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)] ${
+                  isActive
+                    ? 'bg-primary/10 text-primary'
+                    : 'hover:bg-muted/10 text-muted-foreground hover:text-foreground'
+                } `}
               >
                 <Icon
                   size={18}
@@ -173,7 +171,7 @@ export const Sidebar: FC<SidebarProps> = ({
     >
       {/* Backdrop */}
       <div
-        className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+        className="animate-in fade-in absolute inset-0 bg-black/60 backdrop-blur-sm duration-200"
         onClick={onClose}
       />
 
@@ -184,21 +182,21 @@ export const Sidebar: FC<SidebarProps> = ({
         exit={{ x: '-100%' }}
         transition={{ type: 'spring', damping: 25, stiffness: 200 }}
         id="mobile-menu-drawer"
-        className="relative w-64 max-w-[80vw] h-full bg-sidebar border-r border-border shadow-2xl flex flex-col p-6"
+        className="relative flex h-full w-64 max-w-[80vw] flex-col border-r border-border bg-sidebar p-6 shadow-2xl"
         style={{ height: '100dvh' }}
       >
-        <div className="flex justify-between items-center mb-8">
-          <span className="text-lg font-semibold text-sidebar-foreground/80">导航</span>
+        <div className="mb-8 flex items-center justify-between">
+          <span className="text-sidebar-foreground/80 text-lg font-semibold">导航</span>
           <button
             onClick={onClose}
-            className="p-2 -mr-2 rounded-md hover:bg-sidebar-accent text-muted-foreground hover:text-sidebar-accent-foreground transition-colors"
+            className="-mr-2 rounded-md p-2 text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
             <X size={20} />
           </button>
         </div>
 
         <motion.nav
-          className="space-y-2 flex-1 overflow-y-auto"
+          className="flex-1 space-y-2 overflow-y-auto"
           initial="hidden"
           animate="show"
           variants={{
@@ -220,16 +218,11 @@ export const Sidebar: FC<SidebarProps> = ({
                 }}
                 key={item.id}
                 onClick={() => handleNavClick(item.id)}
-                className={`
-                                    group w-full flex items-center gap-4 px-4 py-3 rounded-xl text-left
-                                    transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)]
-                                    active:scale-[0.98]
-                                    ${
-                                      isActive
-                                        ? 'bg-primary/10 text-primary font-medium'
-                                        : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
-                                    }
-                                `}
+                className={`group flex w-full items-center gap-4 rounded-xl px-4 py-3 text-left transition-all duration-[var(--duration-fast)] ease-[var(--ease-out)] active:scale-[0.98] ${
+                  isActive
+                    ? 'bg-primary/10 font-medium text-primary'
+                    : 'text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground'
+                } `}
               >
                 <Icon
                   size={22}

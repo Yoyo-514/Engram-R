@@ -1,6 +1,7 @@
 import { get, set } from '@/config/settings';
 import { getRequestHeaders } from '@/integrations/tavern';
 import { notificationService } from '@/ui/services/NotificationService';
+
 import manifest from '../../../manifest.json';
 
 declare const __COMMIT_HASH__: string;

@@ -1,10 +1,11 @@
+import { Edit2, Copy, Trash2, Server, Cloud } from 'lucide-react';
 /**
  * PresetCard - LLM 预设卡片（使用通用 ItemCard）
  */
 import type { FC } from 'react';
-import { Edit2, Copy, Trash2, Server, Cloud } from 'lucide-react';
-import { ItemCard } from '@/ui/components/display/ItemCard';
+
 import type { LLMPreset } from '@/types/llm';
+import { ItemCard } from '@/ui/components/display/ItemCard';
 
 interface PresetCardProps {
   preset: LLMPreset;

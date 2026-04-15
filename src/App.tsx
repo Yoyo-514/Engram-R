@@ -1,7 +1,8 @@
 import type { FC } from 'react';
 import { Suspense, lazy, useEffect, useState } from 'react';
+
 import { get, set } from '@/config/settings';
-import { EventBus } from '@/core/events';
+import { engramEventBus } from '@/core/events';
 import { getLatestVersion, hasUnreadUpdate } from '@/core/updater/Updater';
 import { MainLayout } from '@/ui/components/layout/MainLayout';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -31,9 +32,7 @@ interface AppProps {
 }
 
 const App: FC<AppProps> = ({ onClose }) => {
-  const [activeTab, setActiveTab] = useState(
-    () => get('lastOpenedTab') || 'dashboard'
-  );
+  const [activeTab, setActiveTab] = useState(() => get('lastOpenedTab') || 'dashboard');
 
   const handleNavigate = (path: string) => {
     const cleanPath = path.replace(/^\//, '') || 'dashboard';
@@ -43,7 +42,7 @@ const App: FC<AppProps> = ({ onClose }) => {
   };
 
   useEffect(() => {
-    const subscription = EventBus.on<string>('UI_NAVIGATE_REQUEST', (path) => {
+    const subscription = engramEventBus.on<string>('UI_NAVIGATE_REQUEST', (path) => {
       console.debug('[Engram] 收到导航请求:', path);
       handleNavigate(path);
     });

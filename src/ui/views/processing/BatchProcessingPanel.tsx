@@ -1,15 +1,3 @@
-/**
- * BatchProcessingPanel - 批量处理面板
- *
- * V0.9.6: Processing 子面板
- * - 历史消息批处理
- * - 外部 txt 导入
- */
-import { batchProcessor, type HistoryAnalysis, type ImportMode } from '@/modules/batch';
-import { summarizerService } from '@/modules/memory';
-import { NumberField } from '@/ui/components/form/FormComponents';
-import { Divider } from '@/ui/components/layout/Divider';
-import { useWorkflow } from '@/ui/hooks/useWorkflow';
 import {
   CheckCircle2,
   Clock,
@@ -27,9 +15,23 @@ import {
 } from 'lucide-react';
 import { useCallback, useRef, useState, useEffect } from 'react';
 import type { FC, ChangeEvent } from 'react';
-import { useMemoryStore } from '@/state/memoryStore';
-import { notificationService } from '@/ui/services/NotificationService';
+
 import { chatManager } from '@/data/ChatManager';
+/**
+ * BatchProcessingPanel - 批量处理面板
+ *
+ * V0.9.6: Processing 子面板
+ * - 历史消息批处理
+ * - 外部 txt 导入
+ */
+import { batchProcessor } from '@/modules/batch';
+import { summarizerService } from '@/modules/memory';
+import { useMemoryStore } from '@/state/memoryStore';
+import type { HistoryAnalysis, ImportMode } from '@/types/batch';
+import { NumberField } from '@/ui/components/form/FormComponents';
+import { Divider } from '@/ui/components/layout/Divider';
+import { useWorkflow } from '@/ui/hooks/useWorkflow';
+import { notificationService } from '@/ui/services/NotificationService';
 
 // 任务状态图标
 const TaskStatusIcon: FC<{ status: string }> = ({ status }) => {
@@ -39,7 +41,7 @@ const TaskStatusIcon: FC<{ status: string }> = ({ status }) => {
     case 'error':
       return <XCircle size={14} className="text-destructive" />;
     case 'running':
-      return <RefreshCw size={14} className="text-primary animate-spin" />;
+      return <RefreshCw size={14} className="animate-spin text-primary" />;
     case 'skipped':
       return <Clock size={14} className="text-muted-foreground" />;
     default:
@@ -99,12 +101,12 @@ const DataBatchSection: FC = () => {
   };
 
   return (
-    <section className="space-y-4 pt-4 border-t border-border/50">
-      <h3 className="text-primary text-sm font-medium">数据批处理</h3>
+    <section className="border-border/50 space-y-4 border-t pt-4">
+      <h3 className="text-sm font-medium text-primary">数据批处理</h3>
       <p className="text-xs text-muted-foreground">对事件数据进行批量操作（不依赖楼层范围）</p>
 
       {/* 归档操作卡片 */}
-      <div className="p-4 rounded-lg bg-card/30 border border-border/30 space-y-3">
+      <div className="bg-card/30 border-border/30 space-y-3 rounded-lg border p-4">
         <div className="flex items-center gap-2">
           <Archive size={14} className="text-primary" />
           <span className="text-sm font-medium text-foreground">归档已嵌入事件</span>
@@ -115,7 +117,7 @@ const DataBatchSection: FC = () => {
 
         {/* 扫描结果 */}
         {archiveStats && (
-          <div className="text-xs space-y-1 p-2 bg-muted/20 rounded">
+          <div className="bg-muted/20 space-y-1 rounded p-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">level 0 事件总数</span>
               <span className="font-mono text-foreground">{archiveStats.total}</span>
@@ -134,7 +136,7 @@ const DataBatchSection: FC = () => {
         {/* 操作按钮 */}
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs border border-border rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/30 transition-colors disabled:opacity-40"
+            className="hover:bg-muted/30 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
             onClick={handleScan}
             disabled={isScanning || isArchiving}
           >
@@ -142,7 +144,7 @@ const DataBatchSection: FC = () => {
             扫描
           </button>
           <button
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-40"
+            className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground transition-colors disabled:opacity-40"
             onClick={handleArchive}
             disabled={isArchiving || !archiveStats || archiveStats.pending === 0}
           >
@@ -269,7 +271,9 @@ export const BatchProcessingPanel: FC = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
-    reader.addEventListener('load', (event) => setImportText((event?.target?.result as string) || ''));
+    reader.addEventListener('load', (event) =>
+      setImportText((event?.target?.result as string) || '')
+    );
     reader.readAsText(file);
   }, []);
 
@@ -285,11 +289,11 @@ export const BatchProcessingPanel: FC = () => {
       : 0;
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
+    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
       {/* ========== 左栏：历史消息批处理 ========== */}
       <section className="space-y-6">
         <div>
-          <h2 className="text-sm font-medium text-heading mb-1">历史消息批处理</h2>
+          <h2 className="mb-1 text-sm font-medium text-heading">历史消息批处理</h2>
           <p className="text-xs text-meta">根据当前配置处理历史聊天记录</p>
         </div>
 
@@ -313,15 +317,15 @@ export const BatchProcessingPanel: FC = () => {
         </div>
 
         {/* 任务类型选择 (Checkbox Grid) */}
-        <div className="grid grid-cols-2 gap-3 p-3 bg-muted/10 rounded-lg border border-border/50">
-          <span className="col-span-2 text-xs text-muted-foreground font-medium mb-1">
+        <div className="bg-muted/10 border-border/50 grid grid-cols-2 gap-3 rounded-lg border p-3">
+          <span className="col-span-2 mb-1 text-xs font-medium text-muted-foreground">
             选择任务类型
           </span>
           {Object.entries(TASK_TYPE_LABELS).map(([type, label]) => (
-            <label key={type} className="flex items-center gap-2 cursor-pointer select-none">
+            <label key={type} className="flex cursor-pointer select-none items-center gap-2">
               <input
                 type="checkbox"
-                className="rounded border-gray-300 text-primary focus:ring-primary h-3.5 w-3.5"
+                className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
                 checked={selectedTypes[type]}
                 onChange={() => handleTypeToggle(type)}
                 disabled={queue.isRunning}
@@ -333,7 +337,7 @@ export const BatchProcessingPanel: FC = () => {
 
         {/* 分析按钮 */}
         <button
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
           onClick={handleAnalyze}
           disabled={isAnalyzing || queue.isRunning}
         >
@@ -347,7 +351,7 @@ export const BatchProcessingPanel: FC = () => {
             <Divider length={100} spacing="md" />
 
             <div className="space-y-4">
-              <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              <h3 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 预计任务队列
               </h3>
               <div className="space-y-2 text-sm">
@@ -378,10 +382,10 @@ export const BatchProcessingPanel: FC = () => {
             </div>
 
             {/* 操作按钮 */}
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex flex-wrap gap-3">
               {!queue.isRunning ? (
                 <button
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                  className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors"
                   onClick={handleStart}
                 >
                   <Play size={14} />
@@ -390,14 +394,14 @@ export const BatchProcessingPanel: FC = () => {
               ) : (
                 <>
                   <button
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                     onClick={handlePauseResume}
                   >
                     {queue.isPaused ? <Play size={14} /> : <Pause size={14} />}
                     {queue.isPaused ? '继续' : '暂停'}
                   </button>
                   <button
-                    className="inline-flex items-center gap-2 px-4 py-2 text-sm text-destructive hover:text-destructive/80 border border-destructive/30 rounded-lg transition-colors"
+                    className="hover:text-destructive/80 border-destructive/30 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm text-destructive transition-colors"
                     onClick={handleStop}
                   >
                     <Square size={14} />
@@ -407,7 +411,7 @@ export const BatchProcessingPanel: FC = () => {
               )}
               {queue && !queue.isRunning && (
                 <button
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
                   onClick={handleReset}
                 >
                   <RotateCcw size={14} />
@@ -423,23 +427,23 @@ export const BatchProcessingPanel: FC = () => {
           <div className="space-y-4 pt-2">
             {/* 1. 总体进度区域 */}
             <div>
-              <div className="flex justify-between items-center mb-1.5">
+              <div className="mb-1.5 flex items-center justify-between">
                 <span className="text-sm font-medium text-heading">批处理总体进度</span>
                 <span
-                  className={`text-sm font-mono ${queue.isRunning ? 'text-value' : 'text-muted-foreground'}`}
+                  className={`font-mono text-sm ${queue.isRunning ? 'text-value' : 'text-muted-foreground'}`}
                 >
                   {overallPercent}%
                 </span>
               </div>
-              <div className="h-2 bg-muted rounded-full overflow-hidden relative border border-border/40">
+              <div className="border-border/40 relative h-2 overflow-hidden rounded-full border bg-muted">
                 <div
-                  className="absolute top-0 left-0 h-full bg-primary transition-all duration-[var(--duration-slow)] ease-[var(--ease-out)]"
+                  className="absolute left-0 top-0 h-full bg-primary transition-all duration-[var(--duration-slow)] ease-[var(--ease-out)]"
                   style={{ width: `${overallPercent}%` }}
                 >
                   {/* 如果正在运行，添加流光动画效果 */}
                   {queue.isRunning && (
                     <div
-                      className="absolute inset-0 bg-white/20 w-full animate-[shimmer_2s_infinite]"
+                      className="absolute inset-0 w-full animate-[shimmer_2s_infinite] bg-white/20"
                       style={{
                         backgroundImage:
                           'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
@@ -448,7 +452,7 @@ export const BatchProcessingPanel: FC = () => {
                   )}
                 </div>
               </div>
-              <div className="flex justify-between mt-1 text-[11px] text-meta font-mono">
+              <div className="mt-1 flex justify-between font-mono text-[11px] text-meta">
                 <span>
                   当前阶段: {queue.currentTaskIndex + 1} / {queue.overallProgress.total}
                 </span>
@@ -464,21 +468,21 @@ export const BatchProcessingPanel: FC = () => {
 
             {/* 2. 活动任务焦点窗口 */}
             {queue.isRunning && currentTask && (
-              <div className="p-3 bg-card border border-primary/20 rounded-lg flex items-start gap-3 bg-primary/5">
+              <div className="border-primary/20 bg-primary/5 flex items-start gap-3 rounded-lg border bg-card p-3">
                 <div className="mt-0.5">
-                  <RefreshCw size={16} className="text-primary animate-spin" />
+                  <RefreshCw size={16} className="animate-spin text-primary" />
                 </div>
                 <div className="flex-1 space-y-1">
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="text-heading font-medium">正在处理</span>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-heading">正在处理</span>
                   </div>
                   <div className="text-xs text-muted-foreground">
                     当前分配:{' '}
-                    <span className="text-emphasis font-mono">
+                    <span className="font-mono text-emphasis">
                       {TASK_TYPE_LABELS[queue.tasks[queue.currentTaskIndex]?.type] || '执行任务'}
                     </span>
                     {queue.tasks[queue.currentTaskIndex]?.floorRange && (
-                      <span className="ml-1 text-label whitespace-nowrap">
+                      <span className="ml-1 whitespace-nowrap text-label">
                         (楼层 {queue.tasks[queue.currentTaskIndex].floorRange!.start}-
                         {queue.tasks[queue.currentTaskIndex].floorRange!.end})
                       </span>
@@ -491,7 +495,7 @@ export const BatchProcessingPanel: FC = () => {
             <Divider length={50} spacing="sm" />
 
             {/* 3. 详细子任务列表 (滚动视窗) */}
-            <div className="space-y-1 max-h-40 overflow-y-auto">
+            <div className="max-h-40 space-y-1 overflow-y-auto">
               {(queue.tasks || []).slice(0, 10).map((task) => (
                 <div key={task.id} className="flex items-center gap-2 text-xs">
                   <TaskStatusIcon status={task.status} />
@@ -510,7 +514,7 @@ export const BatchProcessingPanel: FC = () => {
                 </div>
               ))}
               {queue.tasks.length > 10 && (
-                <div className="text-xs text-muted-foreground/50">
+                <div className="text-muted-foreground/50 text-xs">
                   ...还有 {queue.tasks.length - 10} 个任务
                 </div>
               )}
@@ -520,11 +524,11 @@ export const BatchProcessingPanel: FC = () => {
       </section>
 
       {/* ========== 右栏：外部导入 ========== */}
-      <section className="space-y-6 lg:pl-8 relative">
+      <section className="relative space-y-6 lg:pl-8">
         <Divider responsive length={30} />
 
         <div>
-          <h2 className="text-sm font-medium text-heading mb-1">外部文本导入</h2>
+          <h2 className="mb-1 text-sm font-medium text-heading">外部文本导入</h2>
           <p className="text-xs text-meta">导入小说、电子书等外部文本</p>
         </div>
 
@@ -538,7 +542,7 @@ export const BatchProcessingPanel: FC = () => {
             className="hidden"
           />
           <button
-            className="inline-flex items-center gap-2 px-4 py-2 text-sm text-muted-foreground hover:text-foreground border border-border rounded-lg transition-colors"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
             onClick={triggerFileSelect}
           >
             <Upload size={14} />
@@ -556,14 +560,14 @@ export const BatchProcessingPanel: FC = () => {
           <span className="text-xs text-muted-foreground">处理模式</span>
           <div className="space-y-2">
             <label
-              className="flex items-start gap-3 cursor-pointer group"
+              className="group flex cursor-pointer items-start gap-3"
               onClick={() => setImportMode('fast')}
             >
               <span
-                className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${importMode === 'fast' ? 'border-primary bg-primary' : 'border-border group-hover:border-muted-foreground'}`}
+                className={`mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 transition-colors ${importMode === 'fast' ? 'border-primary bg-primary' : 'border-border group-hover:border-muted-foreground'}`}
               >
                 {importMode === 'fast' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                 )}
               </span>
               <div>
@@ -578,14 +582,14 @@ export const BatchProcessingPanel: FC = () => {
               </div>
             </label>
             <label
-              className="flex items-start gap-3 cursor-pointer group"
+              className="group flex cursor-pointer items-start gap-3"
               onClick={() => setImportMode('detailed')}
             >
               <span
-                className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center transition-colors ${importMode === 'detailed' ? 'border-primary bg-primary' : 'border-border group-hover:border-muted-foreground'}`}
+                className={`mt-0.5 flex h-4 w-4 items-center justify-center rounded-full border-2 transition-colors ${importMode === 'detailed' ? 'border-primary bg-primary' : 'border-border group-hover:border-muted-foreground'}`}
               >
                 {importMode === 'detailed' && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-foreground" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary-foreground" />
                 )}
               </span>
               <div>
@@ -623,11 +627,11 @@ export const BatchProcessingPanel: FC = () => {
         {/* 预览 */}
         {importText && (
           <div>
-            <span className="text-xs text-muted-foreground block mb-2">预览</span>
-            <div className="bg-muted/20 border border-border rounded-lg p-3 max-h-32 overflow-y-auto text-xs text-muted-foreground font-mono">
+            <span className="mb-2 block text-xs text-muted-foreground">预览</span>
+            <div className="bg-muted/20 max-h-32 overflow-y-auto rounded-lg border border-border p-3 font-mono text-xs text-muted-foreground">
               {importText.slice(0, 500)}...
             </div>
-            <div className="text-[10px] text-muted-foreground mt-1">
+            <div className="mt-1 text-[10px] text-muted-foreground">
               预计 {Math.ceil((importText.length - overlapSize) / (chunkSize - overlapSize))} 块
             </div>
           </div>
@@ -635,7 +639,7 @@ export const BatchProcessingPanel: FC = () => {
 
         {/* 导入按钮 */}
         <button
-          className="inline-flex items-center gap-2 px-4 py-2 text-sm bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors disabled:opacity-50"
           onClick={handleImport}
           disabled={!importText || importProgress !== null}
         >
@@ -645,7 +649,7 @@ export const BatchProcessingPanel: FC = () => {
 
         {/* 导入进度 */}
         {importProgress && (
-          <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full bg-primary transition-all duration-300"
               style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
