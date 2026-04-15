@@ -5,16 +5,18 @@
  * Each chat_id gets its own isolated IndexedDB database.
  */
 
-import Dexie, { type Table } from 'dexie';
+import { Dexie, type Table } from 'dexie';
 
 import { Logger } from '../core/logger';
 import type { EntityNode, EventNode } from '../types/graph';
 import { syncService } from './SyncService';
+import type { DatabaseStats, DatabaseSummary } from '@/types/database';
+import { getSTContext } from '@/integrations/tavern';
 
 /**
  * 每个聊天的元数据存储
  */
-export interface ChatMeta {
+interface ChatMeta {
   key: string;
   value: unknown;
 }
@@ -208,7 +210,7 @@ export async function deleteDatabase(chatId: string): Promise<void> {
 /**
  * 列出所有 Engram 数据库名称
  */
-async function listAllDatabases(): Promise<string[]> {
+export async function listAllDatabases(): Promise<string[]> {
   const allDbs = await Dexie.getDatabaseNames();
   return allDbs.filter((name) => name.startsWith('Engram_'));
 }
@@ -216,7 +218,7 @@ async function listAllDatabases(): Promise<string[]> {
 /**
  * 获取所有 Engram 数据库的 chatId 列表
  */
-async function listAllChatIds(): Promise<string[]> {
+export async function listAllChatIds(): Promise<string[]> {
   const dbNames = await listAllDatabases();
   return dbNames.map((name) => name.replace('Engram_', ''));
 }
@@ -224,7 +226,7 @@ async function listAllChatIds(): Promise<string[]> {
 /**
  * 删除所有 Engram 数据库 (危险操作！)
  */
-async function deleteAllDatabases(): Promise<number> {
+export async function deleteAllDatabases(): Promise<number> {
   const dbNames = await listAllDatabases();
   for (const name of dbNames) {
     await Dexie.delete(name);
@@ -234,4 +236,88 @@ async function deleteAllDatabases(): Promise<number> {
   return dbNames.length;
 }
 
-export { deleteAllDatabases, listAllChatIds, listAllDatabases };
+function buildChatCharacterNameMap(): Map<string, string> {
+  const ctx = getSTContext();
+  const map = new Map<string, string>();
+
+  if (!ctx?.characters || !Array.isArray(ctx.characters)) {
+    return map;
+  }
+
+  for (const character of ctx.characters) {
+    if (!character?.chat || !character?.name) {
+      continue;
+    }
+    map.set(character.chat, character.name);
+  }
+
+  return map;
+}
+
+export async function listDatabaseSummaries(currentChatId?: string): Promise<DatabaseSummary[]> {
+  const dbNames = await listAllDatabases();
+  const chatCharacterMap = buildChatCharacterNameMap();
+
+  const summaries = await Promise.all(
+    dbNames.map(async (name) => {
+      const chatId = name.replace('Engram_', '');
+      const db = getDbForChat(chatId);
+      const lastModifiedMeta = await db.meta.get('lastModified');
+      return {
+        name,
+        chatId,
+        characterName: chatCharacterMap.get(chatId) ?? null,
+        isOpen: dbCache.has(chatId),
+        isCurrent: currentChatId === chatId,
+        lastModified: typeof lastModifiedMeta?.value === 'number' ? lastModifiedMeta.value : null,
+      };
+    })
+  );
+
+  return summaries.sort((a, b) => {
+    if (a.isCurrent !== b.isCurrent) {
+      return a.isCurrent ? -1 : 1;
+    }
+
+    const aGroup = a.characterName ?? a.chatId;
+    const bGroup = b.characterName ?? b.chatId;
+    if (aGroup !== bGroup) {
+      return aGroup.localeCompare(bGroup, 'zh-CN');
+    }
+
+    return (b.lastModified ?? 0) - (a.lastModified ?? 0);
+  });
+}
+
+export async function getDatabaseStats(chatId: string): Promise<DatabaseStats> {
+  const db = getDbForChat(chatId);
+  const [
+    eventCount,
+    entityCount,
+    archivedEventCount,
+    archivedEntityCount,
+    embeddedEventCount,
+    embeddedEntityCount,
+    lastModifiedMeta,
+  ] = await Promise.all([
+    db.events.count(),
+    db.entities.count(),
+    db.events.where('is_archived').equals(1 as never).count(),
+    db.entities.where('is_archived').equals(1 as never).count(),
+    db.events.where('is_embedded').equals(1 as never).count(),
+    db.entities.where('is_embedded').equals(1 as never).count(),
+    db.meta.get('lastModified'),
+  ]);
+
+  return {
+    name: `Engram_${chatId}`,
+    chatId,
+    eventCount,
+    entityCount,
+    archivedEventCount,
+    archivedEntityCount,
+    embeddedEventCount,
+    embeddedEntityCount,
+    lastModified: typeof lastModifiedMeta?.value === 'number' ? lastModifiedMeta.value : null,
+  };
+}

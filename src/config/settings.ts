@@ -42,10 +42,6 @@ export interface EngramSettings {
   preprocessConfig: PreprocessConfig; // 输入预处理配置
   linkedDeletion: {
     enabled: boolean; // 是否启用联动删除
-    deleteWorldbook: boolean; // 删除角色时同步删除 Engram 世界书
-    deleteChatWorldbook: boolean; // 删除聊天时同步删除 Engram 世界书
-    deleteIndexedDB: boolean; // 删除角色时同步删除本地 IndexedDB 数据
-    showConfirmation: boolean; // 删除前显示确认对话框
   };
   glassSettings: {
     enabled: boolean; // 是否启用
@@ -82,10 +78,6 @@ const defaultSettings: EngramSettings = Object.freeze({
   preprocessConfig: DEFAULT_PREPROCESS_CONFIG,
   linkedDeletion: {
     enabled: true,
-    deleteWorldbook: true,
-    deleteChatWorldbook: false, // 默认关闭，防止误删
-    deleteIndexedDB: false,
-    showConfirmation: true,
   },
   glassSettings: {
     enabled: true,

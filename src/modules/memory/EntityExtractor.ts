@@ -7,7 +7,7 @@
  */
 
 import { DEFAULT_ENTITY_CONFIG } from '@/config/memory/defaults';
-import { get, incrementStatistic } from '@/config/settings';
+import { get } from '@/config/settings';
 import { engramEventBus } from '@/core/events';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger, LogModule } from '@/core/logger';
@@ -134,7 +134,7 @@ export class EntityBuilder {
         startFloor = currentFloor - 49;
       }
 
-      // P0 修复：自动触发也要保证 range 不倒挂
+      // 自动触发也要保证 range 不倒挂
       if (startFloor > currentFloor) {
         Logger.warn(LogModule.MEMORY_ENTITY, '自动提取起始楼层大于当前楼层，已执行反倒挂修正', {
           startFloor,
@@ -163,10 +163,9 @@ export class EntityBuilder {
 
   /**
    * 检查是否应该在指定楼层触发实体提取
-   * V0.9.1: 使用楼层触发器，与 SummarizerService 一致
    */
   shouldTriggerOnFloor(currentFloor: number, lastExtractedFloor: number): boolean {
-    // V0.9.12: Fix - 每次检查触发器时刷新配置，避免初始化时的 stale config
+    // 每次检查触发器时刷新配置，避免初始化时的 stale config
     const savedConfig = get('runtimeSettings')?.entityExtractConfig;
     if (savedConfig) {
       this.config = { ...this.config, ...savedConfig };
@@ -238,7 +237,7 @@ export class EntityBuilder {
       const signal = { cancelled: false };
 
       // 显示运行中通知 (支持取消)
-      let runningToast: any = null;
+      let runningToast = null;
       if (manual) {
         runningToast = notificationService.running('正在进行实体提取...', 'Engram', () => {
           signal.cancelled = true;
@@ -284,6 +283,12 @@ export class EntityBuilder {
             `实体提取完成: 新增 ${result?.newEntities?.length || 0}, 更新 ${result?.updatedEntities?.length || 0}`,
             'Engram'
           );
+        }
+
+        // 工作流保存完成后触发自动归档检查
+        if (this.config.autoArchive ?? true) {
+          await new Promise((r) => setTimeout(r, 0));
+          await this.checkAndArchiveEntities();
         }
       } else {
         Logger.info(LogModule.MEMORY_ENTITY, '实体提取预览完成', {
@@ -333,7 +338,7 @@ export class EntityBuilder {
 
   /**
    * 按楼层范围提取实体
-   * V0.9.9: 统一调用 MacroService 获取指定范围的历史
+   * 统一调用 MacroService 获取指定范围的历史
    */
   async extractByRange(range: [number, number], manual = false): Promise<EntityBuildResult | null> {
     // 同步获取清洗后的历史记录
@@ -377,72 +382,6 @@ export class EntityBuilder {
 
     // 复用 extractByRange 逻辑，它会正确调用 FetchContext 并传入 range
     return this.extractByRange(range, true);
-  }
-
-  /**
-   * 直接保存实体列表 (用于预览通过后的保存)
-   */
-  async saveRawEntities(newEntities: EntityNode[], updatedEntities: EntityNode[]): Promise<void> {
-    const store = useMemoryStore.getState();
-    const currentFloor = getCurrentMessageCount();
-
-    Logger.info(LogModule.MEMORY_ENTITY, '开始保存实体 (saveRawEntities)', {
-      newCount: newEntities.length,
-      updatedCount: updatedEntities.length,
-    });
-
-    try {
-      // 批量保存新增实体
-      if (newEntities.length > 0) {
-        const entitiesToSave = newEntities.map((entity) => ({
-          name: entity.name,
-          type: entity.type,
-          description: entity.description,
-          aliases: entity.aliases || [],
-          profile: entity.profile || {},
-        }));
-        await store.saveEntities(entitiesToSave);
-        incrementStatistic('totalEntities', newEntities.length);
-      }
-
-      // 批量保存更新实体 (并行，但引入分批处理以限制并发)
-      if (updatedEntities.length > 0) {
-        const chunkSize = 50; // 每批最大并发更新量
-        for (let i = 0; i < updatedEntities.length; i += chunkSize) {
-          const chunk = updatedEntities.slice(i, i + chunkSize);
-          await Promise.all(
-            chunk.map((entity) => {
-              return store.updateEntity(entity.id, {
-                profile: entity.profile,
-                aliases: entity.aliases,
-                description: entity.description,
-                name: entity.name,
-                type: entity.type,
-              });
-            })
-          );
-        }
-      }
-
-      // 更新状态
-      await chatManager.updateState({ last_extracted_floor: currentFloor });
-
-      notificationService.success(
-        `已保存 ${newEntities.length} 个新实体，更新 ${updatedEntities.length} 个实体`,
-        'Engram'
-      );
-      Logger.success(LogModule.MEMORY_ENTITY, '实体保存完成');
-
-      // V1.4.2: 成功保存后触发自动归档检查
-      // 🐛 P0 Bugfix: 在进入归档前 yield 一下，确保 IndexedDB 视图刷新且 Zustand 状态同步完成
-      if (this.config.autoArchive ?? true) {
-        await new Promise((r) => setTimeout(r, 0));
-        await this.checkAndArchiveEntities();
-      }
-    } catch (error) {
-      Logger.error(LogModule.MEMORY_ENTITY, '实体保存失败', { error });
-      throw error; // Re-throw for UI to catch
-    }
   }
 
   /**
@@ -493,17 +432,6 @@ export class EntityBuilder {
       Logger.error(LogModule.MEMORY_ENTITY, '执行实体自动归档失败', { error });
     }
   }
-
-  /**
-   * 实体消歧：检查新实体是否与已有实体重复
-   * 已迁移至 SaveEntity Step
-   */
-  // private resolveEntity(...) {}
-
-  /**
-   * 获取状态 (UI 适配)
-   * V0.9.1: 改为楼层相关状态
-   */
 
   /**
    * 获取状态 (UI 适配)

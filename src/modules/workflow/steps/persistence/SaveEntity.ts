@@ -333,7 +333,18 @@ export class SaveEntity implements IStep {
 
         if (!isDryRun) {
           if (normalizedEntity.id && !normalizedEntity.id.startsWith('temp-')) {
-            await store.updateEntity(normalizedEntity.id, this.buildEntityUpdate(normalizedEntity));
+            const updatePayload = this.buildEntityUpdate(normalizedEntity);
+
+            if (normalizedEntity.is_archived === true) {
+              updatePayload.is_archived = false;
+              normalizedEntity.is_archived = false;
+              Logger.info(
+                'SaveEntity',
+                `🔓 Auto-unarchived entity "${normalizedEntity.name}" after review confirmation`
+              );
+            }
+
+            await store.updateEntity(normalizedEntity.id, updatePayload);
             outUpdatedEntities.push(normalizedEntity);
           } else {
             Logger.warn(
@@ -510,13 +521,26 @@ export class SaveEntity implements IStep {
           targetDoc.type,
           targetDoc.profile || {}
         );
-        await store.updateEntity(existing.id, {
+
+        // 当合并目标为已归档实体时，自动解除归档使其重新可见
+        const wasArchived = existing.is_archived === true;
+        const updatePayload: Partial<EntityNode> = {
           profile: targetDoc.profile,
           aliases: targetDoc.aliases,
           description,
           name: targetDoc.name,
           type: targetDoc.type,
-        });
+        };
+        if (wasArchived) {
+          updatePayload.is_archived = false;
+          targetDoc.is_archived = false;
+          Logger.info(
+            'SaveEntity',
+            `🔓 Auto-unarchived entity "${entityName}" — it was updated via merge patch`
+          );
+        }
+
+        await store.updateEntity(existing.id, updatePayload);
         updatedEntities.push(targetDoc);
         return;
       }

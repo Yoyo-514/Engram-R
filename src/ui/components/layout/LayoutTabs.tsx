@@ -30,11 +30,6 @@ export const LayoutTabs: FC<TabPillsProps> = (props) => {
     return null;
   }
 
-  // 在 HeaderExtension 中渲染时，重写样式以适应 Header 上下文
-  // 1. 移除 sticky (因为它在 fixed/flex header 中)
-  // 2. 移除默认边距 (mb-6) 和边框 (HeaderExtension 已有边框)
-  // 3. 移除背景 (HeaderExtension 已有玻璃背景)
-  // 4. 增加水平内边距以匹配 Layout 内容区布局 (px-4 md:px-8...)
   const headerProps = {
     ...props,
     sticky: false,

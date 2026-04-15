@@ -125,8 +125,3 @@ class ChatManager {
 }
 
 export const chatManager = new ChatManager();
-
-/**
- * @deprecated V0.6: 使用 chatManager 替代
- * 保留以便定位迁移点
- */

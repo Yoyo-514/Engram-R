@@ -10,22 +10,22 @@ export class FetchExistingEntities implements IStep {
     const store = useMemoryStore.getState();
     const entities = await store.getAllEntities();
 
-    // 简化实体信息，用于 Prompt 上下文
-    const simplified = entities.map((e) => ({
+    // 分离活跃实体与归档实体
+    // LLM 提示词中只展示活跃实体，避免 LLM 误认为归档实体 "已存在" 而跳过创建
+    const activeEntities = entities.filter((e) => !e.is_archived);
+
+    // 简化实体信息，用于 Prompt 上下文 (仅活跃实体)
+    const simplified = activeEntities.map((e) => ({
       name: e.name,
       type: e.type,
       aliases: e.aliases || [],
     }));
 
-    // 存入 Input 供 BuildPrompt 使用
-    // 注意：BuildPrompt 需要配置变量映射，或者我们在这里直接替换？
-    // 更好的方式是存入 config 或 input，然后 BuildPrompt 有逻辑去处理它
-    // 这里我们约定存入 context.input.existingEntities
     context.input.existingEntities = JSON.stringify(simplified, null, 2);
 
-    // 同时存入完整对象供 SaveEntity 使用 (消歧用)
+    // 存入完整对象供 SaveEntity 使用 (含归档实体，用于消歧和自动解除归档)
     context.input._rawExistingEntities = entities;
 
-    Logger.debug('FetchExistingEntities', `获取了 ${entities.length} 个现有实体`);
+    Logger.debug('FetchExistingEntities', `获取了 ${entities.length} 个现有实体 (活跃: ${activeEntities.length}, 归档: ${entities.length - activeEntities.length})`);
   }
 }

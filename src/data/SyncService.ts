@@ -423,10 +423,8 @@ class SyncService {
     const localTs = (localMeta?.value as number) || 0;
 
     // 如果是本机刚上传的，忽略 (防回环)
-    // 旧逻辑：通过 deviceId 检查
-    // 新逻辑：通过严格时间戳检查 (remote > local)
+    // 通过严格时间戳检查 (remote > local)
     // 如果 remote == local，说明是已同步状态，返回 synced
-    // 因此不需要特殊的 deviceId 检查
 
     // 3. 比较
     if (remoteStatus.timestamp > localTs) {
