@@ -23,7 +23,7 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
             {title}
           </h3>
           {description && (
-            <p className="whitespace-normal break-words text-muted-foreground/70 mt-1 max-w-2xl text-xs leading-5">
+            <p className="text-muted-foreground/70 mt-1 max-w-2xl whitespace-normal break-words text-xs leading-5">
               {description}
             </p>
           )}

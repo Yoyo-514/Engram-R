@@ -34,7 +34,7 @@ export const AppearanceSettingsSection: FC = () => {
                   <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                     启用 UI 动画
                   </h4>
-                  <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                  <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                     控制页面切换、卡片悬停与状态反馈等界面动画。
                   </p>
                 </div>
@@ -59,7 +59,7 @@ export const AppearanceSettingsSection: FC = () => {
                 <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                   启用毛玻璃
                 </h4>
-                <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                   控制整体背景的透明度与模糊效果。
                 </p>
               </div>

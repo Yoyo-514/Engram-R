@@ -125,7 +125,7 @@ export const SyncSettingsSection: FC = () => {
                   </span>
                 )}
               </div>
-              <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+              <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                 通过同步文件在不同端之间传递当前聊天的 Engram 数据。
               </p>
             </div>
@@ -140,7 +140,7 @@ export const SyncSettingsSection: FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">自动同步</span>
-                <p className="whitespace-normal break-words text-muted-foreground/60 text-xs">
+                <p className="text-muted-foreground/60 whitespace-normal break-words text-xs">
                   每隔一段时间自动检查并同步本地与远端数据。
                 </p>
               </div>
@@ -154,7 +154,7 @@ export const SyncSettingsSection: FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">上次同步时间</span>
-                <p className="whitespace-normal break-words text-muted-foreground/60 text-xs">
+                <p className="text-muted-foreground/60 whitespace-normal break-words text-xs">
                   {lastSyncTime > 0 ? new Date(lastSyncTime).toLocaleString() : '暂无记录'}
                 </p>
               </div>
@@ -167,7 +167,7 @@ export const SyncSettingsSection: FC = () => {
               </button>
             </div>
 
-            <ul className="whitespace-normal break-words bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc rounded p-2 text-xs">
+            <ul className="bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc whitespace-normal break-words rounded p-2 text-xs">
               <li>
                 同步文件路径:
                 {` data/default-user/files/Engram_sync_${chatId ?? 'unknown'}.json`}

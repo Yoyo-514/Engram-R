@@ -115,7 +115,7 @@ export const ItemCard: FC<ItemCardProps> = ({
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
             {/* 标题 */}
             <span
-              className={`flex-1 break-words text-sm font-medium leading-5 transition-colors text-ellipsis overflow-hidden ${selected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} ${toggle && !toggle.checked ? 'line-through opacity-60' : ''} `}
+              className={`flex-1 overflow-hidden text-ellipsis break-words text-sm font-medium leading-5 transition-colors ${selected ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'} ${toggle && !toggle.checked ? 'line-through opacity-60' : ''} `}
             >
               {title}
             </span>
@@ -126,7 +126,7 @@ export const ItemCard: FC<ItemCardProps> = ({
                 {badges.map((badge, i) => (
                   <span
                     key={i}
-                    className={`min-w-0 rounded-sm px-1.5 py-0.5 text-[10px] font-medium break-words ${BADGE_COLORS[badge.color || 'default']} `}
+                    className={`min-w-0 break-words rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${BADGE_COLORS[badge.color || 'default']} `}
                   >
                     {badge.text}
                   </span>
@@ -159,7 +159,7 @@ export const ItemCard: FC<ItemCardProps> = ({
       {/* 右侧：操作按钮 */}
       {visibleActions.length > 0 && (
         <div
-          className={`mt-2 flex self-end gap-0.5 transition-opacity sm:mt-1 ${selected ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'}`}
+          className={`mt-2 flex gap-0.5 self-end transition-opacity sm:mt-1 ${selected ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'}`}
         >
           {visibleActions.map((action, i) => (
             <button

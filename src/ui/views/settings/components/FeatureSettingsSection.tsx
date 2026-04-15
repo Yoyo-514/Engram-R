@@ -31,7 +31,7 @@ export const FeatureSettingsSection: FC = () => {
                 <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                   启用修订模式
                 </h4>
-                <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                   在写入长期记忆前，弹出预览窗口。
                 </p>
               </div>
@@ -58,7 +58,7 @@ export const FeatureSettingsSection: FC = () => {
                 <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                   预处理修订模式
                 </h4>
-                <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                   在注入用户输入前，弹出预览窗口。
                 </p>
               </div>
