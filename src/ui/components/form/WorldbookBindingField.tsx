@@ -7,7 +7,7 @@ import { Book, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
-import { getWorldbookScopes } from '@/integrations/tavern/worldbook';
+import { getWorldbookScopes } from '@/integrations/tavern';
 
 interface WorldbookBindingFieldProps {
   selectedBooks: string[];

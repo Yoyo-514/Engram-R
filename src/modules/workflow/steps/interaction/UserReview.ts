@@ -1,7 +1,7 @@
 import { reviewService } from '@/core/events/ReviewService';
 import { Logger } from '@/core/logger';
 import { parseJson } from '@/core/utils';
-import { countWorldbookTokens } from '@/integrations/tavern/worldbook';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import type { JobContext } from '@/types/job_context';
 import type { AgenticRecall } from '@/types/preprocess';
 import type { IStep, StepResult } from '@/types/step';

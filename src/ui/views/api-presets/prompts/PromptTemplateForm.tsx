@@ -6,7 +6,7 @@ import type { FC } from 'react';
  * 提示词模板编辑表单
  */
 import { PROMPT_CATEGORIES } from '@/config/prompt/defaults';
-import { countWorldbookTokens } from '@/integrations/tavern/worldbook';
+import { countWorldbookTokens } from '@/integrations/tavern';
 import type { LLMPreset } from '@/types/llm';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import { FormSection, SelectField, TextField } from '@/ui/components/form/FormComponents';

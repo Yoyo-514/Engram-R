@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 
 import { get, set } from '@/config/settings';
 import { getTavernHelper } from '@/core/utils';
-import { getWorldbookScopes, getWorldbookStructure } from '@/integrations/tavern/worldbook';
+import { getWorldbookScopes, getWorldbookStructure } from '@/integrations/tavern';
 import type { EngramRuntimeSettings } from '@/types/config';
 import type { WorldbookConfig, WorldbookProfile } from '@/types/worldbook';
 
