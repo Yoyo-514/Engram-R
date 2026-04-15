@@ -2,7 +2,6 @@ export interface DatabaseSummary {
   name: string;
   chatId: string;
   characterName: string | null;
-  isOpen: boolean;
   isCurrent: boolean;
   lastModified: number | null;
 }

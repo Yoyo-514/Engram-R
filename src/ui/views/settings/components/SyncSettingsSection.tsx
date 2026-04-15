@@ -87,7 +87,7 @@ export const SyncSettingsSection: FC = () => {
   return (
     <SettingsSection title="同步" description="管理本地数据库与同步文件的同步行为。">
       <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
-        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-start justify-between gap-3">
           <div className="flex w-full min-w-0 flex-1 items-center gap-3">
             <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
               <svg
@@ -125,20 +125,22 @@ export const SyncSettingsSection: FC = () => {
                   </span>
                 )}
               </div>
-              <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+              <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                 通过同步文件在不同端之间传递当前聊天的 Engram 数据。
               </p>
             </div>
           </div>
-          <Switch checked={syncConfig.enabled} onChange={handleConfigChange('enabled')} />
+          <div className="flex-shrink-0 pt-0.5">
+            <Switch checked={syncConfig.enabled} onChange={handleConfigChange('enabled')} />
+          </div>
         </div>
 
         {syncConfig.enabled && (
-          <div className="space-y-3 border-t border-border pl-14 pt-3">
+          <div className="space-y-3 border-t border-border pt-3">
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">自动同步</span>
-                <p className="text-muted-foreground/60 text-xs">
+                <p className="whitespace-normal break-words text-muted-foreground/60 text-xs">
                   每隔一段时间自动检查并同步本地与远端数据。
                 </p>
               </div>
@@ -152,7 +154,7 @@ export const SyncSettingsSection: FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">上次同步时间</span>
-                <p className="text-muted-foreground/60 text-xs">
+                <p className="whitespace-normal break-words text-muted-foreground/60 text-xs">
                   {lastSyncTime > 0 ? new Date(lastSyncTime).toLocaleString() : '暂无记录'}
                 </p>
               </div>
@@ -165,7 +167,7 @@ export const SyncSettingsSection: FC = () => {
               </button>
             </div>
 
-            <ul className="bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc rounded p-2 text-xs">
+            <ul className="whitespace-normal break-words bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc rounded p-2 text-xs">
               <li>
                 同步文件路径:
                 {` data/default-user/files/Engram_sync_${chatId ?? 'unknown'}.json`}

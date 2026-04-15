@@ -197,7 +197,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
                 {isEditorExpanded && (
                   <textarea
-                    className="bg-muted/50 border-border/50 focus:ring-primary/20 custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-all rounded-md border p-3 font-mono text-xs outline-none focus:ring-2"
+                    className="bg-muted/50 border-border/50 focus:ring-primary/20 custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-words rounded-md border p-3 font-mono text-xs outline-none focus:ring-2"
                     value={JSON.stringify(editingEntity.entity.profile, null, 2)}
                     onChange={(e) => {
                       try {
@@ -238,7 +238,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
                 </button>
 
                 {isPreviewExpanded && (
-                  <div className="bg-background/50 border-primary/10 custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-all rounded-md border p-3 font-mono text-xs text-foreground">
+                  <div className="bg-background/50 border-primary/10 custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border p-3 font-mono text-xs text-foreground">
                     {previewDescription}
                   </div>
                 )}
@@ -367,7 +367,7 @@ const EntityCard: FC<{
         {isUpdated && entity._diff ? (
           <div className="bg-background/50 mt-1 flex flex-col gap-1 rounded p-2.5 font-mono text-xs">
             {entity._diff.map((op, i) => (
-              <div key={i} className="flex items-baseline gap-2 break-all">
+              <div key={i} className="flex items-baseline gap-2 break-words">
                 {/* Path */}
                 <span className="text-foreground/80 min-w-[30px] shrink-0 font-medium">
                   {op.path}

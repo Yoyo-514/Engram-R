@@ -50,12 +50,12 @@ export const ThemeSelector: FC = () => {
   return (
     <div className="space-y-4">
       <h3 className="text-lg font-medium">主题设置</h3>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
         {options.map((option) => (
           <button
             key={option.id}
             onClick={() => handleThemeChange(option.id)}
-            className={`group relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all ${
+            className={`group relative flex min-w-0 flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all ${
               currentTheme === option.id
                 ? 'bg-accent/10 border-primary'
                 : 'hover:bg-accent/5 border-transparent'
@@ -85,7 +85,7 @@ export const ThemeSelector: FC = () => {
             </div>
 
             <span
-              className={`text-sm font-medium ${currentTheme === option.id ? 'text-primary' : 'text-muted-foreground'}`}
+              className={`max-w-full break-words text-center text-sm font-medium leading-5 ${currentTheme === option.id ? 'text-primary' : 'text-muted-foreground'}`}
             >
               {option.name}
             </span>

@@ -230,11 +230,11 @@ export const DatabaseManagementSection: FC = () => {
               <div className="flex-shrink-0 rounded-lg bg-red-500/10 p-2 text-red-500">
                 <Trash2 size={20} />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full flex-1">
                 <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                   联动删除
                 </h4>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                   删除聊天时，自动清理对应的 IndexedDB 分片与同步文件残留。
                 </p>
               </div>
@@ -246,9 +246,9 @@ export const DatabaseManagementSection: FC = () => {
           </div>
 
           {linkedDeletion.enabled && (
-            <div className="space-y-3 border-t border-border pt-3 sm:pl-14">
-              <p className="text-muted-foreground/80 text-xs leading-5">
-                该选项只处理聊天数据库与 `Engram_sync_*.json` 文件，不再触碰旧的角色级世界书逻辑。
+            <div className="space-y-3 border-t border-border pt-3">
+              <p className="whitespace-normal break-words text-muted-foreground/80 text-xs leading-5">
+                该选项只处理聊天数据库与 `Engram_sync_*.json` 文件。
               </p>
             </div>
           )}
@@ -260,21 +260,21 @@ export const DatabaseManagementSection: FC = () => {
               <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
                 <RefreshCw size={20} />
               </div>
-              <div className="min-w-0 flex-1">
+              <div className="min-w-0 w-full flex-1">
                 <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
                   数据库维护
                 </h4>
-                <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                <p className="whitespace-normal break-words mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
                   快速管理当前聊天数据库与历史数据库。
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="space-y-3 sm:pl-14">
+          <div className="space-y-3">
             <div>
               <h5 className="text-sm font-medium text-foreground">当前聊天数据库</h5>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">
+              <p className="whitespace-normal break-words mt-1 text-xs leading-5 text-muted-foreground">
                 当前会话数据库会单独展示，但仍沿用统一的卡片选择、统计与维护流程。
               </p>
             </div>
@@ -291,7 +291,7 @@ export const DatabaseManagementSection: FC = () => {
                       ? new Date(currentDatabaseSummary.lastModified).toLocaleString()
                       : '当前未连接聊天，无法读取数据库记录'
                   }
-                  meta={currentDatabaseSummary?.isOpen ? 'OPEN' : 'CURRENT'}
+                  meta="CURRENT"
                   badges={[
                     { text: '当前聊天', color: 'primary' as const },
                     ...(currentDatabaseSummary?.characterName
@@ -301,29 +301,29 @@ export const DatabaseManagementSection: FC = () => {
                   className="border-primary/30 bg-background/60 border"
                 />
 
-                <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
-                  <div>
+                <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 xl:grid-cols-4">
+                  <div className="min-w-0 w-full">
                     <div className="text-[11px] text-muted-foreground">数据库名称</div>
-                    <div className="break-all text-sm font-medium text-foreground">
+                    <div className="whitespace-normal break-words text-sm font-medium text-foreground">
                       {currentDatabaseName}
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0 w-full">
                     <div className="text-[11px] text-muted-foreground">聊天 ID</div>
-                    <div className="break-all text-sm font-medium text-foreground">
+                    <div className="whitespace-normal break-words text-sm font-medium text-foreground">
                       {currentDatabaseSummary?.chatId ?? currentChatId ?? '-'}
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0 w-full">
                     <div className="text-[11px] text-muted-foreground">角色</div>
-                    <div className="text-sm font-medium text-foreground">
+                    <div className="whitespace-normal break-words text-sm font-medium text-foreground">
                       {currentDatabaseSummary?.characterName ?? '未识别角色'}
                     </div>
                   </div>
-                  <div>
+                  <div className="min-w-0 w-full">
                     <div className="text-[11px] text-muted-foreground">状态</div>
                     <div className="text-sm font-medium text-foreground">
-                      {currentDatabaseSummary?.isOpen ? '打开中' : '当前聊天'}
+                      当前聊天
                     </div>
                   </div>
                 </div>
@@ -331,43 +331,43 @@ export const DatabaseManagementSection: FC = () => {
                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
                   <button
                     onClick={handleReset}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-yellow-600 transition-colors hover:bg-muted sm:w-auto"
+                    className="basis-full min-w-0 w-full max-w-full whitespace-normal break-words rounded-md border border-border bg-background px-3 py-2 text-center text-xs font-medium text-yellow-600 transition-colors hover:bg-muted"
                   >
                     重置当前聊天数据库
                   </button>
                   <button
                     onClick={handleDeleteCurrent}
-                    className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 sm:w-auto"
+                    className="basis-full min-w-0 w-full max-w-full whitespace-normal break-words rounded-md border border-border bg-background px-3 py-2 text-center text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10"
                   >
                     删除当前聊天数据库
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="bg-background/40 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+              <div className="whitespace-normal bg-background/40 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
                 当前未连接聊天，无法执行当前数据库操作。
               </div>
             )}
           </div>
 
-          <div className="space-y-3 border-t border-border pt-4 sm:pl-14">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div className="min-w-0">
-                <h5 className="text-sm font-medium text-foreground">历史数据库清理</h5>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                  仅显示当前聊天之外的 Engram 数据库，减少误删风险。
-                </p>
-              </div>
+          <div className="space-y-3 border-t border-border pt-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+                <div className="min-w-0 w-full">
+                  <h5 className="text-sm font-medium text-foreground">历史数据库清理</h5>
+                  <p className="whitespace-normal break-words mt-1 text-xs leading-5 text-muted-foreground">
+                    仅显示当前聊天之外的 Engram 数据库，减少误删风险。
+                  </p>
+                </div>
               <button
                 onClick={loadAvailableDatabases}
                 disabled={isLoadingDatabases}
-                className="rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
+                className="max-w-full whitespace-normal rounded-md border border-border bg-background px-3 py-2 text-center text-xs font-medium text-foreground transition-colors hover:bg-muted disabled:opacity-50"
               >
                 刷新列表
               </button>
             </div>
 
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {historicalDatabases.length === 0 ? (
                 <div className="bg-background/40 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
                   没有可清理的历史数据库。
@@ -379,7 +379,7 @@ export const DatabaseManagementSection: FC = () => {
                       <div className="text-xs font-medium text-muted-foreground">
                         {groupName} · {items.length} 个聊天库
                       </div>
-                      <div className="grid gap-2 md:grid-cols-2">
+                      <div className="flex flex-col gap-2">
                         {items.map((item) => (
                           <ItemCard
                             key={item.name}
@@ -392,7 +392,6 @@ export const DatabaseManagementSection: FC = () => {
                                 ? new Date(item.lastModified).toLocaleString()
                                 : '暂无修改记录'
                             }
-                            meta={item.isOpen ? 'OPEN' : undefined}
                             badges={[
                               ...(selectedDatabases.includes(item.name)
                                 ? [{ text: '已选中', color: 'emerald' as const }]
@@ -400,7 +399,6 @@ export const DatabaseManagementSection: FC = () => {
                               ...(item.isCurrent
                                 ? [{ text: '当前聊天', color: 'primary' as const }]
                                 : []),
-                              ...(item.isOpen ? [{ text: '打开中', color: 'blue' as const }] : []),
                             ]}
                             actions={[
                               {
@@ -423,38 +421,38 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               )}
 
-              <div className="bg-background/60 rounded-lg border border-border p-3 text-xs leading-5 text-muted-foreground">
+              <div className="whitespace-normal break-words bg-background/60 rounded-lg border border-border p-3 text-xs leading-5 text-muted-foreground break-words">
                 {selectedSummary
-                  ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 打开中: ${selectedSummary.isOpen ? '是' : '否'} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
+                  ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
                   : currentDatabaseName
                     ? `当前聊天数据库: ${currentDatabaseName}`
                     : '当前未连接聊天。'}
               </div>
 
-              <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 lg:grid-cols-4">
-                <div>
+              <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="min-w-0 w-full">
                   <div className="text-[11px] text-muted-foreground">事件数</div>
                   <div className="text-sm font-medium text-foreground">
                     {isLoadingStats ? '加载中...' : (selectedStats?.eventCount ?? '-')}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0 w-full">
                   <div className="text-[11px] text-muted-foreground">实体数</div>
                   <div className="text-sm font-medium text-foreground">
                     {isLoadingStats ? '加载中...' : (selectedStats?.entityCount ?? '-')}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0 w-full">
                   <div className="text-[11px] text-muted-foreground">归档数据</div>
-                  <div className="text-sm font-medium text-foreground">
+                  <div className="break-words text-sm font-medium text-foreground">
                     {isLoadingStats
                       ? '加载中...'
                       : `${selectedStats?.archivedEventCount ?? 0} 事件 / ${selectedStats?.archivedEntityCount ?? 0} 实体`}
                   </div>
                 </div>
-                <div>
+                <div className="min-w-0 w-full">
                   <div className="text-[11px] text-muted-foreground">嵌入完成</div>
-                  <div className="text-sm font-medium text-foreground">
+                  <div className="break-words text-sm font-medium text-foreground">
                     {isLoadingStats
                       ? '加载中...'
                       : `${selectedStats?.embeddedEventCount ?? 0} 事件 / ${selectedStats?.embeddedEntityCount ?? 0} 实体`}
@@ -462,7 +460,7 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
                 <div className="sm:col-span-2 lg:col-span-4">
                   <div className="text-[11px] text-muted-foreground">最后修改时间</div>
-                  <div className="text-sm font-medium text-foreground">
+                  <div className="break-words text-sm font-medium text-foreground">
                     {isLoadingStats
                       ? '加载中...'
                       : selectedStats?.lastModified
@@ -472,7 +470,7 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 <div className="text-xs text-muted-foreground">
                   已选择 {selectedDatabases.length} 个历史数据库
                 </div>
@@ -483,7 +481,7 @@ export const DatabaseManagementSection: FC = () => {
                     historicalDatabases.length === 0 ||
                     selectedDatabases.length === 0
                   }
-                  className="w-full rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 disabled:opacity-50 sm:w-auto"
+                  className="basis-full min-w-0 w-full max-w-full whitespace-normal break-words rounded-md border border-border bg-background px-3 py-2 text-center text-xs font-medium text-red-600 transition-colors hover:bg-red-500/10 disabled:opacity-50"
                 >
                   删除选中的历史数据库
                 </button>
@@ -491,7 +489,7 @@ export const DatabaseManagementSection: FC = () => {
             </div>
           </div>
 
-          <div className="bg-background/40 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+          <div className="whitespace-normal break-words bg-background/40 rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
             IndexedDB 版本: {Dexie.semVer || 'Dexie'}
             {currentDatabaseName ? ` · 当前数据库: ${currentDatabaseName}` : ' · 当前未连接聊天'}
           </div>

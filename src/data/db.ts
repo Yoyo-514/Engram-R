@@ -39,14 +39,18 @@ export class ChatDatabase extends Dexie {
     super(`Engram_${chatId}`);
     this.chatId = chatId;
 
-    // V0.9.4: Schema 升级 - entities 表添加 *aliases
-    // V1.5.0: Schema 升级 - 添加 is_archived, is_embedded 索引支持 Dashboard 高效统计
     this.version(3).stores({
       // Events: 核心记忆单元
       events: 'id, timestamp, significance_score, level, is_archived, is_embedded',
-      // Entities: 图谱实体 (添加 is_archived 索引)
+      // Entities: 图谱实体
       entities: 'id, type, name, *aliases, is_archived',
       // Meta: 状态存储 (lastSummarizedFloor 等)
+      meta: 'key',
+    });
+
+    this.version(4).stores({
+      events: 'id, timestamp, significance_score, level, is_archived, is_embedded',
+      entities: 'id, type, name, *aliases, is_archived, is_embedded',
       meta: 'key',
     });
 
@@ -268,7 +272,6 @@ export async function listDatabaseSummaries(currentChatId?: string): Promise<Dat
         name,
         chatId,
         characterName: chatCharacterMap.get(chatId) ?? null,
-        isOpen: dbCache.has(chatId),
         isCurrent: currentChatId === chatId,
         lastModified: typeof lastModifiedMeta?.value === 'number' ? lastModifiedMeta.value : null,
       };
@@ -292,6 +295,23 @@ export async function listDatabaseSummaries(currentChatId?: string): Promise<Dat
 
 export async function getDatabaseStats(chatId: string): Promise<DatabaseStats> {
   const db = getDbForChat(chatId);
+
+  const countByFlag = async <T extends object>(
+    table: Table<T, string>,
+    field: keyof T & string
+  ): Promise<number> => {
+    try {
+      return await (table as Table<T, string>)
+        .where(field as string)
+        .equals(1 as never)
+        .count();
+    } catch (error) {
+      Logger.warn(MODULE, `Falling back to full scan for ${field} in Engram_${chatId}`, error);
+      const rows = await table.toArray();
+      return rows.filter((row) => row?.[field] === true || row?.[field] === 1).length;
+    }
+  };
+
   const [
     eventCount,
     entityCount,
@@ -303,22 +323,10 @@ export async function getDatabaseStats(chatId: string): Promise<DatabaseStats> {
   ] = await Promise.all([
     db.events.count(),
     db.entities.count(),
-    db.events
-      .where('is_archived')
-      .equals(1 as never)
-      .count(),
-    db.entities
-      .where('is_archived')
-      .equals(1 as never)
-      .count(),
-    db.events
-      .where('is_embedded')
-      .equals(1 as never)
-      .count(),
-    db.entities
-      .where('is_embedded')
-      .equals(1 as never)
-      .count(),
+    countByFlag(db.events, 'is_archived'),
+    countByFlag(db.entities, 'is_archived'),
+    countByFlag(db.events, 'is_embedded'),
+    countByFlag(db.entities, 'is_embedded'),
     db.meta.get('lastModified'),
   ]);
 

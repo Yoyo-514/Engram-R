@@ -39,5 +39,7 @@ coverage/
 # spec-workflow
 .spec-workflow/
 
+.serena
+
 tsconfig.tsbuildinfo
 tavern-api

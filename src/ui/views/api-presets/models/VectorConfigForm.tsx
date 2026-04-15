@@ -241,7 +241,7 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
               }}
               className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
             />
-            <p className="text-muted-foreground/70 break-all text-[10px]">
+            <p className="text-muted-foreground/70 break-words text-[10px]">
               {config.source === 'ollama'
                 ? '填写 base URL 即可，会自动拼接 /api/embeddings'
                 : config.autoSuffix !== false && config.apiUrl

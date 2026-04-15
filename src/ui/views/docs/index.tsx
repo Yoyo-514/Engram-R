@@ -108,7 +108,7 @@ export const DocsView: FC<DocsViewProps> = ({ initialTab }) => {
                                 }
                                 #engram-docs-content code {
                                     white-space: pre-wrap !important;
-                                    word-break: break-all !important;
+                                    word-break: break-words !important;
                                 }
                             `}</style>
               <article

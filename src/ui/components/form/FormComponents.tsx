@@ -168,12 +168,12 @@ export const NumberField: FC<NumberFieldProps> = ({
 }) => {
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {label}
           {required && <span className="text-destructive">*</span>}
         </label>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center justify-end gap-1 sm:justify-normal">
           <input
             type="number"
             min={min}
@@ -181,7 +181,7 @@ export const NumberField: FC<NumberFieldProps> = ({
             step={step}
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
-            className="mx-0.5 w-16 border-0 border-b border-transparent bg-transparent px-0 py-0 text-right text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] focus:border-border focus:text-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="mx-0.5 w-20 border-0 border-b border-transparent bg-transparent px-0 py-0 text-right text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] focus:border-border focus:text-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           {suffix && <span className="text-sm font-medium text-muted-foreground">{suffix}</span>}
         </div>
