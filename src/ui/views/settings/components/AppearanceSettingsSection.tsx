@@ -8,31 +8,34 @@ import { Switch } from '@/ui/components/core/Switch';
 import { NumberField } from '@/ui/components/form/FormComponents';
 import { getTheme, setTheme } from '@/ui/services';
 
-import { ThemeSelector } from './ThemeSelector';
 import { SettingsSection } from './SettingsSection';
+import { ThemeSelector } from './ThemeSelector';
 
 export const AppearanceSettingsSection: FC = () => {
   const { enableAnimations, updateEnableAnimations, saveConfig } = useConfigStore();
   const [, forceUpdate] = useState({});
 
   const refreshTheme = () => setTheme(getTheme());
+  const glassEnabled = getSettings().glassSettings?.enabled ?? true;
 
   return (
-    <SettingsSection title="外观" description="主题、动画和玻璃特效等视觉表现设置。">
+    <SettingsSection title="外观" description="调整主题、动画与玻璃效果等界面表现。">
       <div className="space-y-6">
         <div className="space-y-4">
           <ThemeSelector />
 
           <div className="bg-muted/30 rounded-lg border border-border p-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex w-full min-w-0 flex-1 items-center gap-3">
                 <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
                   <Sparkles size={20} />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h4 className="truncate font-medium text-foreground">启用 UI 动画</h4>
-                  <p className="line-clamp-2 text-sm text-muted-foreground">
-                    开启或关闭开场、切页及交互动画，关闭可提升低配设备的响应速度
+                  <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
+                    启用 UI 动画
+                  </h4>
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                    控制页面切换、卡片悬停与状态反馈等界面动画。
                   </p>
                 </div>
               </div>
@@ -48,17 +51,19 @@ export const AppearanceSettingsSection: FC = () => {
         </div>
 
         <div className="bg-muted/30 space-y-6 rounded-lg border border-border p-4">
-          <div className="flex items-center justify-between gap-3">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex w-full min-w-0 flex-1 items-center gap-3">
               <div className="min-w-0 flex-1">
-                <h4 className="truncate font-medium text-foreground">启用毛玻璃</h4>
-                <p className="line-clamp-2 text-sm text-muted-foreground">
-                  开启后，面板背景将具有磨砂质感
+                <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
+                  启用毛玻璃
+                </h4>
+                <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                  控制整体背景的透明度与模糊效果。
                 </p>
               </div>
             </div>
             <Switch
-              checked={getSettings().glassSettings?.enabled ?? true}
+              checked={glassEnabled}
               onChange={(checked) => {
                 const current = getSettings();
                 set('glassSettings', {
@@ -71,11 +76,11 @@ export const AppearanceSettingsSection: FC = () => {
             />
           </div>
 
-          {(getSettings().glassSettings?.enabled ?? true) && (
+          {glassEnabled && (
             <>
               <NumberField
-                label="不透明度 (Opacity)"
-                description="调整面板背景的遮罩强度，数值越低越透明"
+                label="透明度 (Opacity)"
+                description="控制背景玻璃层的透明程度。"
                 value={getSettings().glassSettings?.opacity ?? 0.8}
                 onChange={(val) => {
                   const current = getSettings();
@@ -91,8 +96,8 @@ export const AppearanceSettingsSection: FC = () => {
                 step={0.05}
               />
               <NumberField
-                label="背景磨砂 (Blur)"
-                description="调整背景模糊程度 (px)"
+                label="模糊强度 (Blur)"
+                description="控制玻璃层的背景模糊半径，单位为像素。"
                 value={getSettings().glassSettings?.blur ?? 10}
                 onChange={(val) => {
                   const current = getSettings();

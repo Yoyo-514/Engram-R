@@ -26,6 +26,9 @@ export class FetchExistingEntities implements IStep {
     // 存入完整对象供 SaveEntity 使用 (含归档实体，用于消歧和自动解除归档)
     context.input._rawExistingEntities = entities;
 
-    Logger.debug('FetchExistingEntities', `获取了 ${entities.length} 个现有实体 (活跃: ${activeEntities.length}, 归档: ${entities.length - activeEntities.length})`);
+    Logger.debug(
+      'FetchExistingEntities',
+      `获取了 ${entities.length} 个现有实体 (活跃: ${activeEntities.length}, 归档: ${entities.length - activeEntities.length})`
+    );
   }
 }

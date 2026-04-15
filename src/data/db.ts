@@ -7,11 +7,12 @@
 
 import { Dexie, type Table } from 'dexie';
 
+import { getSTContext } from '@/integrations/tavern';
+import type { DatabaseStats, DatabaseSummary } from '@/types/database';
+
 import { Logger } from '../core/logger';
 import type { EntityNode, EventNode } from '../types/graph';
 import { syncService } from './SyncService';
-import type { DatabaseStats, DatabaseSummary } from '@/types/database';
-import { getSTContext } from '@/integrations/tavern';
 
 /**
  * 每个聊天的元数据存储
@@ -302,10 +303,22 @@ export async function getDatabaseStats(chatId: string): Promise<DatabaseStats> {
   ] = await Promise.all([
     db.events.count(),
     db.entities.count(),
-    db.events.where('is_archived').equals(1 as never).count(),
-    db.entities.where('is_archived').equals(1 as never).count(),
-    db.events.where('is_embedded').equals(1 as never).count(),
-    db.entities.where('is_embedded').equals(1 as never).count(),
+    db.events
+      .where('is_archived')
+      .equals(1 as never)
+      .count(),
+    db.entities
+      .where('is_archived')
+      .equals(1 as never)
+      .count(),
+    db.events
+      .where('is_embedded')
+      .equals(1 as never)
+      .count(),
+    db.entities
+      .where('is_embedded')
+      .equals(1 as never)
+      .count(),
     db.meta.get('lastModified'),
   ]);
 

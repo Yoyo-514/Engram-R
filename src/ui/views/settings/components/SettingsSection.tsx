@@ -18,11 +18,15 @@ export const SettingsSection: FC<SettingsSectionProps> = ({
   return (
     <section className={className}>
       <div className="mb-4 flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-sm font-medium uppercase tracking-wider text-muted-foreground">
             {title}
           </h3>
-          {description && <p className="mt-1 text-xs text-muted-foreground/70">{description}</p>}
+          {description && (
+            <p className="text-muted-foreground/70 mt-1 max-w-2xl text-xs leading-5">
+              {description}
+            </p>
+          )}
         </div>
         {actions && <div className="shrink-0">{actions}</div>}
       </div>

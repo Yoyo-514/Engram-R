@@ -36,12 +36,16 @@ export const Settings: FC = () => {
   }, [activeTab]);
 
   return (
-    <div className="animate-in fade-in flex h-full flex-col">
-      <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="按模块管理外观、功能、数据库与同步配置" />
+    <div className="animate-in fade-in flex min-h-full flex-col">
+      <PageTitle
+        breadcrumbs={['设置']}
+        title="全局选项"
+        subtitle="按模块管理外观、功能、数据库与同步配置"
+      />
 
       <LayoutTabs tabs={SETTINGS_TABS} activeTab={activeTab} onChange={setActiveTab} />
 
-      <div className="overflow-x-hidden px-4 py-6 md:p-6">
+      <div className="min-h-0 flex-1 overflow-x-hidden px-4 py-6 md:p-6">
         <div className="space-y-8">{content}</div>
       </div>
     </div>

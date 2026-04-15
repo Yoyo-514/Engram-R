@@ -32,10 +32,10 @@ export const SyncSettingsSection: FC = () => {
   const handleManualSync = async () => {
     try {
       setSyncStatus('check');
-      setSyncMessage('检查中...');
+      setSyncMessage('检查同步状态...');
 
       if (!chatId) {
-        alert('请先打开一个聊天以进行同步测试');
+        alert('当前没有连接会话，无法执行同步。');
         setSyncStatus('idle');
         setSyncMessage('');
         return;
@@ -50,19 +50,19 @@ export const SyncSettingsSection: FC = () => {
       switch (result) {
         case 'downloaded':
           setSyncStatus('success');
-          setSyncMessage('已从服务端恢复');
+          setSyncMessage('已下载远端数据');
           break;
         case 'uploaded':
           setSyncStatus('success');
-          setSyncMessage('已上传至服务端');
+          setSyncMessage('已上传本地数据');
           break;
         case 'synced':
           setSyncStatus('success');
-          setSyncMessage('无需同步');
+          setSyncMessage('数据已同步');
           break;
         case 'ignored':
           setSyncStatus('idle');
-          setSyncMessage('服务端无数据');
+          setSyncMessage('没有可同步的变更');
           break;
         case 'error':
         default:
@@ -80,15 +80,15 @@ export const SyncSettingsSection: FC = () => {
     } catch (e) {
       console.error(e);
       setSyncStatus('error');
-      setSyncMessage('发生异常');
+      setSyncMessage('同步请求失败');
     }
   };
 
   return (
-    <SettingsSection title="同步" description="管理多端数据同步与手动恢复操作。">
+    <SettingsSection title="同步" description="管理本地数据库与同步文件的同步行为。">
       <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
-        <div className="mb-4 flex items-center justify-between gap-3">
-          <div className="flex min-w-0 flex-1 items-center gap-3">
+        <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex w-full min-w-0 flex-1 items-center gap-3">
             <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
               <svg
                 width="20"
@@ -107,8 +107,10 @@ export const SyncSettingsSection: FC = () => {
               </svg>
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex items-center gap-2">
-                <h4 className="truncate font-medium text-heading">多端数据同步 (Beta)</h4>
+              <div className="flex flex-wrap items-center gap-2">
+                <h4 className="text-sm font-medium leading-5 text-foreground sm:truncate">
+                  多端数据同步 (Beta)
+                </h4>
                 {syncStatus !== 'idle' && (
                   <span
                     className={`text-xs ${
@@ -123,8 +125,8 @@ export const SyncSettingsSection: FC = () => {
                   </span>
                 )}
               </div>
-              <p className="line-clamp-2 text-sm text-muted-foreground">
-                利用酒馆文件读写接口存储与同步
+              <p className="mt-1 text-sm leading-5 text-muted-foreground sm:line-clamp-2">
+                通过同步文件在不同端之间传递当前聊天的 Engram 数据。
               </p>
             </div>
           </div>
@@ -133,10 +135,12 @@ export const SyncSettingsSection: FC = () => {
 
         {syncConfig.enabled && (
           <div className="space-y-3 border-t border-border pl-14 pt-3">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">自动同步</span>
-                <p className="text-muted-foreground/60 text-xs">数据变动3秒后自动上传</p>
+                <p className="text-muted-foreground/60 text-xs">
+                  每隔一段时间自动检查并同步本地与远端数据。
+                </p>
               </div>
               <Switch
                 checked={syncConfig.autoSync}
@@ -145,9 +149,9 @@ export const SyncSettingsSection: FC = () => {
               />
             </div>
 
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <span className="text-sm text-muted-foreground">上次同步</span>
+                <span className="text-sm text-muted-foreground">上次同步时间</span>
                 <p className="text-muted-foreground/60 text-xs">
                   {lastSyncTime > 0 ? new Date(lastSyncTime).toLocaleString() : '暂无记录'}
                 </p>
@@ -161,10 +165,13 @@ export const SyncSettingsSection: FC = () => {
               </button>
             </div>
 
-            <ul className="text-muted-foreground/60 bg-background/50 mt-2 list-inside list-disc rounded p-2 text-xs">
-              <li>数据存储路径: `data/default-user/files/Engram_sync_{chatId ?? '未知'}.json`</li>
-              <li>跨设备同步需手动点击"上传"或开启自动同步</li>
-              <li>请定期备份重要数据</li>
+            <ul className="bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc rounded p-2 text-xs">
+              <li>
+                同步文件路径:
+                {` data/default-user/files/Engram_sync_${chatId ?? 'unknown'}.json`}
+              </li>
+              <li>上传会覆盖远端文件，下载会导入远端最新内容。</li>
+              <li>请在目标端确认同步文件可访问后再执行操作。</li>
             </ul>
           </div>
         )}
@@ -174,8 +181,8 @@ export const SyncSettingsSection: FC = () => {
             onClick={async () => {
               try {
                 setSyncStatus('syncing');
-                setSyncMessage('强制上传中...');
-                if (!chatId) throw new Error('未连接到聊天');
+                setSyncMessage('上传中...');
+                if (!chatId) throw new Error('当前没有连接会话');
 
                 const success = await syncService.upload(chatId);
 
@@ -189,38 +196,38 @@ export const SyncSettingsSection: FC = () => {
               } catch (e) {
                 Logger.error(LogModule.DATA_SYNC, 'Manual upload failed', e);
                 setSyncStatus('error');
-                setSyncMessage('上传错误: ' + String(e));
+                setSyncMessage('上传失败: ' + String(e));
               }
             }}
             className="w-full rounded border border-border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-blue-500/10 hover:text-blue-500 sm:w-auto"
           >
-            强制上传 (覆盖服务端)
+            仅上传同步文件
           </button>
           <button
             onClick={async () => {
               try {
                 setSyncStatus('syncing');
-                setSyncMessage('强制下载中...');
-                if (!chatId) throw new Error('未连接到聊天');
+                setSyncMessage('下载中...');
+                if (!chatId) throw new Error('当前没有连接会话');
 
                 const result = await syncService.download(chatId);
 
                 if (result === 'success') {
                   setSyncStatus('success');
-                  setSyncMessage('下载并导入成功');
+                  setSyncMessage('下载成功');
                   setLastSyncTime(Date.now());
                 } else {
-                  throw new Error(result === 'no_data' ? '服务端无数据' : '下载失败');
+                  throw new Error(result === 'no_data' ? '远端没有可用数据' : '下载失败');
                 }
               } catch (e) {
                 Logger.error(LogModule.DATA_SYNC, 'Manual download failed', e);
                 setSyncStatus('error');
-                setSyncMessage('下载错误: ' + String(e));
+                setSyncMessage('下载失败: ' + String(e));
               }
             }}
             className="w-full rounded border border-border bg-background px-2 py-1 text-[10px] font-medium text-muted-foreground transition-colors hover:bg-orange-500/10 hover:text-orange-500 sm:w-auto"
           >
-            强制下载 (覆盖本地)
+            仅下载同步文件
           </button>
         </div>
       </div>
