@@ -1,8 +1,6 @@
-import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
-import { set } from '@/config/settings';
-import { getTheme, setTheme } from '@/ui/services';
+import { useThemeStore } from '@/state/themeStore';
 
 import { themes, type ThemeName } from '../../../styles/themes';
 
@@ -15,16 +13,10 @@ interface ThemeOption {
 }
 
 export const ThemeSelector: FC = () => {
-  const [currentTheme, setCurrentTheme] = useState<ThemeName>('claudeDark');
-
-  useEffect(() => {
-    setCurrentTheme(getTheme());
-  }, []);
+  const { theme: currentTheme, setTheme } = useThemeStore();
 
   const handleThemeChange = (themeId: ThemeName) => {
     setTheme(themeId);
-    set('theme', themeId); // Persist to ST settings
-    setCurrentTheme(themeId);
   };
 
   // Prepare theme options for display

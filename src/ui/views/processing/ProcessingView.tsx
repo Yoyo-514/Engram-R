@@ -22,7 +22,7 @@ import { Divider } from '@/ui/components/layout/Divider';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { QuickLinks, type QuickLink } from '@/ui/components/layout/QuickLinks';
 import { type Tab } from '@/ui/components/layout/TabPills';
-import { useConfig } from '@/ui/hooks/useConfig';
+import { useConfigStore } from '@/state/configStore';
 import { useSummarizerConfig } from '@/ui/hooks/useSummarizerConfig';
 
 import { BatchProcessingPanel } from './BatchProcessingPanel';
@@ -77,13 +77,10 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
     entityExtractConfig,
     embeddingConfig,
     vectorConfig,
-    updateRecallConfig,
-    updateRerankConfig,
-    updateEntityExtractConfig,
-    updateEmbeddingConfig,
+    updateConfig,
     saveConfig,
     hasChanges: configHasChanges,
-  } = useConfig();
+  } = useConfigStore();
 
   const {
     summarizerSettings,
@@ -153,7 +150,9 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           <VectorizationPanel
             config={embeddingConfig}
             vectorConfig={vectorConfig}
-            onConfigChange={(updates) => updateEmbeddingConfig({ ...embeddingConfig, ...updates })}
+            onConfigChange={(updates) =>
+              updateConfig('embeddingConfig', { ...embeddingConfig, ...updates })
+            }
           />
         )}
 
@@ -162,14 +161,17 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           <RecallPanel
             recallConfig={recallConfig}
             rerankConfig={rerankConfig}
-            onRecallConfigChange={updateRecallConfig}
-            onRerankConfigChange={updateRerankConfig}
+            onRecallConfigChange={(config) => updateConfig('recallConfig', config)}
+            onRerankConfigChange={(config) => updateConfig('rerankConfig', config)}
           />
         )}
 
         {/* 实体提取 Tab - V0.9 */}
         {activeTab === 'entity' && (
-          <EntityConfigPanel config={entityExtractConfig} onChange={updateEntityExtractConfig} />
+          <EntityConfigPanel
+            config={entityExtractConfig}
+            onChange={(config) => updateConfig('entityExtractConfig', config)}
+          />
         )}
 
         {/* 批量处理 Tab - V0.9.6 */}

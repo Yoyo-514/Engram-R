@@ -389,7 +389,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 checked={settings.enabled}
                 onChange={async (newVal) => {
                   onSummarizerSettingsChange({ ...settings, enabled: newVal });
-                  summarizerService.updateConfig({ enabled: newVal });
+                  summarizerService.setRuntimeConfig({ enabled: newVal });
                 }}
               />
             </div>
@@ -403,7 +403,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 checked={settings.autoHide}
                 onChange={(newVal) => {
                   onSummarizerSettingsChange({ ...settings, autoHide: newVal });
-                  summarizerService.updateConfig({ autoHide: newVal });
+                  summarizerService.setRuntimeConfig({ autoHide: newVal });
                 }}
               />
             </div>
@@ -429,7 +429,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     value={settings.floorInterval}
                     onChange={async (val) => {
                       onSummarizerSettingsChange({ ...settings, floorInterval: val });
-                      summarizerService.updateConfig({ floorInterval: val });
+                      summarizerService.setRuntimeConfig({ floorInterval: val });
                     }}
                   />
                 </div>
@@ -450,7 +450,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     value={settings.bufferSize}
                     onChange={(val) => {
                       onSummarizerSettingsChange({ ...settings, bufferSize: val });
-                      summarizerService.updateConfig({ bufferSize: val });
+                      summarizerService.setRuntimeConfig({ bufferSize: val });
                     }}
                   />
                 </div>

@@ -6,6 +6,7 @@
 
 import { create } from 'zustand';
 
+import { set as setSettings } from '@/config/settings';
 import { getTheme, setTheme as setGlobalTheme } from '@/ui/services';
 import { type ThemeName } from '@/ui/styles/themes';
 
@@ -38,6 +39,7 @@ export const useThemeStore = create<ThemeState>((set) => ({
 
   setTheme: (theme) => {
     setGlobalTheme(theme);
+    setSettings('theme', theme);
     set({
       theme,
       isDarkMode: !['tokyoLight', 'catppuccinLatte'].includes(theme),

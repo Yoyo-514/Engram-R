@@ -16,6 +16,7 @@ import { tryGetDbForChat } from '@/data/db';
 import { getSTContext, getCurrentChatId, getSummaries } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
+import { useConfigStore } from '@/state/configStore';
 
 // ==================== 类型定义 ====================
 
@@ -299,36 +300,27 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
             case 'entity': {
               const entityConfig = runtimeSettings.entityExtractConfig;
               nextVal = !(entityConfig?.enabled ?? false);
-              set('runtimeSettings', {
-                ...runtimeSettings,
-                entityExtractConfig: {
-                  ...entityConfig,
-                  enabled: nextVal,
-                },
+              useConfigStore.getState().updateConfig('entityExtractConfig', {
+                ...entityConfig,
+                enabled: nextVal,
               });
               break;
             }
             case 'embedding': {
               const embeddingConfig = runtimeSettings.embeddingConfig;
               nextVal = !(embeddingConfig?.enabled ?? false);
-              set('runtimeSettings', {
-                ...runtimeSettings,
-                embeddingConfig: {
-                  ...embeddingConfig!,
-                  enabled: nextVal,
-                },
+              useConfigStore.getState().updateConfig('embeddingConfig', {
+                ...embeddingConfig!,
+                enabled: nextVal,
               });
               break;
             }
             case 'recall': {
               const recallConfig = runtimeSettings.recallConfig;
               nextVal = !(recallConfig?.enabled !== false);
-              set('runtimeSettings', {
-                ...runtimeSettings,
-                recallConfig: {
-                  ...recallConfig,
-                  enabled: nextVal,
-                },
+              useConfigStore.getState().updateConfig('recallConfig', {
+                ...recallConfig,
+                enabled: nextVal,
               });
               break;
             }
@@ -340,12 +332,9 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
                 enabled: nextVal,
               });
 
-              set('runtimeSettings', {
-                ...runtimeSettings,
-                recallConfig: {
-                  ...runtimeSettings.recallConfig,
-                  usePreprocessing: nextVal,
-                },
+              useConfigStore.getState().updateConfig('recallConfig', {
+                ...runtimeSettings.recallConfig,
+                usePreprocessing: nextVal,
               });
               break;
             }

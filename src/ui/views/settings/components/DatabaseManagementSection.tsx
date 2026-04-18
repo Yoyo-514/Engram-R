@@ -1,12 +1,12 @@
 import { Dexie } from 'dexie';
 import { RefreshCw, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 
-import { getSettings, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { deleteDatabase, getDatabaseStats, listDatabaseSummaries } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
+import { useConfigStore } from '@/state/configStore';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { DatabaseStats, DatabaseSummary } from '@/types/database';
 import { Switch } from '@/ui/components/core/Switch';
@@ -15,14 +15,11 @@ import { notificationService } from '@/ui/services/NotificationService';
 
 import { SettingsSection } from './SettingsSection';
 
-const getDefaultLinkedDeletion = () => getSettings().linkedDeletion;
-
 export const DatabaseManagementSection: FC = () => {
   const memoryStore = useMemoryStore();
+  const { linkedDeletion, updateConfig } = useConfigStore();
   const currentChatId = getCurrentChatId();
   const currentDatabaseName = currentChatId ? `Engram_${currentChatId}` : '';
-
-  const [linkedDeletion, setLinkedDeletion] = useState(getDefaultLinkedDeletion());
   const [databaseSummaries, setDatabaseSummaries] = useState<DatabaseSummary[]>([]);
   const [selectedDatabase, setSelectedDatabase] = useState<string>('');
   const [selectedDatabases, setSelectedDatabases] = useState<string[]>([]);
@@ -57,11 +54,10 @@ export const DatabaseManagementSection: FC = () => {
 
   const persistLinkedDeletion = (updates: Partial<typeof linkedDeletion>) => {
     const next = { ...linkedDeletion, ...updates };
-    setLinkedDeletion(next);
-    set('linkedDeletion', next);
+    updateConfig('linkedDeletion', next);
   };
 
-  const loadAvailableDatabases = async () => {
+  const loadAvailableDatabases = useCallback(async () => {
     setIsLoadingDatabases(true);
     try {
       const summaries = await listDatabaseSummaries(currentChatId || undefined);
@@ -81,7 +77,7 @@ export const DatabaseManagementSection: FC = () => {
     } finally {
       setIsLoadingDatabases(false);
     }
-  };
+  }, [currentChatId, currentDatabaseName]);
 
   const loadDatabaseStats = async (databaseName: string) => {
     const chatId = databaseName.replace(/^Engram_/, '');
@@ -104,7 +100,7 @@ export const DatabaseManagementSection: FC = () => {
 
   useEffect(() => {
     void loadAvailableDatabases();
-  }, []);
+  }, [loadAvailableDatabases]);
 
   useEffect(() => {
     if (!selectedDatabase) {

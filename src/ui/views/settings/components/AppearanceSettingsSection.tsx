@@ -1,27 +1,21 @@
 import { Sparkles } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import type { FC } from 'react';
 
-import { getSettings, set } from '@/config/settings';
 import { useConfigStore } from '@/state/configStore';
 import { Switch } from '@/ui/components/core/Switch';
 import { NumberField } from '@/ui/components/form/FormComponents';
-import { getTheme, refreshCurrentThemePreview, setTheme } from '@/ui/services';
+import { refreshCurrentThemePreview } from '@/ui/services';
 
 import { SettingsSection } from './SettingsSection';
 import { ThemeSelector } from './ThemeSelector';
 
 export const AppearanceSettingsSection: FC = () => {
-  const { enableAnimations, updateEnableAnimations, saveConfig } = useConfigStore();
-  const [glassSettings, setGlassSettings] = useState(() => getSettings().glassSettings);
+  const { enableAnimations, glassSettings, updateConfig } = useConfigStore();
 
   useEffect(() => {
     refreshCurrentThemePreview();
   }, [glassSettings]);
-
-  const persistGlassSettings = (next: typeof glassSettings) => {
-    set('glassSettings', next);
-  };
 
   const glassEnabled = glassSettings?.enabled ?? true;
   const glassOpacity = glassSettings?.opacity ?? 0.8;
@@ -52,8 +46,7 @@ export const AppearanceSettingsSection: FC = () => {
                 <Switch
                   checked={enableAnimations}
                   onChange={(checked) => {
-                    updateEnableAnimations(checked);
-                    saveConfig();
+                    updateConfig('enableAnimations', checked);
                   }}
                 />
               </div>
@@ -81,12 +74,7 @@ export const AppearanceSettingsSection: FC = () => {
                     ...glassSettings,
                     enabled: checked,
                   };
-                  setGlassSettings(next);
-                  persistGlassSettings(next);
-
-                  if (getTheme() !== 'glass') {
-                    setTheme(getTheme());
-                  }
+                  updateConfig('glassSettings', next);
                 }}
               />
             </div>
@@ -99,12 +87,11 @@ export const AppearanceSettingsSection: FC = () => {
                 description="控制背景玻璃层的透明程度。"
                 value={glassOpacity}
                 onChange={(val) => {
-                  setGlassSettings((prev) => ({
+                  updateConfig('glassSettings', (prev) => ({
                     ...prev,
                     opacity: val,
                   }));
                 }}
-                onBlur={() => persistGlassSettings(glassSettings)}
                 min={0}
                 max={1}
                 step={0.05}
@@ -114,12 +101,11 @@ export const AppearanceSettingsSection: FC = () => {
                 description="控制玻璃层的背景模糊半径，单位为像素。"
                 value={glassBlur}
                 onChange={(val) => {
-                  setGlassSettings((prev) => ({
+                  updateConfig('glassSettings', (prev) => ({
                     ...prev,
                     blur: val,
                   }));
                 }}
-                onBlur={() => persistGlassSettings(glassSettings)}
                 min={0}
                 max={50}
                 step={1}

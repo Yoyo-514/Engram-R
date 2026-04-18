@@ -5,3 +5,4 @@ export * from './JsonParser';
 export * from './KeyboardManager';
 export * from './sillytavern';
 export * from './otherExts';
+export * from './persistence';

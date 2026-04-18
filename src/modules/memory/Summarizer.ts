@@ -523,10 +523,18 @@ class SummarizerService {
   }
 
   /**
+   * 仅更新运行态配置
+   */
+  setRuntimeConfig(config: Partial<SummarizerConfig>) {
+    this.config = { ...this.config, ...config };
+    void this.log('debug', '配置已更新（仅运行态）', this.config);
+  }
+
+  /**
    * 更新配置
    */
   updateConfig(config: Partial<SummarizerConfig>) {
-    this.config = { ...this.config, ...config };
+    this.setRuntimeConfig(config);
     // 持久化保存
     set('summarizerConfig', this.config);
     void this.log('debug', '配置已更新并保存', this.config);

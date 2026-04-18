@@ -1,22 +1,14 @@
 import { Eye } from 'lucide-react';
-import { useState } from 'react';
 import type { FC } from 'react';
 
-import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
-import { getSettings } from '@/config/settings';
 import { summarizerService } from '@/modules/memory';
-import { preprocessor } from '@/modules/preprocess';
+import { useConfigStore } from '@/state/configStore';
 import { Switch } from '@/ui/components/core/Switch';
 
 import { SettingsSection } from './SettingsSection';
 
 export const FeatureSettingsSection: FC = () => {
-  const [previewEnabled, setPreviewEnabled] = useState(
-    getSettings().summarizerConfig?.previewEnabled ?? true
-  );
-  const [preprocessingPreviewEnabled, setPreprocessingPreviewEnabled] = useState(
-    getSettings().preprocessConfig?.preview ?? DEFAULT_PREPROCESS_CONFIG.preview
-  );
+  const { summarizerConfig, preprocessConfig, updateConfig } = useConfigStore();
 
   return (
     <SettingsSection title="功能" description="控制总结、预处理等功能的交互行为。">
@@ -38,10 +30,13 @@ export const FeatureSettingsSection: FC = () => {
             </div>
             <div className="flex-shrink-0 pt-0.5">
               <Switch
-                checked={previewEnabled}
+                checked={summarizerConfig.previewEnabled}
                 onChange={(checked) => {
-                  setPreviewEnabled(checked);
-                  summarizerService.updateConfig({ previewEnabled: checked });
+                  summarizerService.setRuntimeConfig({ previewEnabled: checked });
+                  updateConfig('summarizerConfig', (prev) => ({
+                    ...prev,
+                    previewEnabled: checked,
+                  }));
                 }}
               />
             </div>
@@ -65,14 +60,12 @@ export const FeatureSettingsSection: FC = () => {
             </div>
             <div className="flex-shrink-0 pt-0.5">
               <Switch
-                checked={preprocessingPreviewEnabled}
+                checked={preprocessConfig.preview}
                 onChange={(checked) => {
-                  setPreprocessingPreviewEnabled(checked);
-                  const currentConfig = preprocessor.getConfig();
-                  preprocessor.saveConfig({
-                    ...currentConfig,
+                  updateConfig('preprocessConfig', (prev) => ({
+                    ...prev,
                     preview: checked,
-                  });
+                  }));
                 }}
               />
             </div>

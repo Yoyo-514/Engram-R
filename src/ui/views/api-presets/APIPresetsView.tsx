@@ -20,7 +20,6 @@ import { TabPills } from '@/ui/components/layout/TabPills';
 import { useResponsive } from '@/ui/hooks/useResponsive';
 
 // Hooks
-import { useConfig } from '../../hooks/useConfig';
 import { useLLMPresets } from '../../hooks/useLLMPresets';
 import { useRegexRules } from '../../hooks/useRegexRules';
 import { useWorldInfo } from '../../hooks/useWorldInfo';
@@ -35,6 +34,8 @@ import { RegexRuleForm } from './regex/RegexRuleForm';
 import { RegexRuleList } from './regex/RegexRuleList';
 import { PresetCard } from './shared/PresetCard';
 import { WorldbookConfigForm } from './worldbook/WorldbookConfigForm';
+import { useConfigStore } from '@/state/configStore';
+import type { CustomMacro } from '@/types/macro';
 
 // Tab 类型
 type MainTabType = 'model' | 'prompt' | 'regex' | 'worldbook';
@@ -158,16 +159,14 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
     rerankConfig,
     regexConfig,
     customMacros,
-    updateVectorConfig,
-    updateRerankConfig,
-    updateRegexConfig,
+    updateConfig,
     addCustomMacro,
     updateCustomMacro,
     deleteCustomMacro,
     toggleCustomMacro,
     saveConfig,
     hasChanges: configHasChanges,
-  } = useConfig();
+  } = useConfigStore();
 
   const {
     regexRules,
@@ -283,7 +282,9 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
         );
       }
       if (promptSubTab === 'macros') {
-        const editingMacro = (settings.customMacros || []).find((m) => m.id === editingMacroId);
+        const editingMacro = (settings.customMacros || []).find(
+          (m: CustomMacro) => m.id === editingMacroId
+        );
         if (editingMacro) {
           return (
             <MobileFullscreenForm
@@ -428,10 +429,16 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
             )}
 
             {modelSubTab === 'vector' && (
-              <VectorConfigForm config={settings.vectorConfig} onChange={updateVectorConfig} />
+              <VectorConfigForm
+                config={settings.vectorConfig}
+                onChange={(config) => updateConfig('vectorConfig', config)}
+              />
             )}
             {modelSubTab === 'rerank' && (
-              <RerankConfigForm config={settings.rerankConfig} onChange={updateRerankConfig} />
+              <RerankConfigForm
+                config={settings.rerankConfig}
+                onChange={(config) => updateConfig('rerankConfig', config)}
+              />
             )}
           </div>
         )}
@@ -510,7 +517,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
               ) : (
                 (() => {
                   const editingMacro = (settings.customMacros || []).find(
-                    (m) => m.id === editingMacroId
+                    (m: CustomMacro) => m.id === editingMacroId
                   );
                   return editingMacro ? (
                     <div className="animate-in fade-in slide-in-from-right-2 duration-300">
@@ -546,7 +553,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
                 onReorder={reorderRules}
                 enableNativeRegex={settings.regexConfig?.enableNativeRegex ?? true}
                 onToggleNativeRegex={(enabled) =>
-                  updateRegexConfig({
+                  updateConfig('regexConfig', {
                     ...settings.regexConfig,
                     enableNativeRegex: enabled,
                   })

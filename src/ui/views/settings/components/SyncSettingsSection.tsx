@@ -1,21 +1,16 @@
 import { useState } from 'react';
 import type { FC } from 'react';
 
-import { getSettings, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { syncService } from '@/data/SyncService';
 import { getCurrentChatId } from '@/integrations/tavern';
+import { useConfigStore } from '@/state/configStore';
 import { Switch } from '@/ui/components/core/Switch';
 
 import { SettingsSection } from './SettingsSection';
 
 export const SyncSettingsSection: FC = () => {
-  const [syncConfig, setSyncConfig] = useState(
-    getSettings().syncConfig || {
-      enabled: false,
-      autoSync: true,
-    }
-  );
+  const { syncConfig, updateConfig } = useConfigStore();
   const [syncStatus, setSyncStatus] = useState<'idle' | 'check' | 'syncing' | 'success' | 'error'>(
     'idle'
   );
@@ -24,9 +19,10 @@ export const SyncSettingsSection: FC = () => {
   const chatId = getCurrentChatId();
 
   const handleConfigChange = (key: keyof typeof syncConfig) => (checked: boolean) => {
-    const next = { ...syncConfig, [key]: checked };
-    setSyncConfig(next);
-    set('syncConfig', next);
+    updateConfig('syncConfig', {
+      ...syncConfig,
+      [key]: checked,
+    });
   };
 
   const handleManualSync = async () => {
