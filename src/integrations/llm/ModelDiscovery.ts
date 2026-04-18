@@ -4,6 +4,8 @@
  */
 
 import { Logger } from '@/core/logger';
+import { getTavernHelper } from '@/core/utils';
+import { getRequestHeaders } from '@/integrations/tavern';
 
 const MODULE = 'ModelService';
 const DEFAULT_TIMEOUT = 10000;
@@ -49,6 +51,27 @@ function normalizeErrorMessage(error: unknown): string {
   return String(error);
 }
 
+function normalizeModelIds(modelIds: string[]): ModelInfo[] {
+  return modelIds
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0)
+    .map((id) => ({ id, name: id }))
+    .sort((a, b) => a.id.localeCompare(b.id));
+}
+
+function createAbortController(timeout: number): {
+  controller: AbortController;
+  cleanup: () => void;
+} {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+
+  return {
+    controller,
+    cleanup: () => clearTimeout(timeoutId),
+  };
+}
+
 function parseOpenAIModel(item: unknown): ModelInfo | null {
   if (!isRecord(item)) {
     return null;
@@ -63,22 +86,6 @@ function parseOpenAIModel(item: unknown): ModelInfo | null {
     id,
     name: readString(item.name) ?? id,
     owned_by: readString(item.owned_by),
-  };
-}
-
-function parseOllamaModel(item: unknown): ModelInfo | null {
-  if (!isRecord(item)) {
-    return null;
-  }
-
-  const id = readString(item.name) ?? readString(item.model);
-  if (!id) {
-    return null;
-  }
-
-  return {
-    id,
-    name: readString(item.name) ?? id,
   };
 }
 
@@ -116,12 +123,107 @@ function parseOpenAIResponse(payload: unknown): ModelInfo[] {
     .filter((item): item is ModelInfo => item !== null);
 }
 
-function parseOllamaResponse(payload: unknown): ModelInfo[] {
-  const items = isRecord(payload) && Array.isArray(payload.models) ? payload.models : [];
+function parseBackendStatusResponse(payload: unknown): ModelInfo[] {
+  const directModels = parseOpenAIResponse(payload);
+  if (directModels.length > 0) {
+    return directModels;
+  }
 
-  return items
-    .map((item) => parseOllamaModel(item))
-    .filter((item): item is ModelInfo => item !== null);
+  if (!isRecord(payload)) {
+    return [];
+  }
+
+  const candidates: unknown[] = [];
+
+  if (Array.isArray(payload.models)) {
+    candidates.push(payload.models);
+  }
+
+  if (isRecord(payload.data)) {
+    if (Array.isArray(payload.data.models)) {
+      candidates.push(payload.data.models);
+    }
+    if (Array.isArray(payload.data.data)) {
+      candidates.push(payload.data.data);
+    }
+  }
+
+  for (const candidate of candidates) {
+    const parsed = parseOpenAIResponse(candidate);
+    if (parsed.length > 0) {
+      return parsed;
+    }
+
+    if (Array.isArray(candidate)) {
+      const normalized = normalizeModelIds(
+        candidate.map((item) => readString(item) ?? '').filter((item) => item.length > 0)
+      );
+      if (normalized.length > 0) {
+        return normalized;
+      }
+    }
+  }
+
+  return [];
+}
+
+async function tryFetchModelsViaTavernHelper(config: FetchModelsConfig): Promise<ModelInfo[] | null> {
+  const helper = getTavernHelper();
+  if (!helper?.getModelList) {
+    return null;
+  }
+
+  try {
+    const modelIds = await helper.getModelList({
+      apiurl: config.apiUrl,
+      key: config.apiKey,
+    });
+    return normalizeModelIds(modelIds);
+  } catch (error) {
+    Logger.warn(MODULE, `TavernHelper model discovery failed: ${normalizeErrorMessage(error)}`);
+    return null;
+  }
+}
+
+async function tryFetchModelsViaBackendProxy(
+  source: Extract<ModelAPIType, 'openai' | 'ollama' | 'vllm'>,
+  config: FetchModelsConfig
+): Promise<ModelInfo[] | null> {
+  const { apiUrl, apiKey, timeout = DEFAULT_TIMEOUT } = config;
+  const { controller, cleanup } = createAbortController(timeout);
+
+  try {
+    const response = await fetch('/api/backends/chat-completions/status', {
+      method: 'POST',
+      headers: {
+        ...getRequestHeaders(),
+      },
+      body: JSON.stringify({
+        chat_completion_source: source,
+        reverse_proxy: apiUrl,
+        proxy_password: apiKey,
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    const data: unknown = await response.json();
+    const models = parseBackendStatusResponse(data);
+    if (models.length === 0) {
+      return null;
+    }
+
+    Logger.info(MODULE, `Fetched ${models.length} models via backend proxy`);
+    return models.sort((a, b) => a.id.localeCompare(b.id));
+  } catch (error) {
+    Logger.warn(MODULE, `Backend proxy model discovery failed: ${normalizeErrorMessage(error)}`);
+    return null;
+  } finally {
+    cleanup();
+  }
 }
 
 function parseCohereResponse(payload: unknown): ModelInfo[] {
@@ -161,80 +263,34 @@ export async function fetchModels(
  * 获取 OpenAI 兼容接口模型列表
  */
 export async function fetchOpenAIModels(config: FetchModelsConfig): Promise<ModelInfo[]> {
-  const { apiUrl, apiKey, timeout = DEFAULT_TIMEOUT } = config;
-  const baseUrl = apiUrl.replace(/\/+$/, '');
-  const modelsUrl = `${baseUrl}/models`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-
-    if (apiKey) {
-      headers.Authorization = `Bearer ${apiKey}`;
-    }
-
-    const response = await fetch(modelsUrl, {
-      method: 'GET',
-      headers,
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data: unknown = await response.json();
-    const models = parseOpenAIResponse(data).sort((a, b) => a.id.localeCompare(b.id));
-
-    Logger.info(MODULE, `Fetched ${models.length} models from OpenAI API`);
-    return models;
-  } catch (error) {
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      Logger.error(MODULE, 'OpenAI API request timeout');
-    } else {
-      Logger.error(MODULE, `OpenAI API error: ${normalizeErrorMessage(error)}`);
-    }
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
+  const viaTavernHelper = await tryFetchModelsViaTavernHelper(config);
+  if (viaTavernHelper) {
+    return viaTavernHelper;
   }
+
+  const viaBackendProxy = await tryFetchModelsViaBackendProxy('openai', config);
+  if (viaBackendProxy) {
+    return viaBackendProxy;
+  }
+
+  throw new Error('无法通过后端代理获取 OpenAI 模型列表');
 }
 
 /**
  * 获取 Ollama 模型列表
  */
 export async function fetchOllamaModels(config: FetchModelsConfig): Promise<ModelInfo[]> {
-  const { apiUrl, timeout = DEFAULT_TIMEOUT } = config;
-  let baseUrl = apiUrl.replace(/\/+$/, '');
-  baseUrl = baseUrl.replace(/\/api\/(embeddings?|tags)$/, '');
-  const tagsUrl = `${baseUrl}/api/tags`;
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch(tagsUrl, {
-      method: 'GET',
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data: unknown = await response.json();
-    const models = parseOllamaResponse(data);
-
-    Logger.info(MODULE, `Fetched ${models.length} models from Ollama`);
-    return models;
-  } catch (error) {
-    Logger.error(MODULE, `Ollama API error: ${normalizeErrorMessage(error)}`);
-    throw error;
-  } finally {
-    clearTimeout(timeoutId);
+  const viaTavernHelper = await tryFetchModelsViaTavernHelper(config);
+  if (viaTavernHelper) {
+    return viaTavernHelper;
   }
+
+  const viaBackendProxy = await tryFetchModelsViaBackendProxy('ollama', config);
+  if (viaBackendProxy) {
+    return viaBackendProxy;
+  }
+
+  throw new Error('无法通过后端代理获取 Ollama 模型列表');
 }
 
 /**
@@ -242,7 +298,17 @@ export async function fetchOllamaModels(config: FetchModelsConfig): Promise<Mode
  * vLLM 兼容 OpenAI models 接口
  */
 export async function fetchVLLMModels(config: FetchModelsConfig): Promise<ModelInfo[]> {
-  return fetchOpenAIModels(config);
+  const viaTavernHelper = await tryFetchModelsViaTavernHelper(config);
+  if (viaTavernHelper) {
+    return viaTavernHelper;
+  }
+
+  const viaBackendProxy = await tryFetchModelsViaBackendProxy('vllm', config);
+  if (viaBackendProxy) {
+    return viaBackendProxy;
+  }
+
+  throw new Error('无法通过后端代理获取 vLLM 模型列表');
 }
 
 /**
