@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { getCurrentTavernCharacter, getTavernHelper } from '@/core/utils';
+import { getCurrentTavernCharacter, getTavernContext, getTavernHelper } from '@/core/utils';
 
 import { getSTContext, type RawSTChatMessage } from '../core/context';
 
@@ -11,17 +11,12 @@ function assertValidRange(start: number, end: number): void {
   }
 }
 
-async function persistAndRefreshChat(): Promise<void> {
+async function persistChat(): Promise<void> {
   const ctx = getSTContext();
 
   if (ctx && typeof ctx.saveChat === 'function') {
     await ctx.saveChat();
-    Logger.debug(MODULE, 'Chat saved after hide operation');
-  }
-
-  if (ctx && typeof ctx.reloadCurrentChat === 'function') {
-    await ctx.reloadCurrentChat();
-    Logger.debug(MODULE, 'Chat reloaded after hide operation');
+    Logger.debug(MODULE, 'Chat saved after message mutation');
   }
 }
 
@@ -79,13 +74,25 @@ export async function injectMessage(
       mes: content,
     };
 
-    ctx.chat.push(newMessage);
-    await persistAndRefreshChat();
+    const canUseAddOneMessage = typeof ctx?.addOneMessage === 'function';
+
+    if (canUseAddOneMessage) {
+      ctx.addOneMessage(newMessage, {
+        scroll: true,
+      });
+      Logger.debug(MODULE, 'Message injected via addOneMessage');
+    } else {
+      ctx.chat.push(newMessage);
+      Logger.warn(MODULE, 'addOneMessage unavailable, fallback to ctx.chat.push');
+    }
+
+    await persistChat();
 
     Logger.info(MODULE, 'Message injected', {
       role,
       length: content.length,
       forceAvatar: Boolean(forceAvatar),
+      usedAddOneMessage: canUseAddOneMessage,
     });
   } catch (error) {
     Logger.error(MODULE, 'Failed to inject message', error);
