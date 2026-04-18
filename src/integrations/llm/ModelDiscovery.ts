@@ -167,7 +167,9 @@ function parseBackendStatusResponse(payload: unknown): ModelInfo[] {
   return [];
 }
 
-async function tryFetchModelsViaTavernHelper(config: FetchModelsConfig): Promise<ModelInfo[] | null> {
+async function tryFetchModelsViaTavernHelper(
+  config: FetchModelsConfig
+): Promise<ModelInfo[] | null> {
   const helper = getTavernHelper();
   if (!helper?.getModelList) {
     return null;

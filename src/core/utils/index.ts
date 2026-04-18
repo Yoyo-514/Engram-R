@@ -6,3 +6,4 @@ export * from './KeyboardManager';
 export * from './sillytavern';
 export * from './otherExts';
 export * from './persistence';
+export * from './error';

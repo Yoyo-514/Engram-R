@@ -21,13 +21,8 @@ export interface UseSummarizerConfigReturn {
 }
 
 export function useSummarizerConfig(): UseSummarizerConfigReturn {
-  const {
-    summarizerConfig,
-    trimmerConfig,
-    updateConfig,
-    saveConfig,
-    hasChanges,
-  } = useConfigStore();
+  const { summarizerConfig, trimmerConfig, updateConfig, saveConfig, hasChanges } =
+    useConfigStore();
 
   const updateSummarizerSettings = useCallback(
     (settings: SummarizerConfig) => {

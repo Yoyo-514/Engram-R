@@ -29,7 +29,12 @@ import { useMemoryStore } from '@/state/memoryStore';
  * - 状态项按重要性区分字体大小
  * - 去卡片化，使用细线分割
  */
-import type { SummarizerConfig, SummarizerStatus, TrimmerConfig, TrimTriggerType } from '@/types/memory';
+import type {
+  SummarizerConfig,
+  SummarizerStatus,
+  TrimmerConfig,
+  TrimTriggerType,
+} from '@/types/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
@@ -248,7 +253,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                   {status.running && (
                     <div className="mt-1 text-[10px] text-muted-foreground">
                       预计从第{' '}
-                      <span className="text-primary font-mono">
+                      <span className="font-mono text-primary">
                         {status.lastSummarizedFloor + settings.floorInterval}
                       </span>{' '}
                       层开始检查是否满足总结条件
@@ -256,7 +261,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                   )}
                 </div>
                 <div>
-                  <span className="mb-1 block text-xs text-muted-foreground">待进入总结队列的楼层</span>
+                  <span className="mb-1 block text-xs text-muted-foreground">
+                    待进入总结队列的楼层
+                  </span>
                   <div className="flex items-baseline gap-2">
                     <div className="font-mono text-3xl font-light text-amber-500">
                       {status.pendingFloors}
@@ -265,7 +272,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                       当前预计覆盖{' '}
                       <span className="font-mono">
                         {status.lastSummarizedFloor + 1} -{' '}
-                        {status.lastSummarizedFloor + Math.max(1, settings.floorInterval - settings.bufferSize)}
+                        {status.lastSummarizedFloor +
+                          Math.max(1, settings.floorInterval - settings.bufferSize)}
                       </span>{' '}
                       层
                     </div>
@@ -409,7 +417,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
                 <span className="text-sm text-foreground">自动隐藏原文</span>
-                <span className="text-[10px] text-muted-foreground">总结写入后隐藏对应历史楼层</span>
+                <span className="text-[10px] text-muted-foreground">
+                  总结写入后隐藏对应历史楼层
+                </span>
               </div>
               <SwitchField
                 label=""
@@ -428,7 +438,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 {/* 触发间隔 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="text-xs leading-relaxed text-muted-foreground">
                     每累计{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.floorInterval}
@@ -449,7 +459,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
                 {/* 缓冲楼层 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs text-muted-foreground leading-relaxed">
+                  <div className="text-xs leading-relaxed text-muted-foreground">
                     始终跳过最近{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.bufferSize}
@@ -619,7 +629,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
           {/* 说明 - 简化 */}
           <p className="text-muted-foreground/70 text-xs leading-relaxed">
-            精简只作用于历史摘要层：会把更早的摘要继续压缩，同时保留最近几条摘要不动，减少 Token 消耗但尽量不影响当前上下文阅读。
+            精简只作用于历史摘要层：会把更早的摘要继续压缩，同时保留最近几条摘要不动，减少 Token
+            消耗但尽量不影响当前上下文阅读。
           </p>
         </div>
       </section>

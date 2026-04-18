@@ -10,6 +10,8 @@ import { Braces, Cpu, FileText, Key, Layers, Plus, Regex, Save } from 'lucide-re
 import { useEffect, useState } from 'react';
 import type { ElementType, FC } from 'react';
 
+import { useConfigStore } from '@/state/configStore';
+import type { CustomMacro } from '@/types/macro';
 // Components
 import { PageTitle } from '@/ui/components/display/PageTitle';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
@@ -34,8 +36,6 @@ import { RegexRuleForm } from './regex/RegexRuleForm';
 import { RegexRuleList } from './regex/RegexRuleList';
 import { PresetCard } from './shared/PresetCard';
 import { WorldbookConfigForm } from './worldbook/WorldbookConfigForm';
-import { useConfigStore } from '@/state/configStore';
-import type { CustomMacro } from '@/types/macro';
 
 // Tab 类型
 type MainTabType = 'model' | 'prompt' | 'regex' | 'worldbook';

@@ -4,10 +4,17 @@ import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { matchEvent, scanEntities } from '@/modules/memory/EntityScanner';
 import { type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
+import type { EntityNode, EventNode } from '@/types/graph';
 import { type JobContext } from '@/types/job_context';
 import { type IStep } from '@/types/step';
 
 const MODULE = 'KeywordRetrieveStep';
+
+type ArchivedEventQuery = {
+  limit: (count: number) => {
+    count: () => Promise<number>;
+  };
+};
 
 export class KeywordRetrieveStep implements IStep {
   name = 'KeywordRetrieveStep';
@@ -16,10 +23,14 @@ export class KeywordRetrieveStep implements IStep {
     context.data = context.data || {};
 
     const query = context.input?.query as string;
+    const scanQuery = context.input?.scanQuery as string;
+    const textInput = context.input?.text as string; // 适配 Preprocessor 的输入格式
     const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
 
     const textToScan =
-      unifiedQueries && unifiedQueries.length > 0 ? unifiedQueries.join('\n') : query;
+      unifiedQueries && unifiedQueries.length > 0
+        ? unifiedQueries.join('\n')
+        : scanQuery || query || textInput;
 
     if (!textToScan) {
       Logger.debug(LogModule.RAG_INJECT, '没有提供扫描上下文，跳过关键词检索');
@@ -38,11 +49,17 @@ export class KeywordRetrieveStep implements IStep {
     const runtimeSettings = get('runtimeSettings');
     const recallConfig = runtimeSettings?.recallConfig;
 
-    // P0 & P1 Fix: 此处不再因为无归档事件而直接返回
+    // 此处不再因为无归档事件而直接返回
     // 归档事件检查应仅限制在“事件扫描”部分，不能连累实体扫描
     let hasArchivedEvents = false;
     try {
-      const filtered: any = (db.events as any).where?.('is_archived').equals(1);
+      const filtered = (
+        db.events as typeof db.events & {
+          where?: (index: 'is_archived') => { equals: (value: 1) => ArchivedEventQuery };
+        }
+      )
+        .where?.('is_archived')
+        ?.equals(1);
       if (filtered) {
         const count = await filtered.limit(1).count();
         hasArchivedEvents = count > 0;
@@ -60,12 +77,12 @@ export class KeywordRetrieveStep implements IStep {
       hasArchivedEvents = true;
     }
 
-    // 1. 获取全量数据进行缓存 (P1 Fix: 内存优化，只拉取一次)
+    // 1. 预先读取实体数据，供命中筛选和关系联想复用
     const allEntities = await db.entities.toArray();
     const entityIndex = allEntities.map((e) => ({ id: e.id, name: e.name, aliases: e.aliases }));
 
     // 预构建实体名 -> 实体 Map 以便快速查找 (缓存给后续多跳联想使用)
-    const entryMap = new Map<string, any>();
+    const entryMap = new Map<string, EntityNode>();
     for (const e of allEntities) {
       entryMap.set(e.name.toLowerCase(), e);
       if (Array.isArray(e.aliases)) {
@@ -77,24 +94,27 @@ export class KeywordRetrieveStep implements IStep {
 
     Logger.debug(LogModule.RAG_INJECT, `准备扫描。实体索引总量: ${entityIndex.length}`);
 
-    // P1 Fix: Hard limit keyword results to avoid candidate explosion
-    // 事件/实体分别设上限（优先读 recallConfig.keywordTopK，其次回退到 embedding.topK/默认值）
+    // 为关键词命中设置硬上限，避免候选数量过大影响后续排序与注入
+    // 事件/实体分别限流：优先使用 keywordTopK，其次回退到 embedding.topK/默认值
     const eventTopK = recallConfig?.keywordTopK?.events ?? recallConfig?.embedding?.topK ?? 50;
     const entityTopK = recallConfig?.keywordTopK?.entities ?? 30;
 
-    let hitEntities: any[] = [];
-    const hitEvents: any[] = [];
+    let hitEntities: EntityNode[] = [];
+    const hitEvents: EventNode[] = [];
 
     // 2. 执行关键词扫描
     Logger.debug(LogModule.RAG_INJECT, `扫描文本预览: ${textToScan.slice(0, 50)}...`);
 
-    // 实体扫描 (P0 Fix: 即使无事件也执行)
+    // 实体扫描独立执行，不受归档事件状态影响
     if (recallConfig?.enableEntityKeyword !== false) {
       // 首先通过索引进行初步过滤
-      const matchedIndex = scanEntities(textToScan, entityIndex as any).slice(0, entityTopK);
+      const matchedIndex = scanEntities(textToScan, entityIndex as EntityNode[]).slice(
+        0,
+        entityTopK
+      );
 
       if (matchedIndex.length > 0) {
-        // P1 Fix: 从已有的 allEntities 缓存中获取，避免再次 bulkGet
+        // 命中实体直接从缓存中过滤，避免重复查询
         const matchedIds = new Set(matchedIndex.map((e) => e.id));
         hitEntities = allEntities.filter((e) => matchedIds.has(e.id));
 
@@ -107,7 +127,7 @@ export class KeywordRetrieveStep implements IStep {
       Logger.debug(LogModule.RAG_INJECT, '实体关键词扫描已禁用');
     }
 
-    // 事件仅在配置开启且有归档事件时扫描 (P0 Fix: 守卫下沉)
+    // 事件扫描仅在主开关开启且当前存在归档事件时执行
     if (recallConfig?.useKeywordRecall !== false && recallConfig?.enableEventKeyword !== false) {
       if (hasArchivedEvents) {
         const scannedCount = { total: 0, archived: 0, matched: 0 };
@@ -162,13 +182,13 @@ export class KeywordRetrieveStep implements IStep {
       keywordEntityMap.set(entity.id, 0.9); // 直接命中最高分
     }
 
-    // 4.2. 关系多跳 (第二跳)
-    // P1 Fix: 直接使用前面预构建好的 entryMap 和 allEntities 缓存，避免重复拉表
+    // 4.2. 关系多跳：基于已命中实体扩展一跳关联实体
+    // 复用预构建索引，避免在关系扩展阶段重复遍历全表
 
     const hopAttenuation = 0.8; // 多跳衰减系数
 
     for (const seedEntity of hitEntities) {
-      const relations = seedEntity.profile?.relations as Record<string, any> | undefined;
+      const relations = seedEntity.profile?.relations as Record<string, unknown> | undefined;
       if (!relations) continue;
 
       const seedScore = keywordEntityMap.get(seedEntity.id) || 0;
@@ -176,7 +196,7 @@ export class KeywordRetrieveStep implements IStep {
 
       // 遍历声明的所有关联网
       for (const targetName of Object.keys(relations)) {
-        // 使用 Map 替代 O(N) 的 allEntities.find
+        // 使用索引表查找关联实体，避免线性扫描
         const targetEntity = entryMap.get(targetName.toLowerCase());
 
         if (targetEntity) {

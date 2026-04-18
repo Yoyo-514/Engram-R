@@ -43,8 +43,7 @@ export interface ScoredEvent {
 function calculateHybridScore(
   embeddingScore: number | null | undefined,
   rerankScore: number | null | undefined,
-  keywordScore: number | null | undefined,
-  alpha: number
+  keywordScore: number | null | undefined
 ): number {
   // 基础分：如果同时有 keyword 和 embedding，取最高者
   const baseScore = Math.max(embeddingScore ?? 0, keywordScore ?? 0);
@@ -54,27 +53,22 @@ function calculateHybridScore(
   if (baseScore === 0) return rerankScore ?? 0;
   if (rerankScore == null) return baseScore;
 
-  // 加权平均: hybrid = (1-α) * baseScore + α * rerank
-  return (1 - alpha) * baseScore + alpha * rerankScore;
+  // 混合分数 = 基础分 (Embedding/Keyword) + Rerank 分数
+  // 这样做可以更直观地反映多路召回的累加贡献
+  return baseScore + (rerankScore ?? 0);
 }
 
 /**
  * 对候选事件进行混合打分和排序
  *
  * @param candidates 候选事件列表
- * @param alpha 混合权重
  * @returns 排序后的事件列表
  */
-export function scoreAndSort(candidates: ScoredEvent[], alpha: number): ScoredEvent[] {
+export function scoreAndSort(candidates: ScoredEvent[]): ScoredEvent[] {
   // 计算每个事件的混合分数
   const scored = candidates.map((event) => ({
     ...event,
-    hybridScore: calculateHybridScore(
-      event.embeddingScore,
-      event.rerankScore,
-      event.keywordScore,
-      alpha
-    ),
+    hybridScore: calculateHybridScore(event.embeddingScore, event.rerankScore, event.keywordScore),
   }));
 
   // 按混合分数降序排列
@@ -83,7 +77,6 @@ export function scoreAndSort(candidates: ScoredEvent[], alpha: number): ScoredEv
   Logger.debug(LogModule.RAG_INJECT, '混合打分完成', {
     candidateCount: scored.length,
     topScore: scored[0]?.hybridScore,
-    alpha,
   });
 
   return scored;
@@ -101,8 +94,7 @@ export function scoreAndSort(candidates: ScoredEvent[], alpha: number): ScoredEv
 export function mergeResults(
   embeddingResults: Map<string, ScoredEvent>,
   rerankResults: { index: number; relevance_score: number }[],
-  embeddingCandidates: ScoredEvent[],
-  alpha: number
+  embeddingCandidates: ScoredEvent[]
 ): ScoredEvent[] {
   // 将 Rerank 分数合并到 Embedding 结果中
   for (const rerankItem of rerankResults) {
@@ -115,5 +107,5 @@ export function mergeResults(
 
   // 转换为数组并计算混合分数
   const candidates = Array.from(embeddingResults.values());
-  return scoreAndSort(candidates, alpha);
+  return scoreAndSort(candidates);
 }

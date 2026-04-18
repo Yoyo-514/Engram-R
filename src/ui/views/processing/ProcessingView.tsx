@@ -17,12 +17,12 @@ import {
 import { useState } from 'react';
 import type { FC } from 'react';
 
+import { useConfigStore } from '@/state/configStore';
 import { PageTitle } from '@/ui/components/display/PageTitle';
 import { Divider } from '@/ui/components/layout/Divider';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { QuickLinks, type QuickLink } from '@/ui/components/layout/QuickLinks';
 import { type Tab } from '@/ui/components/layout/TabPills';
-import { useConfigStore } from '@/state/configStore';
 
 import { BatchProcessingPanel } from './BatchProcessingPanel';
 import { EntityConfigPanel } from './EntityConfigPanel';

@@ -1,7 +1,15 @@
+import { BrainCircuit, Database, History, Loader2, Play, Search, Zap } from 'lucide-react';
 import { useState, type FC } from 'react';
 
+import { scanEntities, scanEvents } from '@/modules/memory/EntityScanner';
+import { preprocessor } from '@/modules/preprocess';
+import { retriever } from '@/modules/rag/retrieval/Retriever';
+import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode, EventNode } from '@/types/graph';
+import type { AgenticRecall } from '@/types/preprocess';
 import type { RecallCandidate, RecallConfig, RerankConfig } from '@/types/rag';
+import { notificationService } from '@/ui/services/NotificationService';
+import { RecallDecisionModal } from '@/ui/views/review/RecallDecisionModal';
 
 import { RecallConfigForm } from './components/RecallConfigForm';
 
@@ -12,15 +20,15 @@ interface RecallPanelProps {
   onRerankConfigChange: (config: RerankConfig) => void;
 }
 
-import { BrainCircuit, Database, History, Loader2, Play, Search, Zap } from 'lucide-react';
+type PreviewCandidate = RecallCandidate & {
+  hybridScore?: number;
+};
 
-import { scanEntities, scanEvents } from '@/modules/memory/EntityScanner';
-import { preprocessor } from '@/modules/preprocess';
-import { retriever } from '@/modules/rag/retrieval/Retriever';
-import { useMemoryStore } from '@/state/memoryStore';
-import type { AgenticRecall } from '@/types/preprocess';
-import { notificationService } from '@/ui/services/NotificationService';
-import { RecallDecisionModal } from '@/ui/views/review/RecallDecisionModal';
+const getPreviewCandidateScore = (candidate: PreviewCandidate): number => {
+  if (typeof candidate.hybridScore === 'number') return candidate.hybridScore;
+  if (typeof candidate.rerankScore === 'number') return candidate.rerankScore;
+  return candidate.embeddingScore;
+};
 
 export const RecallPanel: FC<RecallPanelProps> = ({
   recallConfig,
@@ -41,10 +49,6 @@ export const RecallPanel: FC<RecallPanelProps> = ({
   const [matchedEvents, setMatchedEvents] = useState<EventNode[]>([]);
 
   const isAgenticMode = recallConfig.useAgenticRAG;
-
-  type PreviewCandidate = RecallCandidate & {
-    hybridScore?: number;
-  };
 
   // --- 逻辑处理 ---
 
@@ -80,12 +84,15 @@ export const RecallPanel: FC<RecallPanelProps> = ({
     }
   };
 
-  /** 统一处理预览测试：前置确认 -> 调取大模型 / 向量检索引擎 -> 弹出 Modal (统一样式) */
+  /**
+   * 统一处理预览测试：
+   * - Agentic 模式：先跑预处理，展示模型给出的召回决策
+   * - 普通模式：执行一次真实检索，但跳过聊天上下文增强，便于观察当前配置效果
+   */
   const handlePreviewTest = async () => {
     if (!testQuery.trim() || isTesting) return;
 
-    // 向用户提供明确的 Token 扣费警告
-    // V1.4: 如果仅启用了关键词召回 (0 消耗)，则跳过确认
+    // 仅关键词召回不消耗远端模型资源，可跳过确认
     const isZeroCost =
       recallConfig.useKeywordRecall &&
       !recallConfig.useEmbedding &&
@@ -114,13 +121,13 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           return;
         }
         setCurrentRecalls(recalls);
-        setCurrentEntities([]); // Agentic 模式暂不直接显示实体（除非后续扩展预处理）
+        setCurrentEntities([]); // Agentic 预处理当前只返回事件决策，不直接提供实体结果
         setIsModalOpen(true);
       } else {
-        // 普通（向量/混合）模式：先进行标准检索
-        const searchResult = await retriever.search(testQuery);
+        // 普通（向量/混合）模式：执行一次真实检索，但跳过上下文增强
+        const searchResult = await retriever.search(testQuery, undefined, { skipContext: true });
         const candidates = (searchResult.candidates ?? []) as PreviewCandidate[];
-        const recalledEntities = (searchResult.recalledEntities ?? []) as EntityNode[];
+        const recalledEntities = searchResult.recalledEntities ?? [];
 
         if (searchResult.skippedReason) {
           notificationService.info(searchResult.skippedReason, 'RAG 冷启动保护');
@@ -131,16 +138,9 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           notificationService.warning('检索未命中任何事件或实体', 'RAG');
           return;
         }
-        // 把检索返回的带分数的 candidate 元素组装为相同的结构格式供 Modal 消费
+        // 将检索候选转换为统一的预览结构，复用同一个确认弹窗
         const pseudoRecalls: AgenticRecall[] = candidates.map((candidate) => {
-          const score =
-            typeof candidate.hybridScore === 'number'
-              ? candidate.hybridScore
-              : typeof candidate.rerankScore === 'number'
-                ? candidate.rerankScore
-                : typeof candidate.embeddingScore === 'number'
-                  ? candidate.embeddingScore
-                  : 0;
+          const score = getPreviewCandidateScore(candidate);
 
           return {
             id: candidate.id,
@@ -156,7 +156,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
         setCurrentEntities(recalledEntities);
         setIsModalOpen(true);
       }
-    } catch (_error) {
+    } catch {
       notificationService.error('召回预览执行失败，请查阅控制台报错', 'RAG');
     } finally {
       setIsTesting(false);
@@ -335,7 +335,10 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           try {
             setIsTesting(true);
             // 确认后，通过提供明确的 ID 数组强制触发最终的内容装配与记录，绕过额外的无谓检索
-            const searchResult = await retriever.agenticSearch(newRecalls);
+            const searchResult = await retriever.agenticSearch(newRecalls, {
+              mode: isAgenticMode ? 'agentic' : 'hybrid',
+              isManualTest: true, // 显式标记为手动测试，跳过日志和 Brain 状态变更
+            });
             notificationService.success(
               `预览确认完成! 强一致性注入 ${searchResult.nodes?.length ?? 0} 条事件，请查看日志`,
               'RAG'

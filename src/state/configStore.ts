@@ -3,13 +3,13 @@ import { create } from 'zustand';
 import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
 import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
 import { DEFAULT_EMBEDDING_CONFIG } from '@/config/rag/defaults';
-import { createDebouncedPersistence } from '@/core/utils';
 import { type EngramSettings, get as getSettings, set as setSettings } from '@/config/settings';
+import { createDebouncedPersistence } from '@/core/utils';
 import type { CustomMacro } from '@/types/macro';
 import type { EntityExtractConfig, SummarizerConfig, TrimmerConfig } from '@/types/memory';
+import type { PreprocessConfig } from '@/types/preprocess';
 import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
 import type { GlobalRegexConfig } from '@/types/regex';
-import type { PreprocessConfig } from '@/types/preprocess';
 
 export interface ConfigState {
   vectorConfig: VectorConfig;
@@ -30,9 +30,7 @@ export interface ConfigState {
 
   updateConfig: <K extends keyof PersistedConfigState>(
     key: K,
-    value:
-      | PersistedConfigState[K]
-      | ((prev: PersistedConfigState[K]) => PersistedConfigState[K])
+    value: PersistedConfigState[K] | ((prev: PersistedConfigState[K]) => PersistedConfigState[K])
   ) => void;
   addCustomMacro: () => void;
   updateCustomMacro: (id: string, updates: Partial<CustomMacro>) => void;
