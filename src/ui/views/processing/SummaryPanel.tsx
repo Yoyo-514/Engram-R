@@ -251,7 +251,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     {status.running ? '运行中' : '已停止'}
                   </div>
                   {status.running && (
-                    <div className="mt-1 text-[10px] text-muted-foreground">
+                    <div className="mt-1 whitespace-normal break-words text-[10px] text-muted-foreground">
                       预计从第{' '}
                       <span className="font-mono text-primary">
                         {status.lastSummarizedFloor + settings.floorInterval}
@@ -268,7 +268,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     <div className="font-mono text-3xl font-light text-amber-500">
                       {status.pendingFloors}
                     </div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="whitespace-normal break-words text-[10px] text-muted-foreground">
                       当前预计覆盖{' '}
                       <span className="font-mono">
                         {status.lastSummarizedFloor + 1} -{' '}
@@ -354,7 +354,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
               {/* 第四层级：信息 - 世界书 Token */}
               <div>
-                <span className="text-muted-foreground/60 mb-1 block text-[10px] uppercase tracking-wider">
+                <span className="text-muted-foreground/60 mb-1 block whitespace-normal break-words text-[10px] uppercase tracking-wider">
                   已写入摘要层的累计 Token (Engram)
                 </span>
                 <div className="text-primary/80 font-mono text-sm">
@@ -438,7 +438,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 {/* 触发间隔 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs leading-relaxed text-muted-foreground">
+                  <div className="whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
                     每累计{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.floorInterval}
@@ -459,7 +459,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
                 {/* 缓冲楼层 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs leading-relaxed text-muted-foreground">
+                  <div className="whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
                     始终跳过最近{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.bufferSize}
@@ -504,7 +504,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-medium text-foreground">精简配置</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">
+            <p className="mt-0.5 whitespace-normal break-words text-xs text-muted-foreground">
               对较早的摘要层再次压缩，不直接处理最新原始聊天楼层
             </p>
           </div>
@@ -551,7 +551,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
           {/* 阈值设置 - 指引式标签 */}
           <div className="space-y-3">
-            <div className="text-xs text-muted-foreground">
+            <div className="whitespace-normal break-words text-xs text-muted-foreground">
               {limitConfig.label === 'Token 上限' ? (
                 <>
                   当历史摘要累计 Token 超过{' '}
@@ -628,7 +628,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           </button>
 
           {/* 说明 - 简化 */}
-          <p className="text-muted-foreground/70 text-xs leading-relaxed">
+          <p className="text-muted-foreground/70 whitespace-normal break-words text-xs leading-relaxed">
             精简只作用于历史摘要层：会把更早的摘要继续压缩，同时保留最近几条摘要不动，减少 Token
             消耗但尽量不影响当前上下文阅读。
           </p>
