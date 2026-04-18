@@ -19,9 +19,10 @@ const Header: FC<HeaderProps> = ({
   onNavigate,
 }) => {
   return (
-    <header className="z-50 flex h-10 w-full flex-shrink-0 items-center justify-between gap-3 bg-transparent px-4 transition-all duration-300">
-      {/* Left: Logo & Mobile Toggle */}
-      <div className="flex min-w-0 items-center gap-3 md:w-auto">
+    <div className="z-50 w-full flex-shrink-0 bg-transparent transition-all duration-300">
+      <header className="flex h-10 w-full items-center justify-between gap-3 px-4">
+        {/* Left: Logo & Mobile Toggle */}
+        <div className="flex min-w-0 items-center gap-3 md:w-auto">
         {/* Mobile Menu Toggle */}
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -38,32 +39,42 @@ const Header: FC<HeaderProps> = ({
           <span className="font-semibold tracking-tight text-sidebar-foreground">Engram</span>
         </div>
 
-        {/* 依赖提示：插件强依赖 Tavern Helper */}
+          {/* 依赖提示：插件强依赖 Tavern Helper */}
+          <div
+            className="bg-amber-500/15 text-amber-200 border-amber-400/30 hidden min-w-0 items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-none md:flex"
+            title="本插件强依赖酒馆助手 Tavern Helper"
+          >
+            本插件强依赖酒馆助手 Tavern Helper
+          </div>
+        </div>
+
+        {/* Center: Spacer */}
+        <div className="flex-1" />
+
+        {/* Right: Window Controls */}
+        <div className="flex items-center gap-1 md:gap-2">
+          <CommandPalette onNavigate={onNavigate} />
+          <div className="mx-1 h-4 w-[1px] bg-border" />
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+            onClick={onClose}
+            title="关闭扩展"
+          >
+            <X size={20} />
+          </motion.button>
+        </div>
+      </header>
+
+      <div className="px-4 pb-2 md:hidden">
         <div
-          className="bg-amber-500/15 text-amber-200 border-amber-400/30 hidden min-w-0 items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-none md:flex"
+          className="bg-amber-500/15 text-amber-200 border-amber-400/30 rounded-md border px-2 py-1.5 text-[11px] font-medium leading-snug"
           title="本插件强依赖酒馆助手 Tavern Helper"
         >
           本插件强依赖酒馆助手 Tavern Helper
         </div>
       </div>
-
-      {/* Center: Spacer */}
-      <div className="flex-1" />
-
-      {/* Right: Window Controls */}
-      <div className="flex items-center gap-1 md:gap-2">
-        <CommandPalette onNavigate={onNavigate} />
-        <div className="mx-1 h-4 w-[1px] bg-border" />
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
-          onClick={onClose}
-          title="关闭扩展"
-        >
-          <X size={20} />
-        </motion.button>
-      </div>
-    </header>
+    </div>
   );
 };
 
