@@ -245,11 +245,30 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     {status.running ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
                     {status.running ? '运行中' : '已停止'}
                   </div>
+                  {status.running && (
+                    <div className="mt-1 text-[10px] text-muted-foreground">
+                      预计从第{' '}
+                      <span className="text-primary font-mono">
+                        {status.lastSummarizedFloor + settings.floorInterval}
+                      </span>{' '}
+                      层开始检查是否满足总结条件
+                    </div>
+                  )}
                 </div>
                 <div>
-                  <span className="mb-1 block text-xs text-muted-foreground">待处理</span>
-                  <div className="font-mono text-3xl font-light text-amber-500">
-                    {status.pendingFloors}
+                  <span className="mb-1 block text-xs text-muted-foreground">待进入总结队列的楼层</span>
+                  <div className="flex items-baseline gap-2">
+                    <div className="font-mono text-3xl font-light text-amber-500">
+                      {status.pendingFloors}
+                    </div>
+                    <div className="text-[10px] text-muted-foreground">
+                      当前预计覆盖{' '}
+                      <span className="font-mono">
+                        {status.lastSummarizedFloor + 1} -{' '}
+                        {status.lastSummarizedFloor + Math.max(1, settings.floorInterval - settings.bufferSize)}
+                      </span>{' '}
+                      层
+                    </div>
                   </div>
                 </div>
               </div>
@@ -261,13 +280,13 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
-                    当前楼层
+                    聊天最新楼层
                   </span>
                   <div className="text-foreground/80 font-mono text-xl">{status.currentFloor}</div>
                 </div>
                 <div>
                   <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
-                    活跃事件 (蓝灯)
+                    当前活跃事件数 (蓝灯)
                   </span>
                   <div className="text-foreground/80 font-mono text-xl">{activeEventCount}</div>
                 </div>
@@ -280,7 +299,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 <div>
                   <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
-                    总结指针 (已处理)
+                    总结指针 (摘要已覆盖至)
                   </span>
                   <div className="flex items-center gap-2">
                     <input
@@ -301,7 +320,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 </div>
                 <div>
                   <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
-                    提取指针 (已处理)
+                    提取指针 (实体提取已处理至)
                   </span>
                   <div className="flex items-center gap-2">
                     <input
@@ -328,7 +347,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               {/* 第四层级：信息 - 世界书 Token */}
               <div>
                 <span className="text-muted-foreground/60 mb-1 block text-[10px] uppercase tracking-wider">
-                  已总结内容 Token (Engram)
+                  已写入摘要层的累计 Token (Engram)
                 </span>
                 <div className="text-primary/80 font-mono text-sm">
                   {worldbookTokens.toLocaleString()}
@@ -389,8 +408,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
             </div>
             <div className="flex items-center justify-between">
               <div className="flex flex-col">
-                <span className="text-sm text-foreground">自动隐藏</span>
-                <span className="text-[10px] text-muted-foreground">处理完后隐藏原文</span>
+                <span className="text-sm text-foreground">自动隐藏原文</span>
+                <span className="text-[10px] text-muted-foreground">总结写入后隐藏对应历史楼层</span>
               </div>
               <SwitchField
                 label=""
@@ -409,12 +428,12 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <div className="grid grid-cols-2 gap-6">
                 {/* 触发间隔 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs text-muted-foreground">
-                    楼层将每隔{' '}
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    每累计{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.floorInterval}
                     </span>{' '}
-                    层总结
+                    个新楼层，就检查一次是否触发总结
                   </div>
                   <SliderField
                     min={5}
@@ -430,12 +449,12 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
                 {/* 缓冲楼层 - 指引式标签 */}
                 <div className="space-y-3">
-                  <div className="text-xs text-muted-foreground">
-                    保留最近{' '}
+                  <div className="text-xs text-muted-foreground leading-relaxed">
+                    始终跳过最近{' '}
                     <span className="mx-0.5 text-base font-medium text-foreground">
                       {settings.bufferSize}
                     </span>{' '}
-                    层作为缓冲
+                    层，避免把最新上下文过早并入摘要
                   </div>
                   <SliderField
                     min={0}
@@ -475,7 +494,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-sm font-medium text-foreground">精简配置</h2>
-            <p className="mt-0.5 text-xs text-muted-foreground">将多次总结压缩为更简洁的摘要</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              对较早的摘要层再次压缩，不直接处理最新原始聊天楼层
+            </p>
           </div>
           <SwitchField
             label=""
@@ -489,7 +510,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         >
           {/* 触发条件 - 无框单选 */}
           <div className="space-y-3">
-            <span className="text-xs text-muted-foreground">触发条件</span>
+            <span className="text-xs text-muted-foreground">触发依据（作用在摘要层）</span>
             <div className="flex gap-6">
               {TRIGGER_OPTIONS.map((opt) => (
                 <label
@@ -523,19 +544,19 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
             <div className="text-xs text-muted-foreground">
               {limitConfig.label === 'Token 上限' ? (
                 <>
-                  当 Token 数超过{' '}
+                  当历史摘要累计 Token 超过{' '}
                   <span className="mx-0.5 text-base font-medium text-foreground">
                     {limitConfig.value}
                   </span>{' '}
-                  时触发
+                  时，触发一次摘要层精简
                 </>
               ) : (
                 <>
-                  当活跃事件超过{' '}
+                  当可参与精简的摘要条目超过{' '}
                   <span className="mx-0.5 text-base font-medium text-foreground">
                     {limitConfig.value}
                   </span>{' '}
-                  条时触发
+                  条时，触发一次摘要层精简
                 </>
               )}
             </div>
@@ -558,7 +579,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <span className="mx-0.5 text-base font-medium text-foreground">
                 {trimConfig.keepRecentCount ?? 3}
               </span>{' '}
-              条不合并
+              条摘要不参与本轮合并
             </div>
             <SliderField
               min={0}
@@ -573,11 +594,11 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           {trimStatus && (
             <div className="space-y-1 text-xs text-muted-foreground">
               <div className="flex justify-between">
-                <span>待合并条目:</span>
+                <span>待合并摘要数:</span>
                 <span className="font-mono">{trimStatus.pendingEntryCount}</span>
               </div>
               <div className="flex justify-between">
-                <span>当前{trimConfig.trigger === 'token' ? 'Token' : '条目数'}:</span>
+                <span>当前摘要层{trimConfig.trigger === 'token' ? ' Token' : '条目数'}:</span>
                 <span className={`font-mono ${trimStatus.triggered ? 'text-amber-500' : ''}`}>
                   {trimStatus.currentValue} / {limitConfig.value}
                 </span>
@@ -598,7 +619,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
           {/* 说明 - 简化 */}
           <p className="text-muted-foreground/70 text-xs leading-relaxed">
-            精简会将多次总结内容压缩为更简洁的摘要，减少 Token 消耗。
+            精简只作用于历史摘要层：会把更早的摘要继续压缩，同时保留最近几条摘要不动，减少 Token 消耗但尽量不影响当前上下文阅读。
           </p>
         </div>
       </section>
