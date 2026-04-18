@@ -39,9 +39,7 @@ export interface LLMPreset {
   /** 预设名称 */
   name: string;
   /** 配置源：使用酒馆当前配置、酒馆的 connection_profile 或自定义 */
-  source: 'tavern' | 'tavern_profile' | 'custom';
-  /** 选择的酒馆 connection_profile ID（仅当 source === 'tavern_profile' 时有效） */
-  tavernProfileId?: string;
+  source: 'tavern' | 'custom';
   /** 自定义 API 配置（仅当 source === 'custom' 时有效） */
   custom?: CustomAPIConfig;
   /** 在 source: 'tavern' 时用于临时覆盖大模型名称，若为空则不覆盖 */

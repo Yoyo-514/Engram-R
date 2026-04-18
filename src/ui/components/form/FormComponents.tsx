@@ -142,6 +142,7 @@ export const TextField: FC<TextFieldProps> = ({
 interface NumberFieldProps extends BaseFieldProps {
   value: number;
   onChange: (value: number) => void;
+  onBlur?: () => void;
   min?: number;
   max?: number;
   step?: number;
@@ -161,6 +162,7 @@ export const NumberField: FC<NumberFieldProps> = ({
   className = '',
   value,
   onChange,
+  onBlur,
   min,
   max,
   step = 1,
@@ -181,6 +183,7 @@ export const NumberField: FC<NumberFieldProps> = ({
             step={step}
             value={value}
             onChange={(e) => onChange(Number(e.target.value))}
+            onBlur={onBlur}
             className="mx-0.5 w-20 border-0 border-b border-transparent bg-transparent px-0 py-0 text-right text-base font-medium text-foreground outline-none transition-colors [appearance:textfield] focus:border-border focus:text-primary [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
           {suffix && <span className="text-sm font-medium text-muted-foreground">{suffix}</span>}

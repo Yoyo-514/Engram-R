@@ -25,7 +25,7 @@ export const PresetCard: FC<PresetCardProps> = ({
   onDelete,
 }) => {
   const SourceIcon =
-    preset.source === 'tavern' || preset.source === 'tavern_profile' ? Server : Cloud;
+    preset.source === 'tavern' ? Server : Cloud;
   const modelName = preset.source === 'custom' ? preset.custom?.model || '未设置' : '使用当前';
 
   return (

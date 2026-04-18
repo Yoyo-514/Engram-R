@@ -118,6 +118,10 @@ function applyThemeVariables(themeName: ThemeName): void {
   }
 }
 
+export function refreshCurrentThemePreview(): void {
+  applyThemeVariables(currentTheme);
+}
+
 /**
  * 初始化主题系统
  */

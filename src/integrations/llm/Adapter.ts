@@ -1,13 +1,10 @@
 /**
- * LLMAdapter - LLM 调用适配器
+ * 统一封装 TavernHelper 的文本生成调用。
  *
- * 封装对 SillyTavern/TavernHelper LLM API 的调用
- *
- * 通用服务：可被 Summarizer、RAG、Graph 等模块复用
- *
- * V0.9.1 改进：
- * - 添加请求队列和执行锁，防止并发请求导致的配置冲突
- * - 支持 tavern_profile 临时切换模式
+ * 该适配器负责：
+ * - 串行化请求，避免共享运行时配置被并发请求交叉污染；
+ * - 解析 Engram 侧预设，并映射到 TavernHelper 所需参数；
+ * - 处理取消、预处理与基础遥测。
  */
 
 import { getSettings, incrementStatistic } from '@/config/settings';
@@ -64,7 +61,7 @@ interface QueuedRequest {
 }
 
 /**
- * 获取 TavernHelper API
+ * 构造统一的取消异常，便于上层区分业务失败与用户中断。
  */
 function createCancellationError(reason?: string): Error & { isCancellation: true } {
   const error = new Error(reason) as Error & { isCancellation: true };
@@ -89,8 +86,7 @@ function isCancellationError(error: unknown): error is Error & { isCancellation?
 }
 
 /**
- * LLMAdapter 类
- * 封装 LLM 调用，支持队列和锁机制
+ * 以单执行器模型调度生成请求，确保底层调用顺序可控。
  */
 class LLMAdapter {
   /** 执行锁 */
@@ -151,8 +147,29 @@ class LLMAdapter {
   }
 
   /**
-   * 调用 LLM 生成 (队列模式)
-   * @param request 请求参数
+   * 根据请求上下文解析最终生效的预设。
+   */
+  private resolvePreset(request: LLMRequest): LLMPreset | undefined {
+    const settings = getSettings();
+    const presets = settings.runtimeSettings?.llmPresets;
+
+    if (request.presetId) {
+      const matchedPreset = presets?.find((preset) => preset.id === request.presetId);
+      if (matchedPreset) {
+        return matchedPreset;
+      }
+    }
+
+    const selectedPresetId = settings.runtimeSettings?.selectedPresetId;
+    if (!selectedPresetId) {
+      return undefined;
+    }
+
+    return presets?.find((preset) => preset.id === selectedPresetId);
+  }
+
+  /**
+   * 将请求放入串行队列，避免底层共享状态被并发访问。
    */
   async generate(request: LLMRequest): Promise<LLMResponse> {
     return new Promise((resolve, reject) => {
@@ -162,7 +179,7 @@ class LLMAdapter {
   }
 
   /**
-   * 处理请求队列
+   * 消费队列头部请求，并在完成后继续拉取后续任务。
    */
   private async processQueue(): Promise<void> {
     if (this.isExecuting || this.requestQueue.length === 0) {
@@ -185,7 +202,7 @@ class LLMAdapter {
   }
 
   /**
-   * 执行单个请求
+   * 执行单次生成请求，并按预设类型分派到底层实现。
    */
   private async executeRequest(request: LLMRequest): Promise<LLMResponse> {
     const helper = getTavernHelper();
@@ -204,26 +221,9 @@ class LLMAdapter {
     }
 
     try {
-      // 获取预设配置
-      const settings = getSettings();
-      let preset: LLMPreset | undefined;
+      const preset = this.resolvePreset(request);
 
-      if (request.presetId) {
-        preset = settings.runtimeSettings?.llmPresets?.find((p) => p.id === request.presetId);
-      }
-
-      if (!preset && settings.runtimeSettings?.selectedPresetId) {
-        preset = settings.runtimeSettings?.llmPresets?.find(
-          (p) => p.id === settings.runtimeSettings?.selectedPresetId
-        );
-      }
-
-      // 根据预设类型选择执行路径
-      if (preset?.source === 'custom' && preset.custom) {
-        return await this.executeWithCustomApi(request, preset, helper);
-      } else {
-        return await this.executeWithTavern(request, helper, preset);
-      }
+      return await this.callTavernHelper(request, helper, preset);
     } catch (error) {
       if (request.signal?.cancelled) {
         throw createCancellationError(request.signal.reason);
@@ -244,27 +244,15 @@ class LLMAdapter {
     }
   }
 
-  // =========================================================================
-  // 执行路径：custom (自定义 API)
-  // =========================================================================
+  /**
+   * 将预设转换为 TavernHelper 可识别的覆盖参数。
+   */
+  private buildPresetOverrides(preset?: LLMPreset): Record<string, unknown> | undefined {
+    if (!preset) {
+      return undefined;
+    }
 
-  private async executeWithCustomApi(
-    request: LLMRequest,
-    preset: LLMPreset,
-    helper: NonNullable<ReturnType<typeof getTavernHelper>>
-  ): Promise<LLMResponse> {
-    Logger.info(MODULE, `使用自定义 API: ${preset.name}`);
-
-    // 构建 custom_api 配置
-    const customApiConfig: Record<string, unknown> = {
-      // 连接配置
-      apiurl: preset.custom!.apiUrl,
-      key: preset.custom!.apiKey,
-      model: preset.custom!.model,
-      source: 'openai', // 自定义 API 走 OpenAI 兼容接口
-      stream: preset.stream ?? false, // V1.5 透传给 Custom OpenAi 端点强制验证
-
-      // 采样参数
+    const parameterOverrides = {
       temperature: preset.parameters?.temperature,
       max_tokens: preset.parameters?.maxTokens,
       top_p: preset.parameters?.topP,
@@ -274,61 +262,55 @@ class LLMAdapter {
       max_context: preset.parameters?.maxContext,
     };
 
-    return await this.callTavernHelper(request, helper, customApiConfig);
+    if (preset.source === 'custom' && preset.custom) {
+      Logger.info(MODULE, `使用自定义 API: ${preset.name}`);
+      return {
+        apiurl: preset.custom.apiUrl,
+        key: preset.custom.apiKey,
+        model: preset.custom.model,
+        source: 'openai', // TavernHelper 的 custom_api 入口按 OpenAI 兼容协议组装请求。
+        stream: preset.stream ?? false,
+        ...parameterOverrides,
+      };
+    }
+
+    if (preset.source === 'tavern') {
+      return {
+        ...(preset.modelOverride ? { model: preset.modelOverride } : {}),
+        ...parameterOverrides,
+      };
+    }
+
+    return undefined;
   }
 
-  // =========================================================================
-  // 执行路径：tavern (使用酒馆当前配置)
-  // =========================================================================
-
-  private async executeWithTavern(
-    request: LLMRequest,
-    helper: NonNullable<ReturnType<typeof getTavernHelper>>,
-    _preset?: LLMPreset
-  ): Promise<LLMResponse> {
-    // 直接使用酒馆当前配置，不做覆盖
-    return await this.callTavernHelper(request, helper);
+  /**
+   * 组装 TavernHelper 级别的生成选项。
+   */
+  private createGenerationOptions(request: LLMRequest, preset?: LLMPreset) {
+    return {
+      should_stream: preset?.stream ?? false,
+      should_silence: true,
+      generation_id: request.generationId,
+      _engram_internal: request.internal,
+    };
   }
-
-  // =========================================================================
-  // 核心调用逻辑
-  // =========================================================================
 
   private async callTavernHelper(
     request: LLMRequest,
     helper: NonNullable<ReturnType<typeof getTavernHelper>>,
-    customApiConfig?: Record<string, unknown>
+    preset?: LLMPreset
   ): Promise<LLMResponse> {
-    // =========================================================================
-    // Prompt Pre-processing (V1.0 Fix)
-    // =========================================================================
     const finalSystemPrompt = request.systemPrompt || '';
     let finalUserPrompt = request.userPrompt || '';
 
-    // Engram Pipeline (RegexProcessor)
-    // Fix P1: 移除导致循环依赖的 @/modules/workflow/steps 导入，改为直接导入
+    // 仅对用户输入执行正则流水线，避免系统提示词被附加规则意外改写。
     finalUserPrompt = regexProcessor.process(finalUserPrompt, 'input');
     this.throwIfCancelled(request.signal);
 
-    // =========================================================================
-    // 调用 TavernHelper
-    // =========================================================================
-
-    // V1.5 获取此请求所用的 Preset (如果是内部预设，需要再查一次或从上层传下来)
-    // 这里基于 SettingsManager 直接根据 context 取一下当前在跑哪个 preset
-    const settings = getSettings();
-    const currentPreset = request.presetId
-      ? settings.runtimeSettings?.llmPresets?.find((p) => p.id === request.presetId)
-      : settings.runtimeSettings?.llmPresets?.find(
-          (p) => p.id === settings.runtimeSettings?.selectedPresetId
-        );
-
-    const generationOptions = {
-      should_stream: currentPreset?.stream ?? false, // 释放底层硬编码
-      should_silence: true, // V0.9.1: 后台请求静默，不绑定停止按钮
-      generation_id: request.generationId,
-      _engram_internal: request.internal,
-    };
+    const generationOptions = this.createGenerationOptions(request, preset);
+    const presetOverrides = this.buildPresetOverrides(preset);
+    const maxChatHistory = preset?.context?.maxChatHistory ?? 0;
 
     let generationResult: string | GenerateToolCallResult;
     const stopWatching = this.watchForCancellation(request.signal, request.generationId);
@@ -348,14 +330,14 @@ class LLMAdapter {
 
         generationResult = await helper.generateRaw({
           ordered_prompts: prompts,
-          custom_api: customApiConfig,
+          ...(presetOverrides ? { custom_api: presetOverrides } : {}),
           ...generationOptions,
         });
       } else if (helper.generate) {
         generationResult = await helper.generate({
           user_input: finalUserPrompt,
-          max_chat_history: 0,
-          custom_api: customApiConfig,
+          max_chat_history: maxChatHistory,
+          ...(presetOverrides ? { custom_api: presetOverrides } : {}),
           ...generationOptions,
         });
       } else {
@@ -370,7 +352,7 @@ class LLMAdapter {
 
     this.throwIfCancelled(request.signal);
 
-    // --- 全局数据遥测 (Telemetry) ---
+    // 更新全局遥测计数，用于观测总调用量与粗略 Token 消耗。
     incrementStatistic('totalLlmCalls', 1);
     const estimatedPromptTokens = this.estimateTokens(finalSystemPrompt + finalUserPrompt);
     const estimatedCompletionTokens = this.estimateTokens(content);
@@ -388,7 +370,7 @@ class LLMAdapter {
   }
 
   /**
-   * 检查 LLM API 是否可用
+   * 检查当前运行环境是否暴露任一可用的生成接口。
    */
   isAvailable(): boolean {
     const helper = getTavernHelper();
