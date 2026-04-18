@@ -23,6 +23,7 @@ import { MessageReview } from './MessageReview';
 import { RecallDecisionModal } from './RecallDecisionModal';
 import { SummaryReview } from './SummaryReview'; // V1.2
 import type { SummaryReviewEvent } from './SummaryReview';
+import { isRecord } from '@/core/utils';
 
 interface ReviewSessionData {
   query?: string;
@@ -30,10 +31,6 @@ interface ReviewSessionData {
   newEntities?: EntityNode[];
   updatedEntities?: EntityNode[];
   events?: SummaryReviewEvent[];
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object';
 }
 
 function isAgenticRecall(value: unknown): value is AgenticRecall {

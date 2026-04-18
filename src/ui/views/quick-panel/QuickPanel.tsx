@@ -141,7 +141,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     if (!isOpen) return;
 
     const syncData = () => {
-      // 1. Preprocessing Config
+      // 1. Preprocess Config
       const newPre = preprocessor.getConfig() || DEFAULT_PREPROCESS_CONFIG;
       setConfig((prev) => (JSON.stringify(prev) !== JSON.stringify(newPre) ? newPre : prev));
 
@@ -172,7 +172,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
 
   // 切换启用状态
   const handleToggle = useCallback(() => {
-    const currentRecallState = recallConfig?.usePreprocessing ?? false;
+    const currentRecallState = recallConfig?.usePreprocess ?? false;
     const newState = !currentRecallState;
 
     Logger.debug('QuickPanel', '切换预处理状态', { from: currentRecallState, to: newState });
@@ -180,7 +180,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
     // 读取最新设置以防覆盖
     const runtimeSettings: EngramRuntimeSettings | null = get('runtimeSettings');
     if (runtimeSettings && runtimeSettings.recallConfig) {
-      const newRecallConfig = { ...runtimeSettings.recallConfig, usePreprocessing: newState };
+      const newRecallConfig = { ...runtimeSettings.recallConfig, usePreprocess: newState };
       set('runtimeSettings', {
         ...runtimeSettings,
         recallConfig: newRecallConfig,
@@ -206,8 +206,8 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
       // 2. 确保全局 Recall Config 也是开启的
       const runtimeSettings: EngramRuntimeSettings | null = get('runtimeSettings');
       if (runtimeSettings && runtimeSettings.recallConfig) {
-        if (!runtimeSettings.recallConfig.usePreprocessing) {
-          const newRecallConfig = { ...runtimeSettings.recallConfig, usePreprocessing: true };
+        if (!runtimeSettings.recallConfig.usePreprocess) {
+          const newRecallConfig = { ...runtimeSettings.recallConfig, usePreprocess: true };
           set('runtimeSettings', {
             ...runtimeSettings,
             recallConfig: newRecallConfig,
@@ -276,12 +276,12 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                 <span className="text-sm font-medium">输入预处理</span>
               </div>
               <Switch
-                checked={recallConfig?.usePreprocessing ?? config.enabled}
+                checked={recallConfig?.usePreprocess ?? config.enabled}
                 onChange={handleToggle}
               />
             </div>
 
-            {(recallConfig?.usePreprocessing ?? config.enabled) && (
+            {(recallConfig?.usePreprocess ?? config.enabled) && (
               <div
                 className="flex items-center justify-between rounded-md p-2"
                 style={{
@@ -303,7 +303,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
               </div>
             )}
 
-            {(recallConfig?.usePreprocessing ?? config.enabled) && (
+            {(recallConfig?.usePreprocess ?? config.enabled) && (
               <div className="space-y-2">
                 <div className="px-1 text-xs" style={{ color: 'var(--muted-foreground, #888)' }}>
                   预处理模式
@@ -323,7 +323,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                       style={{ color: 'var(--primary, #ef7357)', flexShrink: 0, marginTop: 2 }}
                     />
                     <span>
-                      暂无预处理模板。请前往 API 配置 → 提示词模板中创建 'preprocessing'
+                      暂无预处理模板。请前往 API 配置 → 提示词模板中创建 'preprocess'
                       类别的模板。
                     </span>
                   </div>
@@ -379,7 +379,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                 color: 'var(--muted-foreground, #888)',
               }}
             >
-              {(recallConfig?.usePreprocessing ?? config.enabled)
+              {(recallConfig?.usePreprocess ?? config.enabled)
                 ? availableModes.find((m) => m.id === config.templateId)?.name
                   ? `已启用 · ${availableModes.find((m) => m.id === config.templateId)?.name}`
                   : '已启用 · 未知模板'

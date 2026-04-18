@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { parseJson } from '@/core/utils';
+import { isRecord, isStringArray, parseJson, readNumber, readString } from '@/core/utils';
 import { hideMessageRange, refreshEngramCache } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
 import { type EventNode } from '@/types/graph';
@@ -21,22 +21,6 @@ type ParsedEventInput = {
 type ParsedEventsPayload = {
   events: ParsedEventInput[];
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
-
-function isStringArray(value: unknown): value is string[] {
-  return Array.isArray(value) && value.every((item) => typeof item === 'string');
-}
-
-function readString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
 
 function normalizeStringArray(value: unknown): string[] {
   if (typeof value === 'string' && value.length > 0) {

@@ -1,6 +1,6 @@
 id: builtin_query_enhance
 name: Query 增强
-category: preprocessing
+category: preprocess
 enabled: true
 injectionMode: append
 userPromptTemplate: |

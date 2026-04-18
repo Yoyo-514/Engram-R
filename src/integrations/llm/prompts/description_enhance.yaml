@@ -1,6 +1,6 @@
 id: builtin_description_enhance
 name: 描写增强
-category: preprocessing
+category: preprocess
 enabled: false
 injectionMode: replace
 userPromptTemplate: |

@@ -1,6 +1,6 @@
 id: builtin_agentic_recall
 name: Agentic 召回
-category: preprocessing
+category: preprocess
 enabled: false
 injectionMode: append
 userPromptTemplate: |

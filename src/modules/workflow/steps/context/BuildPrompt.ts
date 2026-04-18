@@ -1,7 +1,7 @@
 import { getBuiltInTemplateByCategory } from '@/config/prompt/templates';
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { getTavernContext } from '@/core/utils';
+import { getTavernContext, isPromptCategory, isRecord, readString } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
@@ -19,23 +19,6 @@ type KeywordEntityRef = {
   id: string;
   score?: number;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
-
-function readString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function isPromptCategory(value: unknown): value is PromptCategory {
-  return (
-    value === 'summary' ||
-    value === 'trim' ||
-    value === 'preprocessing' ||
-    value === 'entity_extraction'
-  );
-}
 
 function readKeywordEntityRefs(value: unknown): KeywordEntityRef[] {
   if (!Array.isArray(value)) {

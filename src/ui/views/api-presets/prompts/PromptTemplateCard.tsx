@@ -19,7 +19,7 @@ import { PROMPT_CATEGORIES } from '@/config/prompt/defaults';
 import { createPromptTemplate } from '@/config/prompt/factories';
 import { getBuiltInTemplateByCategory, getBuiltInTemplateById } from '@/config/prompt/templates';
 import { Logger, LogModule } from '@/core/logger';
-import { parseYaml, stringifyYaml } from '@/core/utils';
+import { isPromptCategory, isRecord, parseYaml, stringifyYaml } from '@/core/utils';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import { notificationService } from '@/ui/services/NotificationService';
 
@@ -101,19 +101,6 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     fileInputRef.current?.click();
   };
 
-  function isRecord(value: unknown): value is Record<string, unknown> {
-    return value !== null && typeof value === 'object';
-  }
-
-  function isPromptCategory(value: unknown): value is PromptCategory {
-    return (
-      value === 'summary' ||
-      value === 'trim' ||
-      value === 'preprocessing' ||
-      value === 'entity_extraction'
-    );
-  }
-
   const handleImportFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !onImport) return;
@@ -175,7 +162,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     }
   };
 
-  const isPreprocessing = template.category === 'preprocess';
+  const isPreprocess = template.category === 'preprocess';
 
   return (
     <div
@@ -183,12 +170,12 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         isSelected
           ? 'bg-accent/50 border-input'
           : 'hover:bg-muted/50 border-transparent bg-transparent hover:border-border'
-      } ${!template.enabled && !isPreprocessing && 'opacity-50'} `}
+      } ${!template.enabled && !isPreprocess && 'opacity-50'} `}
       onClick={onSelect}
     >
       <div className="flex items-start gap-3">
         {/* 状态图标 */}
-        {!isPreprocessing ? (
+        {!isPreprocess ? (
           <button
             className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
               template.enabled
@@ -227,7 +214,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h4
-              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && !isPreprocessing && 'line-through'}`}
+              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && !isPreprocess && 'line-through'}`}
             >
               {template.name}
             </h4>
@@ -294,7 +281,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
               );
 
               // 如果找不到 (可能是旧数据的随机 ID)，回退到分类匹配
-              // 注意：对于 preprocessing 分类，分类匹配可能不准确，建议刷新页面以触发 ID 迁移
+              // 注意：对于 preprocess 分类，分类匹配可能不准确，建议刷新页面以触发 ID 迁移
               if (!defaultTemplate) {
                 defaultTemplate = getBuiltInTemplateByCategory(template.category);
               }

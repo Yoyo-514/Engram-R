@@ -236,7 +236,7 @@ class Injector {
       Logger.debug(LogModule.RAG_INJECT, '秋青子开始处理召回', {
         inputLength: userInput.length,
         recall: recallConfig.enabled,
-        preprocess: recallConfig.usePreprocessing && preprocessorConfig.enabled,
+        preprocess: recallConfig.usePreprocess && preprocessorConfig.enabled,
       });
       // V1.4.1 BUILD: 0717
 
@@ -246,7 +246,7 @@ class Injector {
       const shouldTriggerRecall = recallConfig.enabled || isKeywordOnly;
 
       if (
-        recallConfig.usePreprocessing &&
+        recallConfig.usePreprocess &&
         preprocessorConfig.enabled &&
         !preprocessorConfig.autoTrigger
       ) {
@@ -255,7 +255,7 @@ class Injector {
         if (!shouldTriggerRecall) return;
       }
 
-      if (!shouldTriggerRecall && !(recallConfig.usePreprocessing && preprocessorConfig.enabled)) {
+      if (!shouldTriggerRecall && !(recallConfig.usePreprocess && preprocessorConfig.enabled)) {
         Logger.debug(LogModule.RAG_INJECT, '所有功能均未开启，跳过');
         return;
       }
@@ -276,7 +276,7 @@ class Injector {
       try {
         // 1. 预处理 (如果启用 且 自动触发开启)
         if (
-          recallConfig.usePreprocessing &&
+          recallConfig.usePreprocess &&
           preprocessorConfig.enabled &&
           preprocessorConfig.autoTrigger
         ) {

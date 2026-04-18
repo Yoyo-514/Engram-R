@@ -4,9 +4,9 @@ import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 /**
  * 内置提示词模板
  */
-export function getBuiltInPromptTemplates(): PromptTemplate[] {
-  initPromptLoader();
-  return getBuiltInTemplates();
+export function getBuiltInPromptTemplates(forceReload = false): PromptTemplate[] {
+  initPromptLoader(forceReload);
+  return getBuiltInTemplates(forceReload);
 }
 
 /**

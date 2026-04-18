@@ -7,3 +7,4 @@ export * from './sillytavern';
 export * from './otherExts';
 export * from './persistence';
 export * from './error';
+export * from './prompt';

@@ -1,6 +1,6 @@
 id: builtin_plot_director
 name: 剧情编排
-category: preprocessing
+category: preprocess
 enabled: false
 injectionMode: append
 userPromptTemplate: |

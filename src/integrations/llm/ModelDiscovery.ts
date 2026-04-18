@@ -4,7 +4,7 @@
  */
 
 import { Logger } from '@/core/logger';
-import { getTavernHelper } from '@/core/utils';
+import { getTavernHelper, isRecord, readNumber, readString, readStringArray } from '@/core/utils';
 import { getRequestHeaders } from '@/integrations/tavern';
 
 const MODULE = 'ModelService';
@@ -23,24 +23,6 @@ export interface FetchModelsConfig {
   apiUrl: string;
   apiKey?: string;
   timeout?: number;
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
-
-function readString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-function readStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
 }
 
 function normalizeErrorMessage(error: unknown): string {

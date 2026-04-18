@@ -330,16 +330,16 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
               break;
             }
             case 'preprocess': {
-              const currentPreprocessingConfig = get('preprocessConfig') || {};
-              nextVal = !(currentPreprocessingConfig as { enabled?: boolean })?.enabled;
+              const currentPreprocessConfig = get('preprocessConfig') || {};
+              nextVal = !(currentPreprocessConfig as { enabled?: boolean })?.enabled;
               set('preprocessConfig', {
-                ...currentPreprocessingConfig,
+                ...currentPreprocessConfig,
                 enabled: nextVal,
               });
 
               useConfigStore.getState().updateConfig('recallConfig', {
                 ...runtimeSettings.recallConfig,
-                usePreprocessing: nextVal,
+                usePreprocess: nextVal,
               });
               break;
             }

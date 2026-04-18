@@ -1,5 +1,5 @@
 import { Logger, LogModule } from '@/core/logger';
-import { parseYaml } from '@/core/utils';
+import { isPromptCategory, parseYaml } from '@/core/utils';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 
 interface ImportMetaWithGlob extends ImportMeta {
@@ -20,10 +20,6 @@ const promptFiles = (import.meta as ImportMetaWithGlob).glob<{ default: string }
  */
 let templates: PromptTemplate[] = [];
 let initialized = false;
-
-function isPromptCategory(value: unknown): value is PromptCategory {
-  return typeof value === 'string';
-}
 
 function parsePromptTemplate(rawContent: string, path: string, now: number): PromptTemplate | null {
   const parsed = parseYaml(rawContent);
@@ -71,8 +67,8 @@ function parsePromptTemplate(rawContent: string, path: string, now: number): Pro
 /**
  * 初始化加载
  */
-export function initPromptLoader(): void {
-  if (initialized) return;
+export function initPromptLoader(forceReload = false): void {
+  if (initialized && !forceReload) return;
 
   const loadedTemplates: PromptTemplate[] = [];
   const now = Date.now();
@@ -105,9 +101,9 @@ export function initPromptLoader(): void {
 /**
  * 获取所有内置模板 (V0.9.1)
  */
-export function getBuiltInTemplates(): PromptTemplate[] {
+export function getBuiltInTemplates(forceReload = false): PromptTemplate[] {
   // 确保已从 YAML 加载
-  initPromptLoader();
+  initPromptLoader(forceReload);
   return [...templates];
 }
 

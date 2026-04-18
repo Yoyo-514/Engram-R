@@ -97,7 +97,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
       recallConfig.useKeywordRecall &&
       !recallConfig.useEmbedding &&
       !recallConfig.useAgenticRAG &&
-      !recallConfig.usePreprocessing;
+      !recallConfig.usePreprocess;
 
     if (!isZeroCost) {
       const userAgreed = window.confirm(

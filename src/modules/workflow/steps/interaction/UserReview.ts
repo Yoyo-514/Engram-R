@@ -1,6 +1,6 @@
 import { reviewService } from '@/core/events/ReviewService';
 import { Logger } from '@/core/logger';
-import { parseJson } from '@/core/utils';
+import { isRecord, parseJson } from '@/core/utils';
 import { countWorldbookTokens } from '@/integrations/tavern';
 import type { JobContext } from '@/types/job_context';
 import type { AgenticRecall } from '@/types/preprocess';
@@ -18,10 +18,6 @@ interface ReviewPayload {
   agenticRecalls?: unknown[];
   newEntities?: unknown[];
   updatedEntities?: unknown[];
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return !!value && typeof value === 'object';
 }
 
 function isReviewPayload(value: unknown): value is ReviewPayload {

@@ -28,7 +28,7 @@ export const DOCS: DocCategory[] = [
     label: '配置指南',
     icon: Play,
     component: GettingStarted,
-    keywords: ['配置', 'setup', '入门', 'start', 'api', 'embedding', 'rerank', 'preprocessing'],
+    keywords: ['配置', 'setup', '入门', 'start', 'api', 'embedding', 'rerank', 'preprocess'],
     description: '按步骤完成模型接入、处理策略与运行验证',
   },
   {

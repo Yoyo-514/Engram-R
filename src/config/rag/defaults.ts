@@ -31,7 +31,7 @@ export const DEFAULT_RECALL_CONFIG: RecallConfig = {
   enabled: true,
   useEmbedding: true,
   useRerank: false,
-  usePreprocessing: false,
+  usePreprocess: false,
   useAgenticRAG: false,
   useKeywordRecall: true,
   enableEntityKeyword: true,

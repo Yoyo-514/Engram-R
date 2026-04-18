@@ -147,7 +147,7 @@ export function useLLMPresets(): UseLLMPresetsReturn {
    * - 保留当前启用状态和世界书绑定
    */
   const resetAllTemplates = useCallback(() => {
-    const builtInDefaults = getBuiltInPromptTemplates();
+    const builtInDefaults = getBuiltInPromptTemplates(true);
     setSettings((prev) => {
       // 保留自定义模板
       const customTemplates = prev.promptTemplates.filter((t) => !t.isBuiltIn);

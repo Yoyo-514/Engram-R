@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
 import type { EventNode } from '@/types/graph';
+import { isRecord, readNumber, readString } from '@/core/utils';
 
 type EditableEventKV = Partial<EventNode['structured_kv']>;
 
@@ -26,18 +27,6 @@ interface SummaryReviewProps {
 }
 
 type EditableKVKey = keyof EditableEventKV;
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
-
-function readString(value: unknown): string | undefined {
-  return typeof value === 'string' ? value : undefined;
-}
-
-function readNumber(value: unknown): number | undefined {
-  return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
 
 function normalizeStringArray(value: unknown): string[] | undefined {
   if (typeof value === 'string') {

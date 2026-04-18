@@ -50,7 +50,7 @@ export async function processEJSMacros(entries: string[]): Promise<string[]> {
       })
     );
   } catch (error) {
-    Logger.warn('EjsProcessor', 'EJS preprocessing failed', error);
+    Logger.warn('EjsProcessor', 'EJS preprocess failed', error);
     return entries;
   }
 }

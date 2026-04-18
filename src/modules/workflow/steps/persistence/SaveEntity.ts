@@ -3,7 +3,7 @@ import { z } from 'zod';
 
 import { EntityType } from '@/config/memory/defaults';
 import { Logger } from '@/core/logger';
-import { deepClone, stringifyYaml } from '@/core/utils';
+import { deepClone, isRecord, stringifyYaml } from '@/core/utils';
 import { parseJson } from '@/core/utils/JsonParser';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode } from '@/types/graph';
@@ -94,10 +94,6 @@ type EntityIndexes = {
   byLowerName: Map<string, EntityNode>;
   byLowerAlias: Map<string, EntityNode[]>;
 };
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return value !== null && typeof value === 'object';
-}
 
 export class SaveEntity implements IStep {
   name = 'SaveEntity';

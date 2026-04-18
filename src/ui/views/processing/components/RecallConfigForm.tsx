@@ -175,19 +175,19 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
 
           {/* 预处理增强 */}
           <div
-            className={`rounded-lg border p-4 transition-all ${config.usePreprocessing ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
+            className={`rounded-lg border p-4 transition-all ${config.usePreprocess ? 'bg-primary/5 border-primary/30' : 'border-border/50 bg-card hover:border-border'}`}
           >
             <div className="mb-2 flex items-start justify-between">
               <div className="flex items-center gap-2 text-sm font-medium">
                 <BrainCircuit
                   size={16}
-                  className={config.usePreprocessing ? 'text-primary' : 'text-muted-foreground'}
+                  className={config.usePreprocess ? 'text-primary' : 'text-muted-foreground'}
                 />
                 LLM 预处理增强
               </div>
               <Switch
-                checked={config.usePreprocessing}
-                onChange={(val) => updateConfig({ usePreprocessing: val })}
+                checked={config.usePreprocess}
+                onChange={(val) => updateConfig({ usePreprocess: val })}
               />
             </div>
             <p className="text-xs leading-relaxed text-muted-foreground">

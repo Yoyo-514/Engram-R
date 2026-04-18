@@ -109,7 +109,7 @@ export interface RecallConfig {
   useRerank: boolean;
 
   /** 策略 3: 是否使用 LLM 预处理 (Query 增强/剧情编排) */
-  usePreprocessing: boolean;
+  usePreprocess: boolean;
 
   /** 策略 4: 是否使用 Agentic RAG (LLM 裁判式召回) */
   useAgenticRAG: boolean;
