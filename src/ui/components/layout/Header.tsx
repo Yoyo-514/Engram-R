@@ -19,9 +19,9 @@ const Header: FC<HeaderProps> = ({
   onNavigate,
 }) => {
   return (
-    <header className="z-50 flex h-10 w-full flex-shrink-0 items-center justify-between bg-transparent px-4 transition-all duration-300">
+    <header className="z-50 flex h-10 w-full flex-shrink-0 items-center justify-between gap-3 bg-transparent px-4 transition-all duration-300">
       {/* Left: Logo & Mobile Toggle */}
-      <div className="flex w-16 items-center gap-3 md:w-64">
+      <div className="flex min-w-0 items-center gap-3 md:w-auto">
         {/* Mobile Menu Toggle */}
         <motion.button
           whileTap={{ scale: 0.9 }}
@@ -32,10 +32,18 @@ const Header: FC<HeaderProps> = ({
           <Menu size={18} />
         </motion.button>
 
-        {/* Logo - PC 端显示图形+文字 */}
-        <div className="hidden items-center gap-2 md:flex">
+        {/* Logo */}
+        <div className="flex items-center gap-2">
           <EngramIcon size={18} className="text-primary" />
           <span className="font-semibold tracking-tight text-sidebar-foreground">Engram</span>
+        </div>
+
+        {/* 依赖提示：插件强依赖 Tavern Helper */}
+        <div
+          className="bg-amber-500/15 text-amber-200 border-amber-400/30 hidden min-w-0 items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-none md:flex"
+          title="本插件强依赖酒馆助手 Tavern Helper"
+        >
+          本插件强依赖酒馆助手 Tavern Helper
         </div>
       </div>
 
