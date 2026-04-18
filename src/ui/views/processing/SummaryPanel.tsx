@@ -18,6 +18,7 @@ import {
   summarizerService,
   type TrimmerStatus,
 } from '@/modules/memory';
+import { useConfigStore } from '@/state/configStore';
 import { useMemoryStore } from '@/state/memoryStore';
 /**
  * SummaryPanel - 总结面板组件
@@ -28,21 +29,15 @@ import { useMemoryStore } from '@/state/memoryStore';
  * - 状态项按重要性区分字体大小
  * - 去卡片化，使用细线分割
  */
-import type { SummarizerStatus, TrimmerConfig, TrimTriggerType } from '@/types/memory';
+import type { SummarizerConfig, SummarizerStatus, TrimmerConfig, TrimTriggerType } from '@/types/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
-import type { UseSummarizerConfigReturn } from '@/ui/hooks/useSummarizerConfig';
 import { notificationService } from '@/ui/services';
 
-// Reuse the interface from the hook
-type SummarizerSettings = UseSummarizerConfigReturn['summarizerSettings'];
-
 interface SummaryPanelProps {
-  summarizerSettings: SummarizerSettings;
+  summarizerSettings: SummarizerConfig;
   trimConfig: TrimmerConfig;
-  onSummarizerSettingsChange: (settings: SummarizerSettings) => void;
-  onTrimmerConfigChange: (config: TrimmerConfig) => void;
 }
 
 const TRIGGER_OPTIONS: { id: TrimTriggerType; label: string; icon: ElementType }[] = [
@@ -53,9 +48,8 @@ const TRIGGER_OPTIONS: { id: TrimTriggerType; label: string; icon: ElementType }
 export const SummaryPanel: FC<SummaryPanelProps> = ({
   summarizerSettings: settings,
   trimConfig,
-  onSummarizerSettingsChange,
-  onTrimmerConfigChange,
 }) => {
+  const { updateConfig } = useConfigStore();
   const [status, setStatus] = useState<SummarizerStatus | null>(null);
   const [loading, setLoading] = useState(false);
   const [trimLoading, setTrimLoading] = useState(false);
@@ -168,7 +162,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   const handleTriggerChange = (trigger: TrimTriggerType) => {
     const newConfig = { ...trimConfig, trigger };
-    onTrimmerConfigChange(newConfig);
+    updateConfig('trimmerConfig', newConfig);
   };
 
   const handleLimitChange = (
@@ -176,13 +170,13 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
     value: number
   ) => {
     const newConfig = { ...trimConfig, [key]: value };
-    onTrimmerConfigChange(newConfig);
+    updateConfig('trimmerConfig', newConfig);
   };
 
   // enabled 开关切换
   const handleTrimEnabledChange = async () => {
     const newConfig = { ...trimConfig, enabled: !trimConfig.enabled };
-    onTrimmerConfigChange(newConfig);
+    updateConfig('trimmerConfig', newConfig);
     // Runtime update if needed, typically handled by save action or service sync
     eventTrimmer.updateConfig({ enabled: newConfig.enabled });
   };
@@ -388,8 +382,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 label=""
                 checked={settings.enabled}
                 onChange={async (newVal) => {
-                  onSummarizerSettingsChange({ ...settings, enabled: newVal });
-                  summarizerService.setRuntimeConfig({ enabled: newVal });
+                  updateConfig('summarizerConfig', { ...settings, enabled: newVal });
+                  summarizerService.updateConfig({ enabled: newVal });
                 }}
               />
             </div>
@@ -402,8 +396,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 label=""
                 checked={settings.autoHide}
                 onChange={(newVal) => {
-                  onSummarizerSettingsChange({ ...settings, autoHide: newVal });
-                  summarizerService.setRuntimeConfig({ autoHide: newVal });
+                  updateConfig('summarizerConfig', { ...settings, autoHide: newVal });
+                  summarizerService.updateConfig({ autoHide: newVal });
                 }}
               />
             </div>
@@ -428,8 +422,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     step={5}
                     value={settings.floorInterval}
                     onChange={async (val) => {
-                      onSummarizerSettingsChange({ ...settings, floorInterval: val });
-                      summarizerService.setRuntimeConfig({ floorInterval: val });
+                      updateConfig('summarizerConfig', { ...settings, floorInterval: val });
+                      summarizerService.updateConfig({ floorInterval: val });
                     }}
                   />
                 </div>
@@ -449,8 +443,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     step={1}
                     value={settings.bufferSize}
                     onChange={(val) => {
-                      onSummarizerSettingsChange({ ...settings, bufferSize: val });
-                      summarizerService.setRuntimeConfig({ bufferSize: val });
+                      updateConfig('summarizerConfig', { ...settings, bufferSize: val });
+                      summarizerService.updateConfig({ bufferSize: val });
                     }}
                   />
                 </div>

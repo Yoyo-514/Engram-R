@@ -32,7 +32,7 @@ export const FeatureSettingsSection: FC = () => {
               <Switch
                 checked={summarizerConfig.previewEnabled}
                 onChange={(checked) => {
-                  summarizerService.setRuntimeConfig({ previewEnabled: checked });
+                  summarizerService.updateConfig({ previewEnabled: checked });
                   updateConfig('summarizerConfig', (prev) => ({
                     ...prev,
                     previewEnabled: checked,

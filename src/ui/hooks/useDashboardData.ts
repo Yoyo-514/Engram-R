@@ -286,7 +286,8 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
         try {
           // 1. 读取最新配置（使用完整 defaults 作为 fallback，防止丢失嵌套字段）
           const runtimeSettings = get('runtimeSettings');
-          const currentSummarizerConfig = summarizerService.getConfig();
+          const configStore = useConfigStore.getState();
+          const currentSummarizerConfig = configStore.summarizerConfig;
 
           // 2. 获取当前功能状态并计算新值
           let nextVal: boolean;
@@ -294,13 +295,17 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
           switch (feature) {
             case 'summarizer': {
               nextVal = !(currentSummarizerConfig.enabled !== false);
+              configStore.updateConfig('summarizerConfig', {
+                ...currentSummarizerConfig,
+                enabled: nextVal,
+              });
               summarizerService.updateConfig({ enabled: nextVal });
               break;
             }
             case 'entity': {
               const entityConfig = runtimeSettings.entityExtractConfig;
               nextVal = !(entityConfig?.enabled ?? false);
-              useConfigStore.getState().updateConfig('entityExtractConfig', {
+              configStore.updateConfig('entityExtractConfig', {
                 ...entityConfig,
                 enabled: nextVal,
               });
@@ -309,7 +314,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
             case 'embedding': {
               const embeddingConfig = runtimeSettings.embeddingConfig;
               nextVal = !(embeddingConfig?.enabled ?? false);
-              useConfigStore.getState().updateConfig('embeddingConfig', {
+              configStore.updateConfig('embeddingConfig', {
                 ...embeddingConfig!,
                 enabled: nextVal,
               });
@@ -318,7 +323,7 @@ export function useDashboardData(refreshInterval = 2000): DashboardData & {
             case 'recall': {
               const recallConfig = runtimeSettings.recallConfig;
               nextVal = !(recallConfig?.enabled !== false);
-              useConfigStore.getState().updateConfig('recallConfig', {
+              configStore.updateConfig('recallConfig', {
                 ...recallConfig,
                 enabled: nextVal,
               });

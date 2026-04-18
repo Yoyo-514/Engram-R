@@ -1,12 +1,12 @@
 import { create } from 'zustand';
 
-import { DEFAULT_SUMMARIZER_CONFIG } from '@/config/memory/defaults';
+import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
 import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
 import { DEFAULT_EMBEDDING_CONFIG } from '@/config/rag/defaults';
 import { createDebouncedPersistence } from '@/core/utils';
 import { type EngramSettings, get as getSettings, set as setSettings } from '@/config/settings';
 import type { CustomMacro } from '@/types/macro';
-import type { EntityExtractConfig, SummarizerConfig } from '@/types/memory';
+import type { EntityExtractConfig, SummarizerConfig, TrimmerConfig } from '@/types/memory';
 import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
 import type { GlobalRegexConfig } from '@/types/regex';
 import type { PreprocessConfig } from '@/types/preprocess';
@@ -21,6 +21,7 @@ export interface ConfigState {
   customMacros: CustomMacro[];
   enableAnimations: boolean;
   summarizerConfig: SummarizerConfig;
+  trimmerConfig: TrimmerConfig;
   preprocessConfig: PreprocessConfig;
   linkedDeletion: EngramSettings['linkedDeletion'];
   glassSettings: EngramSettings['glassSettings'];
@@ -51,6 +52,7 @@ type PersistedConfigState = Pick<
   | 'customMacros'
   | 'enableAnimations'
   | 'summarizerConfig'
+  | 'trimmerConfig'
   | 'preprocessConfig'
   | 'linkedDeletion'
   | 'glassSettings'
@@ -59,6 +61,7 @@ type PersistedConfigState = Pick<
 
 const savedContext = getSettings('runtimeSettings');
 const summary = getSettings('summarizerConfig');
+const trimmer = getSettings('trimmerConfig');
 const preprocess = getSettings('preprocessConfig');
 const savedLinkedDeletion = getSettings('linkedDeletion');
 const savedGlassSettings = getSettings('glassSettings');
@@ -80,6 +83,10 @@ function buildPersistedConfigState(
       ...DEFAULT_SUMMARIZER_CONFIG,
       ...summary,
     },
+    trimmerConfig: state?.trimmerConfig ?? {
+      ...DEFAULT_TRIMMER_CONFIG,
+      ...trimmer,
+    },
     preprocessConfig: state?.preprocessConfig ?? {
       ...DEFAULT_PREPROCESS_CONFIG,
       ...preprocess,
@@ -95,6 +102,7 @@ const configPersistence = createDebouncedPersistence<PersistedConfigState>({
   persist: (nextValue) => {
     const {
       summarizerConfig,
+      trimmerConfig,
       preprocessConfig,
       linkedDeletion,
       glassSettings,
@@ -109,6 +117,7 @@ const configPersistence = createDebouncedPersistence<PersistedConfigState>({
     });
 
     setSettings('summarizerConfig', summarizerConfig);
+    setSettings('trimmerConfig', trimmerConfig);
     setSettings('preprocessConfig', preprocessConfig);
     setSettings('linkedDeletion', linkedDeletion);
     setSettings('glassSettings', glassSettings);
@@ -129,6 +138,7 @@ export const useConfigStore = create<ConfigState>((set, get) => {
         customMacros: state.customMacros,
         enableAnimations: state.enableAnimations,
         summarizerConfig: state.summarizerConfig,
+        trimmerConfig: state.trimmerConfig,
         preprocessConfig: state.preprocessConfig,
         linkedDeletion: state.linkedDeletion,
         glassSettings: state.glassSettings,
@@ -206,6 +216,7 @@ export const useConfigStore = create<ConfigState>((set, get) => {
         customMacros: state.customMacros,
         enableAnimations: state.enableAnimations,
         summarizerConfig: state.summarizerConfig,
+        trimmerConfig: state.trimmerConfig,
         preprocessConfig: state.preprocessConfig,
         linkedDeletion: state.linkedDeletion,
         glassSettings: state.glassSettings,
@@ -217,6 +228,7 @@ export const useConfigStore = create<ConfigState>((set, get) => {
 
       const {
         summarizerConfig,
+        trimmerConfig,
         preprocessConfig,
         linkedDeletion,
         glassSettings,
@@ -231,6 +243,7 @@ export const useConfigStore = create<ConfigState>((set, get) => {
       });
 
       setSettings('summarizerConfig', summarizerConfig);
+      setSettings('trimmerConfig', trimmerConfig);
       setSettings('preprocessConfig', preprocessConfig);
       setSettings('linkedDeletion', linkedDeletion);
       setSettings('glassSettings', glassSettings);

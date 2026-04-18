@@ -23,7 +23,6 @@ import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { QuickLinks, type QuickLink } from '@/ui/components/layout/QuickLinks';
 import { type Tab } from '@/ui/components/layout/TabPills';
 import { useConfigStore } from '@/state/configStore';
-import { useSummarizerConfig } from '@/ui/hooks/useSummarizerConfig';
 
 import { BatchProcessingPanel } from './BatchProcessingPanel';
 import { EntityConfigPanel } from './EntityConfigPanel';
@@ -77,29 +76,21 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
     entityExtractConfig,
     embeddingConfig,
     vectorConfig,
+    summarizerConfig,
+    trimmerConfig,
     updateConfig,
     saveConfig,
     hasChanges: configHasChanges,
   } = useConfigStore();
 
-  const {
-    summarizerSettings,
-    trimConfig,
-    updateSummarizerSettings,
-    updateTrimmerConfig,
-    saveSummarizerConfig,
-    hasChanges: summarizerHasChanges,
-  } = useSummarizerConfig();
-
   // Unified Save Handler
   const handleSave = async () => {
     if (configHasChanges) saveConfig();
-    if (summarizerHasChanges) await saveSummarizerConfig();
     // Optional: Toast notification here
     // alert('配置已保存');
   };
 
-  const hasChanges = configHasChanges || summarizerHasChanges;
+  const hasChanges = configHasChanges;
 
   return (
     <div className="animate-in fade-in flex h-full w-full flex-col overflow-x-hidden">
@@ -137,12 +128,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
       <div className="no-scrollbar flex-1 overflow-y-auto">
         {/* 记忆摘要 Tab - 使用 SummaryPanel 组件 */}
         {activeTab === 'summary' && (
-          <SummaryPanel
-            summarizerSettings={summarizerSettings}
-            trimConfig={trimConfig}
-            onSummarizerSettingsChange={updateSummarizerSettings}
-            onTrimmerConfigChange={updateTrimmerConfig}
-          />
+          <SummaryPanel summarizerSettings={summarizerConfig} trimConfig={trimmerConfig} />
         )}
 
         {/* 向量化 Tab - V0.7 使用 VectorizationPanel */}

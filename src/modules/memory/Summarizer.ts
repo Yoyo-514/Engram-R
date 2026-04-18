@@ -3,7 +3,7 @@
  */
 
 import { DEFAULT_SUMMARIZER_CONFIG } from '@/config/memory/defaults';
-import { get, incrementStatistic, set } from '@/config/settings';
+import { get, incrementStatistic } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
@@ -523,21 +523,11 @@ class SummarizerService {
   }
 
   /**
-   * 仅更新运行态配置
-   */
-  setRuntimeConfig(config: Partial<SummarizerConfig>) {
-    this.config = { ...this.config, ...config };
-    void this.log('debug', '配置已更新（仅运行态）', this.config);
-  }
-
-  /**
-   * 更新配置
+   * 更新运行态配置
    */
   updateConfig(config: Partial<SummarizerConfig>) {
-    this.setRuntimeConfig(config);
-    // 持久化保存
-    set('summarizerConfig', this.config);
-    void this.log('debug', '配置已更新并保存', this.config);
+    this.config = { ...this.config, ...config };
+    void this.log('debug', '配置已更新', this.config);
   }
 
   /**
