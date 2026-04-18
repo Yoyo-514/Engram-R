@@ -39,7 +39,7 @@ export class LlmRequest implements IStep {
       throw new Error('LlmRequest: Prompt 未准备好 (previous step missing?)');
     }
 
-    const { system, user } = context.prompt;
+    const { system, user, presetId } = context.prompt;
     const generationId = `engram_${context.id}_${Date.now()}`;
 
     if (context.signal) {
@@ -65,7 +65,7 @@ export class LlmRequest implements IStep {
         userPrompt: user,
         signal: context.signal,
         generationId,
-        // presetId: context.config.presetId // TODO: 未来支持从 Workflow Config 指定 LLM Preset，允许不同步骤使用不同模型参数
+        presetId: presetId ?? context.config.presetId,
         internal: true, // 标记为内部请求，防止触发 Preprocessor
       });
 

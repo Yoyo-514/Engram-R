@@ -209,6 +209,7 @@ export class BuildPrompt implements IStep {
       system: systemPrompt,
       user: userPrompt,
       templateId: template.id,
+      presetId: template.boundPresetId,
     };
 
     Logger.debug('BuildPrompt', `Prompt 构建完成 (Template: ${template.name})`, {

@@ -268,7 +268,7 @@ class LLMAdapter {
       temperature: preset.parameters?.temperature,
       max_tokens: preset.parameters?.maxTokens,
       top_p: preset.parameters?.topP,
-      top_k: preset.parameters?.topK ?? 60, // V1.5
+      top_k: preset.parameters?.topK,
       frequency_penalty: preset.parameters?.frequencyPenalty,
       presence_penalty: preset.parameters?.presencePenalty,
       max_context: preset.parameters?.maxContext,
