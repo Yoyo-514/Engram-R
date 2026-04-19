@@ -1,4 +1,4 @@
-import { Plus, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
@@ -158,19 +158,25 @@ function withUpdatedKV(
 
 export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange }) => {
   const [events, setEvents] = useState<SummaryReviewEvent[]>([]);
+  const [rawContent, setRawContent] = useState('');
+  const [showRawEditor, setShowRawEditor] = useState(false);
 
-  const notifyChange = (newEvents: SummaryReviewEvent[]) => {
-    const newContent = serializeEvents(newEvents);
-    onChange(newContent, { events: newEvents });
+  const notifyChange = (newEvents: SummaryReviewEvent[], nextContent?: string) => {
+    const resolvedContent = nextContent ?? serializeEvents(newEvents);
+    setRawContent(resolvedContent);
+    onChange(resolvedContent, { events: newEvents });
   };
 
   useEffect(() => {
     const parsed = parseEventsFromUnknown(data, content);
     setEvents(parsed);
 
+    const nextRawContent = content || serializeEvents(parsed);
+    setRawContent(nextRawContent);
+
     const parentHasEvents = Array.isArray(data) || Array.isArray(data?.events);
     if (!parentHasEvents && parsed.length > 0) {
-      onChange(serializeEvents(parsed), { events: parsed });
+      onChange(nextRawContent, { events: parsed });
     }
   }, [content, data, onChange]);
 
@@ -223,6 +229,13 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
     notifyChange(next);
   };
 
+  const handleRawContentChange = (value: string) => {
+    setRawContent(value);
+    const parsed = parseEventsFromUnknown(undefined, value);
+    setEvents(parsed);
+    onChange(value, { events: parsed });
+  };
+
   const renderKV = (event: SummaryReviewEvent, index: number) => {
     if (!isEventObject(event)) {
       return null;
@@ -272,7 +285,31 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
-        请确认生成的摘要事件列表。您可以直接在标签内修改结构化数据，或在下方修改描述。
+        请确认生成的摘要事件列表。您可以直接手动修改 AI 原始返回结果，或继续在下方按事件粒度修订结构化数据与描述。
+      </div>
+
+      <div className="space-y-2">
+        <button
+          type="button"
+          onClick={() => setShowRawEditor((current) => !current)}
+          className="hover:bg-muted/40 flex w-full items-center justify-between rounded-md border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+        >
+          <span className="uppercase">AI 原始返回结果</span>
+          <span className="flex items-center gap-1 text-[11px] normal-case">
+            {showRawEditor ? '收起编辑器' : '展开编辑器'}
+            {showRawEditor ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+          </span>
+        </button>
+
+        {showRawEditor && (
+          <textarea
+            value={rawContent}
+            onChange={(inputEvent) => handleRawContentChange(inputEvent.target.value)}
+            className="bg-muted/20 min-h-[160px] w-full resize-y rounded-md border border-border p-3 font-mono text-xs transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
+            placeholder="可直接编辑 AI 返回的摘要文本内容..."
+            spellCheck={false}
+          />
+        )}
       </div>
 
       <div className="space-y-4 pb-4 pr-2">

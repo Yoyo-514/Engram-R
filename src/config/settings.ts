@@ -42,6 +42,8 @@ export interface EngramSettings {
   preprocessConfig: PreprocessConfig; // 输入预处理配置
   linkedDeletion: {
     enabled: boolean; // 是否启用联动删除
+    deleteIndexedDB: boolean; // 是否删除关联聊天数据库与同步残留
+    showConfirmation: boolean; // 是否在删除前弹出确认
   };
   glassSettings: {
     enabled: boolean; // 是否启用
@@ -78,6 +80,8 @@ const defaultSettings: EngramSettings = Object.freeze({
   preprocessConfig: DEFAULT_PREPROCESS_CONFIG,
   linkedDeletion: {
     enabled: true,
+    deleteIndexedDB: true,
+    showConfirmation: true,
   },
   glassSettings: {
     enabled: true,

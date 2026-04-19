@@ -231,7 +231,7 @@ export const DatabaseManagementSection: FC = () => {
                   联动删除
                 </h4>
                 <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
-                  删除聊天时，自动清理对应的 IndexedDB 分片与同步文件残留。
+                  删除聊天或角色时，自动清理关联的 IndexedDB 分片与同步文件残留。
                 </p>
               </div>
             </div>
@@ -244,8 +244,34 @@ export const DatabaseManagementSection: FC = () => {
           {linkedDeletion.enabled && (
             <div className="space-y-3 border-t border-border pt-3">
               <p className="text-muted-foreground/80 whitespace-normal break-words text-xs leading-5">
-                该选项只处理聊天数据库与 `Engram_sync_*.json` 文件。
+                当前仅清理 Engram 数据库与 `Engram_sync_*.json` 文件，不处理世界书。
               </p>
+
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-foreground">删除关联数据库</div>
+                  <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
+                    在聊天删除或角色删除时，尝试匹配并删除对应的 Engram IndexedDB 与同步残留。
+                  </p>
+                </div>
+                <Switch
+                  checked={linkedDeletion.deleteIndexedDB}
+                  onChange={(checked) => persistLinkedDeletion({ deleteIndexedDB: checked })}
+                />
+              </div>
+
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-medium text-foreground">显示命中确认</div>
+                  <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
+                    当角色删除命中疑似关联聊天时，先记录命中结果，再执行清理流程。
+                  </p>
+                </div>
+                <Switch
+                  checked={linkedDeletion.showConfirmation}
+                  onChange={(checked) => persistLinkedDeletion({ showConfirmation: checked })}
+                />
+              </div>
             </div>
           )}
         </div>

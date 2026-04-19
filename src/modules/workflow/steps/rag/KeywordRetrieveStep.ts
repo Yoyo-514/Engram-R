@@ -25,12 +25,33 @@ export class KeywordRetrieveStep implements IStep {
     const query = context.input?.query as string;
     const scanQuery = context.input?.scanQuery as string;
     const textInput = context.input?.text as string; // 适配 Preprocessor 的输入格式
+    const chatHistory = context.input?.chatHistory as string | undefined;
     const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
 
-    const textToScan =
-      unifiedQueries && unifiedQueries.length > 0
-        ? unifiedQueries.join('\n')
-        : scanQuery || query || textInput;
+    const scanParts: string[] = [];
+
+    if (scanQuery) {
+      scanParts.push(scanQuery);
+    } else if (chatHistory) {
+      const recentSegments = chatHistory.split('\n\n').slice(-5).join('\n\n');
+      if (recentSegments) {
+        scanParts.push(recentSegments);
+      }
+    }
+
+    if (query) {
+      scanParts.push(query);
+    }
+
+    if (textInput && textInput !== query) {
+      scanParts.push(textInput);
+    }
+
+    if (unifiedQueries && unifiedQueries.length > 0) {
+      scanParts.push(...unifiedQueries);
+    }
+
+    const textToScan = Array.from(new Set(scanParts.filter(Boolean))).join('\n\n');
 
     if (!textToScan) {
       Logger.debug(LogModule.RAG_INJECT, '没有提供扫描上下文，跳过关键词检索');

@@ -65,7 +65,7 @@ export class EntityBuilder {
   }
 
   private getPreviewEnabled(): boolean {
-    const previewEnabled = get('summarizerConfig')?.previewEnabled;
+    const previewEnabled = get('runtimeSettings')?.entityExtractConfig?.previewEnabled;
     return previewEnabled ?? true;
   }
 

@@ -25,30 +25,11 @@ import {
 } from '@/core/updater/Updater';
 import { getTavernContext } from '@/core/utils';
 import { notificationService } from '@/ui/services/NotificationService';
+import { getRequestHeaders } from '@/integrations/tavern';
 
 interface UpdateNoticeProps {
   isOpen: boolean;
   onClose: () => void;
-}
-
-/**
- * 获取酒馆请求头（用于认证）
- * 从 SillyTavern 上下文或全局变量获取
- */
-function getTavernRequestHeaders(): Record<string, string> {
-  try {
-    // 从 SillyTavern context 获取
-    const context = getTavernContext();
-    if (context?.getRequestHeaders) {
-      return context.getRequestHeaders();
-    }
-  } catch (e) {
-    console.warn('[Engram] 无法获取酒馆请求头', e);
-  }
-  // 返回最小必要头
-  return {
-    'Content-Type': 'application/json',
-  };
 }
 
 /**
@@ -61,7 +42,7 @@ async function updateEngramExtension(): Promise<{
   isUpToDate?: boolean;
 }> {
   try {
-    const headers = getTavernRequestHeaders();
+    const headers = getRequestHeaders();
 
     const extensionInfo = await getExtensionRuntimeInfo();
     if (!extensionInfo?.name) {

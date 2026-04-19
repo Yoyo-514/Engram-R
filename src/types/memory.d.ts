@@ -90,6 +90,8 @@ export interface EntityExtractConfig {
   /** 保留最近 N 条对话不处理 */
   /** 保留最近 N 条对话不处理 */
   keepRecentCount: number;
+  /** 是否启用预览修订 */
+  previewEnabled?: boolean;
   /** 使用的提示词模板 ID */
   promptTemplateId?: string;
   /** 是否启用自动归档 (当总数超过上限时) */

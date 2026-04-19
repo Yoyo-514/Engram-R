@@ -19,6 +19,7 @@ import { getErrorMessage, getErrorStack } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
 import { createRetrievalWorkflow, runWorkflow } from '@/modules/workflow';
+import { KeywordRetrieveStep } from '@/modules/workflow/steps';
 import type { EntityNode, EventNode } from '@/types/graph';
 import type { AgenticRecall } from '@/types/preprocess';
 import type { BrainRecallConfig, RecallCandidate, RecallConfig } from '@/types/rag';
@@ -254,7 +255,7 @@ class Retriever {
    */
   async agenticSearch(
     recalls: AgenticRecall[],
-    options?: { mode?: string; isManualTest?: boolean }
+    options?: { mode?: string; isManualTest?: boolean; scanQuery?: string }
   ): Promise<RetrievalResult> {
     const startTime = Date.now();
     const chatId = getCurrentChatId();
@@ -322,6 +323,38 @@ class Retriever {
       });
     } else if (options?.isManualTest) {
       Logger.debug(LogModule.RAG_RETRIEVE, 'Agentic Search: 手动测试模式跳过类脑处理逻辑');
+    }
+
+    if (recallConfig.useKeywordRecall) {
+      try {
+        const keywordContext = await runWorkflow(
+          {
+            name: 'AgenticKeywordScan',
+            steps: [new KeywordRetrieveStep()],
+          },
+          {
+            trigger: options?.isManualTest ? 'manual' : 'auto',
+            input: {
+              scanQuery: options?.scanQuery || this.getRecentContext(5) || '',
+              unifiedQueries: recalls.map((recall) => recall.reason).filter(Boolean),
+            },
+          }
+        );
+
+        if (keywordContext.data?.keywordEntityIds && brainConfig.enabled && !options?.isManualTest) {
+          const entityCandidates: RecallCandidate[] = keywordContext.data.keywordEntityIds.map(
+            (entity: { id: string; score: number }) => ({
+              id: entity.id,
+              label: 'entity',
+              embeddingScore: entity.score,
+              rerankScore: entity.score,
+            })
+          );
+          brainRecallCache.process(entityCandidates);
+        }
+      } catch (error) {
+        Logger.warn(LogModule.RAG_RETRIEVE, 'Agentic 模式下的关键词扫描失败', error);
+      }
     }
 
     const totalTime = Date.now() - startTime;

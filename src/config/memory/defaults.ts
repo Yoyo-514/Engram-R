@@ -38,6 +38,7 @@ export const DEFAULT_ENTITY_CONFIG: EntityExtractConfig = {
   trigger: 'floor',
   floorInterval: 15,
   keepRecentCount: 5,
+  previewEnabled: true,
   autoArchive: true,
   archiveLimit: 50,
 };
