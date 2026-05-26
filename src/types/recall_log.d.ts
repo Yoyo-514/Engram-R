@@ -35,6 +35,14 @@ export interface BrainRecallStats {
   snapshot: MemorySlot[];
 }
 
+export interface RecalledEntityLogItem {
+  id: string;
+  name: string;
+  type?: string;
+  description?: string;
+  _recallWeight?: number;
+}
+
 /**
  * 召回日志条目
  */
@@ -45,7 +53,7 @@ export interface RecallLogEntry {
   preprocessedQuery?: string; // 预处理后的查询
   mode: 'embedding' | 'hybrid' | 'agentic'; // (Disabled in V0.8.5)
   results: RecallResultItem[]; // 召回结果
-  recalledEntities?: unknown[]; // V1.4: 被激活的实体列表
+  recalledEntities?: RecalledEntityLogItem[]; // V1.4: 被激活的实体列表
   stats: RecallStats; // 统计信息
   brainStats?: BrainRecallStats; // 类脑召回详情
 }

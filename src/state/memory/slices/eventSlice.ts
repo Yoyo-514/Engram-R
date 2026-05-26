@@ -5,7 +5,8 @@ import { generateShortUUID } from '@/core/utils';
 import { countWorldbookTokens } from '@/integrations/tavern';
 import type { EventNode } from '@/types/graph';
 
-import { type CoreState, getCurrentDb, tryGetCurrentDb } from './coreSlice';
+import type { MemoryState } from '../types';
+import { getCurrentDb, tryGetCurrentDb } from './coreSlice';
 
 export interface EventState {
   saveEvent: (
@@ -37,9 +38,7 @@ export interface EventState {
   getPureActiveEvents: () => Promise<string>;
 }
 
-type EventSliceState = CoreState & EventState;
-
-export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _get) => ({
+export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (set, _get) => ({
   saveEvent: async (eventData) => {
     const db = getCurrentDb();
     if (!db) throw new Error('[MemoryStore] No current chat');
@@ -54,7 +53,7 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
 
     await db.events.add(event);
 
-    set((state: EventSliceState) => ({
+    set((state) => ({
       recentEvents: [...state.recentEvents, event].slice(-10),
     }));
 
@@ -76,7 +75,7 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
 
     await db.events.bulkAdd(events);
 
-    set((state: EventSliceState) => ({
+    set((state) => ({
       recentEvents: [...state.recentEvents, ...events].slice(-10),
     }));
 
@@ -242,7 +241,7 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
     if (!db) return;
 
     try {
-      const { id: _id, timestamp: _ts, ...safeUpdates } = updates as any;
+      const { id: _id, timestamp: _ts, ...safeUpdates } = updates;
       await db.events.update(eventId, safeUpdates);
       console.info(`[MemoryStore] Updated event: ${eventId}`, safeUpdates);
     } catch (e) {
@@ -259,7 +258,7 @@ export const createEventSlice: StateCreator<any, [], [], EventState> = (set, _ge
     try {
       await db.transaction('rw', db.events, async () => {
         for (const { id, updates } of updatesList) {
-          const { id: _id, timestamp: _ts, ...safeUpdates } = updates as any;
+          const { id: _id, timestamp: _ts, ...safeUpdates } = updates;
           await db.events.update(id, safeUpdates);
         }
       });

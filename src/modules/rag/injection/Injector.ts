@@ -13,6 +13,7 @@
 import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get, getPromptTemplateById, incrementStatistic } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
+import { getErrorMessage, getErrorStack } from '@/core/utils/error';
 import {
   eventBus,
   getCurrentChatId,
@@ -38,7 +39,12 @@ interface GenerationAfterCommandsParams {
   quietImage?: string;
   _engram_processed?: boolean; // 我们添加的标记，防止重复处理
   _engram_internal?: boolean; // 内部请求标记
+  prompt?: string;
 }
+
+type EngramChatMessage = SillyTavern.ChatMessage & {
+  _engram_processed?: boolean;
+};
 
 class Injector {
   private isInitialized = false;
@@ -52,13 +58,14 @@ class Injector {
     if (this.isInitialized) return;
 
     Logger.info(LogModule.RAG_INJECT, '开始初始化 V0.8 预处理注入器...');
-    console.info('[Injector] Starting initialization...');
 
     // V0.8: 使用 GENERATION_AFTER_COMMANDS 事件
     // 这个事件在命令处理后、生成开始前触发，酒馆会 await 处理器
-    eventBus.on(events.GENERATION_AFTER_COMMANDS, async (type: any, params: any, dryRun: any) => {
-      console.info('[Injector] 🎯 GENERATION_AFTER_COMMANDS triggered', { type, dryRun });
-      Logger.debug(LogModule.RAG_INJECT, '捕获 GENERATION_AFTER_COMMANDS', { type });
+    eventBus.on(events.GENERATION_AFTER_COMMANDS, async (...args: unknown[]) => {
+      const type = typeof args[0] === 'string' ? args[0] : '';
+      const params = (args[1] || {}) as GenerationAfterCommandsParams;
+      const dryRun = Boolean(args[2]);
+      Logger.debug(LogModule.RAG_INJECT, '捕获 GENERATION_AFTER_COMMANDS', { type, dryRun });
 
       // 重要！必须 await 处理，才能阻塞酒馆的生成流程
       await this.handleGenerationAfterCommands(type, params, dryRun);
@@ -87,7 +94,6 @@ class Injector {
 
     this.isInitialized = true;
     Logger.success(LogModule.RAG_INJECT, 'V0.8 Injector 初始化完成');
-    console.info('[Injector] ✅ V0.8 Initialized - Listening for GENERATION_AFTER_COMMANDS');
   }
 
   /**
@@ -174,7 +180,7 @@ class Injector {
       // 严禁往前查找，否则会导致注入到上一轮对话中。
       const chat = context.chat;
       const lastMessageIndex = chat.length - 1;
-      const lastMessage = chat[lastMessageIndex];
+      const lastMessage = chat[lastMessageIndex] as EngramChatMessage | undefined;
 
       // 严格校验：最新消息是否为用户消息
       let userInput = '';
@@ -182,7 +188,6 @@ class Injector {
 
       if (lastMessage && lastMessage.is_user) {
         // V0.9.12 Fix: Check duplication on retry
-        // @ts-ignore
         if (lastMessage._engram_processed) {
           Logger.debug(LogModule.RAG_INJECT, '消息已标记为已处理 (Prevent Re-entry)', {
             index: lastMessageIndex,
@@ -264,7 +269,6 @@ class Injector {
       this.cacheInvalid = false; // 重置缓存失效标记
       params._engram_processed = true; // 标记 Params 已处理
       if (lastMessage) {
-        // @ts-ignore
         lastMessage._engram_processed = true; // 标记消息对象已处理 (参考脚本.js)
       }
       // 开始处理（不再重复记录，上面已经有 info 了）
@@ -386,7 +390,7 @@ class Injector {
 
         // 3. 更新用户消息 (如果内容发生了变化)
         if (finalOutput !== userInput) {
-          if (targetSource === 'chat') {
+          if (targetSource === 'chat' && lastMessage) {
             // 策略1：直接修改消息对象
             lastMessage.mes = finalOutput;
 
@@ -423,7 +427,6 @@ class Injector {
               }
               // 尝试修改本次生成的 prompt (如果 params 可写)
               if (params) {
-                // @ts-ignore
                 params.prompt = finalOutput;
               }
             } catch (e) {
@@ -436,15 +439,14 @@ class Injector {
           this.processingChats.delete(activeChatId);
         }
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (activeChatId) {
         this.processingChats.delete(activeChatId);
       }
       Logger.error(LogModule.RAG_INJECT, 'handleGenerationAfterCommands 失败', {
-        message: e?.message || e,
-        stack: e?.stack,
+        message: getErrorMessage(e),
+        stack: getErrorStack(e),
       });
-      console.error('[Injector] Error:', e);
     }
   }
 }

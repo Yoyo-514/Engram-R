@@ -56,6 +56,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
   // 过滤和排序处理
   const worldbooks = Object.keys(worldbookStructure)
     .filter((book) => !book.startsWith('[Engram]'))
+    .slice()
     .sort();
   const filteredWorldbooks = worldbooks.filter(
     (book) =>

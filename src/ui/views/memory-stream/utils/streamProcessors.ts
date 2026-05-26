@@ -38,7 +38,7 @@ export function filterEvents(
     result = result.filter((e) => activeIds.has(e.id));
   }
 
-  return result.sort((a, b) =>
+  return [...result].sort((a, b) =>
     sortOrder === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
   );
 }
@@ -77,12 +77,14 @@ export function groupEvents(filteredEvents: EventNode[], sortOrder: SortOrder): 
   return sortedKeys.map((key, idx) => {
     const group = groups.get(key)!;
     // 组内严格按时间戳排序
-    group.events.sort((a, b) => (isAsc ? a.timestamp - b.timestamp : b.timestamp - a.timestamp));
+    const sortedEvents = [...group.events].sort((a, b) =>
+      isAsc ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
+    );
 
     return {
       key: idx,
       title: group.title,
-      events: group.events,
+      events: sortedEvents,
       startIndex: 0,
     };
   });

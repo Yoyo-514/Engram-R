@@ -1,5 +1,6 @@
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
+import { getErrorMessage } from '@/core/utils/error';
 import { chatManager } from '@/data/ChatManager';
 import { getCurrentMessageCount } from '@/integrations/tavern';
 import { summarizerService } from '@/modules/memory';
@@ -31,10 +32,9 @@ export class HistoryTask implements IBatchTaskHandler {
   async estimate(): Promise<BatchTask[]> {
     const targetTypes = new Set(this.types || ['summary', 'entity', 'trim', 'embed']);
 
-    // 我们需要重新拉取各个模块最新的状态以得到 currentFloor
-    const state = await chatManager.getState();
-    // @ts-ignore
-    const currentFloor = state.current_floor || getCurrentMessageCount() || 0;
+    // 以酒馆当前消息数作为可处理楼层上限，数据库状态只记录各模块处理进度。
+    await chatManager.getState();
+    const currentFloor = getCurrentMessageCount();
 
     const summarizerConfig = summarizerService.getConfig();
     const entityConfig = entityBuilder.getConfig();
@@ -153,8 +153,8 @@ export class HistoryTask implements IBatchTaskHandler {
           default:
             Logger.warn(LogModule.BATCH, `未知的任务类型: ${task.type}`);
         }
-      } catch (e: any) {
-        Logger.error(LogModule.BATCH, `任务 ${task.type} 执行失败`, { error: e.message });
+      } catch (e: unknown) {
+        Logger.error(LogModule.BATCH, `任务 ${task.type} 执行失败`, { error: getErrorMessage(e) });
         throw e; // 重复抛出给 Engine 捕获从而标记 Error
       }
     }
@@ -196,11 +196,11 @@ export class HistoryTask implements IBatchTaskHandler {
 
         // 无论成功与否，我们都推进 processedFloors，因为逻辑已外置
         processedFloors += currentSliceEnd - currentSliceStart + 1;
-      } catch (err: any) {
+      } catch (err: unknown) {
         Logger.error(
           LogModule.BATCH,
           `Summary Failed at range ${currentSliceStart}-${currentSliceEnd}`,
-          { error: err.message }
+          { error: getErrorMessage(err) }
         );
         processedFloors += summaryInterval; // 跳过此分片
       }
@@ -244,11 +244,11 @@ export class HistoryTask implements IBatchTaskHandler {
             { error: res.error }
           );
         }
-      } catch (err: any) {
+      } catch (err: unknown) {
         Logger.error(
           LogModule.BATCH,
           `Entity extract exception for range ${currentSliceStart}-${currentSliceEnd}`,
-          { error: err.message }
+          { error: getErrorMessage(err) }
         );
       }
 
@@ -274,8 +274,8 @@ export class HistoryTask implements IBatchTaskHandler {
         if (res === null) {
           Logger.warn(LogModule.BATCH, 'Trim skipped or returned null');
         }
-      } catch (err: any) {
-        Logger.error(LogModule.BATCH, 'Trim failed', { error: err.message });
+      } catch (err: unknown) {
+        Logger.error(LogModule.BATCH, 'Trim failed', { error: getErrorMessage(err) });
       }
       yield; // 释放控制权
       updateProgress(taskIndex, i + 1);

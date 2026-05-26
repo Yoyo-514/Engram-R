@@ -13,6 +13,7 @@ import type { CSSProperties } from 'react';
 
 import type { EntityType } from '@/config/memory/defaults';
 import { stringifyYaml } from '@/core/utils';
+import { getErrorMessage } from '@/core/utils/error';
 /**
  * EntityEditor - 实体编辑面板
  *
@@ -163,8 +164,8 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
           try {
             JSON.parse(val);
             setJsonError(null);
-          } catch (e: any) {
-            setJsonError(e.message);
+          } catch (e: unknown) {
+            setJsonError(getErrorMessage(e));
           }
         }, 300),
       []

@@ -40,7 +40,7 @@ export class RecordRecallLogStep implements IStep {
         summary: c.summary,
         category: c.node?.structured_kv?.event || 'unknown',
         embeddingScore: c.embeddingScore || 0,
-        keywordScore: (c as any).keywordScore,
+        keywordScore: c.keywordScore,
         rerankScore: c.rerankScore,
         hybridScore: c.hybridScore,
         isTopK: true,

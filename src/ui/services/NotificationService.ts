@@ -7,13 +7,13 @@ import { Logger } from '@/core/logger';
  * Toastr 类型定义 (部分)
  */
 interface Toastr {
-  success(message: string, title?: string, options?: any): JQuery | null;
-  info(message: string, title?: string, options?: any): JQuery | null;
-  warning(message: string, title?: string, options?: any): JQuery | null;
-  error(message: string, title?: string, options?: any): JQuery | null;
+  success(message: string, title?: string, options?: NotificationOptions): JQuery | null;
+  info(message: string, title?: string, options?: NotificationOptions): JQuery | null;
+  warning(message: string, title?: string, options?: NotificationOptions): JQuery | null;
+  error(message: string, title?: string, options?: NotificationOptions): JQuery | null;
   clear($toastElement?: JQuery): void;
   remove($toastElement?: JQuery): void;
-  options: any;
+  options: NotificationOptions;
 }
 
 /**
@@ -26,6 +26,8 @@ interface NotificationOptions {
   progressBar?: boolean;
   onclick?: () => void;
   parseHtml?: boolean; // 是否允许 HTML
+  tapToDismiss?: boolean;
+  escapeHtml?: boolean;
   /** V0.9.10: 点击跳转动作 */
   action?: {
     /** 跳转目标路径，如 'devlog' 或 'devlog:model' */

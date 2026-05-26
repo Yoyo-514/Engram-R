@@ -5,6 +5,8 @@ import { deleteDatabase, getDbForChat, tryGetDbForChat, type ChatDatabase } from
 import { getCurrentChatId } from '@/integrations/tavern';
 import type { EventNode } from '@/types/graph';
 
+import type { MemoryState } from '../types';
+
 export interface CoreState {
   currentChatId: string | null;
   lastSummarizedFloor: number;
@@ -42,7 +44,7 @@ export function tryGetCurrentDb(): ChatDatabase | null {
   return tryGetDbForChat(chatId);
 }
 
-export const createCoreSlice: StateCreator<any, [], [], CoreState> = (set, get) => ({
+export const createCoreSlice: StateCreator<MemoryState, [], [], CoreState> = (set, get) => ({
   currentChatId: null,
   lastSummarizedFloor: 0,
   isProcessing: false,

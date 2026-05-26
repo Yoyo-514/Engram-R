@@ -130,7 +130,10 @@ export function initQuickPanelButton(): void {
 // ==================== 以下为从 bridge.ts 拆分过来的 UI 管理部分 ====================
 
 // React 渲染器类型
-export type ReactRenderer = (container: HTMLElement, onClose: () => void) => any;
+export type ReactRenderer = (
+  container: HTMLElement,
+  onClose: () => void
+) => { unmount?: () => void } | void;
 let reactRenderer: ReactRenderer | null = null;
 let globalRenderer: ReactRenderer | null = null;
 let globalRoot: { unmount?: () => void } | null = null;
@@ -173,7 +176,7 @@ export function mountGlobalOverlay(): void {
 
   // 挂载
   if (!globalRoot) {
-    globalRoot = globalRenderer(overlay, () => {}); // global overlay usually doesn't need onClose
+    globalRoot = globalRenderer(overlay, () => {}) ?? null; // global overlay usually doesn't need onClose
   }
 }
 
@@ -295,7 +298,7 @@ function createMainPanel(): HTMLElement {
   panel.appendChild(content);
 
   if (reactRenderer) {
-    reactRoot = reactRenderer(panel, toggleMainPanel);
+    reactRoot = reactRenderer(panel, toggleMainPanel) ?? null;
   } else {
     panel.innerHTML = `
             <div class="flex items-center justify-between p-4 border-b border-slate-400/20">

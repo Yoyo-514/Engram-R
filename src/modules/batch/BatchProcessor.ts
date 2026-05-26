@@ -7,6 +7,8 @@
  * - 具体的导入解析逻辑下发到 tasks/ 实现
  */
 
+import { Logger, LogModule } from '@/core/logger';
+import { getErrorMessage } from '@/core/utils/error';
 import type {
   BatchProgressCallback,
   BatchQueue,
@@ -55,8 +57,8 @@ class BatchProcessor {
         embedTasks: previewTasks.find((t) => t.type === 'embed')?.progress.total || 0,
         archiveTasks: previewTasks.find((t) => t.type === 'archive')?.progress.total || 0,
       };
-    } catch (e: any) {
-      console.error('[BatchProcessor] 分析历史失败:', e);
+    } catch (e: unknown) {
+      Logger.error(LogModule.BATCH, '分析历史失败', { error: getErrorMessage(e) });
       return {
         startFloor,
         endFloor: endFloor ?? startFloor,

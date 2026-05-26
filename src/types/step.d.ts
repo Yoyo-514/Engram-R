@@ -32,7 +32,7 @@ export interface RetryConfig {
    * 判定某个 Error 是否值得重试
    * 如果未提供，则所有 Error 都进行重试
    */
-  retryIf?: (error: any) => boolean;
+  retryIf?: (error: unknown) => boolean;
 }
 
 export interface IStep {

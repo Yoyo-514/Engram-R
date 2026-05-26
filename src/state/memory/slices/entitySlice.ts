@@ -3,6 +3,7 @@ import { type StateCreator } from 'zustand';
 import { generateShortUUID } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
 
+import type { MemoryState } from '../types';
 import { getCurrentDb, tryGetCurrentDb } from './coreSlice';
 
 function toYamlScalar(value: unknown, fallback: string): string {
@@ -40,7 +41,7 @@ export interface EntityState {
   getEntityStates: (ids?: string[]) => Promise<string>;
 }
 
-export const createEntitySlice: StateCreator<any, [], [], EntityState> = (_set, _get) => ({
+export const createEntitySlice: StateCreator<MemoryState, [], [], EntityState> = (_set, _get) => ({
   getAllEntities: async () => {
     const db = getCurrentDb();
     if (!db) return [];
@@ -94,7 +95,7 @@ export const createEntitySlice: StateCreator<any, [], [], EntityState> = (_set, 
     if (!db) return;
 
     try {
-      const { id: _id, ...safeUpdates } = updates as any;
+      const { id: _id, ...safeUpdates } = updates;
 
       const existing = await db.entities.get(entityId);
       if (!existing) {
@@ -125,7 +126,7 @@ export const createEntitySlice: StateCreator<any, [], [], EntityState> = (_set, 
       await db.transaction('rw', db.entities, async () => {
         const now = Date.now();
         for (const { id, updates } of updatesList) {
-          const { id: _id, ...safeUpdates } = updates as any;
+          const { id: _id, ...safeUpdates } = updates;
           const existing = await db.entities.get(id);
           if (existing) {
             await db.entities.put({

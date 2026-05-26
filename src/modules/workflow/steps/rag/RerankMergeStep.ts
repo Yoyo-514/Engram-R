@@ -1,6 +1,7 @@
 import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
+import { getErrorMessage } from '@/core/utils/error';
 import { mergeResults, scoreAndSort, type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import { rerankService } from '@/modules/rag/retrieval/Reranker';
 import type { JobContext } from '@/types/job_context';
@@ -19,7 +20,7 @@ export class RerankMergeStep implements IStep {
       maxAttempts: customConfig?.maxAttempts ?? 3,
       delay: customConfig?.retryDelay ?? 2000,
       backoff: 'exponential',
-      retryIf: (error: any) => {
+      retryIf: (error: unknown) => {
         const msg =
           error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
         return (
@@ -98,8 +99,10 @@ export class RerankMergeStep implements IStep {
         finalCandidates = mergeResults(embeddingMap, rerankResults, limitedCandidates);
 
         context.data.candidates = finalCandidates;
-      } catch (e: any) {
-        Logger.warn(LogModule.RAG_RETRIEVE, 'Rerank 失败，准备重试或回退', { error: e.message });
+      } catch (e: unknown) {
+        Logger.warn(LogModule.RAG_RETRIEVE, 'Rerank 失败，准备重试或回退', {
+          error: getErrorMessage(e),
+        });
         throw e; // 抛出异常交给 WorkflowEngine 重试，若穷尽则忽略失败继续使用初始 fallback
       }
     }

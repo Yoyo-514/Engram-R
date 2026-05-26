@@ -14,7 +14,7 @@ export class ParseJson implements IStep {
       throw new Error('ParseJson: 无 LLM 响应内容');
     }
 
-    const parsed = parseJson<any>(contentToparse);
+    const parsed = parseJson<Record<string, unknown>>(contentToparse);
 
     if (!parsed) {
       throw new Error('ParseJson: JSON 解析失败');

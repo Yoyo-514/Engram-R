@@ -240,7 +240,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
     }
 
     // 按分数排序
-    results.sort((a, b) => {
+    results = [...results].sort((a, b) => {
       const getScore = (item: RecallResultItem) => {
         switch (sortMode) {
           case 'embedding':
@@ -382,7 +382,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
               </span>
             </div>
             <div className="flex flex-wrap gap-2">
-              {entry.recalledEntities.map((ent: any) => (
+              {entry.recalledEntities.map((ent) => (
                 <div key={ent.id} className="group relative min-w-0">
                   <div className="bg-primary/10 border-primary/20 hover:bg-primary/20 flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-primary transition-colors">
                     <Database size={10} className="shrink-0" />

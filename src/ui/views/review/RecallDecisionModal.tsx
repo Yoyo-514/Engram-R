@@ -67,6 +67,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
           typeLabel: event?.structured_kv.event || 'unknown',
         };
       })
+      .slice()
       .sort((a, b) => b.score - a.score); // 降序
 
     // 未激活事件 (支持文本过滤)

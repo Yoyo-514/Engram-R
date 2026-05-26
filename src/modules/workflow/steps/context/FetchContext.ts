@@ -1,9 +1,10 @@
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { getCurrentTavernCharacter } from '@/core/utils';
+import { getCurrentTavernCharacter, yieldToMainThread } from '@/core/utils';
 import { getAllTemplates } from '@/integrations/llm';
 import {
   getChatHistory,
+  getChatHistorySegments,
   getContextualWorldInfo,
   getCurrentCharacter,
   getEntityStates,
@@ -18,6 +19,22 @@ import type { IStep } from '@/types/step';
 import type { WorldbookConfig } from '@/types/worldbook';
 
 const RECENT_WORLDBOOK_MESSAGE_LIMIT = 4;
+const HISTORY_BATCH_SIZE = 4;
+
+async function getChatHistoryResponsive(range?: [number, number]): Promise<string> {
+  if (!range) {
+    return getChatHistory();
+  }
+
+  const segments: string[] = [];
+  for (let start = range[0]; start <= range[1]; start += HISTORY_BATCH_SIZE) {
+    const end = Math.min(range[1], start + HISTORY_BATCH_SIZE - 1);
+    segments.push(...getChatHistorySegments([start, end]));
+    await yieldToMainThread();
+  }
+
+  return segments.join('\n\n');
+}
 
 interface TemplateWithWorldbooks {
   id: string;
@@ -45,6 +62,7 @@ function getRecentWorldbookMessages(
       .slice(sliceStart, range[1])
       .map((message) => message.mes || '')
       .filter((message): message is string => typeof message === 'string' && message.length > 0)
+      .slice()
       .reverse();
   }
 
@@ -52,6 +70,7 @@ function getRecentWorldbookMessages(
     .slice(-RECENT_WORLDBOOK_MESSAGE_LIMIT)
     .map((message) => message.mes || '')
     .filter((message): message is string => typeof message === 'string' && message.length > 0)
+    .slice()
     .reverse();
 }
 
@@ -109,7 +128,7 @@ export class FetchContext implements IStep {
         const missingStart = preparedSummaryContext.preparedThroughFloor + 1;
         const preparedHistory = preparedSummaryContext.chatHistory || '';
         const missingHistory =
-          missingStart <= range[1] ? getChatHistory([missingStart, range[1]]) : '';
+          missingStart <= range[1] ? await getChatHistoryResponsive([missingStart, range[1]]) : '';
 
         history =
           preparedHistory && missingHistory
@@ -125,12 +144,12 @@ export class FetchContext implements IStep {
         });
       }
     } else {
-      history = getChatHistory(range);
+      history = await getChatHistoryResponsive(range);
     }
 
-    const shouldCleanHistory = !context.config.skipInputRegexForHistory;
+    const shouldCleanHistory = isImport && !context.config.skipInputRegexForHistory;
     const cleanedHistory = shouldCleanHistory
-      ? regexProcessor.process(history || '', 'input')
+      ? await regexProcessor.processAsync(history || '', 'input')
       : history || '';
 
     context.input.chatHistory = cleanedHistory;

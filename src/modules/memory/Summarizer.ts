@@ -77,10 +77,9 @@ class SummarizerService {
       return undefined;
     }
     if (!metadata.extensions) metadata.extensions = {};
-    // @ts-expect-error - 动态访问
-    if (!metadata.extensions[METADATA_KEY]) metadata.extensions[METADATA_KEY] = {};
-    // @ts-expect-error - 动态访问
-    return metadata.extensions[METADATA_KEY][key];
+    const extensions = metadata.extensions as Record<string, Record<string, unknown>>;
+    if (!extensions[METADATA_KEY]) extensions[METADATA_KEY] = {};
+    return extensions[METADATA_KEY][key];
   }
 
   /**

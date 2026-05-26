@@ -1,6 +1,7 @@
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
+import { getErrorMessage } from '@/core/utils/error';
 import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
@@ -125,9 +126,9 @@ export class ImportTextTask implements IBatchTaskHandler {
                     range: [i, i],
                   },
                 });
-              } catch (entError: any) {
+              } catch (entError: unknown) {
                 Logger.error(LogModule.BATCH, `分块 ${i} 实体提取异常`, {
-                  error: entError.message,
+                  error: getErrorMessage(entError),
                 });
               }
 
@@ -191,8 +192,8 @@ export class ImportTextTask implements IBatchTaskHandler {
           }
           success++;
         }
-      } catch (e: any) {
-        Logger.error(LogModule.BATCH, `处理分块 ${i} 失败`, { error: e.message });
+      } catch (e: unknown) {
+        Logger.error(LogModule.BATCH, `处理分块 ${i} 失败`, { error: getErrorMessage(e) });
         // We keep moving even if a chunk falls through, but we update UI
       }
 

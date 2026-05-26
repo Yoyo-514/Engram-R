@@ -8,6 +8,18 @@ import { type JobContext } from '@/types/job_context';
 import { type IStep } from '@/types/step';
 import { notificationService } from '@/ui/services/NotificationService';
 
+interface ParsedTrimEvent {
+  summary?: string;
+  meta?: {
+    time_anchor?: string;
+    location?: string | string[];
+  };
+}
+
+function isTruthyString(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0;
+}
+
 export class ApplyTrim implements IStep {
   name = 'ApplyTrim';
 
@@ -29,17 +41,18 @@ export class ApplyTrim implements IStep {
 
     // 我们假设精简结果只包含 1 个合并后的事件 (或者 LLM 可能返回多个？EventTrimmer 取的是 0)
     // 原逻辑: const firstParsed = parsed.events[0];
-    const firstParsed = parsed.events[0];
+    const parsedEvents = parsed.events as ParsedTrimEvent[];
+    const firstParsed = parsedEvents[0];
 
     // 1. 保存新的合并事件
     const newEvent = await store.saveEvent({
-      summary: parsed.events.map((e: any) => e.summary).join('\n\n'), // 如果有多个，合并 summary? 或者只取第一个
+      summary: parsedEvents.map((event) => event.summary || '').join('\n\n'), // 如果有多个，合并 summary? 或者只取第一个
       structured_kv: {
-        time_anchor: firstParsed.meta.time_anchor || '',
+        time_anchor: firstParsed.meta?.time_anchor || '',
         role: this.mergeArrays(eventsToMerge.map((e) => e.structured_kv.role)),
-        location: Array.isArray(firstParsed.meta.location)
-          ? (firstParsed.meta.location as string[])
-          : [firstParsed.meta.location].filter((x: any) => Boolean(x)),
+        location: Array.isArray(firstParsed.meta?.location)
+          ? firstParsed.meta.location
+          : [firstParsed.meta?.location].filter(isTruthyString),
         event: '精简合并',
         logic: this.mergeArrays(eventsToMerge.map((e) => e.structured_kv.logic)),
         causality: 'Chain',
@@ -59,7 +72,6 @@ export class ApplyTrim implements IStep {
     // 2. 联动嵌入 (Trim Linkage)
     const sourceEventIds = eventsToMerge.map((e) => e.id);
     const settings = get('runtimeSettings');
-    // @ts-ignore
     const embeddingConfig = settings?.embeddingConfig;
 
     if (embeddingConfig?.enabled && embeddingConfig.trigger === 'with_trim') {

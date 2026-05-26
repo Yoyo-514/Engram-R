@@ -92,7 +92,7 @@ export class UserReview implements IStep {
         reviewData = context.parsedData;
       } else if (context.extractedTags?.query || context.extractedTags?.recall_decision) {
         // V1.3/V1.4: 预处理模式 - 传递 query 与 agentic 决策供编辑
-        reviewData = {} as Record<string, any>;
+        reviewData = {} as ReviewPayload;
         if (context.extractedTags.query) {
           reviewData.query = context.extractedTags.query;
         }

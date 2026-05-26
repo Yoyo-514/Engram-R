@@ -5,9 +5,10 @@ import { getTavernHelper } from '@/core/utils';
 import { getWorldbookScopes, getWorldbookStructure } from '@/integrations/tavern';
 import type { EngramRuntimeSettings } from '@/types/config';
 import type { WorldbookConfig, WorldbookProfile } from '@/types/worldbook';
+import type { WorldbookStructure } from '@/types/worldbook_structure';
 
 export interface UseWorldInfoReturn {
-  worldbookStructure: Record<string, any[]>;
+  worldbookStructure: WorldbookStructure;
   disabledEntries: Record<string, number[]>;
   disabledWorldbooks: string[];
   currentCharWorldbook: string | null;
@@ -29,7 +30,7 @@ export interface UseWorldInfoReturn {
 }
 
 export function useWorldInfo(): UseWorldInfoReturn {
-  const [worldbookStructure, setWorldbookStructure] = useState<Record<string, unknown[]>>({});
+  const [worldbookStructure, setWorldbookStructure] = useState<WorldbookStructure>({});
   const [disabledEntries, setDisabledEntries] = useState<Record<string, number[]>>(
     get('runtimeSettings')?.worldbookConfig?.disabledEntries || {}
   );

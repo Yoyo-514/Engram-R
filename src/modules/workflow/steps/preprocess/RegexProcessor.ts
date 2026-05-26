@@ -9,6 +9,7 @@
 import { DEFAULT_REGEX_RULES } from '@/config/regex/defaults';
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { yieldToMainThread } from '@/core/utils';
 import type { RegexRule, RegexScope } from '@/types/regex';
 
 const MODULE = 'RegexProcessor';
@@ -85,6 +86,41 @@ export class RegexProcessor {
         } catch (e) {
           Logger.warn(MODULE, `Rule "${rule.name}" execution failed:`, e);
         }
+      }
+    }
+
+    return result;
+  }
+
+  /**
+   * 异步处理大文本：每条规则后按需让出主线程，避免长聊天记录清洗卡住 UI。
+   */
+  async processAsync(text: string, scope?: RegexScope): Promise<string> {
+    if (!this.isEngramRegexEnabled()) {
+      return text;
+    }
+
+    let result = text;
+    const shouldYield = text.length > 50_000;
+
+    for (const rule of this.rules) {
+      if (!rule.enabled) continue;
+
+      if (scope && rule.scope !== scope && rule.scope !== 'both') {
+        continue;
+      }
+
+      const regex = this.getCachedRuleRegex(rule);
+      if (regex) {
+        try {
+          result = result.replace(regex, rule.replacement);
+        } catch (e) {
+          Logger.warn(MODULE, `Rule "${rule.name}" execution failed:`, e);
+        }
+      }
+
+      if (shouldYield) {
+        await yieldToMainThread();
       }
     }
 

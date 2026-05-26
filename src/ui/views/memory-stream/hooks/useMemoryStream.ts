@@ -98,7 +98,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     setIsLoading(true);
     try {
       const allEvents = await store.getAllEvents();
-      setEvents(allEvents.sort((a, b) => a.timestamp - b.timestamp));
+      setEvents([...allEvents].sort((a, b) => a.timestamp - b.timestamp));
 
       const snapshot = brainRecallCache.getShortTermSnapshot();
       setActiveIds(new Set(snapshot.map((s) => s.id)));
