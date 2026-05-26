@@ -19,8 +19,8 @@ type CharacterDeletedPayload = {
 };
 
 let isCharacterDeleteServiceInitialized = false;
-let unsubscribeChatDeleted: Unsubscribe | null = null;
-let unsubscribeCharacterDeleted: Unsubscribe | null = null;
+let _unsubscribeChatDeleted: Unsubscribe | null = null;
+let _unsubscribeCharacterDeleted: Unsubscribe | null = null;
 
 /**
  * 聊天删除回调
@@ -161,7 +161,7 @@ export function initCharacterDeleteService(): void {
       };
 
       context.eventSource.on(context.eventTypes.CHAT_DELETED, chatDeletedHandler);
-      unsubscribeChatDeleted = () => {
+      _unsubscribeChatDeleted = () => {
         context.eventSource.removeListener(context.eventTypes.CHAT_DELETED, chatDeletedHandler);
       };
 
@@ -179,7 +179,7 @@ export function initCharacterDeleteService(): void {
       };
 
       context.eventSource.on(context.eventTypes.CHARACTER_DELETED, characterDeletedHandler);
-      unsubscribeCharacterDeleted = () => {
+      _unsubscribeCharacterDeleted = () => {
         context.eventSource.removeListener(
           context.eventTypes.CHARACTER_DELETED,
           characterDeletedHandler
@@ -198,19 +198,7 @@ export function initCharacterDeleteService(): void {
 /**
  * 检查服务是否已初始化
  */
-export function isCharacterDeleteServiceReady(): boolean {
-  return isCharacterDeleteServiceInitialized;
-}
-
 /**
  * 重置状态并解绑事件
  * 用于测试、热重载或重新初始化场景
  */
-export function resetCharacterDeleteService(): void {
-  unsubscribeChatDeleted?.();
-  unsubscribeChatDeleted = null;
-  unsubscribeCharacterDeleted?.();
-  unsubscribeCharacterDeleted = null;
-
-  isCharacterDeleteServiceInitialized = false;
-}

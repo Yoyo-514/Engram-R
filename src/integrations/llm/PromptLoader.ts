@@ -1,6 +1,6 @@
 import { Logger, LogModule } from '@/core/logger';
 import { isPromptCategory, parseYaml } from '@/core/utils';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import type { PromptTemplate } from '@/types/prompt';
 
 interface ImportMetaWithGlob extends ImportMeta {
   glob<T>(pattern: string, options: { eager: boolean; query: string }): Record<string, T>;

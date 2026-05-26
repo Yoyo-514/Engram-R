@@ -15,8 +15,7 @@ export function getTavernHelper(): TavernHelperApi | null {
 
 export function getEjsTemplate(): EjsTemplateApi | null {
   try {
-    // @ts-expect-error - EjsTemplate 全局对象
-    return window.EjsTemplate;
+    return window.EjsTemplate ?? null;
   } catch {
     Logger.error('EjsTemplateApi', '加载失败');
     return null;
@@ -25,8 +24,7 @@ export function getEjsTemplate(): EjsTemplateApi | null {
 
 export function getMvu(): MvuApi | null {
   try {
-    // @ts-expect-error - EjsTemplate 全局对象
-    return window.Mvu;
+    return window.Mvu ?? null;
   } catch {
     Logger.error('MvuApi', '加载失败');
     return null;

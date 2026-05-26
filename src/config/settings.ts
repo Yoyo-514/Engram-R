@@ -11,7 +11,7 @@ import { getRawSTContext } from '@/integrations/tavern/core';
 import type { EngramRuntimeSettings } from '@/types/config';
 import type { SummarizerConfig, TrimmerConfig } from '@/types/memory';
 import type { PreprocessConfig } from '@/types/preprocess';
-import type { PromptCategory, PromptTemplate } from '@/types/prompt';
+import type { PromptTemplate } from '@/types/prompt';
 import type { RegexRule } from '@/types/regex';
 
 type EngramContextSettings = Record<string, EngramSettings | undefined>;
@@ -346,25 +346,6 @@ export function set<K extends keyof EngramSettings>(key: K, value: EngramSetting
 
   // 保存到服务器
   saveContext(context);
-}
-
-/**
- * 保存设置到服务器
- */
-export function save(): void {
-  saveContext(getContext());
-}
-
-/**
- * 获取指定分类下已启用的提示词模板
- * @param category 模板分类
- * @returns 启用的模板，如果没有则返回 null
- */
-export function getEnabledPromptTemplate(category: PromptCategory): PromptTemplate | null {
-  // 优先从 runtimeSettings.promptTemplates 读取
-  const runtimeSettings = get('runtimeSettings');
-  const templates = runtimeSettings?.promptTemplates || [];
-  return templates.find((t: PromptTemplate) => t.category === category && t.enabled) || null;
 }
 
 /**

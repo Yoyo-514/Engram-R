@@ -188,7 +188,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
               value={scanQuery}
               onChange={(e) => setScanQuery(e.target.value)}
               placeholder="输入文本测试匹配 (实际检索会自动回溯最近 5 条消息)..."
-              className="bg-secondary/20 border-border/40 focus:border-primary/50 min-h-[80px] resize-y rounded-md border p-3 text-sm transition-colors focus:outline-none"
+              className="bg-secondary/20 border-border/40 focus:border-primary/50 min-h-[80px] resize-y whitespace-pre-wrap break-words rounded-md border p-3 text-sm transition-colors focus:outline-none"
             />
 
             {/* 扫描匹配结果直接在这里渲染，不使用弹窗 */}
@@ -217,7 +217,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
                     {matchedEvents.map((evt) => (
                       <div
                         key={evt.id}
-                        className="text-foreground/70 bg-secondary/30 border-primary/40 truncate rounded border-l-2 p-1.5 text-[10px]"
+                        className="text-foreground/70 bg-secondary/30 border-primary/40 line-clamp-2 whitespace-normal break-words rounded border-l-2 p-1.5 text-[10px]"
                       >
                         {evt.summary}
                       </div>
@@ -273,7 +273,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
                 ? '模拟用户输入触发 Agentic 预处理...'
                 : '模拟 User Input 触发向量召回预览...'
             }
-            className="bg-secondary/30 border-border/50 focus:border-primary/50 min-h-[80px] flex-1 resize-y rounded-md border p-3 text-sm transition-colors focus:outline-none"
+            className="bg-secondary/30 border-border/50 focus:border-primary/50 min-h-[80px] flex-1 resize-y whitespace-pre-wrap break-words rounded-md border p-3 text-sm transition-colors focus:outline-none"
           />
           <div className="flex flex-col gap-2">
             <button

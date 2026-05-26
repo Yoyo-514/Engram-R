@@ -1,5 +1,5 @@
 import { Logger, LogModule } from '@/core/logger';
-import { generateShortUUID, sleep } from '@/core/utils';
+import { generateShortUUID, sleep, yieldToMainThread } from '@/core/utils';
 import type { JobContext } from '@/types/job_context';
 import type { IStep, StepResult } from '@/types/step';
 
@@ -231,6 +231,8 @@ export async function runWorkflow(
         Logger.warn(LogModule.RAG_INJECT, '工作流被中途取消', { jobId: context.id });
         break;
       }
+
+      await yieldToMainThread();
 
       const step = workflow.steps[i];
       const nextIndex = await executeStep(step, context, stepIndexMap);

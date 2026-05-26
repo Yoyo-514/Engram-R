@@ -27,7 +27,7 @@ import { chatManager } from '@/data/ChatManager';
 import { batchProcessor } from '@/modules/batch';
 import { summarizerService } from '@/modules/memory';
 import { useMemoryStore } from '@/state/memoryStore';
-import type { HistoryAnalysis, ImportMode } from '@/types/batch';
+import type { BatchTaskType, HistoryAnalysis, ImportMode } from '@/types/batch';
 import { NumberField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import { useWorkflow } from '@/ui/hooks/useWorkflow';
@@ -50,7 +50,7 @@ const TaskStatusIcon: FC<{ status: string }> = ({ status }) => {
 };
 
 // 任务类型中文映射
-const TASK_TYPE_LABELS: Record<string, string> = {
+const TASK_TYPE_LABELS: Partial<Record<BatchTaskType, string>> = {
   summary: '剧情总结',
   entity: '实体提取',
   trim: '事件精简',
@@ -190,19 +190,17 @@ export const BatchProcessingPanel: FC = () => {
   const [chunkSize, setChunkSize] = useState(2000);
   const [overlapSize, setOverlapSize] = useState(200);
   const [importText, setImportText] = useState('');
-  const [importProgress, setImportProgress] = useState<{ current: number; total: number } | null>(
-    null
-  );
+  const [isImporting, setIsImporting] = useState(false);
 
   // 任务类型选择
-  const [selectedTypes, setSelectedTypes] = useState<Record<string, boolean>>({
+  const [selectedTypes, setSelectedTypes] = useState<Partial<Record<BatchTaskType, boolean>>>({
     summary: true,
     entity: true,
     trim: true,
     embed: true,
   });
 
-  const handleTypeToggle = (type: string) => {
+  const handleTypeToggle = (type: BatchTaskType) => {
     setSelectedTypes((prev) => ({ ...prev, [type]: !prev[type] }));
   };
 
@@ -212,8 +210,8 @@ export const BatchProcessingPanel: FC = () => {
     try {
       // Convert selection map to array
       const types = Object.entries(selectedTypes)
-        .filter(([_, enabled]) => enabled)
-        .map(([type]) => type) as any[];
+        .filter(([, enabled]) => enabled)
+        .map(([type]) => type as BatchTaskType);
 
       const result = await batchProcessor.analyzeHistory(startFloor, endFloor, types);
       setAnalysis(result);
@@ -229,8 +227,8 @@ export const BatchProcessingPanel: FC = () => {
   const handleStart = useCallback(async () => {
     if (!analysis) return;
     const types = Object.entries(selectedTypes)
-      .filter(([_, enabled]) => enabled)
-      .map(([type]) => type) as any[];
+      .filter(([, enabled]) => enabled)
+      .map(([type]) => type as BatchTaskType);
 
     await batchProcessor.startHistory(analysis.startFloor, analysis.endFloor, types);
     // useWorkflow 会自动更新状态
@@ -255,16 +253,20 @@ export const BatchProcessingPanel: FC = () => {
   const handleImport = useCallback(async () => {
     if (!importText.trim()) return;
 
+    setIsImporting(true);
     try {
-      // 依赖 BatchProcessor 内部的消息通知或者 Error 冒泡
-      // V1.0 架构下引擎结束会自动清理 queue，进度条会自然消失
+      await batchProcessor.importText(importText, {
+        mode: importMode,
+        chunkSize,
+        overlapSize,
+      });
     } catch (e) {
       console.error('Import failed', e);
       notificationService.error('导入失败', 'Engram Batch');
     } finally {
-      setImportProgress(null);
+      setIsImporting(false);
     }
-  }, [importText]);
+  }, [chunkSize, importMode, importText, overlapSize]);
 
   // 文件选择
   const handleFileSelect = useCallback((e: ChangeEvent<HTMLInputElement>) => {
@@ -321,18 +323,21 @@ export const BatchProcessingPanel: FC = () => {
           <span className="col-span-2 mb-1 text-xs font-medium text-muted-foreground">
             选择任务类型
           </span>
-          {Object.entries(TASK_TYPE_LABELS).map(([type, label]) => (
-            <label key={type} className="flex cursor-pointer select-none items-center gap-2">
-              <input
-                type="checkbox"
-                className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
-                checked={selectedTypes[type]}
-                onChange={() => handleTypeToggle(type)}
-                disabled={queue.isRunning}
-              />
-              <span className="text-sm text-foreground">{label}</span>
-            </label>
-          ))}
+          {Object.entries(TASK_TYPE_LABELS).map(([rawType, label]) => {
+            const type = rawType as BatchTaskType;
+            return (
+              <label key={type} className="flex cursor-pointer select-none items-center gap-2">
+                <input
+                  type="checkbox"
+                  className="h-3.5 w-3.5 rounded border-gray-300 text-primary focus:ring-primary"
+                  checked={!!selectedTypes[type]}
+                  onChange={() => handleTypeToggle(type)}
+                  disabled={queue.isRunning}
+                />
+                <span className="min-w-0 break-words text-sm text-foreground">{label}</span>
+              </label>
+            );
+          })}
         </div>
 
         {/* 分析按钮 */}
@@ -468,15 +473,15 @@ export const BatchProcessingPanel: FC = () => {
 
             {/* 2. 活动任务焦点窗口 */}
             {queue.isRunning && currentTask && (
-              <div className="border-primary/20 bg-primary/5 flex items-start gap-3 rounded-lg border bg-card p-3">
-                <div className="mt-0.5">
+              <div className="border-primary/20 bg-primary/5 flex min-w-0 items-start gap-3 rounded-lg border bg-card p-3">
+                <div className="mt-0.5 shrink-0">
                   <RefreshCw size={16} className="animate-spin text-primary" />
                 </div>
-                <div className="flex-1 space-y-1">
+                <div className="min-w-0 flex-1 space-y-1">
                   <div className="flex items-center justify-between text-sm">
                     <span className="font-medium text-heading">正在处理</span>
                   </div>
-                  <div className="text-xs text-muted-foreground">
+                  <div className="min-w-0 whitespace-normal break-words text-xs text-muted-foreground">
                     当前分配:{' '}
                     <span className="font-mono text-emphasis">
                       {TASK_TYPE_LABELS[queue.tasks[queue.currentTaskIndex]?.type] || '执行任务'}
@@ -497,12 +502,11 @@ export const BatchProcessingPanel: FC = () => {
             {/* 3. 详细子任务列表 (滚动视窗) */}
             <div className="max-h-40 space-y-1 overflow-y-auto">
               {(queue.tasks || []).slice(0, 10).map((task) => (
-                <div key={task.id} className="flex items-center gap-2 text-xs">
+                <div key={task.id} className="flex min-w-0 items-center gap-2 text-xs">
                   <TaskStatusIcon status={task.status} />
                   <span
-                    className={
-                      task.status === 'running' ? 'text-foreground' : 'text-muted-foreground'
-                    }
+                    className={`min-w-0 truncate ${task.status === 'running' ? 'text-foreground' : 'text-muted-foreground'}`}
+                    title={TASK_TYPE_LABELS[task.type] || task.type}
                   >
                     {TASK_TYPE_LABELS[task.type] || task.type}
                   </span>
@@ -628,7 +632,7 @@ export const BatchProcessingPanel: FC = () => {
         {importText && (
           <div>
             <span className="mb-2 block text-xs text-muted-foreground">预览</span>
-            <div className="bg-muted/20 max-h-32 overflow-y-auto rounded-lg border border-border p-3 font-mono text-xs text-muted-foreground">
+            <div className="bg-muted/20 max-h-32 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border p-3 font-mono text-xs text-muted-foreground">
               {importText.slice(0, 500)}...
             </div>
             <div className="mt-1 text-[10px] text-muted-foreground">
@@ -641,21 +645,11 @@ export const BatchProcessingPanel: FC = () => {
         <button
           className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors disabled:opacity-50"
           onClick={handleImport}
-          disabled={!importText || importProgress !== null}
+          disabled={!importText || isImporting}
         >
           <FileText size={14} />
-          {importProgress ? `导入中 ${importProgress.current}/${importProgress.total}` : '开始导入'}
+          {isImporting ? '导入中...' : '开始导入'}
         </button>
-
-        {/* 导入进度 */}
-        {importProgress && (
-          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${(importProgress.current / importProgress.total) * 100}%` }}
-            />
-          </div>
-        )}
       </section>
 
       {/* ==================== 数据批处理 ==================== */}

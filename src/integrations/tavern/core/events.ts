@@ -35,8 +35,6 @@ export const events = {
   WORLDINFO_UPDATED: 'worldinfo_updated',
 } as const;
 
-export type EventType = (typeof events)[keyof typeof events];
-
 /** 事件回调函数类型 */
 export type EventCallback = (...args: unknown[]) => void | Promise<void>;
 

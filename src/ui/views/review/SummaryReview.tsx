@@ -2,8 +2,8 @@ import { ChevronDown, ChevronUp, Plus, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import type { FC } from 'react';
 
-import type { EventNode } from '@/types/graph';
 import { isRecord, readNumber, readString } from '@/core/utils';
+import type { EventNode } from '@/types/graph';
 
 type EditableEventKV = Partial<EventNode['structured_kv']>;
 
@@ -285,14 +285,15 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
   return (
     <div className="flex flex-col gap-4">
       <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
-        请确认生成的摘要事件列表。您可以直接手动修改 AI 原始返回结果，或继续在下方按事件粒度修订结构化数据与描述。
+        请确认生成的摘要事件列表。您可以直接手动修改 AI
+        原始返回结果，或继续在下方按事件粒度修订结构化数据与描述。
       </div>
 
       <div className="space-y-2">
         <button
           type="button"
           onClick={() => setShowRawEditor((current) => !current)}
-          className="hover:bg-muted/40 flex w-full items-center justify-between rounded-md border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground transition-colors hover:border-primary/30 hover:text-primary"
+          className="hover:bg-muted/40 border-border/60 bg-muted/10 hover:border-primary/30 flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground transition-colors hover:text-primary"
         >
           <span className="uppercase">AI 原始返回结果</span>
           <span className="flex items-center gap-1 text-[11px] normal-case">

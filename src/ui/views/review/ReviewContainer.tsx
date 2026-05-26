@@ -14,6 +14,7 @@ import { createPortal } from 'react-dom';
 
 import { engramEventBus } from '@/core/events';
 import type { ReviewAction, ReviewRequest } from '@/core/events/ReviewService';
+import { isRecord } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
 import type { AgenticRecall } from '@/types/preprocess';
 import { ModernButton as Button } from '@/ui/components/core/Button';
@@ -23,7 +24,6 @@ import { MessageReview } from './MessageReview';
 import { RecallDecisionModal } from './RecallDecisionModal';
 import { SummaryReview } from './SummaryReview'; // V1.2
 import type { SummaryReviewEvent } from './SummaryReview';
-import { isRecord } from '@/core/utils';
 
 interface ReviewSessionData {
   query?: string;

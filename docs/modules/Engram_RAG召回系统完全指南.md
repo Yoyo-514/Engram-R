@@ -48,7 +48,7 @@ graph TD
 | 组件                    | 文件路径                                                | 职责                                                                                                                 |
 | ----------------------- | ------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
 | **Injector**            | `src/modules/rag/injection/Injector.ts`                 | 监听酒馆事件，阻塞生成流程，协调预处理和召回                                                                         |
-| **Preprocessor**        | `src/modules/preprocess/Preprocessor.ts`             | 利用 LLM 分析用户意图，生成 Unified Query                                                                            |
+| **Preprocessor**        | `src/modules/preprocess/Preprocessor.ts`                | 利用 LLM 分析用户意图，生成 Unified Query                                                                            |
 | **EmbeddingService**    | `src/modules/rag/embedding/EmbeddingService.ts`         | 处理文本向量化，支持多并发和批处理                                                                                   |
 | **RerankService**       | `src/modules/rag/retrieval/Reranker.ts`                 | 对初步召回结果进行精细化语义重排序                                                                                   |
 | **BrainRecallCache**    | `src/modules/rag/retrieval/BrainRecallCache.ts`         | **V0.9.5 核心**：类脑记忆缓存系统                                                                                    |

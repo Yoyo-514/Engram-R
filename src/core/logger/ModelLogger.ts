@@ -5,6 +5,15 @@
  * 仅内存存储，不导出，不持久化
  */
 
+/** 模型日志类型 */
+export type ModelLogType =
+  | 'summarize'
+  | 'trim'
+  | 'vectorize'
+  | 'query'
+  | 'entity_extraction'
+  | 'other';
+
 /** 模型日志条目 */
 export interface ModelLogEntry {
   /** 唯一 ID */
@@ -12,7 +21,7 @@ export interface ModelLogEntry {
   /** 时间戳 */
   timestamp: number;
   /** 调用类型 */
-  type: 'summarize' | 'trim' | 'vectorize' | 'query' | 'entity_extraction' | 'other';
+  type: ModelLogType;
   /** 方向：发送/接收 */
   direction: 'sent' | 'received';
 
@@ -49,6 +58,16 @@ export interface ModelLogEntry {
 
 /** 最大日志条目数 */
 const MAX_ENTRIES = 100;
+/** 单段模型日志文本最大保留字符数，避免超大 prompt/response 拖慢 UI */
+const MAX_TEXT_CHARS = 50_000;
+
+function limitLogText(value: string | undefined): string | undefined {
+  if (!value || value.length <= MAX_TEXT_CHARS) {
+    return value;
+  }
+
+  return `${value.slice(0, MAX_TEXT_CHARS)}\n\n...[已截断 ${value.length - MAX_TEXT_CHARS} 字符以避免界面卡顿]`;
+}
 
 /**
  * ModelLogger 类
@@ -57,6 +76,7 @@ const MAX_ENTRIES = 100;
 class ModelLoggerClass {
   private entries: ModelLogEntry[] = [];
   private listeners: Set<() => void> = new Set();
+  private notifyScheduled = false;
 
   /**
    * 创建新的日志条目（发送阶段）
@@ -77,8 +97,8 @@ class ModelLoggerClass {
       timestamp: Date.now(),
       type: data.type,
       direction: 'sent',
-      systemPrompt: data.systemPrompt,
-      userPrompt: data.userPrompt,
+      systemPrompt: limitLogText(data.systemPrompt),
+      userPrompt: limitLogText(data.userPrompt),
       tokensSent: data.tokensSent,
       model: data.model,
       character: data.character,
@@ -115,7 +135,7 @@ class ModelLoggerClass {
       timestamp: Date.now(),
       type: entry.type,
       direction: 'received',
-      response: data.response,
+      response: limitLogText(data.response),
       tokensReceived: data.tokensReceived,
       status: data.status,
       error: data.error,
@@ -237,9 +257,17 @@ class ModelLoggerClass {
    * 通知监听器
    */
   private notifyListeners(): void {
-    for (const listener of this.listeners) {
-      listener();
+    if (this.notifyScheduled) {
+      return;
     }
+
+    this.notifyScheduled = true;
+    setTimeout(() => {
+      this.notifyScheduled = false;
+      for (const listener of this.listeners) {
+        listener();
+      }
+    }, 0);
   }
 }
 

@@ -8,9 +8,7 @@ const MODULE = 'EntityScanner';
  */
 function parseRegexFromString(input: string): RegExp | null {
   try {
-    // @ts-expect-error - 尝试从全局获取，SillyTavern 导出了这个方法
     if (typeof window.parseRegexFromString === 'function') {
-      // @ts-expect-error  - 尝试从全局获取，SillyTavern 导出了这个方法
       return window.parseRegexFromString(input);
     }
   } catch (e) {

@@ -42,9 +42,9 @@ export class RerankMergeStep implements IStep {
     // 1. 合并向量检索和关键词检索的候选 (按 ID 去重，保留最高分)
     const candidateMap = new Map<string, ScoredEvent>();
 
-    // 优先加载关键词候选
+    // 优先加载关键词候选；复制对象，避免污染上游候选缓存
     for (const candidate of keywordCandidates) {
-      candidateMap.set(candidate.id, candidate);
+      candidateMap.set(candidate.id, { ...candidate });
     }
 
     // 合并向量候选，记录 embeddingScore
@@ -52,9 +52,9 @@ export class RerankMergeStep implements IStep {
       if (candidateMap.has(candidate.id)) {
         // 如果已存在（被关键词命中），补充 embeddingScore
         const existing = candidateMap.get(candidate.id)!;
-        existing.embeddingScore = candidate.embeddingScore;
+        candidateMap.set(candidate.id, { ...existing, embeddingScore: candidate.embeddingScore });
       } else {
-        candidateMap.set(candidate.id, candidate);
+        candidateMap.set(candidate.id, { ...candidate });
       }
     }
 
@@ -70,13 +70,14 @@ export class RerankMergeStep implements IStep {
     // P1 Fix: 二次 hard-limit，避免 KeywordRetrieveStep 的候选爆炸穿透到后续
     // - 若配置存在 keywordTopK/events，则以其为上限，否则回退 embedding.topK
     const hardLimit = activeConfig.keywordTopK?.events ?? activeConfig.embedding?.topK ?? 50;
-    const limitedCandidates = candidates.slice(0, Math.max(1, hardLimit));
+    const scoredCandidates = scoreAndSort(candidates);
+    const limitedCandidates = scoredCandidates.slice(0, Math.max(1, hardLimit));
 
     context.data.originalCandidateCount = candidates.length;
     context.data.keywordHardLimit = hardLimit;
 
     // 在重试机制介入前，预先设置好降级候选列表，以防多次尝试彻底失败后 WorkflowEngine 根据 ignoreFailure 继续执行时空结果
-    context.data.candidates = scoreAndSort(limitedCandidates, 0);
+    context.data.candidates = limitedCandidates;
 
     // 2. Rerank 重排序 (如果启用且服务可用)
     let finalCandidates = limitedCandidates;
@@ -94,12 +95,7 @@ export class RerankMergeStep implements IStep {
         rerankTime = Date.now() - context.data.rerankStartTime;
 
         const embeddingMap = new Map(limitedCandidates.map((c) => [c.id, c]));
-        const alpha =
-          typeof (rerankService as any).getHybridAlpha === 'function'
-            ? (rerankService as any).getHybridAlpha()
-            : 0.5;
-
-        finalCandidates = mergeResults(embeddingMap, rerankResults, limitedCandidates, alpha);
+        finalCandidates = mergeResults(embeddingMap, rerankResults, limitedCandidates);
 
         context.data.candidates = finalCandidates;
       } catch (e: any) {

@@ -2,7 +2,15 @@ declare module '*.scss';
 declare module '*.sass';
 
 interface Window {
-  __ENGRAM_SEARCH_INIT__?: boolean;
+  EjsTemplate?: typeof EjsTemplate;
+  Mvu?: typeof Mvu;
+  parseRegexFromString?: (input: string) => RegExp | null;
+  stopGenerationById?: (generationId: string) => boolean | Promise<boolean>;
+  stopAllGeneration?: () => boolean | Promise<boolean>;
+  stopGeneration?: () => void;
+  SillyTavern?: {
+    getContext?: () => any;
+  };
 }
 
 type LiteralUnion<

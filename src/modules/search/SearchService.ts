@@ -2,7 +2,9 @@ import type { ElementType } from 'react';
 
 import { CommandAdapter } from './adapters/CommandAdapter';
 import { DocAdapter } from './adapters/DocAdapter';
+import { LogAdapter } from './adapters/LogAdapter';
 import { MemoryAdapter } from './adapters/MemoryAdapter';
+import { PresetAdapter } from './adapters/PresetAdapter';
 import { SettingAdapter } from './adapters/SettingAdapter';
 
 export interface SearchResult {
@@ -21,24 +23,27 @@ export interface SearchAdapter {
 }
 
 class SearchServiceImpl {
-  private adapters: SearchAdapter[] = [];
+  private adapters = new Map<string, SearchAdapter>();
 
-  registerAdapter(adapter: SearchAdapter) {
-    this.adapters.push(adapter);
+  registerAdapter(id: string, adapter: SearchAdapter): void {
+    this.adapters.set(id, adapter);
   }
 
   async search(query: string): Promise<SearchResult[]> {
     if (!query.trim()) return [];
 
-    const results = await Promise.all(this.adapters.map((a) => a.search(query)));
+    const results = await Promise.all(
+      [...this.adapters.values()].map((adapter) => adapter.search(query))
+    );
     return results.flat().sort((a, b) => (b.score || 0) - (a.score || 0));
   }
 }
 
 export const searchService = new SearchServiceImpl();
 
-// 注册默认适配器
-searchService.registerAdapter(new CommandAdapter());
-searchService.registerAdapter(new SettingAdapter());
-searchService.registerAdapter(new MemoryAdapter());
-searchService.registerAdapter(new DocAdapter());
+searchService.registerAdapter('command', new CommandAdapter());
+searchService.registerAdapter('setting', new SettingAdapter());
+searchService.registerAdapter('log', new LogAdapter());
+searchService.registerAdapter('memory', new MemoryAdapter());
+searchService.registerAdapter('preset', new PresetAdapter());
+searchService.registerAdapter('doc', new DocAdapter());

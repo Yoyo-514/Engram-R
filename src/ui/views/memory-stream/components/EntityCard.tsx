@@ -77,15 +77,17 @@ export const EntityCard: FC<EntityCardProps> = ({
 
         {/* 主内容 */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-heading">{entity.name}</span>
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 truncate text-xs font-medium text-heading">{entity.name}</span>
             <span
-              className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
+              className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
             >
               {entity.type}
             </span>
           </div>
-          <p className="mt-1 truncate text-xs text-meta">{entity.description}</p>
+          <p className="mt-1 truncate text-xs text-meta" title={entity.description}>
+            {entity.description}
+          </p>
         </div>
 
         {/* 锁定按钮 (紧凑模式) */}
@@ -133,7 +135,7 @@ export const EntityCard: FC<EntityCardProps> = ({
       onClick={onSelect}
     >
       {/* 头部：复选框 + 名称 + 类型 */}
-      <div className="mb-2 flex items-center gap-3">
+      <div className="mb-2 flex min-w-0 items-center gap-3">
         <div
           className="-m-1.5 flex shrink-0 select-none items-center justify-center p-1.5"
           onClick={(e) => e.stopPropagation()}
@@ -147,9 +149,9 @@ export const EntityCard: FC<EntityCardProps> = ({
             className="h-4 w-4 cursor-pointer rounded border-border accent-primary"
           />
         </div>
-        <span className="text-sm font-medium text-heading">{entity.name}</span>
+        <span className="min-w-0 break-words text-sm font-medium text-heading">{entity.name}</span>
         <span
-          className={`rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
+          className={`shrink-0 rounded-full border px-1.5 py-0.5 text-[10px] uppercase ${getEntityTypeColor(entity.type)}`}
         >
           {entity.type}
         </span>
@@ -188,13 +190,17 @@ export const EntityCard: FC<EntityCardProps> = ({
       </div>
 
       {/* 描述文本 */}
-      <p className="line-clamp-2 text-xs leading-relaxed text-meta">{entity.description}</p>
+      <p className="line-clamp-2 whitespace-normal break-words text-xs leading-relaxed text-meta">
+        {entity.description}
+      </p>
 
       {/* 触发关键词 (原别名) */}
       {entity.aliases && entity.aliases.length > 0 && (
-        <div className="mt-auto flex items-center gap-1 pt-3 text-[10px] italic text-meta opacity-80">
+        <div className="mt-auto flex min-w-0 items-center gap-1 pt-3 text-[10px] italic text-meta opacity-80">
           <span className="shrink-0 font-medium">触发关键词:</span>
-          <span className="truncate">{entity.aliases.join(', ')}</span>
+          <span className="min-w-0 flex-1 truncate" title={entity.aliases.join(', ')}>
+            {entity.aliases.join(', ')}
+          </span>
         </div>
       )}
     </div>

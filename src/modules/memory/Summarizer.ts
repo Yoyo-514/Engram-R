@@ -395,7 +395,7 @@ class SummarizerService {
         config: {
           previewEnabled: this.config.previewEnabled,
           autoHide: this.config.autoHide,
-          templateId: this.config.promptTemplateId,
+          templateId: this.config.promptTemplateId ?? undefined,
           logType: 'summarize',
         },
         input: {

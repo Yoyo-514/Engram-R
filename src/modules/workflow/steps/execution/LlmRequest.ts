@@ -48,7 +48,7 @@ export class LlmRequest implements IStep {
 
     // 1. 记录发送日志
     const logId = ModelLogger.logSend({
-      type: context.config.logType || 'generation', // 允许 config 覆盖
+      type: context.config.logType || 'other', // 允许 config 覆盖
       systemPrompt: system,
       userPrompt: user,
       model: getCurrentModel() || 'Unknown',
@@ -65,7 +65,7 @@ export class LlmRequest implements IStep {
         userPrompt: user,
         signal: context.signal,
         generationId,
-        presetId: presetId ?? context.config.presetId,
+        presetId: presetId ?? context.config.presetId ?? undefined,
         internal: true, // 标记为内部请求，防止触发 Preprocessor
       });
 

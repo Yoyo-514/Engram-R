@@ -23,9 +23,8 @@ import {
   getLatestVersion,
   markAsRead,
 } from '@/core/updater/Updater';
-import { getTavernContext } from '@/core/utils';
-import { notificationService } from '@/ui/services/NotificationService';
 import { getRequestHeaders } from '@/integrations/tavern';
+import { notificationService } from '@/ui/services/NotificationService';
 
 interface UpdateNoticeProps {
   isOpen: boolean;

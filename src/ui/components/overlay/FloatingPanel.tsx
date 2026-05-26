@@ -165,20 +165,22 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
         }}
       >
         <div
-          className="flex select-none items-center justify-between border-b border-border px-3 py-2"
+          className="flex min-w-0 select-none items-center justify-between gap-2 border-b border-border px-3 py-2"
           onMouseDown={handleMouseDown}
           style={{
             cursor: isDragging ? 'grabbing' : 'grab',
             backgroundColor: 'var(--surface, rgba(255,255,255,0.05))',
           }}
         >
-          <div className="flex items-center gap-2">
-            <GripVertical size={14} className="text-muted-foreground" />
-            <span className="text-sm font-medium text-foreground">{title}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-2">
+            <GripVertical size={14} className="shrink-0 text-muted-foreground" />
+            <span className="min-w-0 truncate text-sm font-medium text-foreground" title={title}>
+              {title}
+            </span>
           </div>
           <button
             onClick={onClose}
-            className="rounded p-1 text-muted-foreground transition-all duration-[var(--duration-fast)] hover:rotate-90 hover:bg-accent hover:text-foreground"
+            className="shrink-0 rounded p-1 text-muted-foreground transition-all duration-[var(--duration-fast)] hover:rotate-90 hover:bg-accent hover:text-foreground"
             style={{ backgroundColor: 'transparent' }}
             aria-label="关闭"
             onMouseDown={(event) => event.stopPropagation()}

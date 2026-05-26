@@ -1,7 +1,13 @@
 import { getBuiltInTemplateByCategory } from '@/config/prompt/templates';
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { getTavernContext, isPromptCategory, isRecord, readString } from '@/core/utils';
+import {
+  getTavernContext,
+  isPromptCategory,
+  isRecord,
+  readString,
+  yieldToMainThread,
+} from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
@@ -137,6 +143,10 @@ export class BuildPrompt implements IStep {
       const regex = new RegExp(key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
       systemPrompt = systemPrompt.replace(regex, value);
       userPrompt = userPrompt.replace(regex, value);
+
+      if (systemPrompt.length + userPrompt.length > 100_000) {
+        await yieldToMainThread();
+      }
     }
 
     let hitEntitiesSummary = '无';
@@ -171,6 +181,8 @@ export class BuildPrompt implements IStep {
       '{{char}}': readString(contextInput.charName),
       '{{user}}': readString(contextInput.userName),
     };
+
+    await yieldToMainThread();
 
     systemPrompt = applyMacroReplacements(systemPrompt, potentialMacros);
     userPrompt = applyMacroReplacements(userPrompt, potentialMacros);

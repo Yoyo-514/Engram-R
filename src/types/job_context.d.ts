@@ -1,3 +1,13 @@
+import type { ModelLogType } from '@/core/logger/ModelLogger';
+
+export interface WorkflowConfig {
+  logType?: ModelLogType;
+  previewEnabled?: boolean;
+  templateId?: string;
+  presetId?: string | null;
+  [key: string]: unknown;
+}
+
 /**
  * JobContext - 任务上下文
  *
@@ -11,7 +21,7 @@ export interface JobContext {
   trigger: 'auto' | 'manual' | 'batch';
 
   /** 任务配置 (通常对应各模块的 Config) */
-  config: Record<string, any>;
+  config: WorkflowConfig;
 
   /**
    * 初始输入数据

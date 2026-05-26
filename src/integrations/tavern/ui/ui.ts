@@ -84,19 +84,6 @@ function injectQuickPanelButton(): boolean {
 }
 
 /**
- * 移除按钮
- */
-export function removeQuickPanelButton(): void {
-  const button = document.querySelector(`#${DOM_IDS.QUICK_PANEL_TRIGGER}`);
-  if (button) {
-    button.removeEventListener('click', handleQuickPanelClick as EventListener);
-    button.remove();
-    isInjected = false;
-    Logger.debug(MODULE, '按钮已移除');
-  }
-}
-
-/**
  * 初始化：等待 DOM 就绪后注入
  */
 export function initQuickPanelButton(): void {
@@ -323,24 +310,4 @@ function createMainPanel(): HTMLElement {
   }
 
   return panel;
-}
-
-/**
- * 调用 SillyTavern 原生弹窗
- * @param content 弹窗内容 (HTML)
- * @param type 弹窗类型 ('text', 'confirm', 'input')
- * @param inputValue 输入框默认值
- */
-export async function callPopup(
-  content: string,
-  type: 'text' | 'confirm' | 'input' = 'text',
-  inputValue: string = ''
-): Promise<any> {
-  // @ts-ignore
-  if (window.callPopup) {
-    // @ts-ignore
-    return window.callPopup(content, type, inputValue);
-  }
-  console.warn('[Engram] callPopup not available');
-  return Promise.resolve(type === 'confirm' ? true : null);
 }

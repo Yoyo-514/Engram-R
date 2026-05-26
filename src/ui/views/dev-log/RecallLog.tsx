@@ -332,7 +332,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
             </div>
 
             <div className="bg-muted/20 border-border/30 overflow-hidden rounded border">
-              <table className="w-full text-left text-[10px]">
+              <table className="w-full table-fixed text-left text-[10px]">
                 <thead className="bg-muted/30 text-muted-foreground">
                   <tr>
                     <th className="p-1.5 font-medium">Event</th>
@@ -383,19 +383,25 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
             </div>
             <div className="flex flex-wrap gap-2">
               {entry.recalledEntities.map((ent: any) => (
-                <div key={ent.id} className="group relative">
-                  <div className="bg-primary/10 border-primary/20 hover:bg-primary/20 flex items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-primary transition-colors">
-                    <Database size={10} />
-                    {ent.name}
+                <div key={ent.id} className="group relative min-w-0">
+                  <div className="bg-primary/10 border-primary/20 hover:bg-primary/20 flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-primary transition-colors">
+                    <Database size={10} className="shrink-0" />
+                    <span className="min-w-0 truncate" title={ent.name}>
+                      {ent.name}
+                    </span>
                     {ent._recallWeight && (
-                      <span className="font-mono opacity-60">({ent._recallWeight.toFixed(2)})</span>
+                      <span className="shrink-0 font-mono opacity-60">
+                        ({ent._recallWeight.toFixed(2)})
+                      </span>
                     )}
                   </div>
                   <div className="text-foreground/80 pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed shadow-xl group-hover:block">
                     <div className="mb-1 font-bold">
                       {ent.name} ({ent.type || '未知'})
                     </div>
-                    <div className="line-clamp-4">{ent.description || '无描述'}</div>
+                    <div className="line-clamp-4 whitespace-normal break-words">
+                      {ent.description || '无描述'}
+                    </div>
                   </div>
                 </div>
               ))}

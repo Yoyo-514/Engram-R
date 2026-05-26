@@ -77,11 +77,11 @@ function MetaLine({ event }: { event: EventNode }) {
   const locStr = Array.isArray(kv.location) ? kv.location.join(', ') : String(kv.location || '');
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5 truncate text-xs">
-      {kv.time_anchor && <span className="text-value">({kv.time_anchor})</span>}
-      {locStr && <span className="text-value">@{locStr}</span>}
+    <div className="flex min-w-0 max-w-full flex-wrap items-center gap-1.5 text-xs">
+      {kv.time_anchor && <span className="break-words text-value">({kv.time_anchor})</span>}
+      {locStr && <span className="break-words text-value">@{locStr}</span>}
       {kv.role && kv.role.length > 0 && (
-        <span className="text-emphasis">[{kv.role.join(', ')}]</span>
+        <span className="break-words text-emphasis">[{kv.role.join(', ')}]</span>
       )}
     </div>
   );
@@ -130,16 +130,18 @@ export const EventCard: FC<EventCardProps> = ({
 
         {/* 主内容 */}
         <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-heading">{eventTitle}</span>
-            {event.is_embedded && <Zap size={10} className="text-label" />}
+          <div className="flex min-w-0 items-center gap-2">
+            <span className="min-w-0 truncate text-xs font-medium text-heading">{eventTitle}</span>
+            {event.is_embedded && <Zap size={10} className="shrink-0 text-label" />}
             <span
               className={`text-xs ${event.significance_score >= 0.8 ? 'text-emphasis' : event.significance_score >= 0.5 ? 'text-value' : 'text-label'}`}
             >
               {event.significance_score.toFixed(1)}
             </span>
           </div>
-          <p className="mt-1 truncate text-sm text-foreground">{summaryText.substring(0, 50)}...</p>
+          <p className="mt-1 truncate text-sm text-foreground" title={summaryText}>
+            {summaryText.substring(0, 50)}...
+          </p>
         </div>
 
         {/* 快捷操作 (紧凑模式) */}
@@ -197,7 +199,7 @@ export const EventCard: FC<EventCardProps> = ({
       )}
 
       {/* 头部：复选框 + 标签 + 嵌入状态 + 分数 */}
-      <div className="mb-2 flex items-center gap-3">
+      <div className="mb-2 flex min-w-0 items-center gap-3">
         <input
           type="checkbox"
           checked={checked}
@@ -207,7 +209,7 @@ export const EventCard: FC<EventCardProps> = ({
           }}
           className="h-4 w-4 rounded border-border accent-primary"
         />
-        <span className="text-xs font-medium text-heading">{eventTitle}</span>
+        <span className="min-w-0 break-words text-xs font-medium text-heading">{eventTitle}</span>
         <EmbeddingBadge isEmbedded={event.is_embedded} />
         {hasChanges && (
           <span
@@ -216,9 +218,9 @@ export const EventCard: FC<EventCardProps> = ({
           />
         )}
 
-        <div className="flex-1" />
+        <div className="min-w-4 flex-1" />
 
-        <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <div className="flex shrink-0 items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
           {/* 归档按钮 (桌面模式) */}
           <button
             className={`rounded-md p-1.5 transition-all ${
@@ -275,10 +277,12 @@ export const EventCard: FC<EventCardProps> = ({
       <MetaLine event={event} />
 
       {/* 摘要文本 */}
-      <p className="mt-1 line-clamp-2 text-sm text-foreground">{summaryText}</p>
+      <p className="mt-1 line-clamp-2 whitespace-normal break-words text-sm text-foreground">
+        {summaryText}
+      </p>
 
       {/* 底部信息 */}
-      <div className="mt-2 flex items-center gap-2 text-xs text-meta">
+      <div className="mt-2 flex min-w-0 flex-wrap items-center gap-2 text-xs text-meta">
         <span>
           Level <span className="font-medium text-value">{event.level}</span>
         </span>

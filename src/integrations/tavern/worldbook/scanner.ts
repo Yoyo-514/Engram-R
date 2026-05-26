@@ -33,7 +33,7 @@ let latestActivatedWorldInfoText = '';
 let latestActivatedWorldInfoEntries: LiveActivatedWorldInfoEntry[] = [];
 let hasActivatedWorldInfoCache = false;
 let worldInfoScanListenerInitialized = false;
-let unsubscribeWorldInfoScanListener: (() => void) | null = null;
+let _unsubscribeWorldInfoScanListener: (() => void) | null = null;
 const unsubscribeWorldInfoCacheInvalidators: Array<() => void> = [];
 const contextualWorldInfoCache = new Map<string, string>();
 
@@ -72,7 +72,7 @@ function ensureWorldInfoScanListener(): void {
     return;
   }
 
-  unsubscribeWorldInfoScanListener = eventBus.on(
+  _unsubscribeWorldInfoScanListener = eventBus.on(
     events.WORLDINFO_SCAN_DONE,
     (eventData: unknown) => {
       const payload = eventData as WorldInfoScanDonePayload;
@@ -476,18 +476,4 @@ export async function getContextualWorldInfo(
     Logger.error(MODULE, 'Failed to get contextual worldbooks', error);
     return '';
   }
-}
-
-/**
- * 重置已激活世界书缓存与监听状态
- * 用于测试、热重载或需要重新建立监听的场景
- */
-export function resetWorldInfoScanCache(): void {
-  unsubscribeWorldInfoScanListener?.();
-  unsubscribeWorldInfoScanListener = null;
-  for (const unsubscribe of unsubscribeWorldInfoCacheInvalidators.splice(0)) {
-    unsubscribe();
-  }
-  clearWorldInfoCaches('manual_reset');
-  worldInfoScanListenerInitialized = false;
 }

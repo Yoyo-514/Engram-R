@@ -23,7 +23,7 @@ import { type ModelLogEntry, ModelLogger } from '@/core/logger/ModelLogger';
 import { countWorldbookTokens } from '@/integrations/tavern';
 
 /** 类型标签配置 */
-const TYPE_LABELS: Record<ModelLogEntry['type'], { label: string; color: string }> = {
+const TYPE_LABELS: Record<string, { label: string; color: string }> = {
   summarize: { label: '总结', color: 'bg-blue-500/20 text-blue-400' },
   trim: { label: '修剪', color: 'bg-yellow-500/20 text-yellow-500' },
   vectorize: { label: '向量化', color: 'bg-purple-500/20 text-purple-400' },
@@ -31,6 +31,9 @@ const TYPE_LABELS: Record<ModelLogEntry['type'], { label: string; color: string 
   entity_extraction: { label: '实体提取', color: 'bg-cyan-500/20 text-cyan-400' },
   other: { label: '其他', color: 'bg-gray-500/20 text-gray-400' },
 };
+
+const getTypeConfig = (type: string): { label: string; color: string } =>
+  TYPE_LABELS[type] ?? { label: type || TYPE_LABELS.other.label, color: TYPE_LABELS.other.color };
 
 /** 状态图标 */
 const StatusIcon: FC<{ status: ModelLogEntry['status'] }> = ({ status }) => {
@@ -94,13 +97,13 @@ const LogCard: FC<{
     void countTokens();
   }, [sent, received, expanded]);
 
-  const typeConfig = TYPE_LABELS[sent.type];
+  const typeConfig = getTypeConfig(sent.type);
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       {/* 头部 */}
       <div
-        className="flex cursor-pointer items-center gap-2 bg-muted-20 px-3 py-2 hover:bg-muted-30"
+        className="flex min-w-0 cursor-pointer items-center gap-2 bg-muted-20 px-3 py-2 hover:bg-muted-30"
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -127,14 +130,14 @@ const LogCard: FC<{
             {sent.character.length > 8 ? sent.character.slice(0, 8) + '...' : sent.character}
           </span>
         )}
-        <span className="text-xs text-muted-foreground">{formatTime(sent.timestamp)}</span>
+        <span className="shrink-0 text-xs text-muted-foreground">{formatTime(sent.timestamp)}</span>
         <StatusIcon status={received?.status || sent.status} />
         {sent.floorRange && (
           <span className="text-xs text-muted-foreground">
             楼层 #{sent.floorRange[0]}-{sent.floorRange[1]}
           </span>
         )}
-        <span className="ml-auto flex items-center gap-1 text-xs text-muted-foreground">
+        <span className="ml-auto flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
           <Clock size={12} />
           {formatDuration(received?.duration || sent.duration)}
         </span>
@@ -167,7 +170,7 @@ const LogCard: FC<{
             {sent.userPrompt && (
               <div>
                 <div className="mb-1 text-xs text-muted-foreground">User</div>
-                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap rounded bg-muted-20 p-2 text-sm">
+                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
                   {sent.userPrompt}
                 </div>
               </div>
@@ -250,8 +253,8 @@ export const ModelLog: FC = () => {
           </div>
         ) : (
           <div className="flex h-full flex-col gap-3">
-            {logs.map((log, index) => (
-              <LogCard key={index} sent={log.sent} received={log.received} />
+            {logs.map((log) => (
+              <LogCard key={log.sent.id} sent={log.sent} received={log.received} />
             ))}
           </div>
         )}

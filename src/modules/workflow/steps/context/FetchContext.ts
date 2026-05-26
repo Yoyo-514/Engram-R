@@ -12,6 +12,7 @@ import {
   getSummaries,
 } from '@/integrations/tavern';
 import type { PreparedSummaryContext } from '@/modules/memory/SummaryPreparationCache';
+import { regexProcessor } from '@/modules/workflow/steps/preprocess/RegexProcessor';
 import type { JobContext } from '@/types/job_context';
 import type { IStep } from '@/types/step';
 import type { WorldbookConfig } from '@/types/worldbook';
@@ -127,7 +128,12 @@ export class FetchContext implements IStep {
       history = getChatHistory(range);
     }
 
-    context.input.chatHistory = history || '';
+    const shouldCleanHistory = !context.config.skipInputRegexForHistory;
+    const cleanedHistory = shouldCleanHistory
+      ? regexProcessor.process(history || '', 'input')
+      : history || '';
+
+    context.input.chatHistory = cleanedHistory;
 
     if (!history && !isImport) {
       Logger.warn('FetchContext', 'No chat history was resolved for current workflow');
@@ -182,7 +188,7 @@ export class FetchContext implements IStep {
     if (wbConfig?.enabled === false) {
       Logger.debug('FetchContext', 'Worldbook feature disabled, skipping world info');
     } else {
-      const worldbookMessages = getRecentWorldbookMessages(context, history, isImport);
+      const worldbookMessages = getRecentWorldbookMessages(context, cleanedHistory, isImport);
       const useContextualWorldInfo =
         isImport || Boolean(range) || resolvedExtraWorldbooks.length > 0;
 
@@ -204,7 +210,7 @@ export class FetchContext implements IStep {
     context.input.engramEntityStates = entityStatesContent;
 
     Logger.debug('FetchContext', 'Context fetch complete', {
-      historyLen: history.length,
+      historyLen: cleanedHistory.length,
       wiLen: wiContent.length,
       summaryLen: summaryContent.length,
     });

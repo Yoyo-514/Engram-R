@@ -345,53 +345,6 @@ export async function refreshWorldbookCache(): Promise<void> {
 }
 
 /**
- * V0.9: 刷新图谱数据缓存
- * 输出结构化的 EventNode JSON（排除 embedding 等系统字段）
- */
-export async function refreshGraphCache(): Promise<void> {
-  try {
-    const store = useMemoryStore.getState();
-    const events = await store.getAllEvents();
-    const entities = await store.getAllEntities();
-
-    // 过滤掉 embedding 等系统字段
-    const cleanEvents = events.map((e) => ({
-      id: e.id,
-      summary: e.summary,
-      structured_kv: e.structured_kv,
-      significance_score: e.significance_score,
-      level: e.level,
-      source_range: e.source_range,
-    }));
-
-    const cleanEntities = entities.map((e) => ({
-      id: e.id,
-      name: e.name,
-      type: e.type,
-      aliases: e.aliases || [],
-      description: e.description,
-    }));
-
-    cachedGraphData = JSON.stringify(
-      {
-        events: cleanEvents,
-        existingEntities: cleanEntities,
-      },
-      null,
-      2
-    );
-
-    Logger.debug('MacroService', '图谱缓存已刷新', {
-      eventCount: events.length,
-      entityCount: entities.length,
-    });
-  } catch (e) {
-    Logger.warn('MacroService', '刷新图谱缓存失败', e);
-    cachedGraphData = JSON.stringify({ events: [], existingEntities: [] });
-  }
-}
-
-/**
  * V0.8.5: 使用 RAG 召回的节点刷新缓存
  * V1.0.3 Fix: 复用 getEventSummaries 逻辑，修复召回条目覆盖蓝灯事件和乱序问题
  * @param nodes RAG 召回的事件节点

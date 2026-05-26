@@ -9,7 +9,7 @@
 
 import { getSettings, incrementStatistic } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { getTavernHelper } from '@/core/utils';
+import { getTavernHelper, yieldToMainThread } from '@/core/utils';
 import { regexProcessor } from '@/modules/workflow';
 import type { LLMPreset } from '@/types/llm';
 
@@ -304,8 +304,11 @@ class LLMAdapter {
     const finalSystemPrompt = request.systemPrompt || '';
     let finalUserPrompt = request.userPrompt || '';
 
-    // 仅对用户输入执行正则流水线，避免系统提示词被附加规则意外改写。
-    finalUserPrompt = regexProcessor.process(finalUserPrompt, 'input');
+    // 仅对真实用户输入执行正则流水线。内部总结/实体提取请求的 prompt 往往很长，
+    // 对整段构造后 prompt 同步跑输入正则容易造成主界面卡顿。
+    if (!request.internal) {
+      finalUserPrompt = regexProcessor.process(finalUserPrompt, 'input');
+    }
     this.throwIfCancelled(request.signal);
 
     const generationOptions = this.createGenerationOptions(request, preset);
@@ -316,6 +319,8 @@ class LLMAdapter {
     const stopWatching = this.watchForCancellation(request.signal, request.generationId);
 
     try {
+      await yieldToMainThread();
+
       if (helper.generateRaw) {
         const prompts: Array<{ role: 'system' | 'user'; content: string }> = [];
 

@@ -87,17 +87,3 @@ export async function initWorldBookSlot(): Promise<void> {
     Logger.error(MODULE, '初始化失败', e);
   }
 }
-
-/**
- * 检查槽位是否已初始化
- */
-export function isWorldBookSlotReady(): boolean {
-  return isInitialized;
-}
-
-/**
- * 重置状态（用于测试或聊天切换）
- */
-export function resetWorldBookSlot(): void {
-  isInitialized = false;
-}

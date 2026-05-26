@@ -34,41 +34,6 @@ export async function getEntries(worldbookName: string): Promise<WorldbookEntryW
 }
 
 /**
- * 获取所有世界书名称
- */
-export function getWorldbookNames(): string[] {
-  const helper = getTavernHelper();
-  try {
-    return helper?.getWorldbookNames?.() ?? [];
-  } catch (e) {
-    Logger.error(MODULE, '获取世界书列表失败', e);
-    return [];
-  }
-}
-
-/**
- * 删除世界书
- */
-export async function deleteWorldbook(worldbookName: string): Promise<boolean> {
-  const helper = getTavernHelper();
-  if (!helper?.deleteWorldbook) {
-    Logger.warn(MODULE, 'TavernHelper.deleteWorldbook 不可用');
-    return false;
-  }
-
-  try {
-    const success = await helper.deleteWorldbook(worldbookName);
-    if (success) {
-      Logger.info(MODULE, '已删除世界书', worldbookName);
-    }
-    return success;
-  } catch (e) {
-    Logger.error(MODULE, '删除世界书失败', e);
-    return false;
-  }
-}
-
-/**
  * 创建新的世界书条目
  *
  * 直接传递 Partial<WorldbookEntry> 给 TavernHelper，
@@ -102,81 +67,6 @@ export async function createEntry(
     return true;
   } catch (e) {
     Logger.error(MODULE, '创建世界书条目失败', e);
-    return false;
-  }
-}
-
-/**
- * 更新世界书条目
- *
- * 使用 updateWorldbookWith 的 updater 模式，直接合并字段。
- */
-export async function updateEntry(
-  worldbookName: string,
-  uid: number,
-  updates: Partial<WorldbookEntry>
-): Promise<boolean> {
-  const helper = getTavernHelper();
-  if (!helper?.updateWorldbookWith) {
-    Logger.warn(MODULE, 'TavernHelper.updateWorldbookWith 不可用');
-    return false;
-  }
-
-  try {
-    await helper.updateWorldbookWith(worldbookName, (entries) => {
-      const index = entries.findIndex((e) => e.uid === uid);
-      if (index !== -1) {
-        entries[index] = { ...entries[index], ...updates };
-        Logger.debug(MODULE, '条目已更新', { uid, name: entries[index].name });
-      } else {
-        Logger.warn(MODULE, 'updateEntry 未找到条目', uid);
-      }
-      return entries;
-    });
-    return true;
-  } catch (e) {
-    Logger.error(MODULE, '更新世界书条目失败', e);
-    return false;
-  }
-}
-
-/**
- * 删除指定的世界书条目
- */
-export async function deleteEntry(worldbookName: string, uid: number): Promise<boolean> {
-  const helper = getTavernHelper();
-  if (!helper?.deleteWorldbookEntries) {
-    Logger.warn(MODULE, 'TavernHelper.deleteWorldbookEntries 不可用');
-    return false;
-  }
-
-  try {
-    await helper.deleteWorldbookEntries(worldbookName, (entry) => entry.uid === uid);
-    Logger.debug(MODULE, '已删除条目', { worldbook: worldbookName, uid });
-    return true;
-  } catch (e) {
-    Logger.error(MODULE, '删除世界书条目失败', e);
-    return false;
-  }
-}
-
-/**
- * 批量删除世界书条目
- */
-export async function deleteEntries(worldbookName: string, uids: number[]): Promise<boolean> {
-  const helper = getTavernHelper();
-  if (!helper?.deleteWorldbookEntries) {
-    Logger.warn(MODULE, 'TavernHelper.deleteWorldbookEntries 不可用');
-    return false;
-  }
-
-  try {
-    const uidSet = new Set(uids);
-    await helper.deleteWorldbookEntries(worldbookName, (entry) => uidSet.has(entry.uid));
-    Logger.debug(MODULE, '已批量删除条目', { worldbook: worldbookName, count: uids.length });
-    return true;
-  } catch (e) {
-    Logger.error(MODULE, '批量删除世界书条目失败', e);
     return false;
   }
 }

@@ -30,7 +30,7 @@ export class StopGeneration implements IStep {
    */
   static async abort(signal?: JobContext['signal']): Promise<void> {
     try {
-      const browserWindow = typeof window !== 'undefined' ? (window as any) : undefined;
+      const browserWindow = typeof window !== 'undefined' ? window : undefined;
       const generationId = signal?.generationId;
 
       if (browserWindow && generationId && typeof browserWindow.stopGenerationById === 'function') {

@@ -7,7 +7,12 @@
  * - 具体的导入解析逻辑下发到 tasks/ 实现
  */
 
-import type { BatchProgressCallback, BatchQueue, BatchTaskType } from '@/types/batch';
+import type {
+  BatchProgressCallback,
+  BatchQueue,
+  BatchTaskType,
+  HistoryAnalysis,
+} from '@/types/batch';
 import { notificationService } from '@/ui/services/NotificationService';
 
 import { BatchEngine } from './engine/BatchEngine';
@@ -30,7 +35,11 @@ class BatchProcessor {
    * 分析并补全历史聊天记录
    * (V1.0 重构: 组装 HistoryTask 注入 Engine)
    */
-  async analyzeHistory(startFloor = 0, endFloor?: number, types?: BatchTaskType[]): Promise<any> {
+  async analyzeHistory(
+    startFloor = 0,
+    endFloor?: number,
+    types?: BatchTaskType[]
+  ): Promise<HistoryAnalysis> {
     try {
       const task = new HistoryTask(startFloor, endFloor, types);
       const previewTasks = await task.estimate();
@@ -38,7 +47,8 @@ class BatchProcessor {
       // 返回兼容旧 API 的格式给 UI
       return {
         startFloor: task.startFloor,
-        endFloor: task.endFloor,
+        endFloor: task.endFloor ?? startFloor,
+        estimatedTokens: 0,
         summaryTasks: previewTasks.find((t) => t.type === 'summary')?.progress.total || 0,
         entityTasks: previewTasks.find((t) => t.type === 'entity')?.progress.total || 0,
         trimTasks: previewTasks.find((t) => t.type === 'trim')?.progress.total || 0,
@@ -47,7 +57,16 @@ class BatchProcessor {
       };
     } catch (e: any) {
       console.error('[BatchProcessor] 分析历史失败:', e);
-      return { error: e.message };
+      return {
+        startFloor,
+        endFloor: endFloor ?? startFloor,
+        estimatedTokens: 0,
+        summaryTasks: 0,
+        entityTasks: 0,
+        trimTasks: 0,
+        embedTasks: 0,
+        archiveTasks: 0,
+      };
     }
   }
 

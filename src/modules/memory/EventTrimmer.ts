@@ -103,7 +103,7 @@ class EventTrimmer {
           keepRecentCount: config.keepRecentCount,
           previewEnabled: config.previewEnabled,
           templateId: 'builtin_trim', // Hardcoded for now, matches BuildPrompt category mapping potentially
-          logType: 'trimming',
+          logType: 'trim',
         },
       });
 

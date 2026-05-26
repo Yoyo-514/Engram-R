@@ -341,7 +341,11 @@ class Retriever {
           }
         );
 
-        if (keywordContext.data?.keywordEntityIds && brainConfig.enabled && !options?.isManualTest) {
+        if (
+          keywordContext.data?.keywordEntityIds &&
+          brainConfig.enabled &&
+          !options?.isManualTest
+        ) {
           const entityCandidates: RecallCandidate[] = keywordContext.data.keywordEntityIds.map(
             (entity: { id: string; score: number }) => ({
               id: entity.id,

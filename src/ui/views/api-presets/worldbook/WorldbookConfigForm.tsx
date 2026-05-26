@@ -3,12 +3,13 @@ import { useState } from 'react';
 import type { FC } from 'react';
 
 import type { WorldbookConfig } from '@/types/worldbook';
+import type { WorldbookStructureEntry, WorldbookStructure } from '@/types/worldbook_structure';
 import { FormSection, SwitchField } from '@/ui/components/form/FormComponents';
 
 interface WorldbookConfigFormProps {
   config: WorldbookConfig;
   onChange: (config: WorldbookConfig) => void;
-  worldbookStructure?: Record<string, any[]>;
+  worldbookStructure?: WorldbookStructure;
   disabledEntries?: Record<string, number[]>;
   onToggleWorldbook?: (name: string, disabled: boolean) => void;
   onToggleEntry?: (worldbook: string, uid: number, disabled: boolean) => void;
@@ -59,11 +60,13 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
   const filteredWorldbooks = worldbooks.filter(
     (book) =>
       book.toLowerCase().includes(filterText.toLowerCase()) ||
-      worldbookStructure[book].some(
-        (e: any) =>
-          e.names?.join(' ').toLowerCase().includes(filterText.toLowerCase()) ||
-          e.comment?.toLowerCase().includes(filterText.toLowerCase())
-      )
+      worldbookStructure[book].some((entry) => {
+        const haystack = [entry.name, entry.comment, entry.content, entry.keys.join(' ')]
+          .filter(Boolean)
+          .join(' ')
+          .toLowerCase();
+        return haystack.includes(filterText.toLowerCase());
+      })
   );
 
   return (
@@ -129,7 +132,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                 const entries = worldbookStructure[book] || [];
                 const isExpanded = expandedBooks.has(book);
                 const activeEntriesCount = entries.filter(
-                  (e: any) => !isEntryDisabled(book, e.uid)
+                  (entry) => !isEntryDisabled(book, entry.uid)
                 ).length;
 
                 return (
@@ -179,7 +182,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                             暂无条目
                           </div>
                         ) : (
-                          entries.map((entry: any) => {
+                          entries.map((entry: WorldbookStructureEntry) => {
                             const isEntryItemDisabled = isEntryDisabled(book, entry.uid);
                             return (
                               <div

@@ -184,10 +184,6 @@ function closeDb(chatId: string): void {
 /**
  * 检查某个聊天的数据库是否存在（不会自动创建）
  */
-export function hasDbForChat(chatId: string): boolean {
-  return dbCache.has(chatId);
-}
-
 /**
  * 异步检查某个聊天的数据库是否真实存在（不会自动创建）
  */
@@ -231,16 +227,6 @@ export async function listAllChatIds(): Promise<string[]> {
 /**
  * 删除所有 Engram 数据库 (危险操作！)
  */
-export async function deleteAllDatabases(): Promise<number> {
-  const dbNames = await listAllDatabases();
-  for (const name of dbNames) {
-    await Dexie.delete(name);
-  }
-  dbCache.clear();
-  Logger.warn(MODULE, `Deleted ${dbNames.length} databases`);
-  return dbNames.length;
-}
-
 function buildChatCharacterNameMap(): Map<string, string> {
   const ctx = getSTContext();
   const map = new Map<string, string>();

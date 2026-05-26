@@ -8,8 +8,8 @@ export class FetchEventsToTrim implements IStep {
   name = 'FetchEventsToTrim';
 
   async execute(context: JobContext): Promise<void> {
-    const config = context.config || {};
-    const keepRecentCount = config.keepRecentCount || 3;
+    const keepRecentCount =
+      typeof context.config.keepRecentCount === 'number' ? context.config.keepRecentCount : 3;
 
     const store = useMemoryStore.getState();
     const eventsToMerge = await store.getEventsToMerge(keepRecentCount);

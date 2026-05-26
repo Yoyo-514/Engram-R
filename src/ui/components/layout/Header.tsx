@@ -22,26 +22,26 @@ const Header: FC<HeaderProps> = ({
     <div className="z-50 w-full flex-shrink-0 bg-transparent transition-all duration-300">
       <header className="flex h-10 w-full items-center justify-between gap-3 px-4">
         {/* Left: Logo & Mobile Toggle */}
-        <div className="flex min-w-0 items-center gap-3 md:w-auto">
-        {/* Mobile Menu Toggle */}
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          className="-ml-2 rounded-md p-2 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
-          onClick={onToggleSidebar}
-          title="菜单"
-        >
-          <Menu size={18} />
-        </motion.button>
+        <div className="flex min-w-0 flex-1 items-center gap-3 md:w-auto">
+          {/* Mobile Menu Toggle */}
+          <motion.button
+            whileTap={{ scale: 0.9 }}
+            className="-ml-2 rounded-md p-2 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground md:hidden"
+            onClick={onToggleSidebar}
+            title="菜单"
+          >
+            <Menu size={18} />
+          </motion.button>
 
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <EngramIcon size={18} className="text-primary" />
-          <span className="font-semibold tracking-tight text-sidebar-foreground">Engram</span>
-        </div>
+          {/* Logo */}
+          <div className="flex shrink-0 items-center gap-2">
+            <EngramIcon size={18} className="text-primary" />
+            <span className="font-semibold tracking-tight text-sidebar-foreground">Engram</span>
+          </div>
 
           {/* 依赖提示：插件强依赖 Tavern Helper */}
           <div
-            className="bg-amber-500/15 text-amber-200 border-amber-400/30 hidden min-w-0 items-center rounded-md border px-2 py-1 text-[11px] font-medium leading-none md:flex"
+            className="hidden min-w-0 truncate rounded-md border border-amber-400/30 bg-amber-500/15 px-2 py-1 text-[11px] font-medium leading-none text-amber-200 md:block"
             title="本插件强依赖酒馆助手 Tavern Helper"
           >
             本插件强依赖酒馆助手 Tavern Helper
@@ -49,10 +49,10 @@ const Header: FC<HeaderProps> = ({
         </div>
 
         {/* Center: Spacer */}
-        <div className="flex-1" />
+        <div className="hidden flex-1 md:block" />
 
         {/* Right: Window Controls */}
-        <div className="flex items-center gap-1 md:gap-2">
+        <div className="flex shrink-0 items-center gap-1 md:gap-2">
           <CommandPalette onNavigate={onNavigate} />
           <div className="mx-1 h-4 w-[1px] bg-border" />
           <motion.button
@@ -68,7 +68,7 @@ const Header: FC<HeaderProps> = ({
 
       <div className="px-4 pb-2 md:hidden">
         <div
-          className="bg-amber-500/15 text-amber-200 border-amber-400/30 rounded-md border px-2 py-1.5 text-[11px] font-medium leading-snug"
+          className="whitespace-normal break-words rounded-md border border-amber-400/30 bg-amber-500/15 px-2 py-1.5 text-[11px] font-medium leading-snug text-amber-200"
           title="本插件强依赖酒馆助手 Tavern Helper"
         >
           本插件强依赖酒馆助手 Tavern Helper

@@ -247,7 +247,7 @@ export const DatabaseManagementSection: FC = () => {
                 当前仅清理 Engram 数据库与 `Engram_sync_*.json` 文件，不处理世界书。
               </p>
 
-              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+              <div className="bg-background/50 flex items-start justify-between gap-3 rounded-md border border-border p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">删除关联数据库</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
@@ -260,7 +260,7 @@ export const DatabaseManagementSection: FC = () => {
                 />
               </div>
 
-              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+              <div className="bg-background/50 flex items-start justify-between gap-3 rounded-md border border-border p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">显示命中确认</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">

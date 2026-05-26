@@ -53,14 +53,6 @@ export function getRawSTContext(): TavernContext | null | undefined {
 }
 
 /**
- * 获取当前聊天记录
- */
-export function getCurrentChat(): RawSTChatMessage[] {
-  const ctx = getSTContext();
-  return ctx?.chat || [];
-}
-
-/**
  * 获取当前聊天 ID
  */
 export function getCurrentChatId(): string | null {

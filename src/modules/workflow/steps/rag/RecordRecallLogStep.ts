@@ -27,7 +27,7 @@ export class RecordRecallLogStep implements IStep {
       // 这只是为了展示在日志里，不需要等待它注入，ST 会自己处理注入
       const worldInfoText = await getLiveActivatedWorldInfo();
       worldbookEntriesCount = worldInfoText ? worldInfoText.split('\n\n').length : 0;
-    } catch (e) {
+    } catch (_e) {
       Logger.debug(LogModule.RAG_INJECT, '获取世界书条目统计失败');
     }
 

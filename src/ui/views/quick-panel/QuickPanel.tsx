@@ -323,8 +323,7 @@ export function QuickPanel({ isOpen, onClose }: QuickPanelProps) {
                       style={{ color: 'var(--primary, #ef7357)', flexShrink: 0, marginTop: 2 }}
                     />
                     <span>
-                      暂无预处理模板。请前往 API 配置 → 提示词模板中创建 'preprocess'
-                      类别的模板。
+                      暂无预处理模板。请前往 API 配置 → 提示词模板中创建 'preprocess' 类别的模板。
                     </span>
                   </div>
                 ) : (

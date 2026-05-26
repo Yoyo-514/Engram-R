@@ -4,10 +4,9 @@
  */
 
 import { Logger } from '@/core/logger';
-import { getTavernHelper, isRecord, readNumber, readString, readStringArray } from '@/core/utils';
+import { getTavernHelper } from '@/core/utils';
 
 const MODULE = 'ModelService';
-const DEFAULT_TIMEOUT = 10000;
 
 export interface ModelInfo {
   id: string;
@@ -40,28 +39,6 @@ function normalizeModelIds(modelIds: string[]): ModelInfo[] {
     .sort((a, b) => a.id.localeCompare(b.id));
 }
 
-function parseCohereModel(item: unknown): ModelInfo | null {
-  if (!isRecord(item)) {
-    return null;
-  }
-
-  const endpoints = readStringArray(item.endpoints);
-  if (!endpoints.includes('embed')) {
-    return null;
-  }
-
-  const name = readString(item.name);
-  if (!name) {
-    return null;
-  }
-
-  return {
-    id: name,
-    name,
-    contextLength: readNumber(item.context_length),
-  };
-}
-
 async function tryFetchModelsViaTavernHelper(
   config: FetchModelsConfig
 ): Promise<ModelInfo[] | null> {
@@ -79,39 +56,6 @@ async function tryFetchModelsViaTavernHelper(
   } catch (error) {
     Logger.warn(MODULE, `TavernHelper model discovery failed: ${normalizeErrorMessage(error)}`);
     return null;
-  }
-}
-
-function parseCohereResponse(payload: unknown): ModelInfo[] {
-  const items = isRecord(payload) && Array.isArray(payload.models) ? payload.models : [];
-
-  return items
-    .map((item) => parseCohereModel(item))
-    .filter((item): item is ModelInfo => item !== null);
-}
-
-/**
- * 获取模型列表
- */
-export async function fetchModels(
-  type: ModelAPIType,
-  config: FetchModelsConfig
-): Promise<ModelInfo[]> {
-  switch (type) {
-    case 'openai':
-      return fetchOpenAIModels(config);
-    case 'ollama':
-      return fetchOllamaModels(config);
-    case 'vllm':
-      return fetchVLLMModels(config);
-    case 'cohere':
-      return fetchCohereModels(config);
-    case 'jina':
-    case 'voyage':
-      return getPresetModels(type);
-    default:
-      Logger.warn(MODULE, 'Unknown API type');
-      return [];
   }
 }
 
@@ -150,47 +94,6 @@ export async function fetchVLLMModels(config: FetchModelsConfig): Promise<ModelI
   }
 
   throw new Error('无法通过 TavernHelper 获取 vLLM 模型列表');
-}
-
-/**
- * 获取 Cohere 模型列表
- */
-export async function fetchCohereModels(config: FetchModelsConfig): Promise<ModelInfo[]> {
-  const { apiKey, timeout = DEFAULT_TIMEOUT } = config;
-
-  if (!apiKey) {
-    Logger.warn(MODULE, 'Cohere API key required');
-    return getPresetModels('cohere');
-  }
-
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-
-  try {
-    const response = await fetch('https://api.cohere.ai/v1/models', {
-      method: 'GET',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      signal: controller.signal,
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
-    }
-
-    const data: unknown = await response.json();
-    const models = parseCohereResponse(data);
-
-    Logger.info(MODULE, `Fetched ${models.length} embed models from Cohere`);
-    return models;
-  } catch (error) {
-    Logger.error(MODULE, `Cohere API error: ${normalizeErrorMessage(error)}`);
-    return getPresetModels('cohere');
-  } finally {
-    clearTimeout(timeoutId);
-  }
 }
 
 /**

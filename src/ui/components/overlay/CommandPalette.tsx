@@ -5,20 +5,7 @@ import { createPortal } from 'react-dom';
 
 import { setCommandPaletteCallback } from '@/index';
 import { CommandAdapter } from '@/modules/search/adapters/CommandAdapter';
-import { LogAdapter } from '@/modules/search/adapters/LogAdapter';
-import { MemoryAdapter } from '@/modules/search/adapters/MemoryAdapter';
-import { PresetAdapter } from '@/modules/search/adapters/PresetAdapter';
-import { SettingAdapter } from '@/modules/search/adapters/SettingAdapter';
 import { searchService, type SearchResult } from '@/modules/search/SearchService';
-
-if (!window.__ENGRAM_SEARCH_INIT__) {
-  searchService.registerAdapter(new CommandAdapter());
-  searchService.registerAdapter(new SettingAdapter());
-  searchService.registerAdapter(new LogAdapter());
-  searchService.registerAdapter(new MemoryAdapter());
-  searchService.registerAdapter(new PresetAdapter());
-  window.__ENGRAM_SEARCH_INIT__ = true;
-}
 
 interface CommandPaletteProps {
   onNavigate: (path: string) => void;

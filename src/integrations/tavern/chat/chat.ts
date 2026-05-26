@@ -1,5 +1,5 @@
 import { Logger } from '@/core/logger';
-import { getCurrentTavernCharacter, getTavernContext, getTavernHelper } from '@/core/utils';
+import { getCurrentTavernCharacter, getTavernHelper } from '@/core/utils';
 
 import { getSTContext, type RawSTChatMessage } from '../core/context';
 

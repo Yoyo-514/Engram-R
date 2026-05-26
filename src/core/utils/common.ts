@@ -3,18 +3,9 @@
 /**
  * 格式化时间戳
  */
-export function formatTimestamp(timestamp: number): string {
-  return new Date(timestamp).toLocaleString('zh-CN');
-}
-
 /**
  * 截断文本
  */
-export function truncateText(text: string, maxLength: number): string {
-  if (text.length <= maxLength) return text;
-  return text.slice(0, maxLength) + '...';
-}
-
 /**
  * 生成语义化短 UUID (例如 evt_A1b2C3)
  * 采用 Base62 字符集，默认 6 位长度，兼顾极短体积与防撞性能。
@@ -38,6 +29,13 @@ export function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+/**
+ * 让出主线程，避免长流程连续同步步骤阻塞界面渲染。
+ */
+export function yieldToMainThread(): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, 0));
+}
+
 export function isRecord(value: unknown): value is Record<string, unknown> {
   return value !== null && typeof value === 'object';
 }
@@ -48,12 +46,6 @@ export function readString(value: unknown): string | undefined {
 
 export function readNumber(value: unknown): number | undefined {
   return typeof value === 'number' && Number.isFinite(value) ? value : undefined;
-}
-
-export function readStringArray(value: unknown): string[] {
-  return Array.isArray(value)
-    ? value.filter((item): item is string => typeof item === 'string')
-    : [];
 }
 
 export function isStringArray(value: unknown): value is string[] {
