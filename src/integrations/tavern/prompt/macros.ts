@@ -1,7 +1,4 @@
-import {
-  DEFAULT_ENTITY_INJECT_LIMIT,
-  DEFAULT_RERANK_CONFIG,
-} from '@/config/rag/defaults';
+import { DEFAULT_ENTITY_INJECT_LIMIT, DEFAULT_RERANK_CONFIG } from '@/config/rag/defaults';
 import { get, subscribe } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';

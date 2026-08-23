@@ -33,7 +33,7 @@ export const LayoutTabs: FC<TabPillsProps> = (props) => {
   const headerProps = {
     ...props,
     sticky: false,
-    className: `!mb-0 !border-0 !bg-transparent px-4 md:px-8 lg:px-12 ${props.className || ''}`,
+    className: `!mb-0 !border-0 !bg-transparent px-4 md:px-8 ${props.className || ''}`,
   };
 
   return createPortal(<TabPills {...headerProps} />, container);

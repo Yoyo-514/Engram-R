@@ -37,7 +37,7 @@ export const TabPills: FC<TabPillsProps> = ({
 
   return (
     <div
-      className={`mb-6 flex items-center justify-between gap-4 border-b border-border ${sticky ? 'glass-sticky sticky z-20 -mx-4 -mt-4 px-4 pb-0 pt-4 md:-mx-8 md:px-8 lg:-mx-12 lg:px-12' : 'px-0'} ${className} `}
+      className={`mb-6 flex items-center justify-between gap-4 border-b border-border ${sticky ? 'glass-sticky sticky z-20 -mx-4 -mt-4 px-4 pb-0 pt-4 md:-mx-8 md:px-8' : 'px-0'} ${className} `}
       style={
         sticky
           ? {

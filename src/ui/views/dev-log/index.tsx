@@ -202,7 +202,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
       {activeTab === 'runtime' && (
         <div className="flex min-h-0 flex-1 flex-col">
           {/* 工具栏 - sticky (Level 2, now top-0 because tabs are in header) */}
-          <div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b border-border px-4 py-3 backdrop-blur-sm md:-mx-8 md:px-8 lg:-mx-12 lg:px-12">
+          <div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b border-border px-4 py-3 backdrop-blur-sm md:-mx-8 md:px-8">
             <div className="flex flex-wrap items-center gap-2">
               {/* 级别过滤 */}
               <div className="relative">
