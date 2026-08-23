@@ -62,3 +62,9 @@ export const DEFAULT_RERANK_CONFIG: RerankConfig = {
   topN: 5,
   hybridAlpha: 0.5,
 };
+
+/**
+ * 实体注入上限：无论关键词/类脑召回多少实体，注入 prompt 的实体状态最多取这个数
+ * 防止实体描述（YAML 烧录）过多撑爆 token
+ */
+export const DEFAULT_ENTITY_INJECT_LIMIT = 10;

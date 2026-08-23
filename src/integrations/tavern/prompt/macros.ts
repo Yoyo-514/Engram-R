@@ -1,3 +1,4 @@
+import { DEFAULT_ENTITY_INJECT_LIMIT } from '@/config/rag/defaults';
 import { get, subscribe } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
@@ -290,9 +291,10 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
           .map((slot) => slot.id);
       }
 
-      // 提取实体 ID
+      // 提取实体 ID（注入上限，防止实体状态文本撑爆 token）
       effectiveEntityIds = snapshot
         .filter((slot) => slot.category === 'entity')
+        .slice(0, DEFAULT_ENTITY_INJECT_LIMIT)
         .map((slot) => slot.id);
     } catch (e) {
       Logger.debug('MacroService', 'BrainRecallCache 获取失败，跳过', e);
@@ -359,11 +361,12 @@ export async function refreshCacheWithNodes(
     // 1. 刷新事件摘要
     cachedSummaries = await store.getEventSummaries(recalledIds);
 
-    // 2. V1.4.1: 同步刷新实体状态
+    // 2. V1.4.1: 同步刷新实体状态（注入上限）
     try {
       const entityIds = brainRecallCache
         .getShortTermSnapshot()
         .filter((slot) => slot.category === 'entity')
+        .slice(0, DEFAULT_ENTITY_INJECT_LIMIT)
         .map((slot) => slot.id);
       cachedEntityStates = await store.getEntityStates(entityIds);
     } catch (e) {

@@ -1,4 +1,9 @@
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
+import {
+  DEFAULT_BRAIN_RECALL_CONFIG,
+  DEFAULT_ENTITY_INJECT_LIMIT,
+  DEFAULT_RECALL_CONFIG,
+  DEFAULT_RERANK_CONFIG,
+} from '@/config/rag/defaults';
 import { get } from '@/config/settings';
 import { engramEventBus } from '@/core/events/event-bus';
 import { Logger, LogModule } from '@/core/logger';
@@ -6,6 +11,7 @@ import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
 import type { ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
+import type { EntityNode } from '@/types/graph';
 import { type JobContext } from '@/types/job_context';
 import type { BrainRecallConfig, RecallCandidate, RecallConfig } from '@/types/rag';
 import { type IStep } from '@/types/step';
@@ -31,6 +37,7 @@ export class BrainRecallStep implements IStep {
     const db = tryGetDbForChat(chatId || '');
     const allEntities = await (db?.entities.toArray() || []);
     const entityMap = new Map(allEntities.map((e) => [e.id, e]));
+    let workingMemorySize = 0;
 
     if (brainConfig.enabled) {
       brainRecallCache.setConfig(brainConfig);
@@ -74,6 +81,7 @@ export class BrainRecallStep implements IStep {
       );
 
       const brainResults = brainRecallCache.process(allMappedCandidates);
+      workingMemorySize = brainResults.length;
 
       // 3. 更新事件候选分数 (V1.4.5: 改为增量加成模式，不再直接覆盖)
       const candidateMap = new Map(candidates.map((c) => [c.id, c]));
@@ -123,17 +131,6 @@ export class BrainRecallStep implements IStep {
         entityOutput: recalledEntities.length,
         isWorkingMemory: brainResults.length,
       });
-
-      // 通知记忆流等 UI 激活状态已更新（RETRIEVAL_COMPLETE 此前无人发出，补上链路）
-      engramEventBus.emit({
-        type: 'RETRIEVAL_COMPLETE',
-        payload: {
-          chatId,
-          eventCount: context.data.candidates.length,
-          entityCount: recalledEntities.length,
-          workingMemorySize: brainResults.length,
-        },
-      });
     } else {
       // V1.4.1: 类脑引擎未启用，执行降级透传
       context.data.recalledEntities = keywordEntityIds
@@ -147,5 +144,48 @@ export class BrainRecallStep implements IStep {
         entityCount: context.data.recalledEntities?.length || 0,
       });
     }
+
+    // ============ 最终注入截断 ============
+    // 无论 rerank 是否开启，注入候选都按 rerankConfig.topN（默认 5）截断，
+    // 避免合并后几十条召回事件全部注入导致 token 膨胀。
+    // 类脑加成会改变 hybridScore，因此截断前按最终分数重排。
+    const rerankSettings = get('runtimeSettings')?.rerankConfig;
+    const injectLimit = Math.max(1, rerankSettings?.topN ?? DEFAULT_RERANK_CONFIG.topN);
+
+    const finalCandidates: ScoredEvent[] = context.data.candidates;
+    if (finalCandidates.length > injectLimit) {
+      context.data.candidates = [...finalCandidates]
+        .sort((a, b) => (b.hybridScore ?? 0) - (a.hybridScore ?? 0))
+        .slice(0, injectLimit);
+      Logger.debug(LogModule.RAG_INJECT, '召回候选已截断', {
+        before: finalCandidates.length,
+        after: context.data.candidates.length,
+      });
+    }
+
+    // 实体注入上限：按召回权重取前 N，防止实体状态文本过大
+    const finalEntities = context.data.recalledEntities as (EntityNode & {
+      _recallWeight?: number;
+    })[];
+    if (finalEntities.length > DEFAULT_ENTITY_INJECT_LIMIT) {
+      context.data.recalledEntities = [...finalEntities]
+        .sort((a, b) => (b._recallWeight ?? 0) - (a._recallWeight ?? 0))
+        .slice(0, DEFAULT_ENTITY_INJECT_LIMIT);
+      Logger.debug(LogModule.RAG_INJECT, '召回实体已截断', {
+        before: finalEntities.length,
+        after: context.data.recalledEntities.length,
+      });
+    }
+
+    // 通知记忆流等 UI 激活状态已更新（RETRIEVAL_COMPLETE 此前无人发出，补上链路）
+    engramEventBus.emit({
+      type: 'RETRIEVAL_COMPLETE',
+      payload: {
+        chatId,
+        eventCount: context.data.candidates.length,
+        entityCount: context.data.recalledEntities.length,
+        workingMemorySize,
+      },
+    });
   }
 }
