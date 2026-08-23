@@ -43,3 +43,4 @@ coverage/
 
 tsconfig.tsbuildinfo
 tavern-api
+.pi

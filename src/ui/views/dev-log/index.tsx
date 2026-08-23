@@ -19,7 +19,8 @@ import {
  * - 极简主义布局
  */
 import type { FC } from 'react';
-import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 
 import type { LogLevel } from '@/config/logger/defaults';
 import { LogLevelConfig } from '@/config/logger/presentation';
@@ -29,7 +30,13 @@ import { PageTitle } from '@/ui/components/display/PageTitle';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { type Tab } from '@/ui/components/layout/TabPills';
 
-import { LogGroup, groupLogsByModule } from './LogEntryItem';
+import {
+  groupLogsByModule,
+  LogEntryItem,
+  LogGroupHeader,
+  summarizeLogGroup,
+  type LogGroupSummary,
+} from './LogEntryItem';
 import { ModelLog } from './ModelLog';
 import { RecallLog } from './RecallLog';
 
@@ -53,6 +60,16 @@ const TAB_INFO: Record<TabType, { title: string; subtitle: string }> = {
 // V0.9.10: 模块列表自动生成（不再硬编码）
 const MODULES = ['ALL', ...ALL_MODULES];
 
+// 日志订阅批量合并间隔：高频日志下把多次 setState 合并为一次
+const LOG_BATCH_INTERVAL_MS = 100;
+
+// 虚拟化列表行类型：分组头或单条日志
+// 重构说明：V0.9.12 的分组展示保留，但改为 flatten 行 + Virtuoso 虚拟化渲染
+// 5000 条日志只渲染可视区域，避免全量 DOM 导致卡顿
+type LogRow =
+  | { kind: 'header'; summary: LogGroupSummary }
+  | { kind: 'entry'; entry: LogEntry; indent: boolean };
+
 interface DevLogProps {
   initialTab?: TabType;
 }
@@ -61,7 +78,6 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'runtime');
   const currentInfo = TAB_INFO[activeTab];
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [filteredLogs, setFilteredLogs] = useState<LogEntry[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<LogLevel | -1>(-1);
   const [moduleFilter, setModuleFilter] = useState('ALL');
@@ -72,19 +88,38 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   const [defaultGroupExpanded, setDefaultGroupExpanded] = useState(true);
   const [defaultDataExpanded] = useState(false);
 
-  const bottomRef = useRef<HTMLDivElement>(null);
-
   // 初始化和订阅日志
+  // 性能说明：回调只入缓冲区，每 100ms 批量 flush 一次 setState
+  // 高频日志（批量处理、RAG 注入等场景）下渲染频率从每条一次降到每秒最多 10 次
   useEffect(() => {
     setLogs(Logger.getLogs());
+    let timer: ReturnType<typeof setTimeout> | null = null;
+    const pending: LogEntry[] = [];
+
+    const flush = () => {
+      timer = null;
+      if (pending.length > 0) {
+        setLogs((prev) => [...prev, ...pending.splice(0)]);
+      }
+    };
+
     const unsubscribe = Logger.subscribe((entry) => {
-      setLogs((prev) => [...prev, entry]);
+      pending.push(entry);
+      if (timer === null) {
+        timer = setTimeout(flush, LOG_BATCH_INTERVAL_MS);
+      }
     });
-    return () => unsubscribe();
+
+    return () => {
+      if (timer !== null) {
+        clearTimeout(timer);
+      }
+      unsubscribe();
+    };
   }, []);
 
-  // 过滤日志
-  useEffect(() => {
+  // 过滤日志：改为 useMemo 派生，替代原先的 useEffect + 中间 state（消除双重渲染）
+  const filteredLogs = useMemo(() => {
     let result = logs;
     if (levelFilter !== -1) {
       result = result.filter((log) => log.level >= levelFilter);
@@ -99,7 +134,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
           log.message.toLowerCase().includes(query) || log.module.toLowerCase().includes(query)
       );
     }
-    setFilteredLogs(result);
+    return result;
   }, [logs, levelFilter, moduleFilter, searchQuery]);
 
   // V0.9.12: 将日志按模块分组
@@ -107,12 +142,25 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
     return groupLogsByModule(filteredLogs);
   }, [filteredLogs]);
 
-  // 自动滚动
-  useEffect(() => {
-    if (autoScroll && bottomRef.current) {
-      bottomRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  // 分组 + 折叠状态 → 虚拟化列表行
+  const rows = useMemo(() => {
+    const out: LogRow[] = [];
+    for (const group of logGroups) {
+      const isSingle = group.length === 1;
+      const isExpanded = isSingle || defaultGroupExpanded;
+
+      // 单条日志沿用原行为：直接显示条目，不渲染分组头
+      if (!isSingle) {
+        out.push({ kind: 'header', summary: summarizeLogGroup(group) });
+      }
+      if (isExpanded) {
+        for (const entry of group) {
+          out.push({ kind: 'entry', entry, indent: !isSingle });
+        }
+      }
     }
-  }, [filteredLogs, autoScroll]);
+    return out;
+  }, [logGroups, defaultGroupExpanded]);
 
   const handleClear = useCallback(() => {
     Logger.clear();
@@ -273,24 +321,44 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
           </div>
 
           {/* 日志内容区 - 无边框 */}
-          <div className="flex-1 overflow-y-auto py-2 font-mono text-xs leading-relaxed">
+          {/* 性能说明：Virtuoso 虚拟化渲染，只挂载可视区域内的行 */}
+          <div className="min-h-0 flex-1 py-2 font-mono text-xs leading-relaxed">
             {filteredLogs.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
                 <Terminal size={32} strokeWidth={1} className="opacity-30" />
                 <p className="text-sm font-light">暂无日志记录</p>
               </div>
             ) : (
-              <>
-                {logGroups.map((group) => (
-                  <LogGroup
-                    key={`${group[0].module}-${group[0].id}`}
-                    entries={group}
-                    defaultExpanded={defaultGroupExpanded}
-                    defaultDataExpanded={defaultDataExpanded}
-                  />
-                ))}
-                <div ref={bottomRef} />
-              </>
+              <Virtuoso
+                className="min-h-0 flex-1"
+                style={{ height: '100%' }}
+                data={rows}
+                computeItemKey={(index, row) =>
+                  row.kind === 'header' ? `header-${row.summary.first.id}` : row.entry.id
+                }
+                followOutput={autoScroll ? (isAtBottom) => (isAtBottom ? 'smooth' : false) : false}
+                itemContent={(index, row) => {
+                  if (row.kind === 'header') {
+                    return (
+                      <LogGroupHeader
+                        summary={row.summary}
+                        expanded={defaultGroupExpanded}
+                        onToggle={() => setDefaultGroupExpanded(!defaultGroupExpanded)}
+                      />
+                    );
+                  }
+
+                  const item = (
+                    <LogEntryItem entry={row.entry} defaultExpanded={defaultDataExpanded} />
+                  );
+                  // 分组内条目带缩进边线，保持 Docker 风格视觉
+                  return row.indent ? (
+                    <div className="ml-4 border-l border-zinc-800 pl-2">{item}</div>
+                  ) : (
+                    item
+                  );
+                }}
+              />
             )}
           </div>
 

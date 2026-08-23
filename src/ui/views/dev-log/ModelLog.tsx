@@ -11,7 +11,7 @@ import {
   XCircle,
   Zap,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, memo } from 'react';
 import type { FC } from 'react';
 
 /**
@@ -67,10 +67,11 @@ const formatDuration = (ms?: number): string => {
 };
 
 /** 单条日志卡片 */
+// 性能说明：React.memo + ModelLogger 不可变更新，订阅通知时仅重渲染变化的卡片
 const LogCard: FC<{
   sent: ModelLogEntry;
   received?: ModelLogEntry;
-}> = ({ sent, received }) => {
+}> = memo(function LogCard({ sent, received }) {
   const [expanded, setExpanded] = useState(false);
   const [calcSentTokens, setCalcSentTokens] = useState<number | null>(null);
   const [calcRecvTokens, setCalcRecvTokens] = useState<number | null>(null);
@@ -212,7 +213,7 @@ const LogCard: FC<{
       )}
     </div>
   );
-};
+});
 
 /** ModelLog 主组件 */
 export const ModelLog: FC = () => {

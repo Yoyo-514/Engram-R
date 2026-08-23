@@ -69,6 +69,9 @@ function limitLogText(value: string | undefined): string | undefined {
   return `${value.slice(0, MAX_TEXT_CHARS)}\n\n...[已截断 ${value.length - MAX_TEXT_CHARS} 字符以避免界面卡顿]`;
 }
 
+// 接收日志条目的 ID 后缀（与发送条目配对）
+const RECEIVE_SUFFIX = '_recv';
+
 /**
  * ModelLogger 类
  * 管理模型调用日志
@@ -115,6 +118,9 @@ class ModelLoggerClass {
 
   /**
    * 更新日志条目（接收阶段）
+   *
+   * 不可变更新：接收时替换 sent 条目为新对象，
+   * 保证 React.memo(LogCard) 的浅比较能感知状态变化
    */
   logReceive(
     id: string,
@@ -126,12 +132,13 @@ class ModelLoggerClass {
       duration?: number;
     }
   ): void {
-    const entry = this.entries.find((e) => e.id === id);
-    if (!entry) return;
+    const index = this.entries.findIndex((e) => e.id === id);
+    if (index < 0) return;
+    const entry = this.entries[index];
 
     // 添加接收条目
     const receiveEntry: ModelLogEntry = {
-      id: `${id}_recv`,
+      id: `${id}${RECEIVE_SUFFIX}`,
       timestamp: Date.now(),
       type: entry.type,
       direction: 'received',
@@ -145,17 +152,17 @@ class ModelLoggerClass {
       floorRange: entry.floorRange,
     };
 
-    // 更新原条目状态
-    entry.status = data.status;
-    entry.duration = data.duration;
+    // 替换原发送条目为新对象（不可变更新），并在其后插入接收条目
+    const updatedSent: ModelLogEntry = {
+      ...entry,
+      status: data.status,
+      duration: data.duration,
+    };
 
-    // 在发送条目后插入接收条目
-    const index = this.entries.findIndex((e) => e.id === id);
-    if (index >= 0) {
-      this.entries.splice(index, 0, receiveEntry);
-    } else {
-      this.entries.unshift(receiveEntry);
-    }
+    const next = [...this.entries];
+    next[index] = updatedSent;
+    next.splice(index, 0, receiveEntry);
+    this.entries = next;
 
     this.trimEntries();
     this.notifyListeners();
@@ -206,19 +213,24 @@ class ModelLoggerClass {
 
   /**
    * 获取配对的日志（发送+接收）
+   * 单次遍历构建 Map 索引，O(n) 复杂度
    */
   getPaired(): { sent: ModelLogEntry; received?: ModelLogEntry }[] {
-    const result: { sent: ModelLogEntry; received?: ModelLogEntry }[] = [];
-    const sentEntries = this.entries.filter((e) => e.direction === 'sent');
+    const receivedBySentId = new Map<string, ModelLogEntry>();
+    const sentEntries: ModelLogEntry[] = [];
 
-    for (const sent of sentEntries) {
-      const received = this.entries.find(
-        (e) => e.id === `${sent.id}_recv` && e.direction === 'received'
-      );
-      result.push({ sent, received });
+    for (const e of this.entries) {
+      if (e.direction === 'received') {
+        receivedBySentId.set(e.id.slice(0, -RECEIVE_SUFFIX.length), e);
+      } else {
+        sentEntries.push(e);
+      }
     }
 
-    return result;
+    return sentEntries.map((sent) => ({
+      sent,
+      received: receivedBySentId.get(sent.id),
+    }));
   }
 
   /**

@@ -12,8 +12,12 @@ import { generateShortUUID } from '@/core/utils';
 import type { LogEntry, LoggerConfig } from '@/types/logger';
 
 import manifest from '../../../manifest.json';
-import { engramEventBus } from '../events';
-import type { EngramEvent } from '../events';
+// 深度导入 event-bus 而非 events 桶文件：
+// events/index 会反向引入 EventWatcher → tavern 集成链 → PromptLoader，
+// 而 PromptLoader 在模块顶层调用 Logger.info，形成致命循环依赖
+// （生产环境靠加载顺序侥幸避过，单测/不同入口下会直接崩）
+import { engramEventBus } from '../events/event-bus';
+import type { EngramEvent } from '../events/event-bus';
 import type { LogModule } from './LogModule';
 
 // 日志流 Subject (RxJS)
@@ -29,12 +33,56 @@ let config: LoggerConfig = { ...DEFAULT_LOGGER_CONFIG };
 // 初始化标记（防止重复订阅 EventBus）
 let isInitialized = false;
 
+// 单条日志 data 序列化后的最大保留字符数
+// 防止超大 payload（如召回结果、聊天上下文）长期驻留内存并拖慢 UI 序列化
+const MAX_LOG_DATA_CHARS = 4096;
+
 /**
  * 格式化时间戳为 HH:MM:SS
  */
 function formatTime(timestamp: number): string {
   const date = new Date(timestamp);
   return date.toTimeString().slice(0, 8);
+}
+
+/**
+ * 限制日志 data 大小（写入侧截断）
+ *
+ * 设计取舍：
+ * - 超大 payload 在写入时截断一次并缓存序列化结果，
+ *   避免 UI 展开时反复 JSON.stringify 大对象，也避免内存膨胀
+ * - 小数据直接原样返回，序列化开销可忽略
+ */
+function limitLogData(data: unknown): unknown {
+  if (data === undefined || data === null) {
+    return data;
+  }
+
+  if (typeof data === 'string') {
+    if (data.length <= MAX_LOG_DATA_CHARS) {
+      return data;
+    }
+    return `${data.slice(0, MAX_LOG_DATA_CHARS)}...[已截断，原 ${data.length} 字符]`;
+  }
+
+  if (typeof data !== 'object') {
+    return data;
+  }
+
+  try {
+    const json = JSON.stringify(data);
+    if (json.length <= MAX_LOG_DATA_CHARS) {
+      return data;
+    }
+    return {
+      __truncated: true,
+      __originalLength: json.length,
+      preview: json.slice(0, MAX_LOG_DATA_CHARS),
+    };
+  } catch {
+    // 循环引用或不可序列化对象
+    return '[Data serialization failed]';
+  }
 }
 
 /**
@@ -50,14 +98,15 @@ function writeLog(level: LogLevel, module: string, message: string, data?: unkno
     level,
     module,
     message,
-    data,
+    data: limitLogData(data),
   };
 
   // 添加到内存缓存
   logCache.push(entry);
 
-  // 限制最大缓存条数 (FIFO)
-  if (logCache.length > config.maxEntries) {
+  // 惰性裁剪：超过上限的 125% 才一次性裁剪 (FIFO)
+  // 避免每次写入都做 O(n) 数组拷贝
+  if (logCache.length > config.maxEntries * 1.25) {
     logCache = logCache.slice(-config.maxEntries);
   }
 

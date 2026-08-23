@@ -17,6 +17,9 @@ describe('ModelLogger', () => {
       model: 'model-a',
     });
 
+    const [sentBefore] = ModelLogger.getPaired();
+    const sentRef = sentBefore.sent;
+
     ModelLogger.logReceive(id, {
       response: 'response',
       status: 'success',
@@ -29,6 +32,10 @@ describe('ModelLogger', () => {
     expect(paired.received?.id).toBe(`${id}_recv`);
     expect(paired.received?.response).toBe('response');
     expect(ModelLogger.getCount()).toBe(1);
+
+    // 不可变更新：原发送条目引用不变，状态由新对象承载
+    expect(sentRef.status).toBe('pending');
+    expect(paired.sent).not.toBe(sentRef);
   });
 
   it('notifies subscribers when logs change', async () => {

@@ -25,7 +25,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { FC } from 'react';
-import { useState, useEffect, useMemo, createElement } from 'react';
+import { memo, useState, useEffect, useMemo, createElement } from 'react';
 
 import { LogLevel } from '@/config/logger/defaults';
 import { LogLevelConfig } from '@/config/logger/presentation';
@@ -35,14 +35,6 @@ interface LogEntryItemProps {
   entry: LogEntry;
   /** 外部控制是否展开数据详情 */
   defaultExpanded?: boolean;
-}
-
-interface LogGroupProps {
-  entries: LogEntry[];
-  /** 默认是否展开分组 */
-  defaultExpanded?: boolean;
-  /** 默认是否展开数据详情 */
-  defaultDataExpanded?: boolean;
 }
 
 /**
@@ -110,16 +102,39 @@ function getModuleIcon(module: string): LucideIcon {
   return Layers;
 }
 
+// 单条日志 data 预览的最大展示字符数（写入侧已截断到 4096，这里再收紧展示）
+const MAX_PREVIEW_CHARS = 2000;
+
 /**
  * 单条日志项
+ *
+ * 性能说明：
+ * - React.memo 包裹，批量更新时旧条目引用不变，跳过重渲染
+ * - data 预览序列化结果 useMemo 缓存，避免每次渲染 JSON.stringify
  */
-export const LogEntryItem: FC<LogEntryItemProps> = ({ entry, defaultExpanded = false }) => {
+export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
+  entry,
+  defaultExpanded = false,
+}) {
   // 自动展开错误和警告
   const autoExpand = entry.level === LogLevel.WARN || entry.level === LogLevel.ERROR;
   const [expanded, setExpanded] = useState(defaultExpanded || autoExpand);
   const hasData = entry.data !== undefined;
   const levelConfig = LogLevelConfig[entry.level];
   const levelStyle = LEVEL_STYLES[entry.level];
+
+  // 缓存 data 预览文本，限制展示长度
+  // 大 payload 已在写入侧截断，这里再限制一次展示尺寸
+  const dataPreview = useMemo(() => {
+    if (!hasData) return null;
+    try {
+      const str = typeof entry.data === 'string' ? entry.data : JSON.stringify(entry.data, null, 2);
+      if (str.length <= MAX_PREVIEW_CHARS) return str;
+      return `${str.slice(0, MAX_PREVIEW_CHARS)}\n...[预览已截断]`;
+    } catch {
+      return '[Data serialization failed]';
+    }
+  }, [entry.data, hasData]);
 
   // 响应外部默认展开状态变化
   useEffect(() => {
@@ -164,93 +179,86 @@ export const LogEntryItem: FC<LogEntryItemProps> = ({ entry, defaultExpanded = f
       {expanded && hasData && (
         <div className="mb-1 ml-10 mr-2 rounded-r border-l-2 border-zinc-700 bg-zinc-900/50 px-3 py-2 text-[10px]">
           <pre className="m-0 whitespace-pre-wrap break-words font-mono text-zinc-400">
-            {JSON.stringify(entry.data, null, 2)}
+            {dataPreview}
           </pre>
         </div>
       )}
     </div>
   );
-};
+});
 
 /**
- * 日志分组组件（Docker 风格）
- * 将连续相同模块的日志合并在一起显示
+ * 日志分组摘要（由条目列表预计算，供分组头渲染）
  */
-export const LogGroup: FC<LogGroupProps> = ({
-  entries,
-  defaultExpanded = true,
-  defaultDataExpanded = false,
-}) => {
-  const [expanded, setExpanded] = useState(defaultExpanded);
+export interface LogGroupSummary {
+  module: string;
+  count: number;
+  first: LogEntry;
+  last: LogEntry;
+  highestLevel: LogLevel;
+}
 
-  // 响应外部默认展开状态变化
-  useEffect(() => {
-    setExpanded(defaultExpanded);
-  }, [defaultExpanded]);
+/**
+ * 从一组日志条目计算分组摘要
+ */
+export function summarizeLogGroup(entries: LogEntry[]): LogGroupSummary {
+  const highestLevel = entries.reduce(
+    (max, e) => Math.max(max, e.level),
+    LogLevel.DEBUG
+  ) as LogLevel;
 
-  // 分组信息
-  const groupModule = entries[0]?.module || 'Unknown';
-  const entryCount = entries.length;
-  const firstEntry = entries[0];
-  const lastEntry = entries[entries.length - 1];
+  return {
+    module: entries[0]?.module ?? 'Unknown',
+    count: entries.length,
+    first: entries[0],
+    last: entries[entries.length - 1],
+    highestLevel,
+  };
+}
 
-  // 获取最高级别（用于显示颜色）
-  const highestLevel = useMemo(() => {
-    return entries.reduce((max, e) => Math.max(max, e.level), LogLevel.DEBUG) as LogLevel;
-  }, [entries]);
-  const levelStyle = LEVEL_STYLES[highestLevel];
+interface LogGroupHeaderProps {
+  summary: LogGroupSummary;
+  /** 分组是否展开（受控） */
+  expanded: boolean;
+  onToggle: () => void;
+}
 
-  // 时间范围
-  const timeRange =
-    firstEntry && lastEntry
-      ? `${formatTime(firstEntry.timestamp)} - ${formatTime(lastEntry.timestamp)}`
-      : '';
-
-  // 单条日志不需要分组头
-  if (entryCount === 1) {
-    return <LogEntryItem entry={entries[0]} defaultExpanded={defaultDataExpanded} />;
-  }
+/**
+ * 日志分组头（Docker 风格，受控组件）
+ * 分组内容由上层虚拟化列表渲染，此处只负责头部展示
+ */
+export const LogGroupHeader: FC<LogGroupHeaderProps> = ({ summary, expanded, onToggle }) => {
+  const levelStyle = LEVEL_STYLES[summary.highestLevel];
+  const timeRange = `${formatTime(summary.first.timestamp)} - ${formatTime(summary.last.timestamp)}`;
 
   return (
-    <div className="border-l-2 border-transparent transition-colors hover:border-zinc-700">
-      {/* 分组头 */}
-      <div
-        className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[11px] transition-colors hover:bg-white/[0.02]"
-        onClick={() => setExpanded(!expanded)}
+    <div
+      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[11px] transition-colors hover:bg-white/[0.02]"
+      onClick={onToggle}
+    >
+      {/* 展开箭头 */}
+      <span className="shrink-0 text-zinc-500">
+        {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
+      </span>
+
+      {/* 分组图标 - 根据模块显示对应图标 */}
+      {createElement(getModuleIcon(summary.module), {
+        size: 13,
+        className: `shrink-0 ${levelStyle.text}`,
+      })}
+
+      {/* 模块名 */}
+      <span className={`font-medium ${levelStyle.text}`}>{summary.module}</span>
+
+      {/* 计数标签 */}
+      <span
+        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
       >
-        {/* 展开箭头 */}
-        <span className="shrink-0 text-zinc-500">
-          {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
-        </span>
+        {summary.count} 条
+      </span>
 
-        {/* 分组图标 - 根据模块显示对应图标 */}
-        {createElement(getModuleIcon(groupModule), {
-          size: 13,
-          className: `shrink-0 ${levelStyle.text}`,
-        })}
-
-        {/* 模块名 */}
-        <span className={`font-medium ${levelStyle.text}`}>{groupModule}</span>
-
-        {/* 计数标签 */}
-        <span
-          className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
-        >
-          {entryCount} 条
-        </span>
-
-        {/* 时间范围 - 加深颜色 */}
-        <span className="ml-auto tabular-nums text-zinc-500">{timeRange}</span>
-      </div>
-
-      {/* 展开的日志列表 */}
-      {expanded && (
-        <div className="ml-4 border-l border-zinc-800 pl-2">
-          {entries.map((entry) => (
-            <LogEntryItem key={entry.id} entry={entry} defaultExpanded={defaultDataExpanded} />
-          ))}
-        </div>
-      )}
+      {/* 时间范围 - 加深颜色 */}
+      <span className="ml-auto tabular-nums text-zinc-500">{timeRange}</span>
     </div>
   );
 };
