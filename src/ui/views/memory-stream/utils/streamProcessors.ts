@@ -109,12 +109,18 @@ export interface EntityGroup {
 export function filterEntities(
   entities: EntityNode[],
   pendingChanges: Map<string, Partial<EntityNode>>,
-  searchQuery: string
+  searchQuery: string,
+  showActiveOnly: boolean,
+  activeIds: Set<string>
 ): EntityNode[] {
-  const result = entities.map((e) => {
+  let result = entities.map((e) => {
     const pending = pendingChanges.get(e.id);
     return pending ? ({ ...e, ...pending } as EntityNode) : e;
   });
+
+  if (showActiveOnly) {
+    result = result.filter((e) => activeIds.has(e.id));
+  }
 
   if (!searchQuery.trim()) return result;
 
@@ -150,12 +156,13 @@ function sortEntities(entities: EntityNode[], sortMode: EntitySortMode): EntityN
 
     switch (sortMode) {
       case 'updated_asc':
-        return ta - tb;
+        // 时间相同时（旧数据无 last_updated_at）按名称稳定排序
+        return ta - tb || a.name.localeCompare(b.name, 'zh-CN');
       case 'name_asc':
         return a.name.localeCompare(b.name, 'zh-CN');
       case 'updated_desc':
       default:
-        return tb - ta;
+        return tb - ta || a.name.localeCompare(b.name, 'zh-CN');
     }
   });
 }

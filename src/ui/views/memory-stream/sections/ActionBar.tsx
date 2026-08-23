@@ -1,19 +1,9 @@
-import {
-  ArrowDownUp,
-  Database,
-  FileText,
-  Filter,
-  Plus,
-  RefreshCw,
-  Save,
-  Sparkles,
-  Trash2,
-} from 'lucide-react';
+import { Database, FileText, Plus, RefreshCw, Save, Sparkles, Trash2 } from 'lucide-react';
 import type { FC } from 'react';
 
 import { getEntityStates, getSummaries } from '@/integrations/tavern';
 
-import type { SortOrder, ViewTab } from '../hooks/useMemoryStream';
+import type { ViewTab } from '../hooks/useMemoryStream';
 
 interface ActionBarProps {
   viewTab: ViewTab;
@@ -23,8 +13,6 @@ interface ActionBarProps {
   checkedCount: number;
   isLoading: boolean;
   isReembedding: boolean;
-  sortOrder: SortOrder;
-  showActiveOnly: boolean;
   showMobileActions: boolean;
 
   // Callbacks
@@ -33,8 +21,6 @@ interface ActionBarProps {
   onBatchDelete: () => void;
   onImportClick: () => void;
   onReembed: () => void;
-  onSortToggle: () => void;
-  onActiveToggle: () => void;
   onPreviewClick: (content: string) => void;
   onMobileActionsToggle: () => void;
   onMobileActionsClose: () => void;
@@ -49,16 +35,12 @@ export const ActionBar: FC<ActionBarProps> = ({
   checkedCount,
   isLoading,
   isReembedding,
-  sortOrder,
-  showActiveOnly,
   showMobileActions,
   onSave,
   onRefresh,
   onBatchDelete,
   onImportClick,
   onReembed,
-  onSortToggle,
-  onActiveToggle,
   onPreviewClick,
   onMobileActionsToggle,
   onMobileActionsClose,
@@ -142,29 +124,6 @@ export const ActionBar: FC<ActionBarProps> = ({
 
           <div className="mx-1 h-4 w-[1px] bg-border" />
 
-          {viewTab === 'list' && (
-            <button
-              onClick={onSortToggle}
-              className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground"
-              title={sortOrder === 'asc' ? '当前: 旧 -> 新' : '当前: 新 -> 旧'}
-            >
-              <ArrowDownUp
-                size={14}
-                className={sortOrder === 'desc' ? 'rotate-180 text-primary' : ''}
-              />
-            </button>
-          )}
-
-          {viewTab === 'list' && (
-            <button
-              onClick={onActiveToggle}
-              className={`rounded-md p-1.5 transition-colors ${showActiveOnly ? 'bg-primary/10 text-primary' : 'text-muted-foreground hover:text-foreground'}`}
-              title={showActiveOnly ? '显示全部' : '只看激活 (Recall)'}
-            >
-              <Filter size={14} />
-            </button>
-          )}
-
           <button
             onClick={handlePreviewOpen}
             className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground"
@@ -225,54 +184,22 @@ export const ActionBar: FC<ActionBarProps> = ({
                 </button>
 
                 {viewTab === 'list' && (
-                  <>
-                    <button
-                      onClick={() => {
-                        onReembed();
-                        onMobileActionsClose();
-                      }}
-                      disabled={isReembedding}
-                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-foreground hover:bg-muted disabled:opacity-50"
-                    >
-                      <Sparkles
-                        size={14}
-                        className={
-                          isReembedding ? 'animate-pulse text-primary' : 'text-muted-foreground'
-                        }
-                      />
-                      {isReembedding ? '嵌入中...' : '重嵌'}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onSortToggle();
-                        onMobileActionsClose();
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-foreground hover:bg-muted"
-                    >
-                      <ArrowDownUp
-                        size={14}
-                        className={
-                          sortOrder === 'desc' ? 'rotate-180 text-primary' : 'text-muted-foreground'
-                        }
-                      />
-                      排序: {sortOrder === 'asc' ? '旧到新' : '新到旧'}
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        onActiveToggle();
-                        onMobileActionsClose();
-                      }}
-                      className="flex items-center gap-2 px-3 py-2 text-left text-xs text-foreground hover:bg-muted"
-                    >
-                      <Filter
-                        size={14}
-                        className={showActiveOnly ? 'text-primary' : 'text-muted-foreground'}
-                      />
-                      {showActiveOnly ? '显示全部' : '只看激活'}
-                    </button>
-                  </>
+                  <button
+                    onClick={() => {
+                      onReembed();
+                      onMobileActionsClose();
+                    }}
+                    disabled={isReembedding}
+                    className="flex items-center gap-2 px-3 py-2 text-left text-xs text-foreground hover:bg-muted disabled:opacity-50"
+                  >
+                    <Sparkles
+                      size={14}
+                      className={
+                        isReembedding ? 'animate-pulse text-primary' : 'text-muted-foreground'
+                      }
+                    />
+                    {isReembedding ? '嵌入中...' : '重嵌'}
+                  </button>
                 )}
 
                 <button

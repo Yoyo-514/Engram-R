@@ -1,4 +1,4 @@
-import { ChevronDown, RefreshCw, Search, Users } from 'lucide-react';
+import { ChevronDown, Filter, RefreshCw, Search, Users } from 'lucide-react';
 import { useEffect, useState, type FC } from 'react';
 
 import type { EntityNode } from '@/types/graph';
@@ -20,6 +20,8 @@ interface EntityListProps {
   entityGroupMode: EntityGroupMode;
   setEntitySortMode: (mode: EntitySortMode) => void;
   setEntityGroupMode: (mode: EntityGroupMode) => void;
+  showActiveOnly: boolean;
+  onActiveToggle: () => void;
 
   // Callbacks
   onSelect: (id: string) => void;
@@ -52,6 +54,8 @@ export const EntityList: FC<EntityListProps> = ({
   entityGroupMode,
   setEntitySortMode,
   setEntityGroupMode,
+  showActiveOnly,
+  onActiveToggle,
   onSelect,
   onCheck,
   onArchive,
@@ -130,6 +134,19 @@ export const EntityList: FC<EntityListProps> = ({
                 </option>
               ))}
             </select>
+
+            <button
+              onClick={onActiveToggle}
+              className={`inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-xs transition-colors ${
+                showActiveOnly
+                  ? 'border-primary/50 bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={showActiveOnly ? '显示全部' : '只看激活 (Recall)'}
+            >
+              <Filter size={12} />
+              {showActiveOnly ? '显示全部' : '只看激活'}
+            </button>
 
             <span className="ml-auto text-[11px] text-muted-foreground">共 {totalCount} 项</span>
           </div>

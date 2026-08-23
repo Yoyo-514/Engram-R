@@ -1,4 +1,4 @@
-import { Brain, RefreshCw, Search } from 'lucide-react';
+import { Brain, Filter, RefreshCw, Search } from 'lucide-react';
 import type { FC } from 'react';
 import { GroupedVirtuoso } from 'react-virtuoso';
 
@@ -7,7 +7,7 @@ import { ErrorBoundary } from '@/ui/components/core/ErrorBoundary';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
 
 import { EventCard } from '../components/EventCard';
-import type { GroupedEvent, ViewMode } from '../hooks/useMemoryStream';
+import type { GroupedEvent, SortOrder, ViewMode } from '../hooks/useMemoryStream';
 
 interface EventListProps {
   viewMode: ViewMode;
@@ -21,6 +21,10 @@ interface EventListProps {
   activeIds: Set<string>;
   selectedId: string | null;
   pendingChanges: Map<string, Partial<EventNode>>;
+  sortOrder: SortOrder;
+  setSortOrder: (order: SortOrder) => void;
+  showActiveOnly: boolean;
+  onActiveToggle: () => void;
 
   // Callbacks
   onSelect: (id: string) => void;
@@ -43,6 +47,10 @@ export const EventList: FC<EventListProps> = ({
   activeIds,
   selectedId,
   pendingChanges,
+  sortOrder,
+  setSortOrder,
+  showActiveOnly,
+  onActiveToggle,
   onSelect,
   onCheck,
   onGroupCheck,
@@ -54,29 +62,61 @@ export const EventList: FC<EventListProps> = ({
     <div className="flex h-full min-h-0 w-full flex-col">
       {/* 搜索框 */}
       {viewMode === 'browse' && (
-        <div className="relative mb-4 shrink-0 px-1">
-          <Search
-            size={14}
-            className="absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground"
-          />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="搜索事件..."
-            style={{
-              background: 'transparent',
-              border: 'none',
-              borderBottom: '1px solid var(--border)',
-              borderRadius: 0,
-              outline: 'none',
-              padding: '8px 0 8px 24px',
-              fontSize: '14px',
-              width: '100%',
-              color: 'var(--foreground)',
-            }}
-            className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
-          />
+        <div className="mb-4 shrink-0 space-y-3 px-1">
+          <div className="relative">
+            <Search
+              size={14}
+              className="absolute left-1 top-1/2 -translate-y-1/2 text-muted-foreground"
+            />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="搜索事件..."
+              style={{
+                background: 'transparent',
+                border: 'none',
+                borderBottom: '1px solid var(--border)',
+                borderRadius: 0,
+                outline: 'none',
+                padding: '8px 0 8px 24px',
+                fontSize: '14px',
+                width: '100%',
+                color: 'var(--foreground)',
+              }}
+              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
+            />
+          </div>
+
+          {/* 排序与激活控制（与实体页统一位置） */}
+          <div className="flex items-center gap-2">
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+              className="rounded border border-border bg-background px-2 py-1 text-xs text-foreground"
+              title="排序方式"
+            >
+              <option value="desc">新到旧</option>
+              <option value="asc">旧到新</option>
+            </select>
+
+            <button
+              onClick={onActiveToggle}
+              className={`inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-xs transition-colors ${
+                showActiveOnly
+                  ? 'border-primary/50 bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+              title={showActiveOnly ? '显示全部' : '只看激活 (Recall)'}
+            >
+              <Filter size={12} />
+              {showActiveOnly ? '显示全部' : '只看激活'}
+            </button>
+
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              共 {filteredEvents.length} 项
+            </span>
+          </div>
         </div>
       )}
 

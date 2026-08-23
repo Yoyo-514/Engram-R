@@ -1,5 +1,6 @@
 import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
+import { engramEventBus } from '@/core/events/event-bus';
 import { Logger, LogModule } from '@/core/logger';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
@@ -121,6 +122,17 @@ export class BrainRecallStep implements IStep {
         eventOutput: context.data.candidates.length,
         entityOutput: recalledEntities.length,
         isWorkingMemory: brainResults.length,
+      });
+
+      // 通知记忆流等 UI 激活状态已更新（RETRIEVAL_COMPLETE 此前无人发出，补上链路）
+      engramEventBus.emit({
+        type: 'RETRIEVAL_COMPLETE',
+        payload: {
+          chatId,
+          eventCount: context.data.candidates.length,
+          entityCount: recalledEntities.length,
+          workingMemorySize: brainResults.length,
+        },
       });
     } else {
       // V1.4.1: 类脑引擎未启用，执行降级透传

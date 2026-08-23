@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import { EntityType } from '@/config/memory/defaults';
 import { get } from '@/config/settings';
+import { engramEventBus } from '@/core/events/event-bus';
 import { refreshEngramCache } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
@@ -47,9 +48,10 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   // === 3. 过滤与排序状态 ===
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
-  const [sortOrder, setSortOrder] = useState<SortOrder>('asc');
+  const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [showActiveOnly, setShowActiveOnly] = useState(false);
   const [activeIds, setActiveIds] = useState<Set<string>>(new Set());
+  const [entityActiveIds, setEntityActiveIds] = useState<Set<string>>(new Set());
   const [entitySortMode, setEntitySortMode] = useState<EntitySortMode>('updated_desc');
   const [entityGroupMode, setEntityGroupMode] = useState<EntityGroupMode>('type');
 
@@ -93,21 +95,26 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // 加载事件流
+  // 从类脑缓存刷新激活状态（事件 + 实体）
+  const refreshActiveState = useCallback(() => {
+    const snapshot = brainRecallCache.getShortTermSnapshot();
+    setActiveIds(new Set(snapshot.map((s) => s.id)));
+    setEntityActiveIds(new Set(snapshot.filter((s) => s.category === 'entity').map((s) => s.id)));
+  }, []);
+
+  // 加载事件流（排序交由 filterEvents/groupEvents 按 sortOrder 处理）
   const loadEvents = useCallback(async () => {
     setIsLoading(true);
     try {
       const allEvents = await store.getAllEvents();
-      setEvents([...allEvents].sort((a, b) => a.timestamp - b.timestamp));
-
-      const snapshot = brainRecallCache.getShortTermSnapshot();
-      setActiveIds(new Set(snapshot.map((s) => s.id)));
+      setEvents(allEvents);
+      refreshActiveState();
     } catch (error) {
       console.error('[MemoryStream] Failed to load events:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [store]);
+  }, [store, refreshActiveState]);
 
   // 加载实体流
   const loadEntities = useCallback(async () => {
@@ -123,6 +130,16 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     void loadEvents();
     void loadEntities();
   }, [loadEvents, loadEntities]);
+
+  // 订阅召回完成事件：类脑缓存更新后实时刷新激活状态（事件与实体高亮/过滤）
+  useEffect(() => {
+    const { unsubscribe } = engramEventBus.subscribe((event) => {
+      if (event.type === 'RETRIEVAL_COMPLETE') {
+        refreshActiveState();
+      }
+    });
+    return () => unsubscribe();
+  }, [refreshActiveState]);
 
   // ==========================================
   // 派生状态 (Derived State)
@@ -154,8 +171,14 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   }, [groupedEvents]);
 
   const filteredEntities = useMemo(() => {
-    return filterEntities(entities, pendingEntityChanges, debouncedSearchQuery);
-  }, [entities, pendingEntityChanges, debouncedSearchQuery]);
+    return filterEntities(
+      entities,
+      pendingEntityChanges,
+      debouncedSearchQuery,
+      showActiveOnly,
+      entityActiveIds
+    );
+  }, [entities, pendingEntityChanges, debouncedSearchQuery, showActiveOnly, entityActiveIds]);
 
   const groupedEntities = useMemo(() => {
     return groupEntities(filteredEntities, entitySortMode, entityGroupMode);
@@ -560,6 +583,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     sortOrder,
     showActiveOnly,
     activeIds,
+    entityActiveIds,
     entitySortMode,
     entityGroupMode,
     hasChanges,

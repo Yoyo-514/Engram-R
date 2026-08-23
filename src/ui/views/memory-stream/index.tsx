@@ -139,8 +139,6 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
             checkedCount={ms.checkedIds.size}
             isLoading={ms.isLoading}
             isReembedding={ms.isReembedding}
-            sortOrder={ms.sortOrder}
-            showActiveOnly={ms.showActiveOnly}
             showMobileActions={ms.showMobileActions}
             onSave={ms.handleBatchSave}
             onRefresh={async () => {
@@ -150,8 +148,6 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
             onBatchDelete={ms.handleBatchDelete}
             onImportClick={ms.handleOpenImportModal}
             onReembed={ms.handleReembedAll}
-            onSortToggle={() => ms.setSortOrder(ms.sortOrder === 'asc' ? 'desc' : 'asc')}
-            onActiveToggle={() => ms.setShowActiveOnly(!ms.showActiveOnly)}
             onPreviewClick={(content) => {
               ms.setPreviewContent(content);
               ms.setShowPreview(true);
@@ -182,6 +178,10 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
                 activeIds={ms.activeIds}
                 selectedId={ms.selectedId}
                 pendingChanges={ms.pendingChanges}
+                sortOrder={ms.sortOrder}
+                setSortOrder={ms.setSortOrder}
+                showActiveOnly={ms.showActiveOnly}
+                onActiveToggle={() => ms.setShowActiveOnly(!ms.showActiveOnly)}
                 onSelect={ms.handleSelect}
                 onCheck={ms.handleCheck}
                 onGroupCheck={(group, checked) => {
@@ -210,6 +210,8 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
                 entityGroupMode={ms.entityGroupMode}
                 setEntitySortMode={ms.setEntitySortMode}
                 setEntityGroupMode={ms.setEntityGroupMode}
+                showActiveOnly={ms.showActiveOnly}
+                onActiveToggle={() => ms.setShowActiveOnly(!ms.showActiveOnly)}
                 onSelect={ms.handleSelect}
                 onCheck={ms.handleCheck}
                 onArchive={ms.handleToggleArchive}
