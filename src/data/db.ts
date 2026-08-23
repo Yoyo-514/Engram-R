@@ -7,8 +7,8 @@
 
 import { Dexie, type Table } from 'dexie';
 
-import { getSTContext } from '@/integrations/tavern';
-import type { DatabaseStats, DatabaseSummary } from '@/types/database';
+import { getRequestHeaders, getSTContext } from '@/integrations/tavern';
+import type { DatabaseBindStatus, DatabaseStats, DatabaseSummary } from '@/types/database';
 
 import { Logger } from '../core/logger';
 import type { EntityNode, EventNode } from '../types/graph';
@@ -225,8 +225,157 @@ export async function listAllChatIds(): Promise<string[]> {
 }
 
 /**
- * 删除所有 Engram 数据库 (危险操作！)
+ * 重新绑定数据库：将源聊天库的数据迁移到目标聊天（覆盖），并删除源库
+ *
+ * 适用场景：聊天被导出后重新导入，chatId 变化导致旧库孤立，
+ * 手动把旧库重新绑定到新聊天。IndexedDB 无法改名，因此采用
+ * 导出源库 → 覆盖导入目标库 → 删除源库 的方式实现。
  */
+export async function rebindDatabase(sourceChatId: string, targetChatId: string): Promise<void> {
+  if (!sourceChatId || !targetChatId) {
+    throw new Error('[Engram DB] rebind requires valid source and target chatId');
+  }
+  if (sourceChatId === targetChatId) {
+    throw new Error('[Engram DB] rebind source and target chatId must differ');
+  }
+
+  Logger.info(MODULE, `Rebinding database: ${sourceChatId} -> ${targetChatId}`);
+
+  const sourceDb = getDbForChat(sourceChatId);
+  const dump = await exportChatData(sourceDb);
+
+  const targetDb = getDbForChat(targetChatId);
+  await importChatData(targetDb, dump);
+
+  await deleteDatabase(sourceChatId);
+
+  Logger.info(MODULE, `Rebind complete: ${sourceChatId} -> ${targetChatId}`);
+}
+
+// ======================== ST 聊天枚举与孤立判定 ========================
+
+/**
+ * 从 /api/chats 响应中解析全部 chatId（纯函数，便于测试）
+ *
+ * 兼容两种格式：
+ * - 新格式（ST 1.12+）：{ 角色名: [{ chat_id: 'uuid', ... }] }
+ * - 旧格式（<1.12）：{ 角色名: ['角色名 - 日期.jsonl', ...] }，旧版 chatId 即文件名
+ */
+export function extractChatIdsFromApiChats(payload: unknown): Set<string> {
+  const ids = new Set<string>();
+  if (!payload || typeof payload !== 'object') {
+    return ids;
+  }
+
+  for (const value of Object.values(payload as Record<string, unknown>)) {
+    if (!Array.isArray(value)) {
+      continue;
+    }
+    for (const item of value) {
+      if (typeof item === 'string') {
+        const id = item.replace(/\.jsonl?$/i, '');
+        if (id) {
+          ids.add(id);
+        }
+      } else if (item && typeof item === 'object') {
+        const chatId = (item as Record<string, unknown>).chat_id;
+        if (typeof chatId === 'string' && chatId) {
+          ids.add(chatId);
+        }
+      }
+    }
+  }
+
+  return ids;
+}
+
+// /api/chats 响应缓存 (30s TTL，避免每次刷新列表都请求)
+let tavernChatIdsCache: { ts: number; ids: Set<string> | null } | null = null;
+const TAVERN_CHATS_CACHE_TTL_MS = 30_000;
+
+/**
+ * 从本地上下文收集已知 chatId（同步、无网络）：
+ * 当前聊天 + 各角色活跃聊天 + ST 1.12+ 的 context.chats
+ */
+function listLocalChatIds(ctx: ReturnType<typeof getSTContext>): Set<string> {
+  const ids = new Set<string>();
+  if (ctx?.chatId) {
+    ids.add(ctx.chatId);
+  }
+
+  for (const character of ctx?.characters ?? []) {
+    if (character?.chat) {
+      ids.add(character.chat);
+    }
+  }
+
+  const chats = (ctx as Record<string, unknown> | null | undefined)?.chats;
+  if (Array.isArray(chats)) {
+    for (const item of chats) {
+      if (item && typeof item === 'object') {
+        const chatId = (item as Record<string, unknown>).chat_id;
+        if (typeof chatId === 'string' && chatId) {
+          ids.add(chatId);
+        }
+      }
+    }
+  }
+
+  return ids;
+}
+
+/**
+ * 枚举 ST 中所有聊天 ID
+ *
+ * 返回 null 表示无法可靠枚举（旧版酒馆且 API 不可用），
+ * 调用方不应据此判定孤立，避免误删风险。
+ */
+export async function listTavernChatIds(): Promise<Set<string> | null> {
+  const ctx = getSTContext();
+  const localIds = listLocalChatIds(ctx);
+
+  // ST 1.12+：context.chats 非空即视为可靠完整来源
+  const chats = (ctx as Record<string, unknown> | null | undefined)?.chats;
+  if (Array.isArray(chats) && chats.length > 0) {
+    return localIds;
+  }
+
+  // 缓存命中
+  const now = Date.now();
+  if (tavernChatIdsCache && now - tavernChatIdsCache.ts < TAVERN_CHATS_CACHE_TTL_MS) {
+    return tavernChatIdsCache.ids === null
+      ? null
+      : new Set([...localIds, ...tavernChatIdsCache.ids]);
+  }
+
+  // HTTP 回退：GET /api/chats
+  try {
+    const response = await fetch('/api/chats', { headers: getRequestHeaders() });
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    const payload: unknown = await response.json();
+    const remoteIds = extractChatIdsFromApiChats(payload);
+    tavernChatIdsCache = { ts: now, ids: remoteIds };
+    return new Set([...localIds, ...remoteIds]);
+  } catch (error) {
+    Logger.warn(MODULE, '无法枚举酒馆聊天列表，孤立判定降级为 unknown', error);
+    tavernChatIdsCache = { ts: now, ids: null };
+    return null;
+  }
+}
+
+/**
+ * 判定单个聊天库与 ST 聊天的绑定状态
+ */
+export async function classifyChatStatus(chatId: string): Promise<DatabaseBindStatus> {
+  const ids = await listTavernChatIds();
+  if (ids === null) {
+    return 'unknown';
+  }
+  return ids.has(chatId) ? 'active' : 'orphaned';
+}
+
 function buildChatCharacterNameMap(): Map<string, string> {
   const ctx = getSTContext();
   const map = new Map<string, string>();
@@ -248,25 +397,43 @@ function buildChatCharacterNameMap(): Map<string, string> {
 export async function listDatabaseSummaries(currentChatId?: string): Promise<DatabaseSummary[]> {
   const dbNames = await listAllDatabases();
   const chatCharacterMap = buildChatCharacterNameMap();
+  const tavernChatIds = await listTavernChatIds();
 
   const summaries = await Promise.all(
     dbNames.map(async (name) => {
       const chatId = name.replace('Engram_', '');
       const db = getDbForChat(chatId);
       const lastModifiedMeta = await db.meta.get('lastModified');
+
+      const status: DatabaseBindStatus =
+        tavernChatIds === null ? 'unknown' : tavernChatIds.has(chatId) ? 'active' : 'orphaned';
+
       return {
         name,
         chatId,
         characterName: chatCharacterMap.get(chatId) ?? null,
         isCurrent: currentChatId === chatId,
         lastModified: typeof lastModifiedMeta?.value === 'number' ? lastModifiedMeta.value : null,
+        status,
       };
     })
   );
 
+  const statusRank: Record<DatabaseBindStatus, number> = {
+    orphaned: 0,
+    unknown: 1,
+    active: 2,
+  };
+
   return summaries.sort((a, b) => {
     if (a.isCurrent !== b.isCurrent) {
       return a.isCurrent ? -1 : 1;
+    }
+
+    // 孤立库置顶，方便发现与处理
+    const statusDiff = statusRank[a.status] - statusRank[b.status];
+    if (statusDiff !== 0) {
+      return statusDiff;
     }
 
     const aGroup = a.characterName ?? a.chatId;

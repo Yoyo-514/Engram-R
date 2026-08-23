@@ -1,19 +1,26 @@
 import { Dexie } from 'dexie';
-import { RefreshCw, Trash2 } from 'lucide-react';
+import { Link2, RefreshCw, Trash2 } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 
 import { Logger, LogModule } from '@/core/logger';
-import { deleteDatabase, getDatabaseStats, listDatabaseSummaries } from '@/data/db';
+import { deleteDatabase, getDatabaseStats, listDatabaseSummaries, rebindDatabase } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { useConfigStore } from '@/state/configStore';
 import { useMemoryStore } from '@/state/memoryStore';
-import type { DatabaseStats, DatabaseSummary } from '@/types/database';
+import type { DatabaseBindStatus, DatabaseStats, DatabaseSummary } from '@/types/database';
 import { Switch } from '@/ui/components/core/Switch';
 import { ItemCard } from '@/ui/components/display/ItemCard';
 import { notificationService } from '@/ui/services/NotificationService';
 
 import { SettingsSection } from './SettingsSection';
+
+// 绑定状态展示文案
+const STATUS_LABELS: Record<DatabaseBindStatus, string> = {
+  active: '已绑定',
+  orphaned: '孤立',
+  unknown: '状态未知',
+};
 
 export const DatabaseManagementSection: FC = () => {
   const memoryStore = useMemoryStore();
@@ -27,6 +34,7 @@ export const DatabaseManagementSection: FC = () => {
   const [isLoadingDatabases, setIsLoadingDatabases] = useState(false);
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
+  const [bindingDatabase, setBindingDatabase] = useState<string | null>(null);
 
   const currentDatabaseSummary = useMemo(
     () => databaseSummaries.find((item) => item.name === currentDatabaseName) ?? null,
@@ -38,9 +46,14 @@ export const DatabaseManagementSection: FC = () => {
     [databaseSummaries, currentDatabaseName]
   );
 
-  const groupedDatabases = useMemo(() => {
+  // 按绑定状态拆分历史库：孤立库置顶提示，未知状态单独成组（不误判）
+  const { orphanedDatabases, unknownDatabases, groupedDatabases } = useMemo(() => {
+    const orphaned = historicalDatabases.filter((item) => item.status === 'orphaned');
+    const unknown = historicalDatabases.filter((item) => item.status === 'unknown');
+    const normal = historicalDatabases.filter((item) => item.status === 'active');
+
     const groups = new Map<string, DatabaseSummary[]>();
-    for (const item of historicalDatabases) {
+    for (const item of normal) {
       const groupKey = item.characterName || '未识别角色';
       const existing = groups.get(groupKey);
       if (existing) {
@@ -49,7 +62,15 @@ export const DatabaseManagementSection: FC = () => {
         groups.set(groupKey, [item]);
       }
     }
-    return Array.from(groups.entries()).map(([groupName, items]) => ({ groupName, items }));
+
+    return {
+      orphanedDatabases: orphaned,
+      unknownDatabases: unknown,
+      groupedDatabases: Array.from(groups.entries()).map(([groupName, items]) => ({
+        groupName,
+        items,
+      })),
+    };
   }, [historicalDatabases]);
 
   const persistLinkedDeletion = (updates: Partial<typeof linkedDeletion>) => {
@@ -169,6 +190,46 @@ export const DatabaseManagementSection: FC = () => {
     setSelectedDatabase(databaseName);
   };
 
+  /**
+   * 将孤立/未知状态的数据库绑定到当前聊天
+   * 实现：导出源库 → 覆盖导入当前库 → 删除源库，随后重置内存状态
+   */
+  const handleRebindToCurrent = async (item: DatabaseSummary) => {
+    if (!currentChatId) {
+      notificationService.warning('当前未连接聊天，无法绑定', 'Engram 设置');
+      return;
+    }
+    if (item.chatId === currentChatId) {
+      return;
+    }
+
+    const confirmed = confirm(
+      `将把数据库「${item.name}」绑定到当前聊天。\n\n` +
+        `目标库 Engram_${currentChatId} 现有数据将被覆盖，源库在迁移完成后自动删除。是否继续？`
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    setBindingDatabase(item.name);
+    try {
+      await rebindDatabase(item.chatId, currentChatId);
+      // 当前聊天数据库数据已变化：重置内存状态并重新初始化，触发各视图重新加载
+      useMemoryStore.getState().reset();
+      await useMemoryStore.getState().initChat();
+      notificationService.success('数据库已绑定到当前聊天', 'Engram 设置');
+      await loadAvailableDatabases();
+    } catch (error) {
+      notificationService.error(
+        `绑定失败: ${error instanceof Error ? error.message : String(error)}`,
+        'Engram 设置'
+      );
+      Logger.error(LogModule.DATA_DB, 'Failed to rebind database', error);
+    } finally {
+      setBindingDatabase(null);
+    }
+  };
+
   const handleDeleteSelectedDatabase = async () => {
     if (selectedDatabases.length === 0) {
       notificationService.warning('请先选择要删除的历史数据库', 'Engram 设置');
@@ -213,6 +274,58 @@ export const DatabaseManagementSection: FC = () => {
   const selectedSummary = selectedDatabase
     ? (databaseSummaries.find((item) => item.name === selectedDatabase) ?? null)
     : null;
+
+  /** 历史库卡片（孤立/未知/正常分组共用） */
+  const renderHistoryCard = (item: DatabaseSummary, showRebind: boolean) => {
+    const isSelected = selectedDatabases.includes(item.name);
+    const isBinding = bindingDatabase === item.name;
+
+    return (
+      <ItemCard
+        key={item.name}
+        compact
+        selected={selectedDatabase === item.name}
+        onClick={() => setSelectedDatabase(item.name)}
+        title={item.characterName ?? item.chatId}
+        subtitle={
+          item.lastModified
+            ? `${item.chatId} · ${new Date(item.lastModified).toLocaleString()}`
+            : item.chatId
+        }
+        badges={[
+          ...(item.status === 'orphaned' ? [{ text: '孤立', color: 'orange' as const }] : []),
+          ...(item.status === 'unknown' ? [{ text: '状态未知', color: 'default' as const }] : []),
+          ...(isSelected ? [{ text: '已选中', color: 'emerald' as const }] : []),
+          ...(item.isCurrent ? [{ text: '当前聊天', color: 'primary' as const }] : []),
+        ]}
+        actions={[
+          ...(showRebind
+            ? [
+                {
+                  icon: <Link2 size={14} />,
+                  title: isBinding ? '绑定中...' : '绑定到当前聊天',
+                  onClick: (e: React.MouseEvent) => {
+                    e.stopPropagation();
+                    if (!isBinding) {
+                      void handleRebindToCurrent(item);
+                    }
+                  },
+                },
+              ]
+            : []),
+          {
+            icon: isSelected ? '−' : '+',
+            title: isSelected ? '取消批量选择' : '加入批量删除列表',
+            onClick: (e: React.MouseEvent) => {
+              e.stopPropagation();
+              toggleDatabaseSelection(item.name);
+            },
+          },
+        ]}
+        className="bg-background/60 border border-border"
+      />
+    );
+  };
 
   return (
     <SettingsSection
@@ -394,47 +507,43 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
+                  {/* 孤立数据库：对应聊天已不存在，优先展示 */}
+                  {orphanedDatabases.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="break-words text-xs font-medium text-orange-500">
+                        孤立数据库 · {orphanedDatabases.length} 个
+                      </div>
+                      <div className="whitespace-normal break-words rounded-md border border-orange-500/20 bg-orange-500/10 p-2 text-xs leading-5 text-orange-500/90">
+                        这些库对应的聊天已不存在（已删除或导出后未清理），可绑定到当前聊天复用记忆，或勾选后批量删除。
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {orphanedDatabases.map((item) => renderHistoryCard(item, true))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 状态未知：无法确认关联，不主动误判 */}
+                  {unknownDatabases.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="break-words text-xs font-medium text-muted-foreground">
+                        状态未知 · {unknownDatabases.length} 个
+                      </div>
+                      <div className="bg-background/40 whitespace-normal break-words rounded-md border border-dashed border-border p-2 text-xs leading-5 text-muted-foreground">
+                        无法确认对应聊天是否存在（酒馆版本或接口限制），请手动确认后再绑定或删除。
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {unknownDatabases.map((item) => renderHistoryCard(item, true))}
+                      </div>
+                    </div>
+                  )}
+
                   {groupedDatabases.map(({ groupName, items }) => (
                     <div key={groupName} className="space-y-2">
                       <div className="break-words text-xs font-medium text-muted-foreground">
                         {groupName} · {items.length} 个聊天库
                       </div>
                       <div className="flex flex-col gap-2">
-                        {items.map((item) => (
-                          <ItemCard
-                            key={item.name}
-                            compact
-                            selected={selectedDatabase === item.name}
-                            onClick={() => setSelectedDatabase(item.name)}
-                            title={item.chatId}
-                            subtitle={
-                              item.lastModified
-                                ? new Date(item.lastModified).toLocaleString()
-                                : '暂无修改记录'
-                            }
-                            badges={[
-                              ...(selectedDatabases.includes(item.name)
-                                ? [{ text: '已选中', color: 'emerald' as const }]
-                                : []),
-                              ...(item.isCurrent
-                                ? [{ text: '当前聊天', color: 'primary' as const }]
-                                : []),
-                            ]}
-                            actions={[
-                              {
-                                icon: selectedDatabases.includes(item.name) ? '−' : '+',
-                                title: selectedDatabases.includes(item.name)
-                                  ? '取消批量选择'
-                                  : '加入批量删除列表',
-                                onClick: (e) => {
-                                  e.stopPropagation();
-                                  toggleDatabaseSelection(item.name);
-                                },
-                              },
-                            ]}
-                            className="bg-background/60 border border-border"
-                          />
-                        ))}
+                        {items.map((item) => renderHistoryCard(item, false))}
                       </div>
                     </div>
                   ))}
@@ -443,7 +552,7 @@ export const DatabaseManagementSection: FC = () => {
 
               <div className="bg-background/60 whitespace-normal break-words rounded-lg border border-border p-3 text-xs leading-5 text-muted-foreground">
                 {selectedSummary
-                  ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
+                  ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 状态: ${STATUS_LABELS[selectedSummary.status]} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
                   : currentDatabaseName
                     ? `当前聊天数据库: ${currentDatabaseName}`
                     : '当前未连接聊天。'}
