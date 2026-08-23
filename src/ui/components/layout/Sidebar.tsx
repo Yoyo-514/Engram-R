@@ -71,7 +71,7 @@ export const Sidebar: FC<SidebarProps> = ({
 
       {/* 第二行：GitHub */}
       <a
-        href="https://github.com/shiyue137mh-netizen/Engram"
+        href="https://github.com/Yoyo-514/Engram-R"
         target="_blank"
         rel="noopener noreferrer"
         className="hover:bg-muted/10 group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground transition-all duration-200 hover:text-foreground"
