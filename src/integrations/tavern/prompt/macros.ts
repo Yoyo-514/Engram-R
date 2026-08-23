@@ -1,4 +1,7 @@
-import { DEFAULT_ENTITY_INJECT_LIMIT } from '@/config/rag/defaults';
+import {
+  DEFAULT_ENTITY_INJECT_LIMIT,
+  DEFAULT_RERANK_CONFIG,
+} from '@/config/rag/defaults';
 import { get, subscribe } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
@@ -285,9 +288,15 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
       // 动态导入避免循环依赖
       const snapshot = brainRecallCache.getShortTermSnapshot();
 
+      // 自动绑定 BrainRecallCache
+      // 如果没有显式传入 recalledIds，则从 BrainRecallCache 获取当前短期记忆
+      // 事件按注入上限（rerankConfig.topN）截断，避免短时记忆槽位全量放行归档事件
       if (!effectiveRecalledIds && snapshot.length > 0) {
+        const rerankSettings = get('runtimeSettings')?.rerankConfig;
+        const injectLimit = Math.max(1, rerankSettings?.topN ?? DEFAULT_RERANK_CONFIG.topN);
         effectiveRecalledIds = snapshot
           .filter((slot) => slot.category === 'event')
+          .slice(0, injectLimit)
           .map((slot) => slot.id);
       }
 
