@@ -1,5 +1,9 @@
 # 更新日志 (CHANGELOG)
 
+## [1.1.3] - 2026-08-23
+
+- 全面修复 lint 错误与警告（React hooks 规范、不可变更新、组件定义等），TypeScript lib 升级至 ES2023。
+
 ## [1.1.2] - 2026-08-23
 
 ### Bug Fixes
