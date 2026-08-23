@@ -14,7 +14,9 @@ export const AppearanceSettingsSection: FC = () => {
   const { enableAnimations, glassSettings, updateConfig } = useConfigStore();
 
   useEffect(() => {
-    refreshCurrentThemePreview();
+    if (glassSettings) {
+      refreshCurrentThemePreview();
+    }
   }, [glassSettings]);
 
   const glassEnabled = glassSettings?.enabled ?? true;

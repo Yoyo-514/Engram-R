@@ -425,6 +425,7 @@ class Retriever {
     // 1. Get recent Level 0 (Details)
     const recentEvents = await db.events
       .filter((node) => node.level === 0)
+      // oxlint-disable-next-line unicorn/no-array-reverse -- Dexie Collection.reverse()，非数组
       .reverse()
       .limit(limit)
       .toArray();
@@ -432,6 +433,7 @@ class Retriever {
     // 2. Get latest Level 1 (Macro Context)
     const latestMacro = await db.events
       .filter((node) => node.level === 1)
+      // oxlint-disable-next-line unicorn/no-array-reverse -- Dexie Collection.reverse()，非数组
       .reverse()
       .first();
 

@@ -155,7 +155,11 @@ describe('rebindDatabase', () => {
 
   it('rejects invalid rebind arguments', async () => {
     const { rebindDatabase } = await import('@/data/db');
-    await expect(rebindDatabase('', 'tgt')).rejects.toThrow();
-    await expect(rebindDatabase('same', 'same')).rejects.toThrow();
+    await expect(rebindDatabase('', 'tgt')).rejects.toThrow(
+      'rebind requires valid source and target chatId'
+    );
+    await expect(rebindDatabase('same', 'same')).rejects.toThrow(
+      'rebind source and target chatId must differ'
+    );
   });
 });

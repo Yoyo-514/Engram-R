@@ -39,16 +39,23 @@ export const FloatingPanel: FC<FloatingPanelProps> = ({
   const dragOffset = useRef({ x: 0, y: 0 });
   const resizeStart = useRef({ width: 0, height: 0, x: 0, y: 0 });
   const positionRef = useRef(position);
-  positionRef.current = position;
 
+  // 同步最新位置到 ref（渲染期间读/写 ref 会触发 lint 规则，改为 effect 同步）
   useEffect(() => {
+    positionRef.current = position;
+  }, [position]);
+
+  // 打开时未指定初始位置 → 居中摆放（渲染期间调整 state，替代 effect 同步）
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen && !initialPosition) {
       setPosition({
         x: Math.max(50, (window.innerWidth - initialWidth) / 2),
         y: Math.max(50, window.innerHeight - 450),
       });
     }
-  }, [initialPosition, initialWidth, isOpen]);
+  }
 
   useEffect(() => {
     const handleWindowResize = () => {

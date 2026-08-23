@@ -85,6 +85,82 @@ async function persistEventEmbedding(
   });
 }
 
+// ==================== 模块级工具函数 ====================
+
+/**
+ * 计算向量范数平方 (L2 Norm Squared)
+ * 注意：为了保持兼容，函数名仍为 computeNorm，但返回的是平方和
+ */
+function computeNorm(vec: number[]): number {
+  let sum = 0;
+  for (let i = 0; i < vec.length; i++) {
+    sum += vec[i] * vec[i];
+  }
+  return sum; // 返回平方和，调用方自行 sqrt 以保持灵活性
+}
+
+/**
+ * 计算余弦相似度
+ * 支持传入预计算的范数平方以提升性能
+ *
+ * @param vecA 向量 A
+ * @param vecB 向量 B
+ * @param normSqA (可选) 向量 A 的范数平方
+ * @param normSqB (可选) 向量 B 的范数平方
+ */
+function cosineSimilarity(
+  vecA: number[],
+  vecB: number[],
+  normSqA?: number,
+  normSqB?: number
+): number {
+  if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
+
+  let dot = 0;
+  let nA = normSqA ?? 0;
+  let nB = normSqB ?? 0;
+
+  const calcA = normSqA === undefined;
+  const calcB = normSqB === undefined;
+
+  for (let i = 0; i < vecA.length; i++) {
+    dot += vecA[i] * vecB[i];
+    if (calcA) nA += vecA[i] * vecA[i];
+    if (calcB) nB += vecB[i] * vecB[i];
+  }
+
+  const denom = Math.sqrt(nA) * Math.sqrt(nB);
+  return denom === 0 ? 0 : dot / denom;
+}
+
+/**
+ * 获取嵌入统计信息
+ */
+async function getEmbeddingStats(): Promise<{
+  total: number;
+  embedded: number;
+  pending: number;
+}> {
+  const chatId = getCurrentChatId();
+  if (!chatId) {
+    return { total: 0, embedded: 0, pending: 0 };
+  }
+
+  const db = tryGetDbForChat(chatId);
+  if (!db) {
+    return { total: 0, embedded: 0, pending: 0 };
+  }
+
+  const events = await db.events.toArray();
+  const embedded = events.filter((event) => event.is_embedded).length;
+
+  return {
+    total: events.length,
+    embedded,
+    pending: events.length - embedded,
+  };
+}
+
 // ==================== EmbeddingService ====================
 
 export function createEmbeddingService() {
@@ -355,80 +431,6 @@ export function createEmbeddingService() {
   }
 
   // ==================== 工具方法 ====================
-
-  /**
-   * 计算向量范数平方 (L2 Norm Squared)
-   * 注意：为了保持兼容，函数名仍为 computeNorm，但返回的是平方和
-   */
-  function computeNorm(vec: number[]): number {
-    let sum = 0;
-    for (let i = 0; i < vec.length; i++) {
-      sum += vec[i] * vec[i];
-    }
-    return sum; // 返回平方和，调用方自行 sqrt 以保持灵活性
-  }
-
-  /**
-   * 计算余弦相似度
-   * 支持传入预计算的范数平方以提升性能
-   *
-   * @param vecA 向量 A
-   * @param vecB 向量 B
-   * @param normSqA (可选) 向量 A 的范数平方
-   * @param normSqB (可选) 向量 B 的范数平方
-   */
-  function cosineSimilarity(
-    vecA: number[],
-    vecB: number[],
-    normSqA?: number,
-    normSqB?: number
-  ): number {
-    if (!vecA || !vecB || vecA.length !== vecB.length) return 0;
-
-    let dot = 0;
-    let nA = normSqA ?? 0;
-    let nB = normSqB ?? 0;
-
-    const calcA = normSqA === undefined;
-    const calcB = normSqB === undefined;
-
-    for (let i = 0; i < vecA.length; i++) {
-      dot += vecA[i] * vecB[i];
-      if (calcA) nA += vecA[i] * vecA[i];
-      if (calcB) nB += vecB[i] * vecB[i];
-    }
-
-    const denom = Math.sqrt(nA) * Math.sqrt(nB);
-    return denom === 0 ? 0 : dot / denom;
-  }
-
-  /**
-   * 获取嵌入统计信息
-   */
-  async function getEmbeddingStats(): Promise<{
-    total: number;
-    embedded: number;
-    pending: number;
-  }> {
-    const chatId = getCurrentChatId();
-    if (!chatId) {
-      return { total: 0, embedded: 0, pending: 0 };
-    }
-
-    const db = tryGetDbForChat(chatId);
-    if (!db) {
-      return { total: 0, embedded: 0, pending: 0 };
-    }
-
-    const events = await db.events.toArray();
-    const embedded = events.filter((event) => event.is_embedded).length;
-
-    return {
-      total: events.length,
-      embedded,
-      pending: events.length - embedded,
-    };
-  }
 
   return {
     setConfig,

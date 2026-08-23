@@ -24,7 +24,7 @@ export class FetchExistingEntities implements IStep {
     context.input.existingEntities = JSON.stringify(simplified, null, 2);
 
     // 存入完整对象供 SaveEntity 使用 (含归档实体，用于消歧和自动解除归档)
-    context.input._rawExistingEntities = entities;
+    context.input.rawExistingEntities = entities;
 
     Logger.debug(
       'FetchExistingEntities',

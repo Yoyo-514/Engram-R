@@ -35,7 +35,7 @@ class SearchServiceImpl {
     const results = await Promise.all(
       [...this.adapters.values()].map((adapter) => adapter.search(query))
     );
-    return results.flat().sort((a, b) => (b.score || 0) - (a.score || 0));
+    return results.flat().toSorted((a, b) => (b.score || 0) - (a.score || 0));
   }
 }
 

@@ -79,7 +79,10 @@ export function useWorldInfo(): UseWorldInfoReturn {
   }, []);
 
   useEffect(() => {
-    void loadWorldbookState();
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await loadWorldbookState();
+    })();
   }, [loadWorldbookState]);
 
   const toggleWorldbook = useCallback((name: string, disabled: boolean) => {

@@ -2,7 +2,7 @@
  * useRegexRules - 正则替换规则管理
  */
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 import { DEFAULT_REGEX_RULES } from '@/config/regex/defaults';
 import {
@@ -28,16 +28,13 @@ export interface UseRegexRulesReturn {
 }
 
 export function useRegexRules(): UseRegexRulesReturn {
-  const [regexRules, setRegexRules] = useState<RegexRule[]>([...DEFAULT_REGEX_RULES]);
+  // 惰性初始化：同步读取本地设置，替代 effect + setState
+  const [regexRules, setRegexRules] = useState<RegexRule[]>(() => {
+    const savedRules = getSettingsRegexRules();
+    return savedRules && savedRules.length > 0 ? savedRules : [...DEFAULT_REGEX_RULES];
+  });
   const [editingRule, setEditingRule] = useState<RegexRule | null>(null);
   const [hasChanges, setHasChanges] = useState(false);
-
-  useEffect(() => {
-    const savedRules = getSettingsRegexRules();
-    if (savedRules && savedRules.length > 0) {
-      setRegexRules(savedRules);
-    }
-  }, []);
 
   const selectRule = useCallback(
     (id: string) => {

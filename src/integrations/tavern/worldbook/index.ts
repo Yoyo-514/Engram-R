@@ -37,7 +37,7 @@ export async function getWorldbookStructure(): Promise<WorldbookStructure> {
   }
 
   const { installed, chat } = getScopes();
-  const targetBooks = Array.from(new Set([...installed, ...chat])).sort();
+  const targetBooks = Array.from(new Set([...installed, ...chat])).toSorted();
 
   const structure: WorldbookStructure = {};
 

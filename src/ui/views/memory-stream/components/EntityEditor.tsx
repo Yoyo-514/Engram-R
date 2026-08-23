@@ -103,19 +103,17 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       };
     }, []);
 
-    // Load data
-    useEffect(() => {
-      if (entity && entity.id !== lastEntityId) {
-        setName(entity.name);
-        setType(entity.type);
-        setAliases(entity.aliases ? entity.aliases.join(', ') : '');
-        setDescription(entity.description || '');
-        setProfileJson(JSON.stringify(entity.profile || {}, null, 2));
-        setJsonError(null);
-        setIsDirty(false);
-        setLastEntityId(entity.id);
-      }
-    }, [entity, lastEntityId]);
+    // Load data：实体切换时重置表单（渲染期间调整 state，替代 effect 同步）
+    if (entity && entity.id !== lastEntityId) {
+      setName(entity.name);
+      setType(entity.type);
+      setAliases(entity.aliases ? entity.aliases.join(', ') : '');
+      setDescription(entity.description || '');
+      setProfileJson(JSON.stringify(entity.profile || {}, null, 2));
+      setJsonError(null);
+      setIsDirty(false);
+      setLastEntityId(entity.id);
+    }
 
     // Sync Helper
     const syncToParent = useCallback(() => {

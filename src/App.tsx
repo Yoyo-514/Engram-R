@@ -1,5 +1,5 @@
 import type { FC } from 'react';
-import { Suspense, lazy, useEffect, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 
 import { get, set } from '@/config/settings';
 import { engramEventBus } from '@/core/events';
@@ -31,15 +31,32 @@ interface AppProps {
   onClose: () => void;
 }
 
+// 模块级更新检测（与组件解耦，供 effect 定时调用）
+async function checkEngramUpdate(): Promise<void> {
+  try {
+    const hasUnread = await hasUnreadUpdate();
+    if (!hasUnread) {
+      return;
+    }
+
+    const latestVersion = await getLatestVersion();
+    notificationService.info(`发现新版本 v${latestVersion}，点击查看更新`, 'Engram 更新', {
+      action: { goto: 'settings' },
+    });
+  } catch (error) {
+    console.debug('[Engram] 更新检测失败:', error);
+  }
+}
+
 const App: FC<AppProps> = ({ onClose }) => {
   const [activeTab, setActiveTab] = useState(() => get('lastOpenedTab') || 'dashboard');
 
-  const handleNavigate = (path: string) => {
+  const handleNavigate = useCallback((path: string) => {
     const cleanPath = path.replace(/^\//, '') || 'dashboard';
     console.debug('[Engram] Navigating to:', cleanPath);
     setActiveTab(cleanPath);
     set('lastOpenedTab', cleanPath);
-  };
+  }, []);
 
   useEffect(() => {
     const subscription = engramEventBus.on<string>('UI_NAVIGATE_REQUEST', (path) => {
@@ -60,27 +77,12 @@ const App: FC<AppProps> = ({ onClose }) => {
       subscription.unsubscribe();
       window.removeEventListener('engram:navigate', handleWindowNavigate as EventListener);
     };
-  }, []);
+  }, [handleNavigate]);
 
+  // oxlint-disable-next-line react/exhaustive-effect-dependencies react-hooks/exhaustive-deps
   useEffect(() => {
-    const checkUpdate = async () => {
-      try {
-        const hasUnread = await hasUnreadUpdate();
-        if (!hasUnread) {
-          return;
-        }
-
-        const latestVersion = await getLatestVersion();
-        notificationService.info(`发现新版本 v${latestVersion}，点击查看更新`, 'Engram 更新', {
-          action: { goto: 'settings' },
-        });
-      } catch (error) {
-        console.debug('[Engram] 更新检测失败:', error);
-      }
-    };
-
     const timer = setTimeout(() => {
-      void checkUpdate();
+      void checkEngramUpdate();
     }, 3000);
 
     return () => clearTimeout(timer);

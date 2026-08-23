@@ -77,7 +77,7 @@ type EntityDraft = Omit<EntityNode, 'id' | 'last_updated_at'>;
 type DiffOperation = jsonpatch.Operation & { oldValue?: unknown };
 type EntityPatchDocument = EntityNode & {
   _original?: EntityNode;
-  _diff?: DiffOperation[];
+  diff?: DiffOperation[];
 };
 type RootPatchValue = {
   type?: unknown;
@@ -237,7 +237,7 @@ export class SaveEntity implements IStep {
   async execute(context: JobContext): Promise<void> {
     const store = useMemoryStore.getState();
     const rawExistingEntities = this.readExistingEntities(
-      (context.input as Record<string, unknown>)._rawExistingEntities
+      (context.input as Record<string, unknown>).rawExistingEntities
     );
     const existingEntities = rawExistingEntities || (await store.getAllEntities());
 
@@ -546,7 +546,7 @@ export class SaveEntity implements IStep {
         targetDoc.type,
         targetDoc.profile || {}
       );
-      targetDoc._diff = this.buildDiffOperations(relativeOps, existing);
+      targetDoc.diff = this.buildDiffOperations(relativeOps, existing);
       updatedEntities.push(targetDoc);
     } catch (error) {
       Logger.warn('SaveEntity', `Patch failed for ${entityName}`, error);

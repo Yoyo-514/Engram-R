@@ -1,4 +1,4 @@
-import Dexie from 'dexie';
+import { Dexie } from 'dexie';
 import { type StateCreator } from 'zustand';
 
 import { generateShortUUID } from '@/core/utils';
@@ -36,6 +36,17 @@ export interface EventState {
   getAgenticIndex: () => Promise<string>;
   /** Agentic RAG: 仅返回纯蓝灯事件的完整 summary */
   getPureActiveEvents: () => Promise<string>;
+}
+
+/**
+ * XML 属性转义（模块层纯函数）
+ */
+function escapeXml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/"/g, '&quot;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (set, _get) => ({
@@ -334,17 +345,10 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
       const archivedEvents = events.filter((e) => e.is_archived);
 
       // 按时间排序
-      activeEvents.sort((a, b) => a.timestamp - b.timestamp);
-      archivedEvents.sort((a, b) => a.timestamp - b.timestamp);
+      activeEvents.toSorted((a, b) => a.timestamp - b.timestamp);
+      archivedEvents.toSorted((a, b) => a.timestamp - b.timestamp);
 
       // 构建极简 XML record（仅使用 structured_kv，不含 summary 长文本）
-      const escapeXml = (s: string) =>
-        s
-          .replace(/&/g, '&amp;')
-          .replace(/"/g, '&quot;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;');
-
       const buildRecord = (e: EventNode, extraAttrs?: string) => {
         const kv = e.structured_kv;
         const attrs = [

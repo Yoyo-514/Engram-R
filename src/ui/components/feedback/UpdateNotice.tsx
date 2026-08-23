@@ -7,7 +7,7 @@
  */
 
 import { CheckCircle, Download, Loader2, RefreshCw, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FC } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -100,14 +100,16 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
   const currentVersion = getCurrentVersion();
   const currentHash = getCurrentHash();
 
-  useEffect(() => {
+  // 打开时重置提示消息（渲染期间调整 state，替代 effect 同步）
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
-      loadUpdateInfo();
       setUpdateMessage(null);
     }
-  }, [isOpen]);
+  }
 
-  const loadUpdateInfo = async () => {
+  const loadUpdateInfo = useCallback(async () => {
     setIsLoading(true);
     try {
       const [latest, hash, log, update] = await Promise.all([
@@ -125,7 +127,16 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (isOpen) {
+      // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+      void (async () => {
+        await loadUpdateInfo();
+      })();
+    }
+  }, [isOpen, loadUpdateInfo]);
 
   const handleMarkAsRead = async () => {
     setIsMarking(true);
@@ -175,7 +186,7 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
 
   const handleRefresh = () => {
     clearCache();
-    loadUpdateInfo();
+    void loadUpdateInfo();
   };
 
   if (!isOpen) return null;

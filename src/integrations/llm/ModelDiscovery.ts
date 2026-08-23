@@ -36,7 +36,7 @@ function normalizeModelIds(modelIds: string[]): ModelInfo[] {
     .map((id) => id.trim())
     .filter((id) => id.length > 0)
     .map((id) => ({ id, name: id }))
-    .sort((a, b) => a.id.localeCompare(b.id));
+    .toSorted((a, b) => a.id.localeCompare(b.id));
 }
 
 async function tryFetchModelsViaTavernHelper(

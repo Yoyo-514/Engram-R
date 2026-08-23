@@ -16,6 +16,7 @@ import { GlobalOverlayContent } from '@/ui/components/overlay/GlobalOverlayConte
 
 import App from './App';
 
+// oxlint-disable-next-line import/no-unassigned-import -- 样式副作用导入
 import './ui/styles/main.css';
 
 // 全局 QuickPanel 状态

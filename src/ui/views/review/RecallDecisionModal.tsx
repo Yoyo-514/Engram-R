@@ -40,18 +40,30 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [allEvents, setAllEvents] = useState<EventNode[]>([]);
 
-  // 在打开时初始化数据
-  useEffect(() => {
+  // 在打开时初始化数据（渲染期间调整 state，替代 effect 同步）
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (prevIsOpen !== isOpen) {
+    setPrevIsOpen(isOpen);
     if (isOpen) {
       setEditedRecalls([...initialRecalls]);
       setSearchQuery('');
-      const store = useMemoryStore.getState();
-      void store.getAllEvents().then((events) => {
-        // 只显示 level 0 且已归档的事件
-        setAllEvents(events.filter((event) => event.level === 0 && event.is_archived));
-      });
     }
-  }, [isOpen, initialRecalls]);
+  }
+
+  // 打开时异步加载可选事件列表（副作用在 effect 中执行）
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    const store = useMemoryStore.getState();
+    void store.getAllEvents().then((events) => {
+      if (cancelled) return;
+      // 只显示 level 0 且已归档的事件
+      setAllEvents(events.filter((event) => event.level === 0 && event.is_archived));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
 
   // 分类并过滤数据
   const { activeEvents, inactiveEvents } = useMemo(() => {
@@ -67,8 +79,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
           typeLabel: event?.structured_kv.event || 'unknown',
         };
       })
-      .slice()
-      .sort((a, b) => b.score - a.score); // 降序
+      .toSorted((a, b) => b.score - a.score); // 降序
 
     // 未激活事件 (支持文本过滤)
     const inactive = allEvents

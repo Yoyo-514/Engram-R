@@ -1,5 +1,5 @@
 import { BrainCircuit, FileText, Search } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FC, ChangeEvent } from 'react';
 
 import type { AgenticRecall } from '@/types/preprocess';
@@ -31,13 +31,17 @@ export const MessageReview: FC<MessageReviewProps> = ({
   const [text, setText] = useState(content);
   const [queryText, setQueryText] = useState(query || '');
 
-  useEffect(() => {
+  // 外部内容变化时同步本地编辑态（渲染期间调整 state，替代 effect 同步）
+  const [prevContent, setPrevContent] = useState(content);
+  if (prevContent !== content) {
+    setPrevContent(content);
     setText(content);
-  }, [content]);
-
-  useEffect(() => {
+  }
+  const [prevQuery, setPrevQuery] = useState(query);
+  if (prevQuery !== query) {
+    setPrevQuery(query);
     setQueryText(query || '');
-  }, [query]);
+  }
 
   const handleChange = (e: ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;

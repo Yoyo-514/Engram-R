@@ -18,14 +18,14 @@ interface AchievementsPanelProps {
   stats: EngramSettings['statistics'];
 }
 
-export const AchievementsPanel: FC<AchievementsPanelProps> = ({ stats }) => {
-  // 处理大数字的美化显示
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
-    if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
-    return num.toString();
-  };
+// 处理大数字的美化显示（纯函数，模块层定义）
+function formatNumber(num: number): string {
+  if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+  if (num >= 1000) return (num / 1000).toFixed(1) + 'k';
+  return num.toString();
+}
 
+export const AchievementsPanel: FC<AchievementsPanelProps> = ({ stats }) => {
   // 计算入坑天数与活跃度
   const firstUseDate = stats.firstUseAt ? new Date(stats.firstUseAt) : new Date();
   const daysSinceFirstUse = Math.max(

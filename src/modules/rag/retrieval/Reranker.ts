@@ -171,7 +171,7 @@ class RerankService {
       }
 
       // 按相关性降序排列
-      return results.sort((a, b) => b.relevance_score - a.relevance_score);
+      return results.toSorted((a, b) => b.relevance_score - a.relevance_score);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : '未知错误';
       Logger.error(LogModule.RAG_RERANK, 'Rerank 调用失败', { error: errorMsg });

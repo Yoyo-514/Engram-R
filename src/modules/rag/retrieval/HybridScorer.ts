@@ -64,7 +64,7 @@ export function scoreAndSort(candidates: ScoredEvent[]): ScoredEvent[] {
         event.keywordScore
       ),
     }))
-    .sort((a, b) => (b.hybridScore ?? 0) - (a.hybridScore ?? 0));
+    .toSorted((a, b) => (b.hybridScore ?? 0) - (a.hybridScore ?? 0));
 }
 
 /**

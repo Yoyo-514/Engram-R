@@ -240,7 +240,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
     }
 
     // 按分数排序
-    results = [...results].sort((a, b) => {
+    results = results.toSorted((a, b) => {
       const getScore = (item: RecallResultItem) => {
         switch (sortMode) {
           case 'embedding':

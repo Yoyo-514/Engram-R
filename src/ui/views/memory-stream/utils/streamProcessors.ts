@@ -38,7 +38,7 @@ export function filterEvents(
     result = result.filter((e) => activeIds.has(e.id));
   }
 
-  return [...result].sort((a, b) =>
+  return result.toSorted((a, b) =>
     sortOrder === 'asc' ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
   );
 }
@@ -68,7 +68,7 @@ export function groupEvents(filteredEvents: EventNode[], sortOrder: SortOrder): 
   });
 
   // 默认按日期排序
-  const sortedKeys = Array.from(groups.keys()).sort((a, b) => {
+  const sortedKeys = Array.from(groups.keys()).toSorted((a, b) => {
     const timeA = new Date(a).getTime();
     const timeB = new Date(b).getTime();
     return isAsc ? timeA - timeB : timeB - timeA;
@@ -77,7 +77,7 @@ export function groupEvents(filteredEvents: EventNode[], sortOrder: SortOrder): 
   return sortedKeys.map((key, idx) => {
     const group = groups.get(key)!;
     // 组内严格按时间戳排序
-    const sortedEvents = [...group.events].sort((a, b) =>
+    const sortedEvents = group.events.toSorted((a, b) =>
       isAsc ? a.timestamp - b.timestamp : b.timestamp - a.timestamp
     );
 
@@ -150,7 +150,7 @@ function getTypeLabel(type: EntityType): string {
 }
 
 function sortEntities(entities: EntityNode[], sortMode: EntitySortMode): EntityNode[] {
-  return [...entities].sort((a, b) => {
+  return entities.toSorted((a, b) => {
     const ta = a.last_updated_at || 0;
     const tb = b.last_updated_at || 0;
 

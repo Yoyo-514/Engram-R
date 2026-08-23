@@ -25,7 +25,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import type { FC } from 'react';
-import { memo, useState, useEffect, useMemo, createElement } from 'react';
+import { memo, useState, useMemo, createElement } from 'react';
 
 import { LogLevel } from '@/config/logger/defaults';
 import { LogLevelConfig } from '@/config/logger/presentation';
@@ -136,12 +136,14 @@ export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
     }
   }, [entry.data, hasData]);
 
-  // 响应外部默认展开状态变化
-  useEffect(() => {
+  // 响应外部默认展开状态变化（渲染期间调整 state，替代 effect 同步）
+  const [prevDefaultExpanded, setPrevDefaultExpanded] = useState(defaultExpanded);
+  if (prevDefaultExpanded !== defaultExpanded) {
+    setPrevDefaultExpanded(defaultExpanded);
     if (hasData) {
       setExpanded(defaultExpanded || autoExpand);
     }
-  }, [defaultExpanded, autoExpand, hasData]);
+  }
 
   return (
     <div className="group">

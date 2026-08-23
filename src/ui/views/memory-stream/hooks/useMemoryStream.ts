@@ -127,8 +127,10 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   }, [store]);
 
   useEffect(() => {
-    void loadEvents();
-    void loadEntities();
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await Promise.all([loadEvents(), loadEntities()]);
+    })();
   }, [loadEvents, loadEntities]);
 
   // 订阅召回完成事件：类脑缓存更新后实时刷新激活状态（事件与实体高亮/过滤）

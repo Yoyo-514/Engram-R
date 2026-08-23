@@ -94,13 +94,18 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
     () => toReviewSessionData(request.data)?.query
   );
 
-  // Phase 2 Fix: 监听 request 的变化以同步状态（防御闭包读取到早期缓存）
-  useEffect(() => {
+  // Phase 2 Fix: 监听 request 的变化以同步状态（渲染期间调整 state，替代 effect 同步）
+  // 防御闭包读取到早期缓存
+  const [prevContent, setPrevContent] = useState(request.content);
+  const [prevData, setPrevData] = useState(request.data);
+  if (prevContent !== request.content || prevData !== request.data) {
+    setPrevContent(request.content);
+    setPrevData(request.data);
     const nextData = toReviewSessionData(request.data);
     setContent(request.content);
     setData(nextData);
     setQuery(nextData?.query);
-  }, [request.content, request.data]);
+  }
 
   // Reject Feedback State
   const [feedback, setFeedback] = useState('');

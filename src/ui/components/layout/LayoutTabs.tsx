@@ -1,5 +1,5 @@
 import { useIsPresent } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useSyncExternalStore } from 'react';
 import type { FC } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -14,14 +14,19 @@ import { TabPills, type TabPillsProps } from './TabPills';
  * 用法: 直接在 View 中渲染，就像普通组件一样。
  */
 export const LayoutTabs: FC<TabPillsProps> = (props) => {
-  const [mounted, setMounted] = useState(false);
   // 判断当前组件所在的页面组件树是否正在被 AnimatePresence 卸载(即退场动画播放中)
   const isPresent = useIsPresent();
 
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
+  // 容器 div 由 MainLayout 渲染，首次 render 时尚未 commit 到 DOM，
+  // 用 useSyncExternalStore 在 effect 阶段（DOM 就绪后）通知一次，重新读取容器存在性
+  const mounted = useSyncExternalStore(
+    (notify) => {
+      notify();
+      return () => {};
+    },
+    () => document.getElementById('engram-header-extension') !== null,
+    () => false
+  );
 
   const container = document.getElementById('engram-header-extension');
 
@@ -33,7 +38,7 @@ export const LayoutTabs: FC<TabPillsProps> = (props) => {
   const headerProps = {
     ...props,
     sticky: false,
-    className: `!mb-0 !border-0 !bg-transparent px-4 md:px-8 ${props.className || ''}`,
+    className: `!mb-0 !border-0 !bg-transparent px-4 ${props.className || ''}`,
   };
 
   return createPortal(<TabPills {...headerProps} />, container);

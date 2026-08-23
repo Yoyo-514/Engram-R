@@ -4,7 +4,7 @@
  */
 
 import { Book, Plus, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FC } from 'react';
 
 import { getWorldbookScopes } from '@/integrations/tavern';
@@ -23,28 +23,27 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
   description = '选择要额外扫描的世界书。角色绑定的世界书会自动包含（无需手动添加）。',
 }) => {
   const [showPicker, setShowPicker] = useState(false);
-  const [availableBooks, setAvailableBooks] = useState<string[]>([]);
   const [_localSelection, setLocalSelection] = useState<string[]>(selectedBooks);
 
-  // 加载可用世界书列表
-  useEffect(() => {
+  // 可用世界书列表：同步读取外部作用域（每次渲染派生，成本低且避免 effect 同步）
+  const availableBooks = (() => {
     try {
       const scopes = getWorldbookScopes();
       // 合并全局 + 已安装，排除 [Engram] 开头和角色绑定的
-      const allBooks = [...new Set([...scopes.global, ...scopes.installed])].filter(
+      return [...new Set([...scopes.global, ...scopes.installed])].filter(
         (name) => !name.startsWith('[Engram]')
       );
-
-      setAvailableBooks(allBooks);
     } catch {
-      setAvailableBooks([]);
+      return [];
     }
-  }, [showPicker]);
+  })();
 
-  // 同步外部选择到本地
-  useEffect(() => {
+  // 外部选择变化时同步到本地（渲染期间调整 state，替代 effect 同步）
+  const [prevSelectedBooks, setPrevSelectedBooks] = useState(selectedBooks);
+  if (prevSelectedBooks !== selectedBooks) {
+    setPrevSelectedBooks(selectedBooks);
     setLocalSelection(selectedBooks);
-  }, [selectedBooks]);
+  }
 
   const handleRemove = (book: string) => {
     onChange(selectedBooks.filter((b) => b !== book));

@@ -33,7 +33,6 @@ let latestActivatedWorldInfoText = '';
 let latestActivatedWorldInfoEntries: LiveActivatedWorldInfoEntry[] = [];
 let hasActivatedWorldInfoCache = false;
 let worldInfoScanListenerInitialized = false;
-let _unsubscribeWorldInfoScanListener: (() => void) | null = null;
 const unsubscribeWorldInfoCacheInvalidators: Array<() => void> = [];
 const contextualWorldInfoCache = new Map<string, string>();
 
@@ -72,25 +71,22 @@ function ensureWorldInfoScanListener(): void {
     return;
   }
 
-  _unsubscribeWorldInfoScanListener = eventBus.on(
-    events.WORLDINFO_SCAN_DONE,
-    (eventData: unknown) => {
-      const payload = eventData as WorldInfoScanDonePayload;
-      latestActivatedWorldInfoText = payload.activated?.text || '';
-      latestActivatedWorldInfoEntries = Array.from(payload.activated?.entries?.entries() || []).map(
-        ([entryKey, entry]) => ({
-          world: normalizeLiveEntryWorld(entryKey),
-          entry,
-        })
-      );
-      hasActivatedWorldInfoCache = true;
+  eventBus.on(events.WORLDINFO_SCAN_DONE, (eventData: unknown) => {
+    const payload = eventData as WorldInfoScanDonePayload;
+    latestActivatedWorldInfoText = payload.activated?.text || '';
+    latestActivatedWorldInfoEntries = Array.from(payload.activated?.entries?.entries() || []).map(
+      ([entryKey, entry]) => ({
+        world: normalizeLiveEntryWorld(entryKey),
+        entry,
+      })
+    );
+    hasActivatedWorldInfoCache = true;
 
-      Logger.debug(MODULE, 'Updated activated world info cache from Tavern event', {
-        textLength: latestActivatedWorldInfoText.length,
-        entryCount: latestActivatedWorldInfoEntries.length,
-      });
-    }
-  );
+    Logger.debug(MODULE, 'Updated activated world info cache from Tavern event', {
+      textLength: latestActivatedWorldInfoText.length,
+      entryCount: latestActivatedWorldInfoEntries.length,
+    });
+  });
 
   unsubscribeWorldInfoCacheInvalidators.push(
     eventBus.on(events.CHAT_CHANGED, () => {
@@ -157,12 +153,12 @@ function buildFilterStateCacheKey(filterState: ReturnType<typeof loadFilteringSt
   return JSON.stringify({
     enabled: config?.enabled !== false,
     includeGlobal: config?.includeGlobal !== false,
-    globalWorldbooks: [...globalWorldbooks].sort(),
-    chatWorldbooks: [...chatWorldbooks].sort(),
-    disabledGlobalBooks: [...disabledGlobalBooks].sort(),
+    globalWorldbooks: globalWorldbooks.toSorted(),
+    chatWorldbooks: chatWorldbooks.toSorted(),
+    disabledGlobalBooks: disabledGlobalBooks.toSorted(),
     disabledEntries: Object.entries(disabledEntries)
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([book, entries]) => [book, [...entries].sort((a, b) => a - b)]),
+      .toSorted(([a], [b]) => a.localeCompare(b))
+      .map(([book, entries]) => [book, entries.toSorted((a, b) => a - b)]),
   });
 }
 
@@ -281,7 +277,7 @@ async function buildLiveActivatedWorldInfo(
 
   const filteredEntries = latestActivatedWorldInfoEntries
     .filter((liveEntry) => shouldIncludeLiveEntry(liveEntry, filterState))
-    .sort((a, b) => a.entry.order - b.entry.order || a.entry.uid - b.entry.uid);
+    .toSorted((a, b) => a.entry.order - b.entry.order || a.entry.uid - b.entry.uid);
 
   if (filteredEntries.length === 0) {
     return '';

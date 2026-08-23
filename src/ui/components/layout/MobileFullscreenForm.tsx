@@ -1,5 +1,4 @@
 import { ArrowLeft } from 'lucide-react';
-import { useEffect, useState } from 'react';
 import type { ReactNode, FC } from 'react';
 import { createPortal } from 'react-dom';
 
@@ -16,14 +15,6 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
   children,
   actions,
 }) => {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-    // 组件卸载时可能需要锁定背景滚动，但为了不干涉全局先保持简单
-    return () => setMounted(false);
-  }, []);
-
   const content = (
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
@@ -46,6 +37,5 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
   );
 
   // 为了完全覆盖所有 SillyTavern UI（包括 header 和其他 fixed 元素），将全屏表单直接渲染到 document.body
-  if (!mounted) return null;
   return createPortal(content, document.body);
 };

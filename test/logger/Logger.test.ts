@@ -14,8 +14,8 @@ describe('Logger', () => {
 
     const entry = Logger.getLogs().find((l) => l.message === 'big object payload');
     expect(entry).toBeDefined();
-    const data = entry!.data as { __truncated?: boolean; preview?: string };
-    expect(data.__truncated).toBe(true);
+    const data = entry!.data as { truncated?: boolean; preview?: string };
+    expect(data.truncated).toBe(true);
     expect(data.preview!.length).toBeLessThan(5000);
   });
 

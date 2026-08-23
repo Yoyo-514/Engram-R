@@ -62,7 +62,8 @@ const FEATURE_CONFIG = [
 const QUICK_ACTIONS = NAV_ITEMS.filter((item) => item.id !== 'dashboard');
 
 export const Dashboard: FC<DashboardProps> = ({ onNavigate }) => {
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  // 惰性初始化：同步读取最近日志，替代 effect 中同步 setState
+  const [logs, setLogs] = useState<LogEntry[]>(() => Logger.getLogs().slice(0, 4));
   const { system, memory, features, brainStats, contextStats, globalStats, toggleFeature } =
     useDashboardData(2000);
 
@@ -70,7 +71,6 @@ export const Dashboard: FC<DashboardProps> = ({ onNavigate }) => {
 
   useEffect(() => {
     isMounted.current = true;
-    setLogs(Logger.getLogs().slice(0, 4));
 
     // 日志节流逻辑：每 500ms 只更新一次 UI
     let pendingLogs: LogEntry[] = [];

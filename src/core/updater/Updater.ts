@@ -69,7 +69,6 @@ const CURRENT_HASH_FALLBACK = 'unknown';
 let cachedLatestVersion: string | null = null;
 let cachedLatestHash: string | null = null;
 let cachedRealLocalHash: string | null = null;
-let _cachedRealExtensionName: string | null = null;
 let cachedExtensionRuntimeInfo: ExtensionRuntimeInfo | null = null;
 let cachedChangelog: string | null = null;
 
@@ -229,7 +228,6 @@ export async function getExtensionRuntimeInfo(): Promise<ExtensionRuntimeInfo | 
               ? found.type
               : 'local',
         };
-        _cachedRealExtensionName = cachedExtensionRuntimeInfo.name;
         console.debug('[Engram] 自动识别扩展标识:', cachedExtensionRuntimeInfo);
         return cachedExtensionRuntimeInfo;
       }
@@ -247,7 +245,6 @@ export async function getExtensionRuntimeInfo(): Promise<ExtensionRuntimeInfo | 
     name: getDefaultExtensionName(),
     type: 'local',
   };
-  _cachedRealExtensionName = cachedExtensionRuntimeInfo.name;
   console.debug('[Engram] 使用默认扩展标识:', cachedExtensionRuntimeInfo);
 
   return cachedExtensionRuntimeInfo;
@@ -388,7 +385,6 @@ export function clearCache(): void {
   cachedLatestVersion = null;
   cachedLatestHash = null;
   cachedRealLocalHash = null;
-  _cachedRealExtensionName = null;
   cachedExtensionRuntimeInfo = null;
   cachedChangelog = null;
 }

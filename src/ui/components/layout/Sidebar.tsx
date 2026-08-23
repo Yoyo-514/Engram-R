@@ -29,6 +29,60 @@ interface SidebarProps {
   hasUnreadUpdate: boolean;
 }
 
+interface BottomAreaProps {
+  onShowUpdateNotice: () => void;
+  hasUnreadUpdate: boolean;
+}
+
+// 底部区域（更新通知 / GitHub / 版本号），独立组件避免渲染期间创建组件
+const BottomArea: FC<BottomAreaProps> = ({ onShowUpdateNotice, hasUnreadUpdate }) => (
+  <div className="border-border/30 mt-2 space-y-2 border-t pt-4">
+    {/* 第一行：更新通知 */}
+    <button
+      onClick={onShowUpdateNotice}
+      className="hover:bg-muted/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-muted-foreground transition-all duration-[var(--duration-fast)] hover:text-foreground"
+    >
+      <div className="relative">
+        <Bell
+          size={16}
+          strokeWidth={1.5}
+          className={hasUnreadUpdate ? 'engram-animate-bell-ring' : ''}
+        />
+        {hasUnreadUpdate && (
+          <span className="engram-animate-pulse absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
+        )}
+      </div>
+      <span className="text-xs">更新通知</span>
+      {hasUnreadUpdate && (
+        <span className="bg-primary/20 ml-auto rounded-full px-1.5 py-0.5 text-[10px] text-primary">
+          NEW
+        </span>
+      )}
+    </button>
+
+    {/* 第二行：GitHub */}
+    <a
+      href="https://github.com/Yoyo-514/Engram-R"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="hover:bg-muted/10 group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground transition-all duration-200 hover:text-foreground"
+      title="点个星⭐支持一下"
+    >
+      <Github size={16} strokeWidth={1.5} className="transition-colors group-hover:text-primary" />
+      <span className="text-xs">GitHub</span>
+      <span className="ml-auto text-[10px] text-primary opacity-0 transition-opacity group-hover:opacity-100">
+        Star ⭐
+      </span>
+    </a>
+
+    {/* 第三行：Logo + 版本号 */}
+    <div className="flex items-center gap-2 px-2 py-1 opacity-50">
+      <EngramTextLogo height={12} />
+      <span className="font-mono text-[10px] text-muted-foreground">v{manifest.version}</span>
+    </div>
+  </div>
+);
+
 export const Sidebar: FC<SidebarProps> = ({
   activeTab,
   onNavigate,
@@ -42,59 +96,6 @@ export const Sidebar: FC<SidebarProps> = ({
     onNavigate(tabId);
     if (isMobile && onClose) onClose();
   };
-
-  // 统一的底部区域组件（三行布局）
-  const BottomArea = () => (
-    <div className="border-border/30 mt-2 space-y-2 border-t pt-4">
-      {/* 第一行：更新通知 */}
-      <button
-        onClick={onShowUpdateNotice}
-        className="hover:bg-muted/10 flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-muted-foreground transition-all duration-[var(--duration-fast)] hover:text-foreground"
-      >
-        <div className="relative">
-          <Bell
-            size={16}
-            strokeWidth={1.5}
-            className={hasUnreadUpdate ? 'engram-animate-bell-ring' : ''}
-          />
-          {hasUnreadUpdate && (
-            <span className="engram-animate-pulse absolute -right-1 -top-1 h-2 w-2 rounded-full bg-red-500" />
-          )}
-        </div>
-        <span className="text-xs">更新通知</span>
-        {hasUnreadUpdate && (
-          <span className="bg-primary/20 ml-auto rounded-full px-1.5 py-0.5 text-[10px] text-primary">
-            NEW
-          </span>
-        )}
-      </button>
-
-      {/* 第二行：GitHub */}
-      <a
-        href="https://github.com/Yoyo-514/Engram-R"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="hover:bg-muted/10 group flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-muted-foreground transition-all duration-200 hover:text-foreground"
-        title="点个星⭐支持一下"
-      >
-        <Github
-          size={16}
-          strokeWidth={1.5}
-          className="transition-colors group-hover:text-primary"
-        />
-        <span className="text-xs">GitHub</span>
-        <span className="ml-auto text-[10px] text-primary opacity-0 transition-opacity group-hover:opacity-100">
-          Star ⭐
-        </span>
-      </a>
-
-      {/* 第三行：Logo + 版本号 */}
-      <div className="flex items-center gap-2 px-2 py-1 opacity-50">
-        <EngramTextLogo height={12} />
-        <span className="font-mono text-[10px] text-muted-foreground">v{manifest.version}</span>
-      </div>
-    </div>
-  );
 
   // 移动端未打开时不渲染
   if (isMobile && !isOpen) return null;
@@ -157,7 +158,7 @@ export const Sidebar: FC<SidebarProps> = ({
           transition={{ delay: 0.3, duration: 0.5 }}
           className="pb-3"
         >
-          <BottomArea />
+          <BottomArea onShowUpdateNotice={onShowUpdateNotice} hasUnreadUpdate={hasUnreadUpdate} />
         </motion.div>
       </motion.aside>
     );
@@ -241,7 +242,7 @@ export const Sidebar: FC<SidebarProps> = ({
           transition={{ delay: 0.3 }}
           className="mt-auto"
         >
-          <BottomArea />
+          <BottomArea onShowUpdateNotice={onShowUpdateNotice} hasUnreadUpdate={hasUnreadUpdate} />
         </motion.div>
       </motion.div>
     </div>

@@ -409,7 +409,7 @@ export class EntityBuilder {
       // 过滤掉已锁定的实体 (锁定的实体获得“免死金牌”)
       const candidates = activeEntities
         .filter((e) => !e.is_locked)
-        .sort((a, b) => (a.last_updated_at || 0) - (b.last_updated_at || 0));
+        .toSorted((a, b) => (a.last_updated_at || 0) - (b.last_updated_at || 0));
 
       const overLimit = activeEntities.length - limit;
       const toArchive = candidates.slice(0, overLimit);

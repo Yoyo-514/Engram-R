@@ -1,5 +1,5 @@
 import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { FC } from 'react';
 
 import { EntityType } from '@/config/memory/defaults';
@@ -25,7 +25,7 @@ interface DiffOperation {
 
 // 扩展类型以包含 diff 信息
 interface EntityNodeWithDiff extends EntityNode {
-  _diff?: DiffOperation[];
+  diff?: DiffOperation[];
   _original?: EntityNode;
 }
 
@@ -43,30 +43,28 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
   const [isEditorExpanded, setIsEditorExpanded] = useState<boolean>(true);
   const [isPreviewExpanded, setIsPreviewExpanded] = useState<boolean>(true);
 
-  // Sync when external data changes
-  useEffect(() => {
+  // Sync when external data changes（渲染期间调整 state，替代 effect 同步）
+  const [prevData, setPrevData] = useState(data);
+  if (prevData !== data) {
+    setPrevData(data);
     setNewEntities(data.newEntities || []);
     setUpdatedEntities(data.updatedEntities || []);
-  }, [data]);
+  }
 
-  // Update preview when editing entity changes
-  useEffect(() => {
-    if (editingEntity) {
-      updatePreview(editingEntity.entity);
-    }
-  }, [editingEntity]);
-
-  const updatePreview = (entity: EntityNode) => {
+  // Update preview when editing entity changes（渲染期间调整 state）
+  const [prevEditingEntity, setPrevEditingEntity] = useState(editingEntity);
+  if (editingEntity && prevEditingEntity !== editingEntity) {
+    setPrevEditingEntity(editingEntity);
     try {
-      const entityObj = { profile: entity.profile };
+      const entityObj = { profile: editingEntity.entity.profile };
       const yamlContent = stringifyYaml(entityObj);
-      setPreviewDescription(`${entity.name}\n${yamlContent.trim()}`);
+      setPreviewDescription(`${editingEntity.entity.name}\n${yamlContent.trim()}`);
     } catch (_error) {
       // If JSON is invalid during typing, we might not have a valid object to dump.
       // But here entity.profile is already an object (parsed from JSON input).
       // So this catch is for yaml dump errors.
     }
-  };
+  }
 
   const notifyChange = (n: EntityNodeWithDiff[], u: EntityNodeWithDiff[]) => {
     onChange({ newEntities: n, updatedEntities: u });
@@ -94,19 +92,19 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
     // V1.5: Enforce Standard YAML Description Format on Save
     // We use the calculated preview as the source of truth for description
-    if (previewDescription) {
-      entity.description = previewDescription;
-    }
+    // 不可变更新：避免直接修改 state 中的实体对象
+    const nextEntity = previewDescription ? { ...entity, description: previewDescription } : entity;
 
     if (list === 'new') {
       const next = [...newEntities];
-      next[index] = entity;
+      next[index] = nextEntity;
       setNewEntities(next);
       notifyChange(next, updatedEntities);
     } else {
       const next = [...updatedEntities];
-      next[index] = entity;
-      delete next[index]._diff;
+      const { diff: removedDiff, ...withoutDiff } = nextEntity;
+      void removedDiff; // 仅用于剥离临时 diff 字段
+      next[index] = withoutDiff;
       setUpdatedEntities(next);
       notifyChange(newEntities, next);
     }
@@ -364,9 +362,9 @@ const EntityCard: FC<{
         </div>
 
         {/* Diff View for Updated Entities */}
-        {isUpdated && entity._diff ? (
+        {isUpdated && entity.diff ? (
           <div className="bg-background/50 mt-1 flex flex-col gap-1 rounded p-2.5 font-mono text-xs">
-            {entity._diff.map((op, i) => (
+            {entity.diff.map((op, i) => (
               <div key={i} className="flex items-baseline gap-2 break-words">
                 {/* Path */}
                 <span className="text-foreground/80 min-w-[30px] shrink-0 font-medium">

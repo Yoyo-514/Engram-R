@@ -154,8 +154,8 @@ export class BrainRecallStep implements IStep {
 
     const finalCandidates: ScoredEvent[] = context.data.candidates;
     if (finalCandidates.length > injectLimit) {
-      context.data.candidates = [...finalCandidates]
-        .sort((a, b) => (b.hybridScore ?? 0) - (a.hybridScore ?? 0))
+      context.data.candidates = finalCandidates
+        .toSorted((a, b) => (b.hybridScore ?? 0) - (a.hybridScore ?? 0))
         .slice(0, injectLimit);
       Logger.debug(LogModule.RAG_INJECT, '召回候选已截断', {
         before: finalCandidates.length,
@@ -168,8 +168,8 @@ export class BrainRecallStep implements IStep {
       _recallWeight?: number;
     })[];
     if (finalEntities.length > DEFAULT_ENTITY_INJECT_LIMIT) {
-      context.data.recalledEntities = [...finalEntities]
-        .sort((a, b) => (b._recallWeight ?? 0) - (a._recallWeight ?? 0))
+      context.data.recalledEntities = finalEntities
+        .toSorted((a, b) => (b._recallWeight ?? 0) - (a._recallWeight ?? 0))
         .slice(0, DEFAULT_ENTITY_INJECT_LIMIT);
       Logger.debug(LogModule.RAG_INJECT, '召回实体已截断', {
         before: finalEntities.length,

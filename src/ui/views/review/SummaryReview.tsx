@@ -167,16 +167,25 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
     onChange(resolvedContent, { events: newEvents });
   };
 
-  useEffect(() => {
+  // 从外部数据解析本地状态（渲染期间调整 state，替代 effect 同步）
+  const [prevContent, setPrevContent] = useState(content);
+  const [prevData, setPrevData] = useState(data);
+  if (prevContent !== content || prevData !== data) {
+    setPrevContent(content);
+    setPrevData(data);
     const parsed = parseEventsFromUnknown(data, content);
     setEvents(parsed);
 
     const nextRawContent = content || serializeEvents(parsed);
     setRawContent(nextRawContent);
+  }
 
+  // 父组件通知：副作用只能在 effect 中执行（渲染期间调用 onChange 会更新父组件 state）
+  useEffect(() => {
+    const parsed = parseEventsFromUnknown(data, content);
     const parentHasEvents = Array.isArray(data) || Array.isArray(data?.events);
     if (!parentHasEvents && parsed.length > 0) {
-      onChange(nextRawContent, { events: parsed });
+      onChange(content || serializeEvents(parsed), { events: parsed });
     }
   }, [content, data, onChange]);
 

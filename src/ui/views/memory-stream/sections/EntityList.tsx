@@ -1,5 +1,5 @@
 import { ChevronDown, Filter, RefreshCw, Search, Users } from 'lucide-react';
-import { useEffect, useState, type FC } from 'react';
+import { useState, type FC } from 'react';
 
 import type { EntityNode } from '@/types/graph';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
@@ -63,12 +63,14 @@ export const EntityList: FC<EntityListProps> = ({
 }) => {
   const [collapsedGroups, setCollapsedGroups] = useState<Set<string>>(new Set());
 
-  useEffect(() => {
-    // 搜索时展开全部，方便定位
+  // 搜索时展开全部，方便定位（渲染期间调整 state，替代 effect 同步）
+  const [prevSearchQuery, setPrevSearchQuery] = useState(searchQuery);
+  if (prevSearchQuery !== searchQuery) {
+    setPrevSearchQuery(searchQuery);
     if (searchQuery.trim()) {
       setCollapsedGroups(new Set());
     }
-  }, [searchQuery]);
+  }
 
   const totalCount = groupedEntities.reduce((acc, g) => acc + g.count, 0);
 

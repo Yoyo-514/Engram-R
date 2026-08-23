@@ -62,16 +62,14 @@ function getRecentWorldbookMessages(
       .slice(sliceStart, range[1])
       .map((message) => message.mes || '')
       .filter((message): message is string => typeof message === 'string' && message.length > 0)
-      .slice()
-      .reverse();
+      .toReversed();
   }
 
   return currentChat
     .slice(-RECENT_WORLDBOOK_MESSAGE_LIMIT)
     .map((message) => message.mes || '')
     .filter((message): message is string => typeof message === 'string' && message.length > 0)
-    .slice()
-    .reverse();
+    .toReversed();
 }
 
 export class FetchContext implements IStep {

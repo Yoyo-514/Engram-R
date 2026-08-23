@@ -2,7 +2,7 @@
  * useLLMPresets - LLM 预设与提示词模板管理
  */
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 import { getDefaultRuntimeSettings } from '@/config/api/defaults';
 import { createDefaultLLMPreset } from '@/config/api/factories';
@@ -40,23 +40,22 @@ export interface UseLLMPresetsReturn {
 }
 
 export function useLLMPresets(): UseLLMPresetsReturn {
-  const [settings, setSettings] = useState<EngramRuntimeSettings>(getDefaultRuntimeSettings);
-  const [editingPreset, setEditingPreset] = useState<LLMPreset | null>(null);
-  const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
-  const [hasChanges, setHasChanges] = useState(false);
-
-  // 加载配置
-  useEffect(() => {
+  // 惰性初始化：同步读取本地设置，替代 effect + setState
+  const [settings, setSettings] = useState<EngramRuntimeSettings>(() => {
     const savedRuntimeSettings = get('runtimeSettings');
     if (savedRuntimeSettings) {
-      setSettings({
+      return {
         ...savedRuntimeSettings,
         selectedPresetId: savedRuntimeSettings.selectedPresetId,
         llmPresets: savedRuntimeSettings.llmPresets,
         promptTemplates: savedRuntimeSettings.promptTemplates || [],
-      });
+      };
     }
-  }, []);
+    return getDefaultRuntimeSettings();
+  });
+  const [editingPreset, setEditingPreset] = useState<LLMPreset | null>(null);
+  const [editingTemplate, setEditingTemplate] = useState<PromptTemplate | null>(null);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const selectPreset = useCallback((preset: LLMPreset) => {
     setSettings((prev) => ({ ...prev, selectedPresetId: preset.id }));

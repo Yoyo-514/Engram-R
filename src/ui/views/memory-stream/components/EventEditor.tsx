@@ -135,24 +135,22 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       };
     }, []);
 
-    // 同步事件数据到表单
-    useEffect(() => {
-      if (event && event.id !== lastEventId) {
-        setSummary(event.summary);
-        setEventType(event.structured_kv?.event || '');
-        setTimeAnchor(event.structured_kv?.time_anchor || '');
-        // V1.0.2: location 现在是数组，显示为逗号分隔
-        const locArray = event.structured_kv?.location || [];
-        setLocation(Array.isArray(locArray) ? locArray.join(', ') : String(locArray || ''));
-        setRoleText(event.structured_kv?.role?.join(', ') || '');
-        setLogicText(event.structured_kv?.logic?.join(', ') || '');
-        setScore(event.significance_score);
-        setIsArchived(!!event.is_archived);
-        setIsLocked(!!event.is_locked);
-        setIsDirty(false);
-        setLastEventId(event.id);
-      }
-    }, [event, lastEventId]);
+    // 同步事件数据到表单（渲染期间调整 state，替代 effect 同步）
+    if (event && event.id !== lastEventId) {
+      setSummary(event.summary);
+      setEventType(event.structured_kv?.event || '');
+      setTimeAnchor(event.structured_kv?.time_anchor || '');
+      // V1.0.2: location 现在是数组，显示为逗号分隔
+      const locArray = event.structured_kv?.location || [];
+      setLocation(Array.isArray(locArray) ? locArray.join(', ') : String(locArray || ''));
+      setRoleText(event.structured_kv?.role?.join(', ') || '');
+      setLogicText(event.structured_kv?.logic?.join(', ') || '');
+      setScore(event.significance_score);
+      setIsArchived(!!event.is_archived);
+      setIsLocked(!!event.is_locked);
+      setIsDirty(false);
+      setLastEventId(event.id);
+    }
 
     const handleDelete = () => {
       if (confirm('确定删除这个事件吗？此操作不可撤销。')) {

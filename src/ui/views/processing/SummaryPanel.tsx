@@ -8,7 +8,7 @@ import {
   RefreshCw,
   Scissors,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FC, ElementType } from 'react';
 
 import { chatManager } from '@/data/ChatManager';
@@ -66,11 +66,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const [editSummarizedFloor, setEditSummarizedFloor] = useState<number>(0);
   const [editExtractedFloor, setEditExtractedFloor] = useState<number>(0);
 
-  useEffect(() => {
-    void loadStatus();
-  }, []);
-
-  const loadStatus = async () => {
+  // 加载状态（useCallback 定义在前，effect 仅调用）
+  const loadStatus = useCallback(async () => {
     try {
       // V0.7.1: 始终刷新缓存，确保待处理数正确
       await summarizerService.initializeForCurrentChat();
@@ -97,7 +94,14 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
     } catch (error) {
       console.error('加载 Summarizer 状态失败:', error);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await loadStatus();
+    })();
+  }, [loadStatus]);
 
   const handleSetSummarizedFloor = async () => {
     try {

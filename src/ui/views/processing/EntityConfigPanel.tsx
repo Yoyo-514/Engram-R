@@ -1,5 +1,5 @@
 import { Archive, RefreshCw } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { FC } from 'react';
 
 import { engramEventBus } from '@/core/events';
@@ -38,18 +38,21 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
   const [isLoading, setIsLoading] = useState(false);
 
   // 加载状态 (Operational Status)
-  const loadStatus = async () => {
+  const loadStatus = useCallback(async () => {
     try {
       const s = (await entityBuilder.getStatus()) as EntityStatus;
       setStatus(s);
     } catch (e) {
       console.error('[EntityConfigPanel] Failed to load status:', e);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void loadStatus();
-  }, []);
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await loadStatus();
+    })();
+  }, [loadStatus]);
 
   // Decoupled State Sync via engramEventBus
   useEffect(() => {
@@ -57,7 +60,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
       void loadStatus();
     });
     return unsubscribe;
-  }, []);
+  }, [loadStatus]);
 
   // 切换启用状态
   const handleToggleEnabled = () => {

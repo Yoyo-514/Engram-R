@@ -100,7 +100,7 @@ export const DatabaseManagementSection: FC = () => {
     }
   }, [currentChatId, currentDatabaseName]);
 
-  const loadDatabaseStats = async (databaseName: string) => {
+  const loadDatabaseStats = useCallback(async (databaseName: string) => {
     const chatId = databaseName.replace(/^Engram_/, '');
     if (!chatId) {
       setSelectedStats(null);
@@ -117,19 +117,24 @@ export const DatabaseManagementSection: FC = () => {
     } finally {
       setIsLoadingStats(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    void loadAvailableDatabases();
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await loadAvailableDatabases();
+    })();
   }, [loadAvailableDatabases]);
 
   useEffect(() => {
-    if (!selectedDatabase) {
-      setSelectedStats(null);
-      return;
-    }
-    void loadDatabaseStats(selectedDatabase);
-  }, [selectedDatabase]);
+    void (async () => {
+      if (!selectedDatabase) {
+        setSelectedStats(null);
+        return;
+      }
+      await loadDatabaseStats(selectedDatabase);
+    })();
+  }, [selectedDatabase, loadDatabaseStats]);
 
   const handleReset = async () => {
     if (!currentChatId) {

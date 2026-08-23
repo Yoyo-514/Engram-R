@@ -428,7 +428,7 @@ export async function listDatabaseSummaries(currentChatId?: string): Promise<Dat
     active: 2,
   };
 
-  return summaries.sort((a, b) => {
+  return summaries.toSorted((a, b) => {
     if (a.isCurrent !== b.isCurrent) {
       return a.isCurrent ? -1 : 1;
     }

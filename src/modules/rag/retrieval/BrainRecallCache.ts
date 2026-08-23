@@ -218,7 +218,7 @@ export class BrainRecallCache {
     const overflow = this.shortTermMemory.size - limit;
     const sorted = Array.from(this.shortTermMemory.values())
       .filter((slot) => slot.firstRound !== this.currentRound) // 保护新人
-      .sort((a, b) => a.finalScore - b.finalScore);
+      .toSorted((a, b) => a.finalScore - b.finalScore);
 
     for (let i = 0; i < overflow && i < sorted.length; i++) {
       this.shortTermMemory.delete(sorted[i].id);
@@ -350,7 +350,9 @@ export class BrainRecallCache {
   }
 
   getShortTermSnapshot(): MemorySlot[] {
-    return Array.from(this.shortTermMemory.values()).sort((a, b) => b.finalScore - a.finalScore);
+    return Array.from(this.shortTermMemory.values()).toSorted(
+      (a, b) => b.finalScore - a.finalScore
+    );
   }
 
   /**

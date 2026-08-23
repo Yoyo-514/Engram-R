@@ -6,7 +6,7 @@
  */
 
 import { Search } from 'lucide-react';
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import type { FC } from 'react';
 
 import { DOCS } from '@/docs';
@@ -21,12 +21,12 @@ export const DocsView: FC<DocsViewProps> = ({ initialTab }) => {
   const [activeDocId, setActiveDocId] = useState<string>(initialTab || DOCS[0]?.id || '');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // 监听 initialTab 变化
-  useEffect(() => {
-    if (initialTab) {
-      setActiveDocId(initialTab);
-    }
-  }, [initialTab]);
+  // 监听 initialTab 变化（渲染期间调整 state，替代 effect 同步）
+  const [prevInitialTab, setPrevInitialTab] = useState(initialTab);
+  if (initialTab && prevInitialTab !== initialTab) {
+    setPrevInitialTab(initialTab);
+    setActiveDocId(initialTab);
+  }
 
   // 当前激活的文档
   const activeDoc = useMemo(() => DOCS.find((d) => d.id === activeDocId) || DOCS[0], [activeDocId]);

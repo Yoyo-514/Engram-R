@@ -1,5 +1,5 @@
 import { AlertCircle, CheckCircle, Info, Play } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import type { FC } from 'react';
 
 /**
@@ -23,26 +23,20 @@ const FLAGS_OPTIONS = [
 
 export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
   const [testInput, setTestInput] = useState('');
-  const [testOutput, setTestOutput] = useState('');
-  const [validation, setValidation] = useState<{ valid: boolean; error?: string }>({ valid: true });
 
   const processor = useMemo(() => new RegexProcessor(), []);
 
-  // 验证正则表达式
-  useEffect(() => {
-    const result = processor.validatePattern(rule.pattern, rule.flags);
-    setValidation(result);
-  }, [rule.pattern, rule.flags, processor]);
+  // 正则验证：由 rule 纯派生，无需 effect 同步
+  const validation = useMemo(
+    () => processor.validatePattern(rule.pattern, rule.flags),
+    [rule.pattern, rule.flags, processor]
+  );
 
-  // 更新测试输出
-  useEffect(() => {
-    if (testInput && validation.valid) {
-      const output = processor.processWithRule(testInput, rule);
-      setTestOutput(output);
-    } else {
-      setTestOutput('');
-    }
-  }, [testInput, rule, validation.valid, processor]);
+  // 测试输出：由输入与验证结果纯派生
+  const testOutput = useMemo(
+    () => (testInput && validation.valid ? processor.processWithRule(testInput, rule) : ''),
+    [testInput, rule, validation.valid, processor]
+  );
 
   const handleFlagToggle = (flag: string) => {
     const currentFlags = rule.flags.split('');

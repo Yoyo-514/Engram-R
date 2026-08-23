@@ -6,8 +6,6 @@ import { notificationService } from '@/ui/services/NotificationService';
 import { databaseExists, deleteDatabase, listAllChatIds } from './db';
 import { syncService } from './SyncService';
 
-type Unsubscribe = () => void;
-
 type CharacterDeletedPayload = {
   id: string;
   character?: {
@@ -19,8 +17,6 @@ type CharacterDeletedPayload = {
 };
 
 let isCharacterDeleteServiceInitialized = false;
-let _unsubscribeChatDeleted: Unsubscribe | null = null;
-let _unsubscribeCharacterDeleted: Unsubscribe | null = null;
 
 /**
  * 聊天删除回调
@@ -161,9 +157,6 @@ export function initCharacterDeleteService(): void {
       };
 
       context.eventSource.on(context.eventTypes.CHAT_DELETED, chatDeletedHandler);
-      _unsubscribeChatDeleted = () => {
-        context.eventSource.removeListener(context.eventTypes.CHAT_DELETED, chatDeletedHandler);
-      };
 
       Logger.debug(LogModule.DATA_CLEANUP, '监听 CHAT_DELETED 事件');
     }
@@ -179,12 +172,6 @@ export function initCharacterDeleteService(): void {
       };
 
       context.eventSource.on(context.eventTypes.CHARACTER_DELETED, characterDeletedHandler);
-      _unsubscribeCharacterDeleted = () => {
-        context.eventSource.removeListener(
-          context.eventTypes.CHARACTER_DELETED,
-          characterDeletedHandler
-        );
-      };
 
       Logger.debug(LogModule.DATA_CLEANUP, '监听 CHARACTER_DELETED 事件');
     }

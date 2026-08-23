@@ -75,8 +75,8 @@ function limitLogData(data: unknown): unknown {
       return data;
     }
     return {
-      __truncated: true,
-      __originalLength: json.length,
+      truncated: true,
+      originalLength: json.length,
       preview: json.slice(0, MAX_LOG_DATA_CHARS),
     };
   } catch {

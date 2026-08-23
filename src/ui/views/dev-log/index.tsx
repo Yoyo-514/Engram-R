@@ -77,7 +77,8 @@ interface DevLogProps {
 export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'runtime');
   const currentInfo = TAB_INFO[activeTab];
-  const [logs, setLogs] = useState<LogEntry[]>([]);
+  // 初始化日志：直接用惰性初始化器读取存量日志，避免 effect 中同步 setState
+  const [logs, setLogs] = useState<LogEntry[]>(() => Logger.getLogs());
   const [searchQuery, setSearchQuery] = useState('');
   const [levelFilter, setLevelFilter] = useState<LogLevel | -1>(-1);
   const [moduleFilter, setModuleFilter] = useState('ALL');
@@ -92,7 +93,6 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   // 性能说明：回调只入缓冲区，每 100ms 批量 flush 一次 setState
   // 高频日志（批量处理、RAG 注入等场景）下渲染频率从每条一次降到每秒最多 10 次
   useEffect(() => {
-    setLogs(Logger.getLogs());
     let timer: ReturnType<typeof setTimeout> | null = null;
     const pending: LogEntry[] = [];
 
@@ -202,7 +202,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
       {activeTab === 'runtime' && (
         <div className="flex min-h-0 flex-1 flex-col">
           {/* 工具栏 - sticky (Level 2, now top-0 because tabs are in header) */}
-          <div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b border-border px-4 py-3 backdrop-blur-sm md:-mx-8 md:px-8">
+          <div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b border-border px-4 py-3 backdrop-blur-sm">
             <div className="flex flex-wrap items-center gap-2">
               {/* 级别过滤 */}
               <div className="relative">

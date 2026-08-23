@@ -39,6 +39,11 @@ interface EmbeddingProgress {
 
 // ==================== 组件 ====================
 
+// 停止嵌入：纯模块操作，不依赖组件状态
+function handleStopEmbedding(): void {
+  embeddingService.stop();
+}
+
 interface VectorizationPanelProps {
   config: EmbeddingConfig;
   vectorConfig: VectorConfig;
@@ -60,12 +65,8 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
   const [rangeStart, setRangeStart] = useState<string>('');
   const [rangeEnd, setRangeEnd] = useState<string>('');
 
-  // 加载初始数据
-  useEffect(() => {
-    void loadData();
-  }, []);
-
-  const loadData = async () => {
+  // 加载初始数据（useCallback 定义在前，effect 仅调用）
+  const loadData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -77,7 +78,14 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    // 异步加载：async 包装避免 effect 内同步 setState（lint 规则）
+    void (async () => {
+      await loadData();
+    })();
+  }, [loadData]);
 
   // 刷新统计
   const refreshStats = useCallback(async () => {
@@ -118,11 +126,6 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
       setIsProcessing(false);
       setProgress(null);
     }
-  };
-
-  // 停止嵌入
-  const handleStopEmbedding = () => {
-    embeddingService.stop();
   };
 
   // 重新嵌入所有

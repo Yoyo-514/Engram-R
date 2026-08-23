@@ -7,7 +7,7 @@
  */
 
 import { Braces, Cpu, FileText, Key, Layers, Plus, Regex, Save } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import type { ElementType, FC } from 'react';
 
 import { useConfigStore } from '@/state/configStore';
@@ -98,39 +98,43 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
   const { isMobile } = useResponsive();
   const [showMobileForm, setShowMobileForm] = useState(false);
 
-  // 监听 isMobile 变化，自动关闭全屏表单
-  useEffect(() => {
+  // 移动端 → 桌面端切换时自动关闭全屏表单（渲染期间调整 state，替代 effect 同步）
+  const [prevIsMobile, setPrevIsMobile] = useState(isMobile);
+  if (prevIsMobile !== isMobile) {
+    setPrevIsMobile(isMobile);
     if (!isMobile) {
       setShowMobileForm(false);
     }
-  }, [isMobile]);
+  }
 
-  useEffect(() => {
+  // 外部传入的初始 tab 路径变化时同步主/子 tab（渲染期间调整 state）
+  const [prevInitialTabPath, setPrevInitialTabPath] = useState(initialTabPath);
+  if (prevInitialTabPath !== initialTabPath) {
+    setPrevInitialTabPath(initialTabPath);
+
     const [nextMainTab, nextNestedTab] = (initialTabPath || '').split(':');
     const resolvedNextMainTab = MAIN_TABS.includes(nextMainTab as MainTabType)
       ? (nextMainTab as MainTabType)
       : initialTab;
 
-    if (!resolvedNextMainTab) {
-      return;
-    }
+    if (resolvedNextMainTab) {
+      setMainTab(resolvedNextMainTab);
 
-    setMainTab(resolvedNextMainTab);
+      if (
+        resolvedNextMainTab === 'model' &&
+        MODEL_SUB_TAB_IDS.includes(nextNestedTab as ModelSubTabType)
+      ) {
+        setModelSubTab(nextNestedTab as ModelSubTabType);
+      }
 
-    if (
-      resolvedNextMainTab === 'model' &&
-      MODEL_SUB_TAB_IDS.includes(nextNestedTab as ModelSubTabType)
-    ) {
-      setModelSubTab(nextNestedTab as ModelSubTabType);
+      if (
+        resolvedNextMainTab === 'prompt' &&
+        PROMPT_SUB_TAB_IDS.includes(nextNestedTab as PromptSubTabType)
+      ) {
+        setPromptSubTab(nextNestedTab as PromptSubTabType);
+      }
     }
-
-    if (
-      resolvedNextMainTab === 'prompt' &&
-      PROMPT_SUB_TAB_IDS.includes(nextNestedTab as PromptSubTabType)
-    ) {
-      setPromptSubTab(nextNestedTab as PromptSubTabType);
-    }
-  }, [initialTab, initialTabPath]);
+  }
 
   // 使用 Hook 管理业务状态
   // 使用组合 Hooks 管理业务状态
