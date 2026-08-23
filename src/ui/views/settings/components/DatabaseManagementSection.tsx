@@ -295,6 +295,9 @@ export const DatabaseManagementSection: FC = () => {
         badges={[
           ...(item.status === 'orphaned' ? [{ text: '孤立', color: 'orange' as const }] : []),
           ...(item.status === 'unknown' ? [{ text: '状态未知', color: 'default' as const }] : []),
+          ...(item.eventCount === 0 && item.entityCount === 0
+            ? [{ text: '空', color: 'default' as const }]
+            : []),
           ...(isSelected ? [{ text: '已选中', color: 'emerald' as const }] : []),
           ...(item.isCurrent ? [{ text: '当前聊天', color: 'primary' as const }] : []),
         ]}
@@ -422,13 +425,20 @@ export const DatabaseManagementSection: FC = () => {
                   onClick={() => setSelectedDatabase(currentDatabaseName)}
                   title={currentDatabaseSummary?.chatId ?? currentChatId ?? '当前聊天'}
                   subtitle={
-                    currentDatabaseSummary?.lastModified
-                      ? new Date(currentDatabaseSummary.lastModified).toLocaleString()
+                    currentDatabaseSummary
+                      ? currentDatabaseSummary.lastModified
+                        ? new Date(currentDatabaseSummary.lastModified).toLocaleString()
+                        : '该数据库暂无数据'
                       : '当前聊天无数据库记录'
                   }
                   meta="CURRENT"
                   badges={[
                     { text: '当前聊天', color: 'primary' as const },
+                    ...(currentDatabaseSummary &&
+                    currentDatabaseSummary.eventCount === 0 &&
+                    currentDatabaseSummary.entityCount === 0
+                      ? [{ text: '空', color: 'default' as const }]
+                      : []),
                     ...(currentDatabaseSummary?.characterName
                       ? [{ text: currentDatabaseSummary.characterName, color: 'blue' as const }]
                       : []),

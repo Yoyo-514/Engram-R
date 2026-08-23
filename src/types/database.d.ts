@@ -14,6 +14,9 @@ export interface DatabaseSummary {
   lastModified: number | null;
   /** 与 ST 聊天的绑定状态 */
   status: DatabaseBindStatus;
+  /** 事件与实体计数，用于卡片上的数据量/空数据指示 */
+  eventCount: number;
+  entityCount: number;
 }
 
 export interface DatabaseStats {

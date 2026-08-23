@@ -404,6 +404,7 @@ export async function listDatabaseSummaries(currentChatId?: string): Promise<Dat
       const chatId = name.replace('Engram_', '');
       const db = getDbForChat(chatId);
       const lastModifiedMeta = await db.meta.get('lastModified');
+      const [eventCount, entityCount] = await Promise.all([db.events.count(), db.entities.count()]);
 
       const status: DatabaseBindStatus =
         tavernChatIds === null ? 'unknown' : tavernChatIds.has(chatId) ? 'active' : 'orphaned';
@@ -415,6 +416,8 @@ export async function listDatabaseSummaries(currentChatId?: string): Promise<Dat
         isCurrent: currentChatId === chatId,
         lastModified: typeof lastModifiedMeta?.value === 'number' ? lastModifiedMeta.value : null,
         status,
+        eventCount,
+        entityCount,
       };
     })
   );

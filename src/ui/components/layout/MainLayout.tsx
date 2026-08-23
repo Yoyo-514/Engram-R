@@ -97,12 +97,12 @@ export const MainLayout: FC<MainLayoutProps> = ({ children, activeTab, setActive
                 transition={{ duration: 0.3, ease: 'easeOut' }}
                 className="h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8 pt-0 md:px-8 md:pb-12 lg:px-12 lg:pb-16"
               >
-                <div className="mx-auto min-h-full max-w-6xl pb-20">{children}</div>
+                <div className="mx-auto h-full max-w-6xl pb-20">{children}</div>
               </motion.div>
             </AnimatePresence>
           ) : (
             <div className="h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8 pt-0 md:px-8 md:pb-12 lg:px-12 lg:pb-16">
-              <div className="mx-auto min-h-full max-w-6xl pb-20">{children}</div>
+              <div className="mx-auto h-full max-w-6xl pb-20">{children}</div>
             </div>
           )}
         </main>
