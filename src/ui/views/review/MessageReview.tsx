@@ -106,18 +106,18 @@ export const MessageReview: FC<MessageReviewProps> = ({
       {/* Agentic RAG 召回决策区域 */}
       {showAgentic && (
         <div className="flex shrink-0 flex-col gap-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-sm font-medium text-foreground">
-              <BrainCircuit size={16} className="text-primary" />
-              <span>Agentic 召回决策</span>
-              <span className="text-xs font-normal text-muted-foreground">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2 text-sm font-medium text-foreground">
+              <BrainCircuit size={16} className="shrink-0 text-primary" />
+              <span className="min-w-0 break-words">Agentic 召回决策</span>
+              <span className="min-w-0 break-words text-xs font-normal text-muted-foreground">
                 基于用户意图的智能检索
               </span>
             </div>
             {onOpenRecallModal && (
               <button
                 onClick={onOpenRecallModal}
-                className="bg-card/50 rounded border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                className="bg-card/50 shrink-0 rounded border border-border px-3 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
               >
                 查看 / 编辑
               </button>

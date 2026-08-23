@@ -231,7 +231,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
           }`}
         >
           {lastResult.failed > 0 ? <AlertCircle size={16} /> : <CheckCircle2 size={16} />}
-          <span className="text-sm">
+          <span className="min-w-0 break-words text-sm">
             完成：{lastResult.success} 成功
             {lastResult.failed > 0 && `，${lastResult.failed} 失败`}
           </span>
@@ -241,8 +241,8 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
       {/* 错误提示 */}
       {error && (
         <div className="bg-destructive/10 mb-6 flex items-center gap-2 rounded-lg p-3 text-destructive">
-          <AlertCircle size={16} />
-          <span className="text-sm">{error}</span>
+          <AlertCircle size={16} className="shrink-0" />
+          <span className="min-w-0 break-words text-sm">{error}</span>
         </div>
       )}
 

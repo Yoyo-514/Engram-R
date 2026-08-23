@@ -32,14 +32,14 @@ export const SimpleModal: FC<SimpleModalProps> = ({
         className={`w-full ${maxWidth} flex max-h-[90vh] flex-col rounded-lg border border-border bg-background shadow-xl`}
       >
         {/* Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-border px-4 py-3">
-          <h3 className="flex items-center gap-2 text-sm font-medium text-foreground">
-            {icon && <span className="text-primary">{icon}</span>}
-            {title}
+        <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
+          <h3 className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium text-foreground">
+            {icon && <span className="shrink-0 text-primary">{icon}</span>}
+            <span className="min-w-0 break-words">{title}</span>
           </h3>
           <button
             onClick={onClose}
-            className="hover:bg-muted/50 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
+            className="hover:bg-muted/50 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
             title="关闭"
           >
             <X size={16} />

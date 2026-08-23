@@ -166,11 +166,16 @@ export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
           {levelConfig.label}
         </span>
 
-        {/* 模块标签 - 加深颜色 */}
-        <span className="shrink-0 text-[11px] text-zinc-400">{entry.module}</span>
+        {/* 模块标签 - 加深颜色，长模块名截断避免挤压消息 */}
+        <span
+          className="max-w-[120px] shrink-0 truncate text-[11px] text-zinc-400"
+          title={entry.module}
+        >
+          {entry.module}
+        </span>
 
         {/* 消息内容 */}
-        <span className="flex-1 break-words text-[11px] leading-relaxed text-zinc-300">
+        <span className="min-w-0 flex-1 break-words text-[11px] leading-relaxed text-zinc-300">
           {entry.message}
         </span>
       </div>
@@ -248,17 +253,19 @@ export const LogGroupHeader: FC<LogGroupHeaderProps> = ({ summary, expanded, onT
       })}
 
       {/* 模块名 */}
-      <span className={`font-medium ${levelStyle.text}`}>{summary.module}</span>
+      <span className={`min-w-0 truncate font-medium ${levelStyle.text}`} title={summary.module}>
+        {summary.module}
+      </span>
 
       {/* 计数标签 */}
       <span
-        className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
+        className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-medium ${levelStyle.bg} ${levelStyle.text}`}
       >
         {summary.count} 条
       </span>
 
       {/* 时间范围 - 加深颜色 */}
-      <span className="ml-auto tabular-nums text-zinc-500">{timeRange}</span>
+      <span className="ml-auto shrink-0 tabular-nums text-zinc-500">{timeRange}</span>
     </div>
   );
 };

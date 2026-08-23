@@ -307,11 +307,13 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
         </p>
 
         {entry.preprocessedQuery && entry.preprocessedQuery !== entry.query && (
-          <p className="text-xs text-muted-foreground">→ 预处理: {entry.preprocessedQuery}</p>
+          <p className="min-w-0 whitespace-pre-wrap break-words text-xs text-muted-foreground">
+            → 预处理: {entry.preprocessedQuery}
+          </p>
         )}
 
         {/* 统计 */}
-        <div className="mt-3 flex items-center gap-4 text-xs text-muted-foreground">
+        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
           <span>候选: {entry.stats.totalCandidates}</span>
           <span>TopK: {entry.stats.topKCount}</span>
           <span>Rerank: {entry.stats.rerankCount}</span>

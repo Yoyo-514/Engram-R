@@ -134,9 +134,9 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
       {editingEntity && (
         <div className="bg-background/80 animate-in fade-in fixed inset-0 z-[12000] flex items-center justify-center p-4 backdrop-blur-sm">
           <div className="animate-in zoom-in-95 mx-auto flex h-[90dvh] w-full max-w-6xl flex-col gap-4 overflow-hidden rounded-lg border border-border bg-popover p-6 shadow-2xl">
-            <div className="mb-2 flex shrink-0 items-center justify-between border-b pb-2">
-              <h3 className="text-lg font-bold">编辑实体</h3>
-              <div className="text-xs text-muted-foreground">
+            <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-2">
+              <h3 className="shrink-0 text-lg font-bold">编辑实体</h3>
+              <div className="min-w-0 break-words text-xs text-muted-foreground">
                 保存时将自动使用右侧预览的 YAML 格式
               </div>
             </div>

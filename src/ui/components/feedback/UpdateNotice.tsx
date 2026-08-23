@@ -188,14 +188,14 @@ export const UpdateNotice: FC<UpdateNoticeProps> = ({ isOpen, onClose }) => {
       {/* Modal */}
       <div className="animate-in zoom-in-95 relative flex max-h-[80vh] w-full max-w-lg flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl duration-200">
         {/* Header */}
-        <div className="border-border/50 flex items-center justify-between border-b px-5 py-4">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
+        <div className="border-border/50 flex items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="bg-primary/10 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg">
               <Download size={16} className="text-primary" />
             </div>
-            <div>
+            <div className="min-w-0">
               <h2 className="text-base font-semibold text-foreground">更新通知</h2>
-              <p className="text-xs text-muted-foreground">
+              <p className="min-w-0 break-all text-xs text-muted-foreground">
                 当前版本: v{currentVersion} {currentHash !== 'unknown' && `(${currentHash})`}
               </p>
             </div>

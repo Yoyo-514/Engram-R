@@ -26,9 +26,9 @@ export const ModernButton: FC<ModernButtonProps> = ({
     {Icon && (
       <Icon
         size={size === 'sm' ? 14 : 16}
-        className="transition-transform duration-[var(--duration-fast)] group-hover:scale-110"
+        className="shrink-0 transition-transform duration-[var(--duration-fast)] group-hover:scale-110"
       />
     )}
-    {label}
+    <span className="min-w-0 whitespace-normal break-words">{label}</span>
   </button>
 );

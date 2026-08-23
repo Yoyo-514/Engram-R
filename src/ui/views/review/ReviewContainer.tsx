@@ -132,9 +132,9 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
     <div className="flex min-h-0 w-full flex-1 flex-col" style={displayStyle}>
       {/* Header (Session Info) - Optional, can be merged into Tab bar or kept here */}
       {request.description && (
-        <div className="bg-muted/20 flex items-center justify-between border-b border-border px-5 py-2 text-xs text-muted-foreground">
-          <span>{request.description}</span>
-          <span className="rounded border border-border bg-background px-1 uppercase">
+        <div className="bg-muted/20 flex items-center justify-between gap-3 border-b border-border px-5 py-2 text-xs text-muted-foreground">
+          <span className="min-w-0 flex-1 break-words">{request.description}</span>
+          <span className="shrink-0 rounded border border-border bg-background px-1 uppercase">
             {request.type}
           </span>
         </div>

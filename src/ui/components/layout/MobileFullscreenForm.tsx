@@ -35,8 +35,8 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
           <button onClick={onClose} className="rounded p-1 hover:bg-accent">
             <ArrowLeft size={20} />
           </button>
-          <h2 className="flex-1 text-lg font-light">{title}</h2>
-          {actions}
+          <h2 className="min-w-0 flex-1 break-words text-lg font-light">{title}</h2>
+          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
         </div>
 
         {/* 内容区域 */}

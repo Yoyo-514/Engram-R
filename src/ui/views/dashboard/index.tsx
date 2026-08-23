@@ -306,7 +306,7 @@ export const Dashboard: FC<DashboardProps> = ({ onNavigate }) => {
               <h2 className="mb-4 text-xs font-medium uppercase tracking-wider text-muted-foreground">
                 快速入口
               </h2>
-              <div className="grid grid-cols-5 gap-3">
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
                 {QUICK_ACTIONS.map(({ id, label, icon: Icon, path }) => (
                   <button
                     key={id}

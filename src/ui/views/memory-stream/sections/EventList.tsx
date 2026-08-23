@@ -118,7 +118,8 @@ export const EventList: FC<EventListProps> = ({
                     className="h-4 w-4 shrink-0 rounded border-border accent-primary"
                   />
                   <div
-                    className="border-border/50 rounded-full border px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
+                    className="border-border/50 min-w-0 truncate rounded-full border px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
+                    title={group.title}
                     style={{
                       backgroundColor:
                         'var(--SmartThemeChatColor, var(--bg-color, var(--background, #1e1e1e)))',
@@ -127,7 +128,7 @@ export const EventList: FC<EventListProps> = ({
                     {group.title}
                   </div>
                   <div className="bg-border/50 h-[1px] flex-1" />
-                  <span className="mr-2 text-[10px] text-muted-foreground">
+                  <span className="mr-2 shrink-0 text-[10px] text-muted-foreground">
                     {group.events.length} 项
                   </span>
                 </div>
