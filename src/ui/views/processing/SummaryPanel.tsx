@@ -184,10 +184,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
   // enabled 开关切换
   const handleTrimEnabledChange = async () => {
-    const newConfig = { ...trimConfig, enabled: !trimConfig.enabled };
-    updateConfig('trimmerConfig', newConfig);
-    // Runtime update if needed, typically handled by save action or service sync
-    eventTrimmer.updateConfig({ enabled: newConfig.enabled });
+    updateConfig('trimmerConfig', (prev) => ({ ...prev, enabled: !prev.enabled }));
   };
 
   // 手动触发精简
@@ -291,16 +288,16 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               {/* 第二层级：次要 - 当前楼层 + 总结次数 */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     聊天最新楼层
                   </span>
-                  <div className="text-foreground/80 font-mono text-xl">{status.currentFloor}</div>
+                  <div className="font-mono text-xl text-foreground/80">{status.currentFloor}</div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     当前活跃事件数 (蓝灯)
                   </span>
-                  <div className="text-foreground/80 font-mono text-xl">{activeEventCount}</div>
+                  <div className="font-mono text-xl text-foreground/80">{activeEventCount}</div>
                 </div>
               </div>
 
@@ -310,7 +307,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               {/* 第三层级：指针管理 */}
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     总结指针 (摘要已覆盖至)
                   </span>
                   <div className="flex items-center gap-2">
@@ -319,19 +316,19 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                       min="0"
                       value={editSummarizedFloor}
                       onChange={(e) => setEditSummarizedFloor(Number(e.target.value))}
-                      className="border-border/50 text-foreground/80 w-16 border-b bg-transparent pb-0.5 font-mono text-xl outline-none transition-colors focus:border-primary"
+                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
                     />
                     <button
                       onClick={handleSetSummarizedFloor}
                       disabled={status.lastSummarizedFloor === editSummarizedFloor}
-                      className="bg-muted/50 rounded px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                      className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
                     >
                       设置
                     </button>
                   </div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     提取指针 (实体提取已处理至)
                   </span>
                   <div className="flex items-center gap-2">
@@ -340,12 +337,12 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                       min="0"
                       value={editExtractedFloor}
                       onChange={(e) => setEditExtractedFloor(Number(e.target.value))}
-                      className="border-border/50 text-foreground/80 w-16 border-b bg-transparent pb-0.5 font-mono text-xl outline-none transition-colors focus:border-primary"
+                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
                     />
                     <button
                       onClick={handleSetExtractedFloor}
                       disabled={extractedFloor === editExtractedFloor}
-                      className="bg-muted/50 rounded px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                      className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
                     >
                       设置
                     </button>
@@ -358,10 +355,10 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
               {/* 第四层级：信息 - 世界书 Token */}
               <div>
-                <span className="text-muted-foreground/60 mb-1 block whitespace-normal break-words text-[10px] uppercase tracking-wider">
+                <span className="mb-1 block whitespace-normal break-words text-[10px] uppercase tracking-wider text-muted-foreground/60">
                   已写入摘要层的累计 Token (Engram)
                 </span>
-                <div className="text-primary/80 font-mono text-sm">
+                <div className="font-mono text-sm text-primary/80">
                   {worldbookTokens.toLocaleString()}
                 </div>
               </div>
@@ -383,7 +380,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
             </button>
           ) : (
             <button
-              className="hover:border-foreground/30 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
               onClick={handleStart}
             >
               <Play size={14} />
@@ -413,8 +410,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 label=""
                 checked={settings.enabled}
                 onChange={async (newVal) => {
-                  updateConfig('summarizerConfig', { ...settings, enabled: newVal });
-                  summarizerService.updateConfig({ enabled: newVal });
+                  updateConfig('summarizerConfig', (prev) => ({ ...prev, enabled: newVal }));
                 }}
               />
             </div>
@@ -429,8 +425,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 label=""
                 checked={settings.autoHide}
                 onChange={(newVal) => {
-                  updateConfig('summarizerConfig', { ...settings, autoHide: newVal });
-                  summarizerService.updateConfig({ autoHide: newVal });
+                  updateConfig('summarizerConfig', (prev) => ({ ...prev, autoHide: newVal }));
                 }}
               />
             </div>
@@ -455,8 +450,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     step={5}
                     value={settings.floorInterval}
                     onChange={async (val) => {
-                      updateConfig('summarizerConfig', { ...settings, floorInterval: val });
-                      summarizerService.updateConfig({ floorInterval: val });
+                      updateConfig('summarizerConfig', (prev) => ({ ...prev, floorInterval: val }));
                     }}
                   />
                 </div>
@@ -476,8 +470,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     step={1}
                     value={settings.bufferSize}
                     onChange={(val) => {
-                      updateConfig('summarizerConfig', { ...settings, bufferSize: val });
-                      summarizerService.updateConfig({ bufferSize: val });
+                      updateConfig('summarizerConfig', (prev) => ({ ...prev, bufferSize: val }));
                     }}
                   />
                 </div>
@@ -623,7 +616,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           {/* 执行按钮 - 边框样式 */}
           <button
             type="button"
-            className="hover:border-foreground/30 inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
             onClick={handleTriggerTrim}
             disabled={trimLoading || (trimStatus?.pendingEntryCount ?? 0) < 2}
           >
@@ -632,7 +625,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           </button>
 
           {/* 说明 - 简化 */}
-          <p className="text-muted-foreground/70 whitespace-normal break-words text-xs leading-relaxed">
+          <p className="whitespace-normal break-words text-xs leading-relaxed text-muted-foreground/70">
             精简只作用于历史摘要层：会把更早的摘要继续压缩，同时保留最近几条摘要不动，减少 Token
             消耗但尽量不影响当前上下文阅读。
           </p>

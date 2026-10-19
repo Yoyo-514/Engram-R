@@ -2,8 +2,7 @@
  * SummarizerService - 剧情总结核心服务
  */
 
-import { DEFAULT_SUMMARIZER_CONFIG } from '@/config/memory/defaults';
-import { get } from '@/config/settings';
+import { get, set } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
@@ -22,7 +21,9 @@ import { eventTrimmer } from './EventTrimmer';
  * 核心总结服务
  */
 class SummarizerService {
-  private config: SummarizerConfig;
+  private get config(): SummarizerConfig {
+    return get('summarizerConfig');
+  }
 
   private currentChatId: string | null = null;
   private isRunning = false;
@@ -33,12 +34,6 @@ class SummarizerService {
 
   // 缓存最后总结的楼层，用于同步读取
   private _lastSummarizedFloor: number = 0;
-
-  constructor(config?: Partial<SummarizerConfig>) {
-    // 优先使用传入配置，其次加载持久化配置，最后使用默认配置
-    const savedConfig = get('summarizerConfig') as Partial<SummarizerConfig>;
-    this.config = { ...DEFAULT_SUMMARIZER_CONFIG, ...savedConfig, ...config };
-  }
 
   /** 获取上次总结的楼层，内存进度为空时从聊天数据库加载。 */
   private async getLastSummarizedFloor(): Promise<number> {
@@ -417,10 +412,10 @@ class SummarizerService {
   }
 
   /**
-   * 更新运行态配置
+   * 更新宿主配置
    */
   updateConfig(config: Partial<SummarizerConfig>) {
-    this.config = { ...this.config, ...config };
+    set('summarizerConfig', { ...this.config, ...config });
     void this.log('debug', '配置已更新', this.config);
   }
 

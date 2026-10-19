@@ -1,11 +1,6 @@
-/**
- * EventTrimmer - IndexedDB 事件精简服务
- *
- * V0.6: 直接调用 llmAdapter，不再依赖 Extractor
- */
+/** IndexedDB 事件精简服务。 */
 
-import { DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
-import { get } from '@/config/settings';
+import { get, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { createTrimmerWorkflow, runWorkflow } from '@/modules/workflow';
 import { useMemoryStore } from '@/state/memoryStore';
@@ -38,39 +33,20 @@ export interface TrimmerStatus {
  * EventTrimmer 类
  */
 class EventTrimmer {
-  private config: TrimmerConfig;
   private isTrimming = false;
-
-  constructor(config?: Partial<TrimmerConfig>) {
-    this.config = this.getEffectiveConfig(config);
-  }
 
   /**
    * 更新配置
    */
   updateConfig(config: Partial<TrimmerConfig>): void {
-    this.config = this.getEffectiveConfig(config);
-  }
-
-  private getStoredConfig(): Partial<TrimmerConfig> {
-    return get('trimmerConfig') || {};
-  }
-
-  private getEffectiveConfig(override: Partial<TrimmerConfig> = {}): TrimmerConfig {
-    return {
-      ...DEFAULT_TRIMMER_CONFIG,
-      ...this.getStoredConfig(),
-      ...this.config,
-      ...override,
-    };
+    set('trimmerConfig', { ...get('trimmerConfig'), ...config });
   }
 
   /**
    * 检查是否可以触发精简
-   * V1.0.5: 使用 getEventsToMerge 而非 getAllEvents，确保只统计活跃事件
    */
   async canTrim(): Promise<{ canTrim: boolean; eventCount: number; pendingCount: number }> {
-    const config = this.getEffectiveConfig();
+    const config = this.getConfig();
     const store = useMemoryStore.getState();
     const eventsToMerge = await store.getEventsToMerge(config.keepRecentCount);
     const { activeEventCount } = await store.countEventTokens();
@@ -95,20 +71,18 @@ class EventTrimmer {
     this.isTrimming = true;
 
     try {
-      // Lazy import
-      const config = this.getEffectiveConfig();
+      const config = this.getConfig();
       const context = await runWorkflow(createTrimmerWorkflow(), {
         trigger: manual ? 'manual' : 'auto',
         config: {
           keepRecentCount: config.keepRecentCount,
           previewEnabled: config.previewEnabled,
-          templateId: 'builtin_trim', // Hardcoded for now, matches BuildPrompt category mapping potentially
+          templateId: 'builtin_trim',
           logType: 'trim',
         },
       });
 
       if (context.data?.skipTrimming) {
-        // Not strictly an error, just skipped
         return null;
       }
 
@@ -133,16 +107,14 @@ class EventTrimmer {
    * 获取配置
    */
   getConfig(): TrimmerConfig {
-    return this.getEffectiveConfig();
+    return { ...get('trimmerConfig') };
   }
 
   /**
    * 获取状态 (UI 适配)
    */
   async getStatus() {
-    // 动态导入以避免循环依赖
     const store = useMemoryStore.getState();
-    // V1.0.5: 使用 activeEventCount 而非 eventCount
     const { totalTokens, activeEventCount } = await store.countEventTokens();
 
     // 触发检测
@@ -150,7 +122,7 @@ class EventTrimmer {
     let currentValue = 0;
     let threshold = 0;
 
-    const config = this.getEffectiveConfig();
+    const config = this.getConfig();
     const triggerType = config.trigger;
     const tokenLimit = config.tokenLimit;
     const countLimit = config.countLimit;
@@ -159,7 +131,6 @@ class EventTrimmer {
       currentValue = totalTokens;
       threshold = tokenLimit;
     } else {
-      // V1.0.5: 使用 activeEventCount
       currentValue = activeEventCount;
       threshold = countLimit;
     }

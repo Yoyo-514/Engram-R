@@ -1,7 +1,6 @@
 import { Eye, ScanSearch } from 'lucide-react';
 import type { FC } from 'react';
 
-import { summarizerService } from '@/modules/memory';
 import { useConfigStore } from '@/state/configStore';
 import { Switch } from '@/ui/components/core/Switch';
 
@@ -14,10 +13,10 @@ export const FeatureSettingsSection: FC = () => {
   return (
     <SettingsSection title="功能" description="控制总结、预处理等功能的交互行为。">
       <div className="space-y-4">
-        <div className="bg-muted/30 rounded-lg border border-border p-4">
+        <div className="rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex w-full min-w-0 flex-1 items-center gap-3">
-              <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
+              <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                 <Eye size={20} />
               </div>
               <div className="min-w-0 flex-1">
@@ -33,7 +32,6 @@ export const FeatureSettingsSection: FC = () => {
               <Switch
                 checked={summarizerConfig.previewEnabled}
                 onChange={(checked) => {
-                  summarizerService.updateConfig({ previewEnabled: checked });
                   updateConfig('summarizerConfig', (prev) => ({
                     ...prev,
                     previewEnabled: checked,
@@ -44,10 +42,10 @@ export const FeatureSettingsSection: FC = () => {
           </div>
         </div>
 
-        <div className="bg-muted/30 rounded-lg border border-border p-4">
+        <div className="rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex w-full min-w-0 flex-1 items-center gap-3">
-              <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
+              <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                 <Eye size={20} />
               </div>
               <div className="min-w-0 flex-1">
@@ -73,10 +71,10 @@ export const FeatureSettingsSection: FC = () => {
           </div>
         </div>
 
-        <div className="bg-muted/30 rounded-lg border border-border p-4">
+        <div className="rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="flex w-full min-w-0 flex-1 items-center gap-3">
-              <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
+              <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                 <ScanSearch size={20} />
               </div>
               <div className="min-w-0 flex-1">

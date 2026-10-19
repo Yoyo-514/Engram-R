@@ -4,6 +4,7 @@ import type { EngramRuntimeSettings } from '@/types/config';
 import { DEFAULT_CUSTOM_MACROS } from '../macro/defaults';
 import { DEFAULT_ENTITY_CONFIG } from '../memory/defaults';
 import {
+  DEFAULT_EMBEDDING_CONFIG,
   DEFAULT_RECALL_CONFIG,
   DEFAULT_RERANK_CONFIG,
   DEFAULT_VECTOR_CONFIG,
@@ -17,6 +18,7 @@ export function getDefaultRuntimeSettings(): EngramRuntimeSettings {
     llmPresets: [createDefaultLLMPreset()],
     selectedPresetId: null,
     vectorConfig: { ...DEFAULT_VECTOR_CONFIG },
+    embeddingConfig: { ...DEFAULT_EMBEDDING_CONFIG },
     rerankConfig: { ...DEFAULT_RERANK_CONFIG },
     promptTemplates: getBuiltInPromptTemplates(),
     worldbookConfig: { ...DEFAULT_WORLDBOOK_CONFIG },

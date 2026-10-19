@@ -1,10 +1,13 @@
 import { create } from 'zustand';
 
-import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
-import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
-import { DEFAULT_EMBEDDING_CONFIG } from '@/config/rag/defaults';
-import { type EngramSettings, get as getSettings, set as setSettings } from '@/config/settings';
-import { createDebouncedPersistence } from '@/core/utils';
+import {
+  type EngramSettings,
+  get as getSettings,
+  getSettings as readSettings,
+  set as setSettings,
+  saveSettings,
+  subscribe,
+} from '@/config/settings';
 import type { CustomMacro } from '@/types/macro';
 import type { EntityExtractConfig, SummarizerConfig, TrimmerConfig } from '@/types/memory';
 import type { PreprocessConfig } from '@/types/preprocess';
@@ -25,7 +28,6 @@ export interface ConfigState {
   linkedDeletion: EngramSettings['linkedDeletion'];
   syncConfig: EngramSettings['syncConfig'];
   hasChanges: boolean;
-
   updateConfig: <K extends keyof PersistedConfigState>(
     key: K,
     value: PersistedConfigState[K] | ((prev: PersistedConfigState[K]) => PersistedConfigState[K])
@@ -52,189 +54,73 @@ type PersistedConfigState = Pick<
   | 'linkedDeletion'
   | 'syncConfig'
 >;
+type RootConfigKey = keyof PersistedConfigState & keyof EngramSettings;
 
-const savedContext = getSettings('runtimeSettings');
-const summary = getSettings('summarizerConfig');
-const trimmer = getSettings('trimmerConfig');
-const preprocess = getSettings('preprocessConfig');
-const savedLinkedDeletion = getSettings('linkedDeletion');
-const savedSyncConfig = getSettings('syncConfig');
-
-function buildPersistedConfigState(
-  state: Partial<PersistedConfigState> | undefined
-): PersistedConfigState {
+/** UI 只投影宿主配置的引用，不持有另一份可回写的业务快照。 */
+function readConfig(): PersistedConfigState {
+  const settings = readSettings();
+  const runtime = settings.runtimeSettings;
   return {
-    vectorConfig: state?.vectorConfig ?? savedContext.vectorConfig,
-    rerankConfig: state?.rerankConfig ?? savedContext.rerankConfig,
-    recallConfig: state?.recallConfig ?? savedContext.recallConfig,
-    regexConfig: state?.regexConfig ?? savedContext.regexConfig,
-    entityExtractConfig: state?.entityExtractConfig ?? savedContext.entityExtractConfig,
-    embeddingConfig: state?.embeddingConfig ?? DEFAULT_EMBEDDING_CONFIG,
-    customMacros: state?.customMacros ?? savedContext.customMacros ?? [],
-    summarizerConfig: state?.summarizerConfig ?? {
-      ...DEFAULT_SUMMARIZER_CONFIG,
-      ...summary,
-    },
-    trimmerConfig: state?.trimmerConfig ?? {
-      ...DEFAULT_TRIMMER_CONFIG,
-      ...trimmer,
-    },
-    preprocessConfig: state?.preprocessConfig ?? {
-      ...DEFAULT_PREPROCESS_CONFIG,
-      ...preprocess,
-    },
-    linkedDeletion: state?.linkedDeletion ?? savedLinkedDeletion,
-    syncConfig: state?.syncConfig ?? savedSyncConfig,
+    vectorConfig: runtime.vectorConfig,
+    rerankConfig: runtime.rerankConfig,
+    recallConfig: runtime.recallConfig,
+    regexConfig: runtime.regexConfig,
+    entityExtractConfig: runtime.entityExtractConfig,
+    // 宿主绑定时已统一补齐该可选字段。
+    embeddingConfig: runtime.embeddingConfig!,
+    customMacros: runtime.customMacros,
+    summarizerConfig: settings.summarizerConfig,
+    trimmerConfig: settings.trimmerConfig,
+    preprocessConfig: settings.preprocessConfig,
+    linkedDeletion: settings.linkedDeletion,
+    syncConfig: settings.syncConfig,
   };
 }
 
-const configPersistence = createDebouncedPersistence<PersistedConfigState>({
-  initialValue: buildPersistedConfigState(savedContext),
-  persist: (nextValue) => {
-    const {
-      summarizerConfig,
-      trimmerConfig,
-      preprocessConfig,
-      linkedDeletion,
-      syncConfig,
-      ...runtimeSettings
-    } = nextValue;
+export const useConfigStore = create<ConfigState>((set, get) => ({
+  ...readConfig(),
+  hasChanges: false,
+  updateConfig: (key, value) => {
+    const current = readConfig()[key];
+    const next = typeof value === 'function' ? value(current) : value;
+    if (Object.is(current, next)) return;
 
-    const currentSettings = getSettings('runtimeSettings') || {};
-    setSettings('runtimeSettings', {
-      ...currentSettings,
-      ...runtimeSettings,
-    });
-
-    setSettings('summarizerConfig', summarizerConfig);
-    setSettings('trimmerConfig', trimmerConfig);
-    setSettings('preprocessConfig', preprocessConfig);
-    setSettings('linkedDeletion', linkedDeletion);
-    setSettings('syncConfig', syncConfig);
+    const runtime = getSettings('runtimeSettings');
+    if (key in runtime) {
+      setSettings('runtimeSettings', { ...runtime, [key]: next });
+    } else {
+      setSettings(key as RootConfigKey, next as EngramSettings[RootConfigKey]);
+    }
+    set({ hasChanges: true });
   },
-});
+  addCustomMacro: () => {
+    const now = Date.now();
+    const macro: CustomMacro = {
+      id: `custom_${now}`,
+      name: 'new_macro',
+      content: '',
+      enabled: true,
+      createdAt: now,
+    };
+    get().updateConfig('customMacros', (macros) => [...macros, macro]);
+  },
+  updateCustomMacro: (id, updates) => {
+    get().updateConfig('customMacros', (macros) =>
+      macros.map((macro) => (macro.id === id ? { ...macro, ...updates } : macro))
+    );
+  },
+  deleteCustomMacro: (id) => {
+    get().updateConfig('customMacros', (macros) => macros.filter((macro) => macro.id !== id));
+  },
+  toggleCustomMacro: (id) => {
+    get().updateConfig('customMacros', (macros) =>
+      macros.map((macro) => (macro.id === id ? { ...macro, enabled: !macro.enabled } : macro))
+    );
+  },
+  saveConfig: () => {
+    saveSettings();
+    set({ hasChanges: false });
+  },
+}));
 
-export const useConfigStore = create<ConfigState>((set, get) => {
-  const applyConfigUpdate = (updates: Partial<PersistedConfigState>) => {
-    set((state) => {
-      const nextState = buildPersistedConfigState({
-        vectorConfig: state.vectorConfig,
-        rerankConfig: state.rerankConfig,
-        recallConfig: state.recallConfig,
-        regexConfig: state.regexConfig,
-        entityExtractConfig: state.entityExtractConfig,
-        embeddingConfig: state.embeddingConfig,
-        customMacros: state.customMacros,
-        summarizerConfig: state.summarizerConfig,
-        trimmerConfig: state.trimmerConfig,
-        preprocessConfig: state.preprocessConfig,
-        linkedDeletion: state.linkedDeletion,
-        syncConfig: state.syncConfig,
-        ...updates,
-      });
-
-      const hasChanges = configPersistence.hasChanges(nextState);
-      if (hasChanges) {
-        configPersistence.schedule(nextState);
-      }
-
-      return {
-        ...nextState,
-        hasChanges,
-      };
-    });
-  };
-
-  return {
-    ...buildPersistedConfigState(savedContext),
-    hasChanges: false,
-
-    updateConfig: (key, value) => {
-      const currentValue = get()[key];
-      const nextValue = typeof value === 'function' ? value(currentValue) : value;
-      applyConfigUpdate({ [key]: nextValue } as Partial<PersistedConfigState>);
-    },
-
-    addCustomMacro: () => {
-      const newMacro: CustomMacro = {
-        id: `custom_${Date.now()}`,
-        name: 'new_macro',
-        content: '',
-        enabled: true,
-        createdAt: Date.now(),
-      };
-
-      applyConfigUpdate({
-        customMacros: [...get().customMacros, newMacro],
-      });
-    },
-
-    updateCustomMacro: (id, updates) => {
-      applyConfigUpdate({
-        customMacros: get().customMacros.map((macro) =>
-          macro.id === id ? { ...macro, ...updates } : macro
-        ),
-      });
-    },
-
-    deleteCustomMacro: (id) => {
-      applyConfigUpdate({
-        customMacros: get().customMacros.filter((macro) => macro.id !== id),
-      });
-    },
-
-    toggleCustomMacro: (id) => {
-      applyConfigUpdate({
-        customMacros: get().customMacros.map((macro) =>
-          macro.id === id ? { ...macro, enabled: !macro.enabled } : macro
-        ),
-      });
-    },
-
-    saveConfig: () => {
-      const state = get();
-      const persistedState = buildPersistedConfigState({
-        vectorConfig: state.vectorConfig,
-        rerankConfig: state.rerankConfig,
-        recallConfig: state.recallConfig,
-        regexConfig: state.regexConfig,
-        entityExtractConfig: state.entityExtractConfig,
-        embeddingConfig: state.embeddingConfig,
-        customMacros: state.customMacros,
-        summarizerConfig: state.summarizerConfig,
-        trimmerConfig: state.trimmerConfig,
-        preprocessConfig: state.preprocessConfig,
-        linkedDeletion: state.linkedDeletion,
-        syncConfig: state.syncConfig,
-      });
-
-      configPersistence.cancel();
-      configPersistence.syncSnapshot(persistedState);
-
-      const {
-        summarizerConfig,
-        trimmerConfig,
-        preprocessConfig,
-        linkedDeletion,
-        syncConfig,
-        ...runtimeSettings
-      } = persistedState;
-
-      const currentSettings = getSettings('runtimeSettings') || {};
-      setSettings('runtimeSettings', {
-        ...currentSettings,
-        ...runtimeSettings,
-      });
-
-      setSettings('summarizerConfig', summarizerConfig);
-      setSettings('trimmerConfig', trimmerConfig);
-      setSettings('preprocessConfig', preprocessConfig);
-      setSettings('linkedDeletion', linkedDeletion);
-      setSettings('syncConfig', syncConfig);
-
-      set({
-        hasChanges: false,
-      });
-    },
-  };
-});
+subscribe(() => useConfigStore.setState(readConfig()));
