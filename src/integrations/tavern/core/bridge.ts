@@ -1,21 +1,12 @@
+/** 初始化酒馆集成与记忆服务。 */
 import { getRegexRules, initSettings } from '@/config/settings';
-/**
- * STBridge - SillyTavern API 桥接层
- *
- * 这是唯一与 SillyTavern 直接交互的模块。
- * 所有 window.SillyTavern、jQuery、eventSource 的调用都在这里统一管理。
- */
 import { Logger } from '@/core/logger';
-import { setupKeyboardShortcuts } from '@/core/utils';
 import { initCharacterDeleteService } from '@/data/CharacterCleanup';
-import { openCommandPalette, toggleQuickPanel } from '@/index';
 import {
   checkTavernIntegration,
   createTopBarButton,
   MacroServiceInit,
   mountGlobalOverlay,
-  toggleMainPanel,
-  initQuickPanelButton,
   initWorldBookSlot,
 } from '@/integrations/tavern';
 import { summarizerService, entityBuilder } from '@/modules/memory';
@@ -64,7 +55,7 @@ export async function initializeEngram(): Promise<void> {
     Logger.warn('Summarizer', '服务启动失败', { error: String(e) });
   }
 
-  // Start Entity Extraction Service (V0.9.14)
+  // 启动实体提取服务
   try {
     entityBuilder.start();
     Logger.info('EntityBuilder', 'Service started');
@@ -72,13 +63,13 @@ export async function initializeEngram(): Promise<void> {
     Logger.warn('EntityBuilder', 'Service start failed', { error: String(e) });
   }
 
-  // 优先使用顶栏按钮，找不到则使用悬浮球
+  // 创建酒馆顶栏入口
   createTopBarButton();
 
   // 初始化主题系统
   initThemeManager();
 
-  // Initialize Injector Service (V0.4 - Dynamic Context)
+  // 启动动态上下文注入
   try {
     injector.init();
     Logger.info('Injector', '注入服务初始化完成');
@@ -86,20 +77,12 @@ export async function initializeEngram(): Promise<void> {
     Logger.warn('Injector', '注入服务初始化失败', { error: String(e) });
   }
 
-  // Initialize MacroService (Global ST Macros) and Worldbook Slot
+  // 初始化宏服务与世界书插槽
   try {
     await initWorldBookSlot();
     await MacroServiceInit();
   } catch (e) {
     Logger.warn('MacroService', '宏服务/世界书初始化失败', { error: String(e) });
-  }
-
-  // V0.8: Initialize QR 栏快捷按钮
-  try {
-    initQuickPanelButton();
-    Logger.info('QuickPanelButton', 'QR 栏按钮初始化完成');
-  } catch (e) {
-    Logger.warn('QuickPanelButton', 'QR 栏按钮初始化失败', { error: String(e) });
   }
 
   // 挂载全局悬浮层 (用于修订弹窗等)
@@ -111,18 +94,6 @@ export async function initializeEngram(): Promise<void> {
     Logger.info('STBridge', '角色联动清理服务初始化完成');
   } catch (e) {
     Logger.warn('STBridge', '角色联动清理服务初始化失败', { error: String(e) });
-  }
-
-  // V0.9.5: 初始化键盘快捷键
-  try {
-    setupKeyboardShortcuts({
-      toggleMainPanel: toggleMainPanel,
-      toggleQuickPanel: toggleQuickPanel,
-      openCommandPalette: openCommandPalette,
-    });
-    Logger.info('STBridge', '键盘快捷键初始化完成');
-  } catch (e) {
-    Logger.warn('STBridge', '键盘快捷键初始化失败', { error: String(e) });
   }
 
   Logger.success('STBridge', 'Engram 初始化完成 - Where memories leave their trace.');

@@ -20,9 +20,6 @@ type SettingsCapableContext = Omit<TavernContext, 'extensionSettings'> & {
   extensionSettings?: EngramContextSettings;
 };
 
-type StatisticsState = EngramSettings['statistics'];
-type IncrementableStatisticKey = Exclude<keyof StatisticsState, 'firstUseAt' | 'activeDays'>;
-
 type EngramExtensionContext = {
   extensionSettings: EngramContextSettings;
   settings: EngramSettings;
@@ -33,7 +30,6 @@ export interface EngramSettings {
   presets: JsonObject; // 待扩展的预设类型，暂时使用 Record
   templates: JsonObject; // 待扩展的模板类型，暂时使用 Record
   promptTemplates: PromptTemplate[]; // 提示词模板列表
-  lastReadVersion: string; // 最后已读的版本号
   lastOpenedTab: string; // 上次打开的主界面页面
   summarizerConfig: SummarizerConfig; // 总结器运行配置（持久化层）
   trimmerConfig: TrimmerConfig; // 事件精简配置
@@ -54,15 +50,6 @@ export interface EngramSettings {
     enabled: boolean; // 总开关：是否启用同步功能
     autoSync: boolean; // 是否在数据变动时自动上传
   };
-  statistics: {
-    firstUseAt: number | null; // 首次使用时间戳
-    activeDays: string[]; // 活跃日期集合 (如 ['2026-03-05', ...])
-    totalTokens: number; // 总 Token 消耗
-    totalLlmCalls: number; // 总 LLM 调用次数
-    totalEvents: number; // 累计生成的节点数
-    totalEntities: number; // 累计提取的实体数
-    totalRagInjections: number; // 总召回注入次数
-  };
 }
 
 /** 默认设置 */
@@ -71,8 +58,7 @@ const defaultSettings: EngramSettings = Object.freeze({
   presets: {},
   templates: {},
   promptTemplates: [],
-  lastReadVersion: '0.0.0',
-  lastOpenedTab: 'dashboard',
+  lastOpenedTab: 'memory',
   summarizerConfig: DEFAULT_SUMMARIZER_CONFIG,
   trimmerConfig: DEFAULT_TRIMMER_CONFIG,
   regexRules: [],
@@ -92,15 +78,6 @@ const defaultSettings: EngramSettings = Object.freeze({
     enabled: false, // 默认关闭（Beta功能）
     autoSync: true, // 启用后默认开启自动同步
   },
-  statistics: {
-    firstUseAt: null,
-    activeDays: [],
-    totalTokens: 0,
-    totalLlmCalls: 0,
-    totalEvents: 0,
-    totalEntities: 0,
-    totalRagInjections: 0,
-  },
 });
 
 /**
@@ -110,18 +87,6 @@ const defaultSettings: EngramSettings = Object.freeze({
  * 这是 ST 官方推荐的扩展设置存储方式
  */
 const EXTENSION_NAME = 'engram';
-const SENSITIVE_LOG_KEYS = new Set([
-  'apiKey',
-  'apikey',
-  'key',
-  'token',
-  'accessToken',
-  'refreshToken',
-  'authorization',
-  'auth',
-  'secret',
-  'password',
-]);
 const listeners: Set<() => void> = new Set();
 const CONTEXT_READY_RETRY_INTERVAL_MS = 200;
 const CONTEXT_READY_TIMEOUT_MS = 5000;
@@ -146,38 +111,6 @@ function notifyListeners(): void {
       Logger.warn('SettingsManager', 'Listener Execution Error', e);
     }
   });
-}
-
-/**
- * 脱敏日志数据，避免 API Key / Token 等敏感字段进入日志缓存
- */
-function sanitizeLogValue(value: unknown, seen: WeakSet<object> = new WeakSet()): unknown {
-  if (value === null || value === undefined) {
-    return value;
-  }
-
-  if (typeof value !== 'object') {
-    return value;
-  }
-
-  if (seen.has(value)) {
-    return '[Circular]';
-  }
-  seen.add(value);
-
-  if (Array.isArray(value)) {
-    return value.map((item) => sanitizeLogValue(item, seen));
-  }
-
-  const sanitized: Record<string, unknown> = {};
-  for (const [entryKey, entryValue] of Object.entries(value)) {
-    if (SENSITIVE_LOG_KEYS.has(entryKey)) {
-      sanitized[entryKey] = '[REDACTED]';
-    } else {
-      sanitized[entryKey] = sanitizeLogValue(entryValue, seen);
-    }
-  }
-  return sanitized;
 }
 
 function cloneDefaultSettings(): EngramSettings {
@@ -339,7 +272,8 @@ export function set<K extends keyof EngramSettings>(key: K, value: EngramSetting
 
   // 更新单个字段
   resolved.settings[key] = value;
-  Logger.debug('SettingsManager', `Set ${String(key)}`, sanitizeLogValue(value));
+  // 配置可能包含密钥，日志只记录发生变更的字段名。
+  Logger.debug('SettingsManager', `Set ${String(key)}`);
 
   // 触发变更通知
   notifyListeners();
@@ -377,39 +311,4 @@ export function getRegexRules(): RegexRule[] {
  */
 export function setRegexRules(rules: RegexRule[]): void {
   set('regexRules', rules);
-}
-
-// ==================== 统计与遥测 (Telemetry) ====================
-
-/**
- * 累加全局统计数据
- * @param key 要累加的统计字段名
- * @param value 累加值 (默认为 1)
- */
-export function incrementStatistic(key: IncrementableStatisticKey, value: number = 1): void {
-  const stats = { ...get('statistics') };
-
-  // 初始化首次使用时间
-  if (!stats.firstUseAt) {
-    stats.firstUseAt = Date.now();
-  }
-
-  // 记录活跃天数 (基于本地时区的 YYYY-MM-DD)
-  const today = new Date().toLocaleDateString('en-CA'); // 'YYYY-MM-DD'
-  if (!stats.activeDays) stats.activeDays = [];
-  if (!stats.activeDays.includes(today)) {
-    stats.activeDays.push(today);
-    // 保持数组不过大，比如保留最近一年 365 天
-    if (stats.activeDays.length > 365) {
-      stats.activeDays.shift();
-    }
-  }
-
-  // 累加数值 (不处理数组或非数值类型)
-  const currentValue = stats[key];
-  if (typeof currentValue === 'number') {
-    stats[key] += value;
-  }
-
-  set('statistics', stats);
 }

@@ -1,1 +1,0 @@
-export { QuickPanel } from './QuickPanel';

@@ -3,7 +3,7 @@
  */
 
 import { DEFAULT_SUMMARIZER_CONFIG } from '@/config/memory/defaults';
-import { get, incrementStatistic } from '@/config/settings';
+import { get } from '@/config/settings';
 import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
@@ -315,7 +315,6 @@ class SummarizerService {
         },
       });
 
-      const savedEvents = context.output;
       const result: SummaryResult = {
         id: Date.now().toString(),
         content: context.cleanedContent || '',
@@ -323,10 +322,6 @@ class SummarizerService {
         timestamp: Date.now(),
         tokenCount: 0,
       };
-
-      if (Array.isArray(savedEvents) && savedEvents.length > 0) {
-        incrementStatistic('totalEvents', savedEvents.length);
-      }
 
       await this.setLastSummarizedFloor(endFloor);
       this.summaryHistory.push(result);

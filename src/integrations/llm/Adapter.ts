@@ -7,7 +7,7 @@
  * - 处理取消、预处理与基础遥测。
  */
 
-import { getSettings, incrementStatistic } from '@/config/settings';
+import { getSettings } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getTavernHelper, yieldToMainThread } from '@/core/utils';
 import { regexProcessor } from '@/modules/workflow';
@@ -315,7 +315,8 @@ class LLMAdapter {
     const presetOverrides = this.buildPresetOverrides(preset);
     const maxChatHistory = preset?.context?.maxChatHistory ?? 0;
 
-    let generationResult: string | GenerateToolCallResult;
+    // 当前请求只生成正文，酒馆助手的默认返回值为字符串。
+    let content: string;
     const stopWatching = this.watchForCancellation(request.signal, request.generationId);
 
     try {
@@ -333,13 +334,13 @@ class LLMAdapter {
         // 这样酒馆就不会在末尾自动追加多余的内容
         prompts.push({ role: 'user', content: finalUserPrompt });
 
-        generationResult = await helper.generateRaw({
+        content = await helper.generateRaw({
           ordered_prompts: prompts,
           ...(presetOverrides ? { custom_api: presetOverrides } : {}),
           ...generationOptions,
         });
       } else if (helper.generate) {
-        generationResult = await helper.generate({
+        content = await helper.generate({
           user_input: finalUserPrompt,
           max_chat_history: maxChatHistory,
           ...(presetOverrides ? { custom_api: presetOverrides } : {}),
@@ -352,20 +353,14 @@ class LLMAdapter {
       stopWatching();
     }
 
-    const content =
-      typeof generationResult === 'string' ? generationResult : generationResult.content || '';
-
     this.throwIfCancelled(request.signal);
 
-    // 更新全局遥测计数，用于观测总调用量与粗略 Token 消耗。
-    incrementStatistic('totalLlmCalls', 1);
     const estimatedPromptTokens = this.estimateTokens(finalSystemPrompt + finalUserPrompt);
     const estimatedCompletionTokens = this.estimateTokens(content);
-    incrementStatistic('totalTokens', estimatedPromptTokens + estimatedCompletionTokens);
 
     return {
       success: true,
-      content: content || '',
+      content,
       tokenUsage: {
         prompt: estimatedPromptTokens,
         completion: estimatedCompletionTokens,

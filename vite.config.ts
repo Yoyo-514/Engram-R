@@ -1,22 +1,16 @@
 import path from 'node:path';
 
-import mdx from '@mdx-js/rollup';
 import react from '@vitejs/plugin-react';
-import remarkGfm from 'remark-gfm';
 import { defineConfig } from 'vite';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
-const commitHash = 'unknown';
-
 export default defineConfig(({ mode }) => ({
-  plugins: [mdx({ remarkPlugins: [remarkGfm] }), tsconfigPaths(), react()],
+  plugins: [tsconfigPaths(), react()],
 
   server: {
     port: 5173,
+    // 酒馆页面跨源加载开发脚本，统一交给 Vite 处理 CORS。
     cors: true,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-    },
     hmr: {
       overlay: false,
     },
@@ -82,7 +76,6 @@ export default defineConfig(({ mode }) => ({
 
   define: {
     'process.env.NODE_ENV': JSON.stringify(mode),
-    __COMMIT_HASH__: JSON.stringify(commitHash),
   },
 
   resolve: {

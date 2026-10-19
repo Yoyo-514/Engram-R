@@ -1,24 +1,5 @@
-/// <reference types="@mdx-js/react" />
-
-// MDX Components
-declare module '*.mdx' {
-  import type { ComponentType } from 'react';
-  const MDXComponent: ComponentType;
-  export default MDXComponent;
-}
-
-// Raw File Imports (Vite specific)
+/** Vite 原始文本导入，用于内置提示词等资源。 */
 declare module '*?raw' {
-  const content: string;
-  export default content;
-}
-
-declare module '*.md?raw' {
-  const content: string;
-  export default content;
-}
-
-declare module '*.mdx?raw' {
   const content: string;
   export default content;
 }

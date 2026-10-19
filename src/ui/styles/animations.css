@@ -118,43 +118,6 @@
   }
 }
 
-/* 铃铛摇晃 - 更新通知 */
-@keyframes engram-bell-ring {
-  0%,
-  100% {
-    transform: rotate(0deg);
-  }
-
-  10% {
-    transform: rotate(12deg);
-  }
-
-  20% {
-    transform: rotate(-10deg);
-  }
-
-  30% {
-    transform: rotate(8deg);
-  }
-
-  40% {
-    transform: rotate(-6deg);
-  }
-
-  50% {
-    transform: rotate(4deg);
-  }
-
-  60% {
-    transform: rotate(-2deg);
-  }
-
-  70%,
-  100% {
-    transform: rotate(0deg);
-  }
-}
-
 /* 脉冲 - 骨架屏/加载 */
 @keyframes engram-pulse {
   0%,
@@ -238,11 +201,6 @@
 
 .engram-animate-shake {
   animation: engram-shake var(--duration-normal, 200ms) ease-in-out;
-}
-
-.engram-animate-bell-ring {
-  animation: engram-bell-ring 1s ease-in-out infinite;
-  transform-origin: top center;
 }
 
 .engram-animate-bounce-in {

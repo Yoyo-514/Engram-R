@@ -11,7 +11,7 @@
  */
 
 import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
-import { get, getPromptTemplateById, incrementStatistic } from '@/config/settings';
+import { get, getPromptTemplateById } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { getErrorMessage, getErrorStack } from '@/core/utils/error';
 import {
@@ -345,7 +345,6 @@ class Injector {
                     nodeCount: agenticResult.nodes.length,
                   });
                   await refreshCacheWithNodes(agenticResult.nodes);
-                  incrementStatistic('totalRagInjections', 1);
                   ragHandled = true;
                 } else {
                   Logger.warn(LogModule.RAG_INJECT, 'Agentic RAG 无有效结果，尝试降级');
@@ -373,7 +372,6 @@ class Injector {
                   entityCount: recallResult.recalledEntities?.length ?? 0,
                 });
                 await refreshCacheWithNodes(recallResult.nodes);
-                incrementStatistic('totalRagInjections', 1);
               } else {
                 Logger.debug(LogModule.RAG_INJECT, '召回无结果');
               }

@@ -84,12 +84,6 @@ pnpm run dev:watch
 
 ---
 
-## 📁 目录结构 (Project Structure)
-
-参考"docs/architecture/项目文件架构.md"
-
----
-
 ## 📄 开源协议 (License)
 
 MIT License

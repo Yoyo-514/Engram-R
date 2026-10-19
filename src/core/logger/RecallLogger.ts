@@ -4,9 +4,10 @@
  * 集中管理召回日志，供 DevLog 组件使用
  */
 
-import { VERSION } from '@/constants';
 import { Logger } from '@/core/logger';
 import type { RecallLogEntry } from '@/types/recall_log';
+
+import manifest from '../../../manifest.json';
 
 type RecallLogSubscriber = (logs: RecallLogEntry[]) => void;
 
@@ -76,7 +77,7 @@ class RecallLogServiceClass {
    */
   exportLogs(): void {
     const exportData = {
-      version: VERSION,
+      version: manifest.version,
       exportedAt: Date.now(),
       logs: this.getLogs(),
     };
