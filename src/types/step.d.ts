@@ -23,7 +23,7 @@ export interface RetryConfig {
   /** 初始重试延迟 (ms) */
   delay: number;
   /**
-   * 退避策略，默认为 exponential
+   * 退避策略，省略时使用固定延迟
    * linear: 延迟固定
    * exponential: 延迟翻倍
    */

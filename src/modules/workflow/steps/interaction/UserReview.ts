@@ -39,7 +39,6 @@ export class UserReview implements IStep {
   constructor(private config: UserReviewConfig) {}
 
   async execute(context: JobContext): Promise<StepResult> {
-    // V1.0.5: 调试日志
     Logger.debug('UserReview', 'previewEnabled check', {
       previewEnabled: context.config.previewEnabled,
       configKeys: Object.keys(context.config),
@@ -47,15 +46,17 @@ export class UserReview implements IStep {
 
     // 检查配置是否启用预览
     if (!context.config.previewEnabled) {
-      // 如果未启用，直接使用 cleanedContent 或 llmResponse.content
-      context.output = context.cleanedContent || context.llmResponse?.content;
+      // 实体流程已完成预演，保留结构化结果供落库；文本流程沿用清洗后的正文。
+      if (this.config.type !== 'entity') {
+        context.output = context.cleanedContent || context.llmResponse?.content;
+      }
       Logger.info('UserReview', 'Preview disabled, skipping review');
       return; // 默认 next
     }
 
     const contentToReview = context.cleanedContent || context.llmResponse?.content || '';
 
-    // V1.2.1: 如果内容为空，视为生成失败，抛出错误中止流程 (不进入预览)
+    // 空内容按生成失败处理，避免进入审阅。
     if (!contentToReview || !contentToReview.trim()) {
       Logger.warn('UserReview', 'Content is empty, skipping review');
       throw new Error('生成的摘要内容为空，请检查模型输出或 Token 限制。');
@@ -77,7 +78,7 @@ export class UserReview implements IStep {
       let reviewType: 'text' | 'json' | 'entity' | 'summary' = this.config.type || 'text';
       let reviewData = undefined;
 
-      // V1.2.7: 优先使用 context.output（来自 SaveEntity dryRun 步骤的 newEntities/updatedEntities）
+      // 优先使用实体预演生成的 newEntities/updatedEntities。
       if (
         context.output &&
         typeof context.output === 'object' &&
@@ -110,7 +111,6 @@ export class UserReview implements IStep {
         }
       }
 
-      // V1.2.0: 使用新的 ReviewService
       const result = await reviewService.requestReview(
         this.config.title,
         this.config.description || `范围: ${range} | Token: ${tokenCount}`,

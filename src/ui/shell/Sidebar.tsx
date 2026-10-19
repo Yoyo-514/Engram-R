@@ -1,4 +1,4 @@
-import { Github, X } from 'lucide-react';
+import { ExternalLink, X } from 'lucide-react';
 import type { FC } from 'react';
 
 import { EngramTextLogo } from '@/ui/assets/icons/EngramTextLogo';
@@ -28,7 +28,7 @@ export const Sidebar: FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, onClo
       )}
       <aside
         id="engram-navigation"
-        className={`border-border/50 fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r bg-sidebar p-4 shadow-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:px-2 md:shadow-none ${isOpen ? 'flex' : 'hidden'}`}
+        className={`fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r border-border/50 bg-sidebar p-4 shadow-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:px-2 md:shadow-none ${isOpen ? 'flex' : 'hidden'}`}
       >
         <div className="mb-4 flex items-center justify-between md:hidden">
           <span className="font-semibold text-sidebar-foreground">导航</span>
@@ -66,14 +66,14 @@ export const Sidebar: FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, onClo
           })}
         </nav>
 
-        <footer className="border-border/30 mt-4 space-y-3 border-t pt-4">
+        <footer className="mt-4 space-y-3 border-t border-border/30 pt-4">
           <a
             href="https://github.com/Yoyo-514/Engram-R"
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
           >
-            <Github size={16} strokeWidth={1.5} />
+            <ExternalLink size={16} strokeWidth={1.5} />
             <span>项目主页</span>
           </a>
           <div className="flex items-center gap-2 px-2 text-muted-foreground">

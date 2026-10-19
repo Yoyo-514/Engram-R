@@ -10,13 +10,13 @@ import type { EntityNode } from '@/types/graph';
 import { type JobContext } from '@/types/job_context';
 import type { IStep } from '@/types/step';
 
-// V1.3: 统一 JSON Patch 格式
+// 统一 JSON Patch 格式
 // 新实体: { op: "add", path: "/entities/{name}", value: {...} }
 // 更新:   { op: "replace/add/remove", path: "/entities/{name}/profile/{key}", value: ... }
 
 const PatchOpSchema = z.object({
   op: z.enum(['add', 'replace', 'remove', 'copy', 'move', 'test']),
-  path: z.string(),
+  path: z.string().startsWith('/entities/'),
   value: z.unknown().optional(),
   from: z.string().optional(),
 });
@@ -25,55 +25,37 @@ const UnifiedPatchSchema = z.object({
   patches: z.array(PatchOpSchema),
 });
 
-const ProcessedResultSchema = z.object({
-  newEntities: z
-    .array(
-      z
-        .object({
-          id: z.string().optional(),
-          name: z.string(),
-          type: z.string().optional(),
-          aliases: z.array(z.string()).optional(),
-          profile: z.record(z.string(), z.unknown()).optional(),
-          description: z.string().optional(),
-          embedding: z.array(z.number()).optional(),
-          is_archived: z.boolean().optional(),
-          is_embedded: z.boolean().optional(),
-          is_locked: z.boolean().optional(),
-          layout_x: z.number().optional(),
-          layout_y: z.number().optional(),
-          last_updated_at: z.number().optional(),
-        })
-        .passthrough()
-    )
-    .optional(),
-  updatedEntities: z
-    .array(
-      z
-        .object({
-          id: z.string().optional(),
-          name: z.string(),
-          type: z.string().optional(),
-          aliases: z.array(z.string()).optional(),
-          profile: z.record(z.string(), z.unknown()).optional(),
-          description: z.string().optional(),
-          embedding: z.array(z.number()).optional(),
-          is_archived: z.boolean().optional(),
-          is_embedded: z.boolean().optional(),
-          is_locked: z.boolean().optional(),
-          layout_x: z.number().optional(),
-          layout_y: z.number().optional(),
-          last_updated_at: z.number().optional(),
-        })
-        .passthrough()
-    )
-    .optional(),
+const ReviewedEntitySchema = z.looseObject({
+  id: z.string().optional(),
+  name: z.string(),
+  type: z.string().optional(),
+  aliases: z.array(z.string()).optional(),
+  profile: z.record(z.string(), z.unknown()).optional(),
+  description: z.string().optional(),
+  embedding: z.array(z.number()).optional(),
+  is_archived: z.boolean().optional(),
+  is_embedded: z.boolean().optional(),
+  is_locked: z.boolean().optional(),
+  layout_x: z.number().optional(),
+  layout_y: z.number().optional(),
+  last_updated_at: z.number().optional(),
 });
+
+const ProcessedResultSchema = z
+  .object({
+    newEntities: z.array(ReviewedEntitySchema).optional(),
+    updatedEntities: z.array(ReviewedEntitySchema).optional(),
+  })
+  .refine((result) => result.newEntities !== undefined || result.updatedEntities !== undefined);
 
 type EntityStore = ReturnType<typeof useMemoryStore.getState>;
 type PatchOperation = z.infer<typeof PatchOpSchema>;
 type EntityProfile = Record<string, unknown>;
 type EntityDraft = Omit<EntityNode, 'id' | 'last_updated_at'>;
+type EntitySource = Partial<Record<keyof EntityDraft, unknown>> & {
+  id?: string;
+  last_updated_at?: number;
+};
 type DiffOperation = jsonpatch.Operation & { oldValue?: unknown };
 type EntityPatchDocument = EntityNode & {
   _original?: EntityNode;
@@ -89,7 +71,6 @@ type RootPatchValue = {
 
 type EntityIndexes = {
   byName: Map<string, EntityNode>;
-  byId: Map<string, EntityNode>;
   byAlias: Map<string, EntityNode[]>;
   byLowerName: Map<string, EntityNode>;
   byLowerAlias: Map<string, EntityNode[]>;
@@ -99,7 +80,6 @@ export class SaveEntity implements IStep {
   name = 'SaveEntity';
   private config: { dryRun?: boolean };
 
-  // V1.2.7: 支持构造函数配置 dryRun，用于预览模式
   constructor(config?: { dryRun?: boolean }) {
     this.config = config || {};
   }
@@ -124,21 +104,7 @@ export class SaveEntity implements IStep {
     return isRecord(value) ? { ...value } : {};
   }
 
-  private buildEntityDraft(
-    name: string,
-    source: {
-      type?: unknown;
-      aliases?: unknown;
-      profile?: unknown;
-      description?: unknown;
-      embedding?: unknown;
-      is_archived?: unknown;
-      is_embedded?: unknown;
-      is_locked?: unknown;
-      layout_x?: unknown;
-      layout_y?: unknown;
-    }
-  ): EntityDraft {
+  private buildEntityDraft(name: string, source: EntitySource): EntityDraft {
     const type = this.normalizeEntityType(source.type);
     const profile = this.normalizeProfile(source.profile);
     const draft: EntityDraft = {
@@ -166,23 +132,7 @@ export class SaveEntity implements IStep {
     return draft;
   }
 
-  private buildEntityDocument(
-    name: string,
-    source: {
-      id?: string;
-      last_updated_at?: number;
-      type?: unknown;
-      aliases?: unknown;
-      profile?: unknown;
-      description?: unknown;
-      embedding?: unknown;
-      is_archived?: unknown;
-      is_embedded?: unknown;
-      is_locked?: unknown;
-      layout_x?: unknown;
-      layout_y?: unknown;
-    }
-  ): EntityPatchDocument {
+  private buildEntityDocument(name: string, source: EntitySource): EntityPatchDocument {
     const draft = this.buildEntityDraft(name, source);
     return {
       ...draft,
@@ -236,14 +186,9 @@ export class SaveEntity implements IStep {
 
   async execute(context: JobContext): Promise<void> {
     const store = useMemoryStore.getState();
-    const rawExistingEntities = this.readExistingEntities(
-      (context.input as Record<string, unknown>).rawExistingEntities
-    );
-    const existingEntities = rawExistingEntities || (await store.getAllEntities());
-
     let sourceContent: unknown = context.parsedData;
 
-    // Handle UserReview modifications
+    // 审阅结果优先于模型原始输出。
     if (typeof context.output === 'string') {
       sourceContent = parseJson(context.output);
       if (!sourceContent) {
@@ -259,17 +204,11 @@ export class SaveEntity implements IStep {
 
     const newEntities: EntityNode[] = [];
     const updatedEntities: EntityNode[] = [];
-    // V1.2.7: 优先使用构造函数配置，其次是 context.config
     const isDryRun = this.config.dryRun ?? context.config.dryRun === true;
 
-    // V1.3.1: 检查是否为已处理的数据 (来自 DryRun + UserReview)
+    // 空数组也是有效的审阅结果，例如用户删除了全部候选实体。
     const processedResult = ProcessedResultSchema.safeParse(sourceContent);
-    const hasProcessedData =
-      processedResult.success &&
-      ((processedResult.data.newEntities?.length ?? 0) > 0 ||
-        (processedResult.data.updatedEntities?.length ?? 0) > 0);
-
-    if (hasProcessedData) {
+    if (processedResult.success) {
       Logger.debug('SaveEntity', 'Detected processed data structure, bypassing extraction logic');
       await this.saveProcessedEntities(
         processedResult.data,
@@ -281,18 +220,23 @@ export class SaveEntity implements IStep {
     } else {
       const unifiedResult = UnifiedPatchSchema.safeParse(sourceContent);
 
-      if (!unifiedResult.success || !this.isUnifiedFormat(unifiedResult.data.patches)) {
+      if (!unifiedResult.success) {
         throw new Error('SaveEntity: Zod Validation Failed - 无法解析为统一 Patch 格式');
       }
 
-      await this.processUnifiedPatches(
-        unifiedResult.data.patches,
-        existingEntities,
-        store,
-        isDryRun,
-        newEntities,
-        updatedEntities
-      );
+      if (unifiedResult.data.patches.length > 0) {
+        const existingEntities =
+          this.readExistingEntities(context.input.rawExistingEntities) ??
+          (await store.getAllEntities());
+        await this.processUnifiedPatches(
+          unifiedResult.data.patches,
+          existingEntities,
+          store,
+          isDryRun,
+          newEntities,
+          updatedEntities
+        );
+      }
     }
 
     context.output = { newEntities, updatedEntities };
@@ -302,7 +246,7 @@ export class SaveEntity implements IStep {
     );
   }
 
-  /** V1.3.1: 直接保存已处理的实体 (来自 UserReview) */
+  /** 保存已审阅的实体，不再重放 Patch 或扫描实体库。 */
   private async saveProcessedEntities(
     data: z.infer<typeof ProcessedResultSchema>,
     store: EntityStore,
@@ -312,14 +256,7 @@ export class SaveEntity implements IStep {
   ): Promise<void> {
     if (data.newEntities) {
       for (const entity of data.newEntities) {
-        const normalizedEntity = this.buildEntityDocument(entity.name, entity);
-
-        if (!isDryRun) {
-          const saved = await store.saveEntity(this.buildEntityDraft(entity.name, entity));
-          outNewEntities.push(saved);
-        } else {
-          outNewEntities.push(normalizedEntity);
-        }
+        outNewEntities.push(await this.createNewEntity(entity.name, entity, store, isDryRun));
       }
     }
 
@@ -356,12 +293,7 @@ export class SaveEntity implements IStep {
     }
   }
 
-  /** 检测是否为统一格式 (patches 数组包含 path 字段) */
-  private isUnifiedFormat(patches: PatchOperation[]): boolean {
-    return patches.length > 0 && patches.every((patch) => patch.path.startsWith('/entities/'));
-  }
-
-  /** V1.3: 处理统一 JSON Patch 格式 */
+  /** 按实体分组应用 JSON Patch。 */
   private async processUnifiedPatches(
     patches: z.infer<typeof PatchOpSchema>[],
     existingEntities: EntityNode[],
@@ -396,7 +328,14 @@ export class SaveEntity implements IStep {
         const conflict = this.findCaseInsensitiveConflict(entityName, entityIndexes);
 
         if (!conflict) {
-          await this.createNewEntity(entityName, addRootPatch.value, store, isDryRun, newEntities);
+          newEntities.push(
+            await this.createNewEntity(
+              entityName,
+              this.readRootPatchValue(addRootPatch.value),
+              store,
+              isDryRun
+            )
+          );
           continue;
         } else {
           existing = conflict;
@@ -436,24 +375,13 @@ export class SaveEntity implements IStep {
 
   private async createNewEntity(
     entityName: string,
-    value: unknown,
+    source: EntitySource,
     store: EntityStore,
-    isDryRun: boolean,
-    newEntities: EntityNode[]
-  ): Promise<void> {
-    const entityDraft = this.buildEntityDraft(entityName, this.readRootPatchValue(value));
-
-    if (!isDryRun) {
-      const saved = await store.saveEntity(entityDraft);
-      newEntities.push(saved);
-      return;
-    }
-
-    newEntities.push({
-      ...entityDraft,
-      id: `temp-${Date.now()}`,
-      last_updated_at: Date.now(),
-    });
+    isDryRun: boolean
+  ): Promise<EntityNode> {
+    return isDryRun
+      ? this.buildEntityDocument(entityName, source)
+      : store.saveEntity(this.buildEntityDraft(entityName, source));
   }
 
   private convertRootAddToPatches(
@@ -512,21 +440,9 @@ export class SaveEntity implements IStep {
       jsonpatch.applyPatch(targetDoc, relativeOps);
 
       if (!isDryRun) {
-        const description = this.profileToYaml(
-          targetDoc.name,
-          targetDoc.type,
-          targetDoc.profile || {}
-        );
-
-        // 当合并目标为已归档实体时，自动解除归档使其重新可见
+        const updatePayload = this.buildEntityUpdate(targetDoc);
+        // 当合并目标为已归档实体时，自动解除归档使其重新可见。
         const wasArchived = existing.is_archived === true;
-        const updatePayload: Partial<EntityNode> = {
-          profile: targetDoc.profile,
-          aliases: targetDoc.aliases,
-          description,
-          name: targetDoc.name,
-          type: targetDoc.type,
-        };
         if (wasArchived) {
           updatePayload.is_archived = false;
           targetDoc.is_archived = false;
@@ -646,7 +562,6 @@ export class SaveEntity implements IStep {
   private buildEntityIndexes(entities: EntityNode[]): EntityIndexes {
     const indexes: EntityIndexes = {
       byName: new Map(),
-      byId: new Map(),
       byAlias: new Map(),
       byLowerName: new Map(),
       byLowerAlias: new Map(),
@@ -661,7 +576,6 @@ export class SaveEntity implements IStep {
 
   private indexEntity(indexes: EntityIndexes, entity: EntityNode): void {
     indexes.byName.set(entity.name, entity);
-    indexes.byId.set(entity.id, entity);
     indexes.byLowerName.set(entity.name.toLowerCase(), entity);
 
     for (const alias of entity.aliases || []) {
@@ -745,11 +659,7 @@ export class SaveEntity implements IStep {
     }
   }
 
-  /**
-   * V1.6: Universal Smart Pointer (Deep Search)
-   * Recursively search for a key in the object structure.
-   * Returns the relative path (slash-separated) to the key if found uniquely.
-   */
+  /** 查找唯一叶键路径，供现有模型输出的路径纠偏使用。 */
   private findUniquePath(obj: unknown, targetKey: string, currentPath: string = ''): string[] {
     if (!isRecord(obj)) {
       return [];

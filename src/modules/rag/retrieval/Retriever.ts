@@ -447,13 +447,6 @@ class Retriever {
 
     return { entries, nodes };
   }
-
-  /**
-   * @deprecated 使用 search() 替代
-   */
-  async vectorSearch(query: string): Promise<RetrievalResult> {
-    return this.search(query);
-  }
 }
 
 export const retriever = new Retriever();
