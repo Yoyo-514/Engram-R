@@ -1,91 +1,26 @@
-/* Engram 主样式入口 */
+@import './tokens.css';
+@import './motion.css';
 
-/* Design Token 系统 */
-@import './variables.css';
-
-/* Animation System V1.0 */
-@import './animations.css';
-
-/* @tailwind base; */
 @tailwind components;
 @tailwind utilities;
 
-/* ==========================================================================
-   Scoped Preflight / Reset
-   Strictly scoped to .engram-app-root to prevent cleaning global ST styles
-   ========================================================================== */
-
-/*
- * Shared Root Configuration (Main Panel + Global Overlay)
- * Apply base variables and resets here.
- */
+/* 不加载全局 preflight，只重置扩展自身的组件。 */
 .engram-app-root {
-  @apply box-border border-border text-foreground;
-  /* Do NOT apply bg-background here blindly, overlay needs to be transparent */
-
-  /* Ensure we don't inherit weird line-heights or fonts globally unless we want to */
-  line-height: normal;
-
-  /* Manual Injection of Tailwind Base Vars scoped to Root */
-  --tw-border-spacing-x: 0;
-  --tw-border-spacing-y: 0;
-  --tw-translate-x: 0;
-  --tw-translate-y: 0;
-  --tw-rotate: 0;
-  --tw-skew-x: 0;
-  --tw-skew-y: 0;
-  --tw-scale-x: 1;
-  --tw-scale-y: 1;
-  --tw-pan-x: ;
-  --tw-pan-y: ;
-  --tw-pinch-zoom: ;
-  --tw-scroll-snap-strictness: proximity;
-  --tw-gradient-from-position: ;
-  --tw-gradient-via-position: ;
-  --tw-gradient-to-position: ;
-  --tw-ordinal: ;
-  --tw-slashed-zero: ;
-  --tw-numeric-figure: ;
-  --tw-numeric-spacing: ;
-  --tw-numeric-fraction: ;
-  --tw-ring-inset: ;
-  --tw-ring-offset-width: 0px;
-  --tw-ring-offset-color: #fff;
-  --tw-ring-color: rgb(59 130 246 / 0.5);
-  --tw-ring-offset-shadow: 0 0 #0000;
-  --tw-ring-shadow: 0 0 #0000;
-  --tw-shadow: 0 0 #0000;
-  --tw-shadow-colored: 0 0 #0000;
-  --tw-blur: ;
-  --tw-brightness: ;
-  --tw-contrast: ;
-  --tw-grayscale: ;
-  --tw-hue-rotate: ;
-  --tw-invert: ;
-  --tw-saturate: ;
-  --tw-sepia: ;
-  --tw-drop-shadow: ;
-  --tw-backdrop-blur: ;
-  --tw-backdrop-brightness: ;
-  --tw-backdrop-contrast: ;
-  --tw-backdrop-grayscale: ;
-  --tw-backdrop-hue-rotate: ;
-  --tw-backdrop-invert: ;
-  --tw-backdrop-opacity: ;
-  --tw-backdrop-saturate: ;
-  --tw-backdrop-sepia: ;
-  --tw-contain-size: ;
-  --tw-contain-layout: ;
-  --tw-contain-paint: ;
-  --tw-contain-style: ;
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+  accent-color: var(--primary);
+  caret-color: var(--primary);
 }
 
+/* Tailwind preflight 关闭后，工具类依赖的初值在局部统一提供。 */
+.engram-app-root,
 .engram-app-root *,
 .engram-app-root ::before,
 .engram-app-root ::after {
-  @apply box-border border-border;
-
-  /* Inject these here too just in case */
+  box-sizing: border-box;
+  border: 0 solid var(--border);
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
   --tw-translate-x: 0;
@@ -109,8 +44,8 @@
   --tw-numeric-fraction: ;
   --tw-ring-inset: ;
   --tw-ring-offset-width: 0px;
-  --tw-ring-offset-color: #fff;
-  --tw-ring-color: rgb(59 130 246 / 0.5);
+  --tw-ring-offset-color: var(--background);
+  --tw-ring-color: var(--ring);
   --tw-ring-offset-shadow: 0 0 #0000;
   --tw-ring-shadow: 0 0 #0000;
   --tw-shadow: 0 0 #0000;
@@ -139,33 +74,30 @@
   --tw-contain-style: ;
 }
 
-/*
- * Specific Structural Styles for Main Panel
- * These are strictly for the full-screen view
- */
-#engram-panel-root {
+#engram-panel-root,
+#engram-global-overlay {
   position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+  inset: 0;
+}
+
+#engram-panel-root {
   z-index: 10000;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100dvh;
   overflow: hidden;
-  @apply bg-background;
-  /* Only main panel gets the background color */
+  background: var(--background);
 }
 
-/*
- * Manual Reset for Engram Components
- * Only targets elements INSIDE .engram-app-root
- */
+/* 根挂载点不拦截酒馆点击，审阅内容自行启用 pointer-events。 */
+#engram-global-overlay {
+  z-index: 11000;
+  pointer-events: none;
+}
+
 :where(.engram-app-root) button {
-  background-color: transparent;
-  background-image: none;
+  background: transparent;
   border: none;
   box-shadow: none;
   color: inherit;
@@ -177,156 +109,66 @@
   cursor: pointer;
   line-height: inherit;
   text-transform: none;
-  transform: none;
-  outline: none;
 }
 
-:where(.engram-app-root) input[type='text'],
-:where(.engram-app-root) input[type='number'],
-:where(.engram-app-root) input[type='password'],
-:where(.engram-app-root) input[type='search'],
+:where(.engram-app-root) input,
 :where(.engram-app-root) textarea,
 :where(.engram-app-root) select {
-  background-color: transparent;
+  font-family: inherit;
   color: inherit;
-  border: none;
   box-shadow: none;
-  outline: none;
-  appearance: none;
 }
-
-/* ==========================================================================
-   Component Inputs
-   ========================================================================== */
 
 @layer components {
   .engram-input,
   .engram-select {
     all: unset;
-    /* Powerful reset, use with care */
     display: block;
     box-sizing: border-box;
-    font-family: var(--font-mono) !important;
+    font-family: var(--font-sans);
     width: 100%;
   }
-
-  .engram-input::placeholder {
-    opacity: 0.5;
-    color: currentColor;
-  }
 }
 
-/* ==========================================================================
-   Utility Overrides
-   ========================================================================== */
-
-/* Scrollbar styling for Webkit (Scoped if possible, but scrollbars are often global) */
-/* We cannot scope ::-webkit-scrollbar easily to just one div in standard CSS without overflow properties on that div */
-/* Assuming these are fine as they match ST mostly */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+:where(.engram-app-root) :focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
 }
 
-::-webkit-scrollbar-track {
-  @apply bg-background;
+:where(.engram-app-root) ::placeholder {
+  color: var(--muted-foreground);
+  opacity: 1;
 }
 
-::-webkit-scrollbar-thumb {
-  @apply rounded-full bg-muted;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  @apply bg-muted-foreground opacity-50;
-}
-
-/* ==========================================================================
-   Glass Effects
-   ========================================================================== */
-
-#engram-layout-root {
-  backdrop-filter: var(--glass-backdrop-filter, none);
-  -webkit-backdrop-filter: var(--glass-backdrop-filter, none);
-}
-
-.glass-panel {
-  position: relative;
-  isolation: isolate;
-}
-
-.glass-panel::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
-  background-color: var(--popover, hsl(224 30% 8%));
-  opacity: 0.6;
-  backdrop-filter: var(--glass-backdrop-filter, blur(12px));
-  -webkit-backdrop-filter: var(--glass-backdrop-filter, blur(12px));
-}
-
-.glass-sticky {
-  isolation: isolate;
-}
-
-.glass-sticky::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-color: var(--background, hsl(224 30% 6%));
-  opacity: 0.5;
-  backdrop-filter: var(--glass-backdrop-filter, blur(16px));
-  -webkit-backdrop-filter: var(--glass-backdrop-filter, blur(16px));
-}
-
-/* ==========================================================================
-   Markdown Content
-   ========================================================================== */
-
-:where(.engram-app-root) .engram-changelog-content {
-  font-size: 0.85rem;
-  line-height: 1.6;
+:where(.engram-app-root) ::selection {
+  background: color-mix(in srgb, var(--primary) 20%, transparent);
   color: var(--foreground);
 }
 
-:where(.engram-app-root) .engram-changelog-content h1,
-:where(.engram-app-root) .engram-changelog-content h2,
-:where(.engram-app-root) .engram-changelog-content h3 {
-  font-weight: 600;
-  margin-top: 1.5em;
-  margin-bottom: 0.5em;
-  color: var(--foreground);
-  line-height: 1.3;
+.engram-app-root,
+.engram-app-root * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--sidebar-border) transparent;
 }
 
-:where(.engram-app-root) .engram-changelog-content h1 {
-  font-size: 1.25em;
-  border-bottom: 1px solid var(--border);
-  padding-bottom: 0.3em;
+.engram-app-root ::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
 }
 
-:where(.engram-app-root) .engram-changelog-content ul,
-:where(.engram-app-root) .engram-changelog-content ol {
-  margin-top: 0.5em;
-  margin-bottom: 0.5em;
-  padding-left: 1.5em;
-  list-style: disc;
+.engram-app-root ::-webkit-scrollbar-track {
+  background: transparent;
 }
 
-:where(.engram-app-root) .engram-changelog-content code {
-  background-color: var(--muted);
-  padding: 0.2em 0.4em;
-  border-radius: 4px;
-  font-family: var(--font-mono);
+.engram-app-root ::-webkit-scrollbar-thumb {
+  background: var(--sidebar-border);
+  border-radius: 3px;
 }
 
-:where(.engram-app-root) .engram-changelog-content pre {
-  background: var(--muted) !important;
-  padding: 1em !important;
-  border-radius: 8px;
-  overflow-x: auto;
-  margin-bottom: 1em !important;
-  border: 1px solid var(--border) !important;
+.engram-app-root .no-scrollbar {
+  scrollbar-width: none;
+}
+
+.engram-app-root .no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

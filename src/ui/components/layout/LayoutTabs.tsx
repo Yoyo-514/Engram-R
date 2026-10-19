@@ -1,24 +1,12 @@
-import { useIsPresent } from 'framer-motion';
 import { useSyncExternalStore } from 'react';
 import type { FC } from 'react';
 import { createPortal } from 'react-dom';
 
 import { TabPills, type TabPillsProps } from './TabPills';
 
-/**
- * LayoutTabs - 布局级标签导航组件
- *
- * 此组件会自动将 TabPills 渲染到 MainLayout 的 Header 扩展区域 (Portal)。
- * 使用此组件替代标准 TabPills 时，标签栏将固定在页面顶部 Header 下方。
- *
- * 用法: 直接在 View 中渲染，就像普通组件一样。
- */
+/** 将页面标签渲染到应用壳层的页头扩展区域。 */
 export const LayoutTabs: FC<TabPillsProps> = (props) => {
-  // 判断当前组件所在的页面组件树是否正在被 AnimatePresence 卸载(即退场动画播放中)
-  const isPresent = useIsPresent();
-
-  // 容器 div 由 MainLayout 渲染，首次 render 时尚未 commit 到 DOM，
-  // 用 useSyncExternalStore 在 effect 阶段（DOM 就绪后）通知一次，重新读取容器存在性
+  // 首次渲染时页头尚未提交到 DOM，提交后重新读取挂载点。
   const mounted = useSyncExternalStore(
     (notify) => {
       notify();
@@ -30,8 +18,7 @@ export const LayoutTabs: FC<TabPillsProps> = (props) => {
 
   const container = document.getElementById('engram-header-extension');
 
-  // 如果未挂载或找不到容器，或者当前正在播退出动画，暂不向 Portal 渲染，防止重叠
-  if (!mounted || !container || !isPresent) {
+  if (!mounted || !container) {
     return null;
   }
 

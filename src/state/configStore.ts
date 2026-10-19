@@ -19,12 +19,10 @@ export interface ConfigState {
   entityExtractConfig: EntityExtractConfig;
   embeddingConfig: EmbeddingConfig;
   customMacros: CustomMacro[];
-  enableAnimations: boolean;
   summarizerConfig: SummarizerConfig;
   trimmerConfig: TrimmerConfig;
   preprocessConfig: PreprocessConfig;
   linkedDeletion: EngramSettings['linkedDeletion'];
-  glassSettings: EngramSettings['glassSettings'];
   syncConfig: EngramSettings['syncConfig'];
   hasChanges: boolean;
 
@@ -48,12 +46,10 @@ type PersistedConfigState = Pick<
   | 'entityExtractConfig'
   | 'embeddingConfig'
   | 'customMacros'
-  | 'enableAnimations'
   | 'summarizerConfig'
   | 'trimmerConfig'
   | 'preprocessConfig'
   | 'linkedDeletion'
-  | 'glassSettings'
   | 'syncConfig'
 >;
 
@@ -62,7 +58,6 @@ const summary = getSettings('summarizerConfig');
 const trimmer = getSettings('trimmerConfig');
 const preprocess = getSettings('preprocessConfig');
 const savedLinkedDeletion = getSettings('linkedDeletion');
-const savedGlassSettings = getSettings('glassSettings');
 const savedSyncConfig = getSettings('syncConfig');
 
 function buildPersistedConfigState(
@@ -76,7 +71,6 @@ function buildPersistedConfigState(
     entityExtractConfig: state?.entityExtractConfig ?? savedContext.entityExtractConfig,
     embeddingConfig: state?.embeddingConfig ?? DEFAULT_EMBEDDING_CONFIG,
     customMacros: state?.customMacros ?? savedContext.customMacros ?? [],
-    enableAnimations: state?.enableAnimations ?? savedContext.enableAnimations ?? true,
     summarizerConfig: state?.summarizerConfig ?? {
       ...DEFAULT_SUMMARIZER_CONFIG,
       ...summary,
@@ -90,7 +84,6 @@ function buildPersistedConfigState(
       ...preprocess,
     },
     linkedDeletion: state?.linkedDeletion ?? savedLinkedDeletion,
-    glassSettings: state?.glassSettings ?? savedGlassSettings,
     syncConfig: state?.syncConfig ?? savedSyncConfig,
   };
 }
@@ -103,7 +96,6 @@ const configPersistence = createDebouncedPersistence<PersistedConfigState>({
       trimmerConfig,
       preprocessConfig,
       linkedDeletion,
-      glassSettings,
       syncConfig,
       ...runtimeSettings
     } = nextValue;
@@ -118,7 +110,6 @@ const configPersistence = createDebouncedPersistence<PersistedConfigState>({
     setSettings('trimmerConfig', trimmerConfig);
     setSettings('preprocessConfig', preprocessConfig);
     setSettings('linkedDeletion', linkedDeletion);
-    setSettings('glassSettings', glassSettings);
     setSettings('syncConfig', syncConfig);
   },
 });
@@ -134,12 +125,10 @@ export const useConfigStore = create<ConfigState>((set, get) => {
         entityExtractConfig: state.entityExtractConfig,
         embeddingConfig: state.embeddingConfig,
         customMacros: state.customMacros,
-        enableAnimations: state.enableAnimations,
         summarizerConfig: state.summarizerConfig,
         trimmerConfig: state.trimmerConfig,
         preprocessConfig: state.preprocessConfig,
         linkedDeletion: state.linkedDeletion,
-        glassSettings: state.glassSettings,
         syncConfig: state.syncConfig,
         ...updates,
       });
@@ -212,12 +201,10 @@ export const useConfigStore = create<ConfigState>((set, get) => {
         entityExtractConfig: state.entityExtractConfig,
         embeddingConfig: state.embeddingConfig,
         customMacros: state.customMacros,
-        enableAnimations: state.enableAnimations,
         summarizerConfig: state.summarizerConfig,
         trimmerConfig: state.trimmerConfig,
         preprocessConfig: state.preprocessConfig,
         linkedDeletion: state.linkedDeletion,
-        glassSettings: state.glassSettings,
         syncConfig: state.syncConfig,
       });
 
@@ -229,7 +216,6 @@ export const useConfigStore = create<ConfigState>((set, get) => {
         trimmerConfig,
         preprocessConfig,
         linkedDeletion,
-        glassSettings,
         syncConfig,
         ...runtimeSettings
       } = persistedState;
@@ -244,7 +230,6 @@ export const useConfigStore = create<ConfigState>((set, get) => {
       setSettings('trimmerConfig', trimmerConfig);
       setSettings('preprocessConfig', preprocessConfig);
       setSettings('linkedDeletion', linkedDeletion);
-      setSettings('glassSettings', glassSettings);
       setSettings('syncConfig', syncConfig);
 
       set({

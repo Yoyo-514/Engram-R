@@ -1,10 +1,4 @@
-/**
- * LogEntryItem - 单条日志渲染组件
- *
- * V0.9.12: 支持分组模式（Docker 风格）
- * - 连续相同模块的日志合并显示
- * - 支持默认展开/折叠
- */
+/** 单条日志及连续同模块日志的分组展示。 */
 
 import {
   ChevronRight,
@@ -15,7 +9,6 @@ import {
   Brain,
   Search,
   Settings,
-  Palette,
   FileCode,
   Database,
   Server,
@@ -45,13 +38,13 @@ function formatTime(timestamp: number): string {
   return date.toTimeString().slice(0, 8);
 }
 
-// 级别样式映射 - 简洁配色（加深 DEBUG 颜色）
+// 日志级别使用固定浅色主题的语义颜色。
 const LEVEL_STYLES: Record<LogLevel, { text: string; bg: string }> = {
-  [LogLevel.DEBUG]: { text: 'text-zinc-400', bg: 'bg-zinc-500/15' },
-  [LogLevel.INFO]: { text: 'text-blue-400', bg: 'bg-blue-500/10' },
-  [LogLevel.SUCCESS]: { text: 'text-emerald-400', bg: 'bg-emerald-500/10' },
-  [LogLevel.WARN]: { text: 'text-amber-400', bg: 'bg-amber-500/10' },
-  [LogLevel.ERROR]: { text: 'text-red-400', bg: 'bg-red-500/10' },
+  [LogLevel.DEBUG]: { text: 'text-muted-foreground', bg: 'bg-muted/40' },
+  [LogLevel.INFO]: { text: 'text-primary', bg: 'bg-primary/10' },
+  [LogLevel.SUCCESS]: { text: 'text-success', bg: 'bg-success/10' },
+  [LogLevel.WARN]: { text: 'text-warning', bg: 'bg-warning/10' },
+  [LogLevel.ERROR]: { text: 'text-error', bg: 'bg-error/10' },
 };
 
 /**
@@ -72,7 +65,6 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   RAG: Search,
   // 设置与配置
   SettingsManager: Settings,
-  ThemeManager: Palette,
   // 宏处理
   MacroService: FileCode,
   // 数据层

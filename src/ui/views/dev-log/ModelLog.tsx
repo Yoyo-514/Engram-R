@@ -104,7 +104,7 @@ const LogCard: FC<{
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       {/* 头部 */}
       <div
-        className="flex min-w-0 cursor-pointer items-center gap-2 bg-muted-20 px-3 py-2 hover:bg-muted-30"
+        className="flex min-w-0 cursor-pointer items-center gap-2 bg-muted/20 px-3 py-2 hover:bg-muted/30"
         onClick={() => setExpanded(!expanded)}
       >
         {expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
@@ -162,7 +162,7 @@ const LogCard: FC<{
             {sent.systemPrompt && (
               <div className="mb-3">
                 <div className="mb-1 text-xs text-muted-foreground">System</div>
-                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
+                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted/20 p-2 text-sm">
                   {sent.systemPrompt}
                 </div>
               </div>
@@ -171,7 +171,7 @@ const LogCard: FC<{
             {sent.userPrompt && (
               <div>
                 <div className="mb-1 text-xs text-muted-foreground">User</div>
-                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
+                <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted/20 p-2 text-sm">
                   {sent.userPrompt}
                 </div>
               </div>
@@ -197,7 +197,7 @@ const LogCard: FC<{
             )}
 
             {received?.response && (
-              <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted-20 p-2 text-sm">
+              <div className="max-h-[500px] overflow-y-auto whitespace-pre-wrap break-words rounded bg-muted/20 p-2 text-sm">
                 {received.response}
               </div>
             )}

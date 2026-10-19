@@ -84,7 +84,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
                 key={opt.value}
                 className={`flex-1 rounded-md border px-3 py-2 text-sm transition-colors ${
                   rule.scope === opt.value
-                    ? 'border-primary bg-primary-20 text-primary'
+                    ? 'border-primary bg-primary/20 text-primary'
                     : 'border-border bg-background text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => onChange({ scope: opt.value })}
@@ -147,7 +147,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
                 key={opt.value}
                 className={`rounded-md border px-2 py-1 text-xs transition-colors ${
                   rule.flags.includes(opt.value)
-                    ? 'border-primary bg-primary-20 text-primary'
+                    ? 'border-primary bg-primary/20 text-primary'
                     : 'border-border bg-background text-muted-foreground hover:bg-muted'
                 }`}
                 onClick={() => handleFlagToggle(opt.value)}
@@ -161,7 +161,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
       </div>
 
       {/* 测试区域 */}
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted-20 p-4">
+      <div className="flex flex-col gap-3 rounded-lg border border-border bg-muted/20 p-4">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <Play size={14} />
           测试正则
@@ -188,12 +188,12 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
       </div>
 
       {/* 提示 */}
-      <div className="bg-label/10 border-label/20 flex items-start gap-2 rounded-lg border p-3 text-sm text-label">
+      <div className="flex items-start gap-2 rounded-lg border border-label/20 bg-label/10 p-3 text-sm text-label">
         <Info size={16} className="mt-0.5 shrink-0" />
         <div>
           <strong>输入</strong>：清洗发给 LLM 的聊天内容。
           <strong>输出</strong>：清洗 LLM 返回的内容（如移除{' '}
-          <code className="bg-label/20 rounded px-1">&lt;think&gt;</code>）。
+          <code className="rounded bg-label/20 px-1">&lt;think&gt;</code>）。
         </div>
       </div>
     </div>

@@ -117,12 +117,12 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
   return (
     <div className="flex flex-col gap-6 font-sans">
-      <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
+      <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-sm text-muted-foreground">
         请确认本次提取的结果。点击卡片可进行编辑，点击右上角删除可移除。
       </div>
 
       {data.error && (
-        <div className="bg-destructive/10 border-destructive/20 flex items-center gap-2 rounded-md border p-3 text-sm text-destructive">
+        <div className="flex items-center gap-2 rounded-md border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
           <AlertTriangle size={16} />
           <span>提取过程发生错误: {data.error}</span>
         </div>
@@ -130,7 +130,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
       {/* Editing Modal/Overlay */}
       {editingEntity && (
-        <div className="bg-background/80 animate-in fade-in fixed inset-0 z-[12000] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="animate-in fade-in fixed inset-0 z-[12000] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
           <div className="animate-in zoom-in-95 mx-auto flex h-[90dvh] w-full max-w-6xl flex-col gap-4 overflow-hidden rounded-lg border border-border bg-popover p-6 shadow-2xl">
             <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-2">
               <h3 className="shrink-0 text-lg font-bold">编辑实体</h3>
@@ -178,7 +178,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
             <div className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden">
               {/* Profile JSON Editor Panel */}
               <div
-                className={`bg-muted/10 flex flex-col gap-2 rounded-md border border-border p-4 transition-all ${isEditorExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
+                className={`flex flex-col gap-2 rounded-md border border-border bg-muted/10 p-4 transition-all ${isEditorExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
               >
                 <button
                   className="group flex w-full cursor-pointer items-center justify-between"
@@ -195,7 +195,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
                 {isEditorExpanded && (
                   <textarea
-                    className="bg-muted/50 border-border/50 focus:ring-primary/20 custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-words rounded-md border p-3 font-mono text-xs outline-none focus:ring-2"
+                    className="custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-words rounded-md border border-border/50 bg-muted/50 p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-primary/20"
                     value={JSON.stringify(editingEntity.entity.profile, null, 2)}
                     onChange={(e) => {
                       try {
@@ -220,7 +220,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
               {/* New Description Preview Panel */}
               <div
-                className={`border-primary/20 bg-primary/5 flex flex-col gap-2 rounded-md border p-4 transition-all ${isPreviewExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
+                className={`flex flex-col gap-2 rounded-md border border-primary/20 bg-primary/5 p-4 transition-all ${isPreviewExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
               >
                 <button
                   className="group flex w-full cursor-pointer items-center justify-between"
@@ -236,7 +236,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
                 </button>
 
                 {isPreviewExpanded && (
-                  <div className="bg-background/50 border-primary/10 custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border p-3 font-mono text-xs text-foreground">
+                  <div className="custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border border-primary/10 bg-background/50 p-3 font-mono text-xs text-foreground">
                     {previewDescription}
                   </div>
                 )}
@@ -334,7 +334,7 @@ const EntityCard: FC<{
             e.stopPropagation();
             onEdit();
           }}
-          className="bg-background/50 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+          className="rounded-md bg-background/50 p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
           title="编辑"
         >
           <Edit2 size={14} />
@@ -344,7 +344,7 @@ const EntityCard: FC<{
             e.stopPropagation();
             onRemove();
           }}
-          className="bg-background/50 rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-destructive"
+          className="rounded-md bg-background/50 p-1.5 text-muted-foreground transition-colors hover:bg-background hover:text-destructive"
           title="移除"
         >
           <Trash2 size={14} />
@@ -363,18 +363,18 @@ const EntityCard: FC<{
 
         {/* Diff View for Updated Entities */}
         {isUpdated && entity.diff ? (
-          <div className="bg-background/50 mt-1 flex flex-col gap-1 rounded p-2.5 font-mono text-xs">
+          <div className="mt-1 flex flex-col gap-1 rounded bg-background/50 p-2.5 font-mono text-xs">
             {entity.diff.map((op, i) => (
               <div key={i} className="flex items-baseline gap-2 break-words">
                 {/* Path */}
-                <span className="text-foreground/80 min-w-[30px] shrink-0 font-medium">
+                <span className="min-w-[30px] shrink-0 font-medium text-foreground/80">
                   {op.path}
                 </span>
 
                 <div className="flex flex-wrap items-center gap-1.5">
                   {/* Old Value (Red) - for replace/remove */}
                   {(op.op === 'replace' || op.op === 'remove') && op.oldValue !== undefined && (
-                    <span className="decoration-destructive/40 bg-destructive/5 border-destructive/10 rounded border px-1 text-destructive line-through">
+                    <span className="rounded border border-destructive/10 bg-destructive/5 px-1 text-destructive line-through decoration-destructive/40">
                       {formatValue(op.oldValue)}
                     </span>
                   )}
@@ -386,7 +386,7 @@ const EntityCard: FC<{
 
                   {/* New Value (Green) - for replace/add */}
                   {(op.op === 'replace' || op.op === 'add') && op.value !== undefined && (
-                    <span className="rounded border border-green-500/20 bg-green-500/10 px-1 font-semibold text-green-600 dark:text-green-400">
+                    <span className="rounded border border-value/20 bg-value/10 px-1 font-semibold text-value">
                       {formatValue(op.value)}
                     </span>
                   )}

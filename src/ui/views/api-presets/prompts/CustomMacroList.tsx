@@ -1,9 +1,3 @@
-/**
- * CustomMacroList - 自定义宏列表组件
- * V0.9.2: 简化为卡片列表，点击后右侧编辑
- */
-
-import { AnimatePresence, motion } from 'framer-motion';
 import { Braces, Plus, Power, Trash2 } from 'lucide-react';
 import type { FC } from 'react';
 
@@ -43,75 +37,68 @@ export const CustomMacroList: FC<CustomMacroListProps> = ({
       </div>
 
       {/* 说明 */}
-      <div className="bg-muted/30 border-border/50 rounded border px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">
+      <div className="rounded border border-border/50 bg-muted/30 px-2 py-1.5 text-xs leading-relaxed text-muted-foreground">
         自定义宏可在模板中使用 <code className="rounded bg-muted px-1">{`{{宏名}}`}</code> 引用
       </div>
 
       {/* 宏列表 */}
-      <motion.div layout className="no-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto">
-        <AnimatePresence initial={false}>
-          {macros.map((macro) => (
-            <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.9, y: 10 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: -10, transition: { duration: 0.2 } }}
-              transition={{ duration: 0.3 }}
-              key={macro.id}
-              className={`group flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200 ${
-                selectedId === macro.id
-                  ? 'bg-accent/50 border-input'
-                  : 'hover:bg-muted/50 border-transparent bg-transparent hover:border-border'
-              } ${!macro.enabled && 'opacity-50'} `}
-              onClick={() => onSelect(macro)}
+      <div className="no-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto">
+        {macros.map((macro) => (
+          <div
+            key={macro.id}
+            className={`group flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-all duration-200 ${
+              selectedId === macro.id
+                ? 'border-input bg-accent/50'
+                : 'border-transparent bg-transparent hover:border-border hover:bg-muted/50'
+            } ${!macro.enabled && 'opacity-50'} `}
+            onClick={() => onSelect(macro)}
+          >
+            {/* 状态图标 */}
+            <button
+              className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
+                macro.enabled
+                  ? selectedId === macro.id
+                    ? 'bg-primary/20 text-primary'
+                    : 'bg-muted text-primary'
+                  : 'bg-muted text-muted-foreground'
+              } `}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggle(macro.id);
+              }}
+              title={macro.enabled ? '点击禁用' : '点击启用'}
             >
-              {/* 状态图标 */}
-              <button
-                className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
-                  macro.enabled
-                    ? selectedId === macro.id
-                      ? 'bg-primary/20 text-primary'
-                      : 'bg-muted text-primary'
-                    : 'bg-muted text-muted-foreground'
-                } `}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onToggle(macro.id);
-                }}
-                title={macro.enabled ? '点击禁用' : '点击启用'}
-              >
-                <Power size={14} />
-              </button>
+              <Power size={14} />
+            </button>
 
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <code
-                    className={`truncate text-sm font-medium ${selectedId === macro.id ? 'text-primary' : 'text-foreground'}`}
-                  >
-                    {`{{${macro.name}}}`}
-                  </code>
-                </div>
-                <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
-                  {macro.content
-                    ? macro.content.slice(0, 50) + (macro.content.length > 50 ? '...' : '')
-                    : '(空内容)'}
-                </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <code
+                  className={`truncate text-sm font-medium ${selectedId === macro.id ? 'text-primary' : 'text-foreground'}`}
+                >
+                  {`{{${macro.name}}}`}
+                </code>
               </div>
+              <p className="mt-0.5 truncate text-[10px] text-muted-foreground">
+                {macro.content
+                  ? macro.content.slice(0, 50) + (macro.content.length > 50 ? '...' : '')
+                  : '(空内容)'}
+              </p>
+            </div>
 
-              {/* 删除按钮 */}
-              <button
-                className={`hover:bg-destructive/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive ${selectedId === macro.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(macro.id);
-                }}
-                title="删除"
-              >
-                <Trash2 size={12} />
-              </button>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+            {/* 删除按钮 */}
+            <button
+              className={`rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive ${selectedId === macro.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(macro.id);
+              }}
+              title="删除"
+            >
+              <Trash2 size={12} />
+            </button>
+          </div>
+        ))}
 
         {macros.length === 0 && (
           <div className="flex flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border py-12 text-muted-foreground">
@@ -122,7 +109,7 @@ export const CustomMacroList: FC<CustomMacroListProps> = ({
             </button>
           </div>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };

@@ -26,7 +26,6 @@ type EngramExtensionContext = {
 };
 
 export interface EngramSettings {
-  theme: string;
   presets: JsonObject; // 待扩展的预设类型，暂时使用 Record
   templates: JsonObject; // 待扩展的模板类型，暂时使用 Record
   promptTemplates: PromptTemplate[]; // 提示词模板列表
@@ -41,11 +40,6 @@ export interface EngramSettings {
     deleteIndexedDB: boolean; // 是否删除关联聊天数据库与同步残留
     showConfirmation: boolean; // 是否在删除前弹出确认
   };
-  glassSettings: {
-    enabled: boolean; // 是否启用
-    opacity: number; // 0-1
-    blur: number; // px
-  };
   syncConfig: {
     enabled: boolean; // 总开关：是否启用同步功能
     autoSync: boolean; // 是否在数据变动时自动上传
@@ -54,7 +48,6 @@ export interface EngramSettings {
 
 /** 默认设置 */
 const defaultSettings: EngramSettings = Object.freeze({
-  theme: 'odysseia',
   presets: {},
   templates: {},
   promptTemplates: [],
@@ -68,11 +61,6 @@ const defaultSettings: EngramSettings = Object.freeze({
     enabled: true,
     deleteIndexedDB: true,
     showConfirmation: true,
-  },
-  glassSettings: {
-    enabled: true,
-    opacity: 0.3,
-    blur: 10,
   },
   syncConfig: {
     enabled: false, // 默认关闭（Beta功能）

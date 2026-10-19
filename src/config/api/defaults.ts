@@ -25,6 +25,5 @@ export function getDefaultRuntimeSettings(): EngramRuntimeSettings {
     entityExtractConfig: { ...DEFAULT_ENTITY_CONFIG },
     customMacros: [...DEFAULT_CUSTOM_MACROS],
     worldbookProfiles: [],
-    enableAnimations: true,
   };
 }

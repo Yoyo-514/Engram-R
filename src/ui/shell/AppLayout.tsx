@@ -1,9 +1,6 @@
 import { useState } from 'react';
 import type { FC, ReactNode } from 'react';
 
-import { useConfigStore } from '@/state/configStore';
-import { GlobalStyles } from '@/ui/styles/GlobalStyles';
-
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 
@@ -15,15 +12,13 @@ interface AppLayoutProps {
 }
 
 export const AppLayout: FC<AppLayoutProps> = ({ children, activeTab, onNavigate, onClose }) => {
-  const enableAnimations = useConfigStore((state) => state.enableAnimations);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   return (
     <div
-      className={`selection:bg-primary/30 absolute inset-0 flex h-full w-full overflow-hidden bg-background font-sans text-foreground selection:text-primary ${!enableAnimations ? 'engram-no-animations' : ''}`}
+      className="absolute inset-0 flex h-full w-full overflow-hidden bg-background font-sans text-foreground"
       id="engram-layout-root"
     >
-      <GlobalStyles />
       <Sidebar
         activeTab={activeTab}
         onNavigate={onNavigate}
@@ -32,7 +27,7 @@ export const AppLayout: FC<AppLayoutProps> = ({ children, activeTab, onNavigate,
       />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="bg-sidebar/95 z-50 flex shrink-0 flex-col border-b border-border backdrop-blur">
+        <div className="z-50 flex shrink-0 flex-col border-b border-border bg-sidebar">
           <Header
             isMenuOpen={isMenuOpen}
             onToggleMenu={() => setIsMenuOpen((open) => !open)}

@@ -7,7 +7,6 @@
  * - 移动端：全屏详情
  */
 
-import { motion } from 'framer-motion';
 import {
   ArrowLeft,
   ChevronRight,
@@ -55,13 +54,8 @@ interface LogListItemProps {
 
 const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
   return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, scale: 0.9, transition: { duration: 0.2 } }}
-      transition={{ duration: 0.3 }}
-      className={`border-border/30 cursor-pointer border-b px-3 py-2 transition-colors ${isSelected ? 'bg-primary/10 border-l-2 border-l-primary' : 'hover:bg-muted/30'} `}
+    <div
+      className={`cursor-pointer border-b border-border/30 px-3 py-2 transition-colors ${isSelected ? 'bg-primary/10' : 'hover:bg-muted/30'}`}
       onClick={onSelect}
     >
       {/* 头部：标签 + 时间 */}
@@ -89,12 +83,12 @@ const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
       {/* 查询预览 */}
       <div className="group/query relative">
         <p
-          className={`text-foreground/90 whitespace-pre-wrap break-words text-sm transition-all duration-300 ${isSelected ? '' : 'line-clamp-3'}`}
+          className={`whitespace-pre-wrap break-words text-sm text-foreground/90 transition-all duration-300 ${isSelected ? '' : 'line-clamp-3'}`}
         >
           {entry.query}
         </p>
         {!isSelected && entry.query.length > 100 && (
-          <div className="bg-background/80 absolute bottom-0 right-0 px-1 text-[10px] text-primary opacity-0 transition-opacity group-hover/query:opacity-100">
+          <div className="absolute bottom-0 right-0 bg-background/80 px-1 text-[10px] text-primary opacity-0 transition-opacity group-hover/query:opacity-100">
             点击查看全部...
           </div>
         )}
@@ -105,7 +99,7 @@ const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
         <Zap size={10} />
         {formatDuration(entry.stats.latencyMs)}
       </div>
-    </motion.div>
+    </div>
   );
 };
 
@@ -127,7 +121,7 @@ const ScoreBar: FC<{
   return (
     <div className="flex items-center gap-2 text-xs">
       <span className="w-16 shrink-0 text-muted-foreground">{label}</span>
-      <div className="bg-muted/30 h-1.5 flex-1 overflow-hidden rounded-full">
+      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted/30">
         <div
           className={`h-full ${color} rounded-full transition-all duration-300`}
           style={{ width: `${percentage}%` }}
@@ -146,7 +140,7 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
 
   return (
     <div
-      className={`border-border/30 hover:bg-muted/10 cursor-pointer border-b px-4 py-3 transition-colors ${item.isReranked ? 'bg-purple-500/5' : item.isTopK ? 'bg-blue-500/5' : ''} `}
+      className={`cursor-pointer border-b border-border/30 px-4 py-3 transition-colors hover:bg-muted/10 ${item.isReranked ? 'bg-purple-500/5' : item.isTopK ? 'bg-blue-500/5' : ''} `}
       onClick={() => setExpanded(!expanded)}
     >
       {/* 徽章 */}
@@ -180,14 +174,14 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
 
       {/* 摘要 */}
       <p
-        className={`text-foreground/90 whitespace-pre-wrap break-words text-sm ${expanded ? '' : 'line-clamp-2'}`}
+        className={`whitespace-pre-wrap break-words text-sm text-foreground/90 ${expanded ? '' : 'line-clamp-2'}`}
       >
         {item.summary}
       </p>
 
       {/* 分数（展开时显示） */}
       {expanded && (
-        <div className="border-border/20 mt-3 space-y-1.5 border-t pt-2">
+        <div className="mt-3 space-y-1.5 border-t border-border/20 pt-2">
           <ScoreBar label="Embedding" score={item.embeddingScore} color="bg-blue-500" />
           {item.keywordScore != null && (
             <ScoreBar label="Keyword" score={item.keywordScore} color="bg-green-500" />
@@ -302,7 +296,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
           <span className="text-xs text-muted-foreground">{formatTime(entry.timestamp)}</span>
         </div>
 
-        <p className="text-foreground/90 mb-2 whitespace-pre-wrap break-words text-sm">
+        <p className="mb-2 whitespace-pre-wrap break-words text-sm text-foreground/90">
           {entry.query}
         </p>
 
@@ -325,7 +319,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
 
         {/* V1.3.1: 类脑召回详情 */}
         {entry.brainStats && (
-          <div className="border-border/30 mt-4 border-t pt-3">
+          <div className="mt-4 border-t border-border/30 pt-3">
             <div className="mb-2 flex items-center gap-2">
               <span className="text-xs font-medium text-foreground">类脑状态</span>
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
@@ -333,7 +327,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
               </span>
             </div>
 
-            <div className="bg-muted/20 border-border/30 overflow-hidden rounded border">
+            <div className="overflow-hidden rounded border border-border/30 bg-muted/20">
               <table className="w-full table-fixed text-left text-[10px]">
                 <thead className="bg-muted/30 text-muted-foreground">
                   <tr>
@@ -347,7 +341,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
                   {entry.brainStats.snapshot.map((slot) => (
                     <tr
                       key={slot.id}
-                      className="border-border/10 hover:bg-muted/20 border-t transition-colors"
+                      className="border-t border-border/10 transition-colors hover:bg-muted/20"
                     >
                       <td className="max-w-[80px] truncate p-1.5" title={slot.id}>
                         {slot.label || slot.id.slice(0, 8)}
@@ -376,7 +370,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
 
         {/* V1.4: 被激活的实体 */}
         {entry.recalledEntities && entry.recalledEntities.length > 0 && (
-          <div className="border-border/30 mt-4 border-t pt-3">
+          <div className="mt-4 border-t border-border/30 pt-3">
             <div className="mb-2 flex items-center gap-2">
               <span className="text-xs font-medium text-foreground">已唤醒实体</span>
               <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
@@ -386,7 +380,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
             <div className="flex flex-wrap gap-2">
               {entry.recalledEntities.map((ent) => (
                 <div key={ent.id} className="group relative min-w-0">
-                  <div className="bg-primary/10 border-primary/20 hover:bg-primary/20 flex max-w-full items-center gap-1.5 rounded-md border px-2 py-1 text-[10px] text-primary transition-colors">
+                  <div className="flex max-w-full items-center gap-1.5 rounded-md border border-primary/20 bg-primary/10 px-2 py-1 text-[10px] text-primary transition-colors hover:bg-primary/20">
                     <Database size={10} className="shrink-0" />
                     <span className="min-w-0 truncate" title={ent.name}>
                       {ent.name}
@@ -397,7 +391,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
                       </span>
                     )}
                   </div>
-                  <div className="text-foreground/80 pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed shadow-xl group-hover:block">
+                  <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-foreground/80 shadow-xl group-hover:block">
                     <div className="mb-1 font-bold">
                       {ent.name} ({ent.type || '未知'})
                     </div>
@@ -559,7 +553,7 @@ export const RecallLog: FC = () => {
       <div className="flex min-h-0 flex-1">
         {/* 左侧：日志列表 */}
         <div
-          className={` ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'} overflow-y-auto ${!isMobile ? 'border-border/50 border-r' : ''} `}
+          className={` ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'} overflow-y-auto ${!isMobile ? 'border-r border-border/50' : ''} `}
         >
           {logs.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-muted-foreground">

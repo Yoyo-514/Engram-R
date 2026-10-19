@@ -19,7 +19,7 @@ export interface EngramRuntimeSettings {
   promptTemplates: PromptTemplate[];
   /** 世界书配置 */
   worldbookConfig: WorldbookConfig;
-  /** 正则配置 (V0.8) */
+  /** 正则配置 */
   regexConfig: GlobalRegexConfig;
   /** 嵌入配置 */
   embeddingConfig?: EmbeddingConfig;
@@ -31,6 +31,4 @@ export interface EngramRuntimeSettings {
   customMacros: CustomMacro[];
   /** 世界书配置方案 */
   worldbookProfiles: WorldbookProfile[];
-  /** 是否启用 UI 动画 (全局开关) */
-  enableAnimations: boolean;
 }

@@ -153,9 +153,9 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
       maxWidth="max-w-3xl"
       footer={renderFooter()}
     >
-      <div className="engram-animate-fade-up flex h-[70vh] flex-col">
+      <div className="flex h-[70vh] flex-col">
         {/* === 上半部: 已激活列表 === */}
-        <div className="bg-card/20 shrink-0 border-b border-border p-4">
+        <div className="shrink-0 border-b border-border bg-card/20 p-4">
           <h4 className="mb-3 flex items-center justify-between text-sm font-medium text-heading">
             <span>已激活 ({activeEvents.length})</span>
           </h4>
@@ -163,7 +163,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
             {activeEvents.map((evt) => (
               <div
                 key={evt.id}
-                className="hover:bg-muted/20 group flex flex-col gap-1 rounded p-2 transition-colors"
+                className="group flex flex-col gap-1 rounded p-2 transition-colors hover:bg-muted/20"
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex flex-1 items-start gap-2">
@@ -175,7 +175,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                       <CheckSquare size={16} />
                     </button>
                     <p
-                      className="text-foreground/90 whitespace-pre-wrap break-words text-sm leading-relaxed"
+                      className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90"
                       title={evt.summary}
                     >
                       <span className="mr-2 select-none rounded bg-muted px-1 py-0.5 text-[10px] uppercase text-label">
@@ -194,14 +194,14 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                       min="0"
                       max="1"
                       step="0.1"
-                      className="border-border/50 w-14 border-b border-none bg-transparent p-0 text-right font-mono text-sm text-value transition-colors hover:border-muted-foreground focus:border-primary focus:ring-0"
+                      className="w-14 border-b border-none border-border/50 bg-transparent p-0 text-right font-mono text-sm text-value transition-colors hover:border-muted-foreground focus:border-primary focus:ring-0"
                       value={evt.score}
                       onChange={(e) => handleUpdateScore(evt.id, parseFloat(e.target.value) || 0)}
                     />
                   </div>
                 </div>
                 <div className="mt-1 flex items-start gap-1.5 pl-6">
-                  <MessageSquare size={12} className="text-muted-foreground/50 mt-[3px] shrink-0" />
+                  <MessageSquare size={12} className="mt-[3px] shrink-0 text-muted-foreground/50" />
                   <p className="break-words text-xs leading-snug text-emphasis opacity-80 transition-opacity group-hover:opacity-100">
                     {evt.reason}
                   </p>
@@ -217,7 +217,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
 
           {/* V1.4: 被唤醒的实体展示 (只读) */}
           {recalledEntities.length > 0 && (
-            <div className="border-border/40 mt-4 border-t pt-4">
+            <div className="mt-4 border-t border-border/40 pt-4">
               <h5 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                 <Database size={12} className="text-primary/60" />
                 已唤醒实体 ({recalledEntities.length})
@@ -226,10 +226,10 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                 {recalledEntities.map((ent) => (
                   <div
                     key={ent.id}
-                    className="bg-primary/5 border-primary/20 text-primary/80 hover:bg-primary/10 flex cursor-default items-center gap-1.5 rounded border px-2 py-1 text-[10px] transition-colors"
+                    className="flex cursor-default items-center gap-1.5 rounded border border-primary/20 bg-primary/5 px-2 py-1 text-[10px] text-primary/80 transition-colors hover:bg-primary/10"
                     title={ent.description || ent.name}
                   >
-                    <span className="bg-primary/40 h-1.5 w-1.5 rounded-full" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary/40" />
                     <span className="font-medium">{ent.name}</span>
                     {ent.recallWeight && (
                       <span className="font-mono opacity-40">({ent.recallWeight.toFixed(2)})</span>
@@ -246,14 +246,14 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
 
         {/* === 下半部: 未激活列表 (虚拟滚动) */}
         <div className="flex min-h-0 flex-1 flex-col bg-background">
-          <div className="bg-background/80 sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border p-3 backdrop-blur">
+          <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b border-border bg-background/80 p-3 backdrop-blur">
             <h4 className="text-sm font-medium text-heading">待选事件 ({inactiveEvents.length})</h4>
             <div className="relative w-64">
               <Search className="absolute left-2 top-1.5 text-muted-foreground" size={14} />
               <input
                 type="text"
                 placeholder="搜索归档事件 summary..."
-                className="border-border/50 placeholder:text-muted-foreground/30 w-full border-b border-none bg-transparent py-1 pl-7 pr-2 text-sm text-foreground transition-colors focus:border-primary focus:ring-0"
+                className="w-full border-b border-none border-border/50 bg-transparent py-1 pl-7 pr-2 text-sm text-foreground transition-colors placeholder:text-muted-foreground/30 focus:border-primary focus:ring-0"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -265,18 +265,18 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
               style={{ height: '100%' }}
               data={inactiveEvents}
               itemContent={(_index, evt) => (
-                <div className="hover:bg-muted/20 border-border/20 mb-1 flex flex-col gap-1 rounded border-b border-transparent p-2 transition-colors last:border-0">
+                <div className="mb-1 flex flex-col gap-1 rounded border-b border-border/20 border-transparent p-2 transition-colors last:border-0 hover:bg-muted/20">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex flex-1 items-start gap-2">
                       <button
-                        className="text-muted-foreground/50 mt-0.5 shrink-0 cursor-pointer transition-colors hover:text-primary"
+                        className="mt-0.5 shrink-0 cursor-pointer text-muted-foreground/50 transition-colors hover:text-primary"
                         onClick={() => handleToggleInactive(evt.id, 0.5)}
                         title="添加激活"
                       >
                         <Square size={16} />
                       </button>
                       <p
-                        className="text-foreground/90 whitespace-pre-wrap break-words text-sm leading-relaxed"
+                        className="whitespace-pre-wrap break-words text-sm leading-relaxed text-foreground/90"
                         title={evt.summary}
                       >
                         <span className="mr-2 select-none rounded bg-muted px-1 py-0.5 text-[10px] uppercase text-label">
@@ -287,7 +287,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                     </div>
 
                     {/* 快捷打分 */}
-                    <div className="bg-muted/20 flex shrink-0 items-center gap-1 rounded px-2 py-1">
+                    <div className="flex shrink-0 items-center gap-1 rounded bg-muted/20 px-2 py-1">
                       {[
                         { label: '低', val: 0.3 },
                         { label: '中', val: 0.6 },
@@ -308,7 +308,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                         max="1"
                         step="0.1"
                         placeholder="0.0"
-                        className="border-border/50 w-10 border-b border-none bg-transparent p-0 text-right font-mono text-xs text-value transition-colors focus:border-primary focus:ring-0"
+                        className="w-10 border-b border-none border-border/50 bg-transparent p-0 text-right font-mono text-xs text-value transition-colors focus:border-primary focus:ring-0"
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = parseFloat((e.target as HTMLInputElement).value) || 0.5;

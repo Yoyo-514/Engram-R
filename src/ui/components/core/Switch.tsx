@@ -5,16 +5,9 @@ interface SwitchProps {
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   className?: string;
-  /**
-   * 自定义 ID，通常不需要，除非做 Label 关联
-   */
   id?: string;
 }
 
-/**
- * 极简开关按钮 (Atomic)
- * Tech Slot 风格: 纤细轨道 + 辉光 Thumb
- */
 export const Switch: FC<SwitchProps> = ({
   checked,
   onChange,
@@ -22,11 +15,9 @@ export const Switch: FC<SwitchProps> = ({
   className = '',
   id,
 }) => {
-  const handleClick = (e: MouseEvent) => {
-    if (!disabled) {
-      e.stopPropagation(); // 防止冒泡触发父级点击
-      onChange(!checked);
-    }
+  const handleClick = (event: MouseEvent) => {
+    event.stopPropagation();
+    onChange(!checked);
   };
 
   return (
@@ -37,20 +28,11 @@ export const Switch: FC<SwitchProps> = ({
       aria-checked={checked}
       onClick={handleClick}
       disabled={disabled}
-      className={`relative inline-flex h-3.5 w-9 shrink-0 cursor-pointer items-center rounded-full border transition-all duration-[var(--duration-normal)] ease-[var(--ease-out)] focus:outline-none active:scale-95 ${
-        checked
-          ? 'bg-primary/20 border-primary/50 shadow-[0_0_10px_rgba(var(--primary),0.2)]'
-          : 'border-border bg-black/20 shadow-inner'
-      } ${disabled ? 'cursor-not-allowed opacity-50' : ''} ${className} `}
+      className={`relative inline-flex h-6 w-10 shrink-0 items-center rounded-full border border-transparent transition-colors duration-[var(--duration-fast)] disabled:cursor-not-allowed disabled:opacity-50 ${checked ? 'bg-primary' : 'bg-sidebar-border'} ${className}`}
     >
-      {/* 辉光 Thumb */}
       <span
-        className={`pointer-events-none inline-block h-2.5 w-2.5 transform rounded-full shadow-sm ring-0 transition-all duration-[var(--duration-normal)] ease-[var(--ease-spring)] ${
-          checked
-            ? 'border-primary-foreground/20 border bg-primary shadow-[0_0_8px_rgba(var(--primary),0.8)]'
-            : 'border border-transparent bg-muted-foreground opacity-60'
-        } `}
-        style={{ transform: checked ? 'translateX(24px)' : 'translateX(2px)' }}
+        className="pointer-events-none block h-4 w-4 rounded-full bg-white shadow-sm transition-transform duration-[var(--duration-fast)]"
+        style={{ transform: checked ? 'translateX(20px)' : 'translateX(4px)' }}
       />
     </button>
   );

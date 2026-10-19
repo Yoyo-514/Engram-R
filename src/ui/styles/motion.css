@@ -1,0 +1,24 @@
+/* 页面和弹窗共用一次淡入，列表增删直接呈现结果。 */
+@keyframes engram-enter {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.engram-app-root .animate-in {
+  animation: engram-enter var(--duration-fast) var(--ease-out);
+}
+
+/* 保留加载指示器；减少动态效果由系统偏好统一控制。 */
+@media (prefers-reduced-motion: reduce) {
+  .engram-app-root *,
+  .engram-app-root ::before,
+  .engram-app-root ::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

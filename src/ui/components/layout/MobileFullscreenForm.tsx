@@ -18,12 +18,12 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
   const content = (
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
-        className="animate-in slide-in-from-right-4 bg-background/95 fixed inset-0 z-[99999] flex flex-col text-foreground backdrop-blur-3xl duration-200"
+        className="animate-in fixed inset-0 z-[99999] flex flex-col bg-background text-foreground"
         style={{ width: '100vw', height: '100dvh' }}
       >
         {/* 头部 */}
         <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} className="rounded p-1 hover:bg-accent">
+          <button onClick={onClose} aria-label="返回列表" className="rounded p-1 hover:bg-accent">
             <ArrowLeft size={20} />
           </button>
           <h2 className="min-w-0 flex-1 break-words text-lg font-light">{title}</h2>

@@ -12,7 +12,6 @@ import {
 import { summarizerService, entityBuilder } from '@/modules/memory';
 import { injector } from '@/modules/rag';
 import { regexProcessor } from '@/modules/workflow/steps';
-import { initThemeManager } from '@/ui/services';
 
 /**
  * 初始化 Engram 插件
@@ -65,9 +64,6 @@ export async function initializeEngram(): Promise<void> {
 
   // 创建酒馆顶栏入口
   createTopBarButton();
-
-  // 初始化主题系统
-  initThemeManager();
 
   // 启动动态上下文注入
   try {

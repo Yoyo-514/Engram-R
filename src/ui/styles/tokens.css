@@ -1,0 +1,47 @@
+/* 固定使用 Tokyo Light；变量仅作用于扩展及其独立弹窗。 */
+.engram-app-root {
+  color-scheme: light;
+  --background: #e6e7ed;
+  --foreground: #343b58;
+  --card: #ffffff;
+  --card-foreground: #343b58;
+  --popover: #e6e7ed;
+  --popover-foreground: #343b58;
+  --primary: #2959aa;
+  --primary-foreground: #ffffff;
+  --secondary: #d5d6db;
+  --secondary-foreground: #343b58;
+  --muted: #cbccd1;
+  --muted-foreground: #505568;
+  --accent: #d5d6db;
+  --accent-foreground: #343b58;
+  --destructive: #8c4351;
+  --destructive-foreground: #ffffff;
+  --border: #cbccd1;
+  --input: #ffffff;
+  --ring: #2959aa;
+  --heading: #5a3e8e;
+  --label: #0f4b6e;
+  --meta: #505568;
+  --link: #8f5e15;
+  --value: #385f0d;
+  --emphasis: #8c4351;
+  --sidebar: #d5d6db;
+  --sidebar-foreground: #343b58;
+  --sidebar-primary: #2959aa;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #cbccd1;
+  --sidebar-accent-foreground: #343b58;
+  --sidebar-border: #a3a5b2;
+  --sidebar-ring: #2959aa;
+  --engram-success: #385f0d;
+  --engram-warning: #8f5e15;
+  --engram-error: #8c4351;
+  --radius: 0.65rem;
+  --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'Cascadia Code', Consolas, ui-monospace, monospace;
+  --duration-fast: 150ms;
+  --duration-normal: 200ms;
+  --duration-slow: 300ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
