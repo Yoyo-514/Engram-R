@@ -49,10 +49,7 @@ declare function getAudioList(type: 'bgm' | 'ambient'): Audio[];
  * @param type 背景音乐 ('bgm') 或音效 ('ambient')
  * @param audio_list 新的播放列表; 如果其中音频没有设置标题 (`title`), 则会从链接 (`url`) 提取文件名作为标题
  */
-declare function replaceAudioList(
-  type: 'bgm' | 'ambient',
-  audio_list: AudioWithOptionalTitle[]
-): void;
+declare function replaceAudioList(type: 'bgm' | 'ambient', audio_list: AudioWithOptionalTitle[]): void;
 
 /**
  * 向播放列表末尾添加不存在的音频, 不会重复添加同 `title` 或 `url` 的音频
@@ -60,10 +57,7 @@ declare function replaceAudioList(
  * @param type 背景音乐 ('bgm') 或音效 ('ambient')
  * @param audio_list 要插入的音频列表; 如果其中音频没有设置标题 (`title`), 则会从链接 (`url`) 提取文件名作为标题
  */
-declare function appendAudioList(
-  type: 'bgm' | 'ambient',
-  audio_list: AudioWithOptionalTitle[]
-): void;
+declare function appendAudioList(type: 'bgm' | 'ambient', audio_list: AudioWithOptionalTitle[]): void;
 
 type AudioSettings = {
   /** 是否启用 */
@@ -109,3 +103,26 @@ declare function getAudioSettings(type: 'bgm' | 'ambient'): AudioSettings;
  * setAudioSettings('bgm', { volume: 50 });
  */
 declare function setAudioSettings(type: 'bgm' | 'ambient', settings: Partial<AudioSettings>): void;
+
+type CurrentAudio = {
+  /** 当前选中/正在播放的音频链接, 未选中曲目时为空字符串 */
+  src: string;
+  /** 当前选中音频的标题, 未匹配到时为空字符串 */
+  title: string;
+  /** 是否正在播放 */
+  playing: boolean;
+  /** 播放进度 (0-100) */
+  progress: number;
+};
+
+/**
+ * 获取当前播放的音频信息: 链接、标题、是否在播、进度
+ *
+ * @param type 背景音乐 ('bgm') 或音效 ('ambient')
+ * @returns 当前音频信息
+ *
+ * @example
+ * // 获取当前正在播放的背景音乐
+ * const { title, src, playing, progress } = getCurrentAudio('bgm');
+ */
+declare function getCurrentAudio(type: 'bgm' | 'ambient'): CurrentAudio;

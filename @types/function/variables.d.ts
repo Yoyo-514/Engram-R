@@ -32,12 +32,7 @@ type VariableOptionExtension = {
   /** 指定要操作变量的扩展 ID */
   extension_id: string;
 };
-type VariableOption =
-  | VariableOptionNormal
-  | VariableOptionCharacter
-  | VariableOptionMessage
-  | VariableOptionScript
-  | VariableOptionExtension;
+type VariableOption = VariableOptionNormal | VariableOptionCharacter | VariableOptionMessage | VariableOptionScript | VariableOptionExtension;
 
 /**
  * 获取变量表
@@ -116,7 +111,7 @@ declare function replaceVariables(variables: Record<string, any>, option: Variab
  */
 declare function updateVariablesWith(
   updater: (variables: Record<string, any>) => Record<string, any>,
-  option: VariableOption
+  option: VariableOption,
 ): Record<string, any>;
 
 /**
@@ -132,7 +127,7 @@ declare function updateVariablesWith(
  */
 declare function updateVariablesWith(
   updater: (variables: Record<string, any>) => Promise<Record<string, any>>,
-  option: VariableOption
+  option: VariableOption,
 ): Promise<Record<string, any>>;
 
 /**
@@ -150,10 +145,7 @@ declare function updateVariablesWith(
  * await insertOrAssignVariables({爱城华恋: {好感度: 10}, 神乐光: {好感度: 5, 认知度: 0}}, {type: 'chat'});
  * // 执行后变量: `{爱城华恋: {好感度: 10}, 神乐光: {好感度: 5, 认知度: 0}}`
  */
-declare function insertOrAssignVariables(
-  variables: Record<string, any>,
-  option: VariableOption
-): Record<string, any>;
+declare function insertOrAssignVariables(variables: Record<string, any>, option: VariableOption): Record<string, any>;
 
 /**
  * 插入新变量, 如果变量已经存在则什么也不做
@@ -170,10 +162,7 @@ declare function insertOrAssignVariables(
  * await insertVariables({爱城华恋: {好感度: 10}, 神乐光: {好感度: 5, 认知度: 0}}, {type: 'chat'});
  * // 执行后变量: `{爱城华恋: {好感度: 5}, 神乐光: {好感度: 5, 认知度: 0}}`
  */
-declare function insertVariables(
-  variables: Record<string, any>,
-  option: VariableOption
-): Record<string, any>;
+declare function insertVariables(variables: Record<string, any>, option: VariableOption): Record<string, any>;
 
 /**
  * 删除变量, 如果变量不存在则什么也不做
@@ -192,7 +181,7 @@ declare function insertVariables(
  */
 declare function deleteVariable(
   variable_path: string,
-  option: VariableOption
+  option: VariableOption,
 ): { variables: Record<string, any>; delete_occurred: boolean };
 
 /**
@@ -213,5 +202,5 @@ declare function deleteVariable(
  */
 declare function registerVariableSchema(
   schema: z.ZodType<any>,
-  option: { type: 'global' | 'preset' | 'character' | 'chat' | 'message' }
+  option: { type: 'global' | 'preset' | 'character' | 'chat' | 'message' },
 ): void;

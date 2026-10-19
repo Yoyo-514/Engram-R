@@ -1,10 +1,9 @@
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import { getCurrentTavernCharacter, yieldToMainThread } from '@/core/utils';
+import { getCurrentTavernCharacter } from '@/core/utils';
 import { getAllTemplates } from '@/integrations/llm';
 import {
   getChatHistory,
-  getChatHistorySegments,
   getContextualWorldInfo,
   getCurrentCharacter,
   getEntityStates,
@@ -12,30 +11,12 @@ import {
   getSTContext,
   getSummaries,
 } from '@/integrations/tavern';
-import type { PreparedSummaryContext } from '@/modules/memory/SummaryPreparationCache';
 import { regexProcessor } from '@/modules/workflow/steps/preprocess/RegexProcessor';
 import type { JobContext } from '@/types/job_context';
 import type { IStep } from '@/types/step';
 import type { WorldbookConfig } from '@/types/worldbook';
 
 const RECENT_WORLDBOOK_MESSAGE_LIMIT = 4;
-const HISTORY_BATCH_SIZE = 4;
-
-async function getChatHistoryResponsive(range?: [number, number]): Promise<string> {
-  if (!range) {
-    return getChatHistory();
-  }
-
-  const segments: string[] = [];
-  for (let start = range[0]; start <= range[1]; start += HISTORY_BATCH_SIZE) {
-    const end = Math.min(range[1], start + HISTORY_BATCH_SIZE - 1);
-    segments.push(...getChatHistorySegments([start, end]));
-    await yieldToMainThread();
-  }
-
-  return segments.join('\n\n');
-}
-
 interface TemplateWithWorldbooks {
   id: string;
   name: string;
@@ -92,9 +73,6 @@ export class FetchContext implements IStep {
     }
 
     const range = context.input.range as [number, number] | undefined;
-    const preparedSummaryContext = context.input.preparedSummaryContext as
-      | PreparedSummaryContext
-      | undefined;
 
     Logger.debug('FetchContext', 'Loading chat history', {
       range: range ?? null,
@@ -104,45 +82,13 @@ export class FetchContext implements IStep {
     });
 
     const isImport = Boolean(context.input.isImport);
-    let history = '';
+    // 单次读取当前聊天记录，避免重 roll 或删除消息后复用预热的旧内容。
+    const history = isImport
+      ? context.input.text || context.input.chatHistory || ''
+      : getChatHistory(range);
 
     if (isImport) {
-      history = context.input.text || context.input.chatHistory || '';
       Logger.debug('FetchContext', 'Using imported text as context', { bytes: history.length });
-    } else if (
-      preparedSummaryContext &&
-      range &&
-      preparedSummaryContext.range[0] === range[0] &&
-      preparedSummaryContext.range[1] === range[1]
-    ) {
-      if (preparedSummaryContext.isComplete) {
-        history = preparedSummaryContext.chatHistory || '';
-        Logger.debug('FetchContext', 'Using prepared summary chat history', {
-          range,
-          bytes: history.length,
-          preparedAt: preparedSummaryContext.createdAt,
-        });
-      } else {
-        const missingStart = preparedSummaryContext.preparedThroughFloor + 1;
-        const preparedHistory = preparedSummaryContext.chatHistory || '';
-        const missingHistory =
-          missingStart <= range[1] ? await getChatHistoryResponsive([missingStart, range[1]]) : '';
-
-        history =
-          preparedHistory && missingHistory
-            ? `${preparedHistory}\n\n${missingHistory}`
-            : preparedHistory || missingHistory;
-
-        Logger.debug('FetchContext', 'Using partial prepared summary chat history', {
-          range,
-          bytes: history.length,
-          preparedAt: preparedSummaryContext.createdAt,
-          preparedThroughFloor: preparedSummaryContext.preparedThroughFloor,
-          missingRange: missingStart <= range[1] ? [missingStart, range[1]] : null,
-        });
-      }
-    } else {
-      history = await getChatHistoryResponsive(range);
     }
 
     const shouldCleanHistory = isImport && !context.config.skipInputRegexForHistory;

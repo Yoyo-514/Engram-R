@@ -25,23 +25,18 @@ type CharWorldbooks = {
 /**
  * 获取角色卡绑定的世界书
  *
- * @param character_name 要查询的角色卡名称, 'current' 表示当前打开的角色卡
+ * @param character_name_or_id 要查询的角色卡显示名称如 '少女歌剧', 或头像 id 如 '少女歌剧.png'; 'current' 表示当前打开的角色卡
  *
  * @returns 角色卡绑定的世界书
  */
-declare function getCharWorldbookNames(
-  character_name: LiteralUnion<'current' | string>
-): CharWorldbooks;
+declare function getCharWorldbookNames(character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>): CharWorldbooks;
 /**
  * 重新绑定角色卡世界书
  *
- * @param character_name 角色卡名称, 'current' 表示当前打开的角色卡
+ * @param character_name_or_id 角色卡显示名称如 '少女歌剧', 或头像 id 如 '少女歌剧.png'; 'current' 表示当前打开的角色卡
  * @param char_worldbooks 要对该角色卡绑定的世界书
  */
-declare function rebindCharWorldbooks(
-  character_name: 'current',
-  char_worldbooks: CharWorldbooks
-): Promise<void>;
+declare function rebindCharWorldbooks(character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>, char_worldbooks: CharWorldbooks): Promise<void>;
 
 /**
  * 获取聊天文件绑定的世界书
@@ -64,10 +59,7 @@ declare function rebindChatWorldbook(chat_name: 'current', worldbook_name: strin
  * @param chat_name 聊天文件名称, 'current' 表示当前打开的聊天
  * @param worldbook_name 世界书名称; 不填则根据当前时间创建
  */
-declare function getOrCreateChatWorldbook(
-  chat_name: 'current',
-  worldbook_name?: string
-): Promise<string>;
+declare function getOrCreateChatWorldbook(chat_name: 'current', worldbook_name?: string): Promise<string>;
 
 type WorldbookEntry = {
   /** uid 是相对于世界书内部的, 不要跨世界书使用 */
@@ -93,10 +85,7 @@ type WorldbookEntry = {
      * - `'not_all'`: 次要关键字中至少有一个关键字没能在欲扫描文本中匹配到
      * - `'not_any'`: 次要关键字中所有关键字都没能欲扫描文本中匹配到
      */
-    keys_secondary: {
-      logic: 'and_any' | 'and_all' | 'not_all' | 'not_any';
-      keys: (string | RegExp)[];
-    };
+    keys_secondary: { logic: 'and_any' | 'and_all' | 'not_all' | 'not_any'; keys: (string | RegExp)[] };
     /** 扫描深度: 1 为仅扫描最后一个楼层, 2 为扫描最后两个楼层, 以此类推 */
     scan_depth: 'same_as_global' | number;
   };
@@ -173,10 +162,7 @@ declare function getWorldbook(worldbook_name: string): Promise<WorldbookEntry[]>
  *
  * @returns 如果发生创建, 则返回 `true`; 如果发生替换, 则返回 `false`
  */
-declare function createWorldbook(
-  worldbook_name: string,
-  worldbook?: WorldbookEntry[]
-): Promise<boolean>;
+declare function createWorldbook(worldbook_name: string, worldbook?: WorldbookEntry[]): Promise<boolean>;
 
 /**
  * 创建或替换名为 `worldbook_name` 的世界书, 内容为 `worldbook`
@@ -190,8 +176,8 @@ declare function createWorldbook(
  */
 declare function createOrReplaceWorldbook(
   worldbook_name: string,
-  worldbook?: PartialDeep<WorldbookEntry>[],
-  { render }?: ReplaceWorldbookOptions
+  worldbook?: TypeFest.PartialDeep<WorldbookEntry>[],
+  { render }?: ReplaceWorldbookOptions,
 ): Promise<boolean>;
 
 /**
@@ -239,13 +225,13 @@ interface ReplaceWorldbookOptions {
  */
 declare function replaceWorldbook(
   worldbook_name: string,
-  worldbook: PartialDeep<WorldbookEntry>[],
-  { render }?: ReplaceWorldbookOptions
+  worldbook: TypeFest.PartialDeep<WorldbookEntry>[],
+  { render }?: ReplaceWorldbookOptions,
 ): Promise<void>;
 
 type WorldbookUpdater =
-  | ((worldbook: WorldbookEntry[]) => PartialDeep<WorldbookEntry>[])
-  | ((worldbook: WorldbookEntry[]) => Promise<PartialDeep<WorldbookEntry>[]>);
+  | ((worldbook: WorldbookEntry[]) => TypeFest.PartialDeep<WorldbookEntry>[])
+  | ((worldbook: WorldbookEntry[]) => Promise<TypeFest.PartialDeep<WorldbookEntry>[]>);
 /**
  * 用 `updater` 函数更新世界书 `worldbook_name`
  *
@@ -277,7 +263,7 @@ type WorldbookUpdater =
 declare function updateWorldbookWith(
   worldbook_name: string,
   updater: WorldbookUpdater,
-  { render }?: ReplaceWorldbookOptions
+  { render }?: ReplaceWorldbookOptions,
 ): Promise<WorldbookEntry[]>;
 
 /**
@@ -298,8 +284,8 @@ declare function updateWorldbookWith(
  */
 declare function createWorldbookEntries(
   worldbook_name: string,
-  new_entries: PartialDeep<WorldbookEntry>[],
-  { render }?: ReplaceWorldbookOptions
+  new_entries: TypeFest.PartialDeep<WorldbookEntry>[],
+  { render }?: ReplaceWorldbookOptions,
 ): Promise<{ worldbook: WorldbookEntry[]; new_entries: WorldbookEntry[] }>;
 
 /**
@@ -321,5 +307,5 @@ declare function createWorldbookEntries(
 declare function deleteWorldbookEntries(
   worldbook_name: string,
   predicate: (entry: WorldbookEntry) => boolean,
-  { render }?: ReplaceWorldbookOptions
+  { render }?: ReplaceWorldbookOptions,
 ): Promise<{ worldbook: WorldbookEntry[]; deleted_entries: WorldbookEntry[] }>;

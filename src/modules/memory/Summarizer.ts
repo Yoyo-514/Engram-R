@@ -8,37 +8,14 @@ import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
 import { chatManager } from '@/data/ChatManager';
-import { getSTContext, initWorldBookSlot } from '@/integrations/tavern';
+import { initWorldBookSlot } from '@/integrations/tavern';
 import { createSummaryWorkflow, runWorkflow, StopGeneration } from '@/modules/workflow';
-import { useMemoryStore } from '@/state/memoryStore'; // Used for setLastSummarizedFloor
+import { useMemoryStore } from '@/state/memoryStore';
 import type { JobContext } from '@/types/job_context';
 import type { SummarizerConfig, SummarizerStatus, SummaryResult } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
 
 import { eventTrimmer } from './EventTrimmer';
-import {
-  getCurrentSummaryPreparationChatId,
-  summaryPreparationCache,
-} from './SummaryPreparationCache';
-
-/** 元数据 key */
-const METADATA_KEY = 'engram';
-
-/**
- * 获取 chat_metadata
- */
-function getChatMetadata(): Record<string, unknown> | null {
-  try {
-    // 优先从 context 获取
-    const context = getSTContext();
-    if (context?.chatMetadata) {
-      return context.chatMetadata;
-    }
-    return null;
-  } catch {
-    return null;
-  }
-}
 
 /**
  * SummarizerService 类
@@ -50,7 +27,6 @@ class SummarizerService {
   private currentChatId: string | null = null;
   private isRunning = false;
   private isSummarizing = false;
-  private cancelRequested = false; // 用户请求取消总结
   private unsubscribeMessage: (() => void) | null = null;
   private unsubscribeChat: (() => void) | null = null;
   private summaryHistory: SummaryResult[] = [];
@@ -64,29 +40,7 @@ class SummarizerService {
     this.config = { ...DEFAULT_SUMMARIZER_CONFIG, ...savedConfig, ...config };
   }
 
-  // ==================== 元数据操作 ====================
-  // 注：getInfoFromChatMetadata 和 saveToChatMetadata 原方法保留作为兼容或临时使用，
-  // 但主要逻辑已迁移至 WorldBookStateService。
-
-  /**
-   * 从当前聊天元数据获取值
-   */
-  private getFromChatMetadata(key: string): unknown {
-    const metadata = getChatMetadata();
-    if (!metadata) {
-      return undefined;
-    }
-    if (!metadata.extensions) metadata.extensions = {};
-    const extensions = metadata.extensions as Record<string, Record<string, unknown>>;
-    if (!extensions[METADATA_KEY]) extensions[METADATA_KEY] = {};
-    return extensions[METADATA_KEY][key];
-  }
-
-  /**
-   * 获取上次总结的楼层
-   * V0.5: 优先从 memoryStore 读取
-   * V0.8: 修复时序问题，直接从 chatManager.getState() 读取确保获取最新值
-   */
+  /** 获取上次总结的楼层，内存进度为空时从聊天数据库加载。 */
   private async getLastSummarizedFloor(): Promise<number> {
     // 如果缓存有值且不是刚被清零，直接返回
     if (this._lastSummarizedFloor > 0) return this._lastSummarizedFloor;
@@ -105,17 +59,13 @@ class SummarizerService {
     }
   }
 
-  /**
-   * 设置上次总结的楼层
-   * V0.5: 保存到 memoryStore (IndexedDB)
-   */
+  /** 更新内存进度，并通过 memoryStore 持久化。 */
   public async setLastSummarizedFloor(floor: number): Promise<void> {
     this._lastSummarizedFloor = floor;
 
     // 保存到 memoryStore
     const store = useMemoryStore.getState();
     await store.setLastSummarizedFloor(floor);
-    summaryPreparationCache.reset(getCurrentSummaryPreparationChatId(), floor);
   }
 
   // ==================== 楼层计算 ====================
@@ -128,7 +78,7 @@ class SummarizerService {
     if (!context?.chat) {
       return 0;
     }
-    // 楼层从0开始计数，所以 length - 1 是最后一楼的索引
+    // 楼层范围从 1 开始计数，消息总数即当前末楼层。
     return context.chat.length;
   }
 
@@ -146,10 +96,7 @@ class SummarizerService {
 
   // ==================== 生命周期 ====================
 
-  /**
-   * 启动服务，开始监听事件
-   * V0.5: 使用 EventWatcher 统一监听
-   */
+  /** 启动服务，通过 EventWatcher 监听消息和聊天切换。 */
   async start(): Promise<void> {
     if (this.isRunning) {
       await this.log('warn', '服务已在运行');
@@ -162,8 +109,6 @@ class SummarizerService {
     // 启动 EventWatcher (如果尚未启动)
     eventWatcher.start();
 
-    // 注册回调
-    // V0.9.11: Always subscribe to messages to support Entity Extraction even if Summary is Manual
     this.unsubscribeMessage = eventWatcher.on(
       'onMessageReceived',
       this.handleMessageReceived.bind(this)
@@ -210,12 +155,12 @@ class SummarizerService {
     const chatId = this.getCurrentChatId();
     const currentFloor = this.getCurrentFloor();
 
-    // 重置/加载缓存
+    // 切换聊天后清空内存进度，再从当前聊天数据库加载。
     this.currentChatId = chatId;
     this.summaryHistory = [];
-    this._lastSummarizedFloor = 0; // 先清空，迫使 reload
+    this._lastSummarizedFloor = 0;
 
-    const lastSummarized = await this.getLastSummarizedFloor(); // 这会更新 _lastSummarizedFloor
+    const lastSummarized = await this.getLastSummarizedFloor();
 
     await this.log('info', '初始化当前聊天状态', {
       chatId,
@@ -223,20 +168,11 @@ class SummarizerService {
       lastSummarizedFloor: lastSummarized,
       pendingFloors: currentFloor - lastSummarized,
     });
-
-    // 如果从未总结过（lastSummarized=0），不要自动跳过，保持为 0，等待用户触发
-    // if (lastSummarized === 0 && currentFloor > 0) {
-    //     this.log('info', '首次初始化，设置基准为当前楼层', { currentFloor });
-    //     await this.setLastSummarizedFloor(currentFloor);
-    // }    }
   }
 
   // ==================== 事件处理 ====================
 
-  /**
-   * 处理消息接收事件
-   * V0.9.1: 同时检查实体提取和 Summary 的触发条件
-   */
+  /** 收到消息后检查自动摘要的楼层间隔。 */
   private async handleMessageReceived(): Promise<void> {
     const currentFloor = this.getCurrentFloor();
     const lastSummarized = await this.getLastSummarizedFloor();
@@ -249,19 +185,7 @@ class SummarizerService {
       triggerAt: this.config.floorInterval,
     });
 
-    // V0.9.1: 检查实体提取触发
-    // V0.9.14: EntityExtraction now has its own listener in EntityExtractor.ts. Removing coupled call.
-    // await this.checkEntityExtraction(currentFloor);
-
     // 检查是否达到 Summary 触发条件
-    if (this.config.enabled && !this.isSummarizing && pendingFloors > 0) {
-      summaryPreparationCache.scheduleWarm({
-        chatId: this.currentChatId,
-        baseFloor: lastSummarized,
-        targetFloor: currentFloor,
-      });
-    }
-
     if (pendingFloors >= this.config.floorInterval) {
       await this.log('info', '达到触发条件，准备总结', {
         pendingFloors,
@@ -308,7 +232,6 @@ class SummarizerService {
     const currentFloor = this.getCurrentFloor();
 
     this.isSummarizing = true;
-    this.cancelRequested = false; // 重置取消标志
 
     // 创建取消信号（引用对象，传递给 WorkflowEngine）
     const cancelSignal: NonNullable<JobContext['signal']> = { cancelled: false };
@@ -317,7 +240,6 @@ class SummarizerService {
     const runningToast = notificationService.running('总结运行中...', 'Engram', () => {
       cancelSignal.cancelled = true;
       cancelSignal.reason = 'summary_cancelled';
-      this.cancelRequested = true;
       void this.log('info', '用户请求取消总结');
       void this.requestStopGeneration(cancelSignal);
       notificationService.warning('正在取消总结...', 'Engram');
@@ -326,7 +248,6 @@ class SummarizerService {
     await new Promise((resolve) => setTimeout(resolve, 0));
 
     try {
-      // 1. Calculate Range
       let startFloor: number;
       let endFloor: number;
 
@@ -346,8 +267,7 @@ class SummarizerService {
           return null;
         }
 
-        // 稳定策略：无论自动还是手动触发，只要没有显式传入 rangeOverride，
-        // 默认都按「楼层间隔 - 缓冲层」处理一个固定窗口，避免手动触发时把所有未处理楼层一次性吞掉。
+        // 使用默认范围时，手动和自动摘要均处理一个固定窗口，并保留缓冲楼层。
         const targetProcessCount = Math.max(1, interval - buffer);
         const availableProcessCount = Math.max(0, maxProcessableFloor - startFloor + 1);
         const processCount = Math.min(targetProcessCount, availableProcessCount, pendingFloors);
@@ -379,13 +299,6 @@ class SummarizerService {
         rangeOverride: rangeOverride ?? null,
       });
 
-      const preparedSummaryContext = await summaryPreparationCache.getPreparedRange({
-        chatId: this.currentChatId,
-        baseFloor: this._lastSummarizedFloor,
-        range,
-      });
-
-      // 2. Run Workflow
       await initWorldBookSlot();
 
       const context = await runWorkflow(createSummaryWorkflow(), {
@@ -398,38 +311,27 @@ class SummarizerService {
           logType: 'summarize',
         },
         input: {
-          range: range,
-          preparedSummaryContext,
+          range,
         },
       });
 
-      // 3. Construct Result (Backward Compatibility)
-      const savedEvents = context.output; // From SaveEvent (Array of EventNodes)
-
-      // If SaveEvent returns array of events, we construct a SummaryResult-like object
-      // or just return the list. Original method returned SummaryResult (single object).
-      // But now we have multiple events potentially.
-      // Let's verify `SummaryResult` type in `types.d.ts` or similar.
-      // It seems SummaryResult expects `content` string.
-
-      // If we have parsed multiple events, the "content" might            // The raw text
+      const savedEvents = context.output;
       const result: SummaryResult = {
         id: Date.now().toString(),
-        content: context.cleanedContent || '', // The raw text
+        content: context.cleanedContent || '',
         sourceFloors: range,
         timestamp: Date.now(),
-        tokenCount: 0, // TODO: Get from context or re-measure
+        tokenCount: 0,
       };
 
       if (Array.isArray(savedEvents) && savedEvents.length > 0) {
         incrementStatistic('totalEvents', savedEvents.length);
       }
 
-      // Update local state (redundant if SaveEvent updated store, but safe)
       await this.setLastSummarizedFloor(endFloor);
       this.summaryHistory.push(result);
 
-      // V1.0.5: 联动触发精简 - 总结完成后检查是否需要精简
+      // 摘要保存后检查自动精简条件。
       try {
         const trimStatus = await eventTrimmer.getStatus();
         const trimConfig = eventTrimmer.getConfig();
@@ -505,9 +407,7 @@ class SummarizerService {
     };
   }
 
-  /**
-   * 刷新状态（强制重新读取）
-   */
+  /** 启动异步状态刷新，并立即返回当前内存状态。 */
   refreshStatus(): SummarizerStatus {
     // 触发异步刷新，但返回当前缓存
     void this.initializeForCurrentChat();

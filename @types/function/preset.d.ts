@@ -80,7 +80,7 @@ type PresetPrompt = {
    * - 系统提示词 (`isPresetSystemPrompt`): 酒馆所设置的系统提示词, 但其实相比于手动添加的提示词没有任何优势, 分为 `main`、`nsfw`、`jailbreak`、`enhance_definitions`
    * - 占位符提示词 (`isPresetPlaceholderPrompt`): 用于表示世界书条目、角色卡、玩家角色、聊天记录等提示词的插入位置, 分为 `world_info_before`、`persona_description`、`char_description`、`char_personality`、`scenario`、`world_info_after`、`dialogue_examples`、`chat_history`
    */
-  id: LiteralUnion<
+  id: TypeFest.LiteralUnion<
     | 'main'
     | 'nsfw'
     | 'jailbreak'
@@ -103,7 +103,7 @@ type PresetPrompt = {
    *   - `'relative'`: 按提示词相对位置插入
    *   - `'in_chat'`: 插入到聊天记录的对应深度, 需要设置对应的深度 `depth` 和顺序 `order`
    */
-  position:
+  position?:
     | {
         type: 'relative';
         depth?: never;
@@ -117,15 +117,12 @@ type PresetPrompt = {
   /** 额外字段, 用于为预设提示词绑定额外数据 */
   extra?: Record<string, any>;
 };
-type PresetNormalPrompt = SetRequired<
-  { id: string } & Omit<PresetPrompt, 'id'>,
-  'position' | 'content'
->;
-type PresetSystemPrompt = SetRequired<
-  { id: 'main' | 'nsfw' | 'jailbreak' | 'enhanceDefinitions' } & Omit<PresetPrompt, 'id'>,
+type PresetNormalPrompt = TypeFest.SetRequired<{ id: string } & Omit<PresetPrompt, 'id'>, 'position' | 'content'>;
+type PresetSystemPrompt = TypeFest.SetRequired<
+  { id: 'main' | 'nsfw' | 'jailbreak' | 'enhanceDefinitions' } & Omit<PresetPrompt, 'id' | 'position'>,
   'content'
 >;
-type PresetPlaceholderPrompt = SetRequired<
+type PresetPlaceholderPrompt = TypeFest.SetRequired<
   {
     id:
       | 'worldInfoBefore'
@@ -136,7 +133,7 @@ type PresetPlaceholderPrompt = SetRequired<
       | 'worldInfoAfter'
       | 'dialogueExamples'
       | 'chatHistory';
-  } & Omit<PresetPrompt, 'id'>,
+  } & Omit<PresetPrompt, 'id' | 'content'>,
   'position'
 >;
 declare function isPresetNormalPrompt(prompt: PresetPrompt): prompt is PresetNormalPrompt;
@@ -180,7 +177,7 @@ declare function loadPreset(preset_name: Exclude<string, 'in_use'>): boolean;
  *
  * @throws 如果预设不存在, 将会抛出异常
  */
-declare function getPreset(preset_name: LiteralUnion<'in_use', string>): Preset;
+declare function getPreset(preset_name: TypeFest.LiteralUnion<'in_use', string>): Preset;
 
 /**
  * 新建 `preset_name` 预设, 内容为 `preset`
@@ -192,10 +189,7 @@ declare function getPreset(preset_name: LiteralUnion<'in_use', string>): Preset;
  *
  * @throws 如果创建的预设内容中存在重复的系统/占位提示词, 将会抛出异常
  */
-declare function createPreset(
-  preset_name: Exclude<string, 'in_use'>,
-  preset?: Preset
-): Promise<boolean>;
+declare function createPreset(preset_name: Exclude<string, 'in_use'>, preset?: Preset): Promise<boolean>;
 
 /**
  * 创建或替换名为 `preset_name` 的预设, 内容为 `preset`
@@ -208,9 +202,9 @@ declare function createPreset(
  * @returns 如果发生创建, 则返回 `true`; 如果发生替换, 则返回 `false`
  */
 declare function createOrReplacePreset(
-  preset_name: LiteralUnion<'in_use', string>,
+  preset_name: TypeFest.LiteralUnion<'in_use', string>,
   preset?: Preset,
-  { render }?: ReplacePresetOptions
+  { render }?: ReplacePresetOptions,
 ): Promise<boolean>;
 
 /**
@@ -230,10 +224,7 @@ declare function deletePreset(preset_name: Exclude<string, 'in_use'>): Promise<b
  *
  * @returns 是否成功重命名, 可能因预设不存在等原因而失败
  */
-declare function renamePreset(
-  preset_name: Exclude<string, 'in_use'>,
-  new_name: string
-): Promise<boolean>;
+declare function renamePreset(preset_name: Exclude<string, 'in_use'>, new_name: string): Promise<boolean>;
 
 type ReplacePresetOptions = {
   /** 如果对 `'in_use'` 预设进行操作, 应该防抖渲染 (debounced)、立即渲染 (immediate) 还是不刷新前端显示 (none)? 默认为性能更好的防抖渲染 */
@@ -283,9 +274,9 @@ type ReplacePresetOptions = {
  * await replacePreset('预设B', preset_b);
  */
 declare function replacePreset(
-  preset_name: LiteralUnion<'in_use', string>,
+  preset_name: TypeFest.LiteralUnion<'in_use', string>,
   preset: Preset,
-  { render }?: ReplacePresetOptions
+  { render }?: ReplacePresetOptions,
 ): Promise<void>;
 
 type PresetUpdater = ((preset: Preset) => Preset) | ((preset: Preset) => Promise<Preset>);
@@ -339,9 +330,9 @@ type PresetUpdater = ((preset: Preset) => Preset) | ((preset: Preset) => Promise
  * });
  */
 declare function updatePresetWith(
-  preset_name: LiteralUnion<'in_use', string>,
+  preset_name: TypeFest.LiteralUnion<'in_use', string>,
   updater: PresetUpdater,
-  { render }?: ReplacePresetOptions
+  { render }?: ReplacePresetOptions,
 ): Promise<Preset>;
 
 /**
@@ -368,7 +359,7 @@ declare function updatePresetWith(
  * });
  */
 declare function setPreset(
-  preset_name: LiteralUnion<'in_use', string>,
-  preset: PartialDeep<Preset>,
-  { render }?: ReplacePresetOptions
+  preset_name: TypeFest.LiteralUnion<'in_use', string>,
+  preset: TypeFest.PartialDeep<Preset>,
+  { render }?: ReplacePresetOptions,
 ): Promise<Preset>;

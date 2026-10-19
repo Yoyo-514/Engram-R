@@ -9,12 +9,7 @@ declare namespace Mvu {
     [key: string]: any;
   };
 
-  type CommandInfo =
-    | SetCommandInfo
-    | InsertCommandInfo
-    | DeleteCommandInfo
-    | AddCommandInfo
-    | MoveCommandInfo;
+  type CommandInfo = SetCommandInfo | InsertCommandInfo | DeleteCommandInfo | AddCommandInfo | MoveCommandInfo;
   type SetCommandInfo = {
     type: 'set';
     full_match: string;
@@ -69,7 +64,7 @@ declare const Mvu: {
      *
      * @example
      * // 修复 gemini 在中文间加入的 '-'', 如将 '角色.络-络' 修复为 '角色.络络'
-     * eventOn(Mvu.events.COMMAND_PARSED, commands => {
+     * eventOn(Mvu.events.COMMAND_PARSED, (_variables, commands) => {
      *   commands.forEach(command => {
      *     command.args[0] = command.args[0].replace(/-/g, '');
      *   });
@@ -77,7 +72,7 @@ declare const Mvu: {
      *
      * @example
      * // 修复繁体字, 如将 '絡絡' 修复为 '络络'
-     * eventOn(Mvu.events.COMMAND_PARSED, commands => {
+     * eventOn(Mvu.events.COMMAND_PARSED, (_variables, commands) => {
      *   commands.forEach(command => {
      *     command.args[0] = command.args[0].replaceAll('絡絡', '络络');
      *   });
@@ -85,11 +80,11 @@ declare const Mvu: {
      *
      * @example
      * // 添加新的更新命令
-     * eventOn(Mvu.events.COMMAND_PARSED, commands => {
+     * eventOn(Mvu.events.COMMAND_PARSED, (_variables, commands) => {
      *   commands.push({
      *     type: 'set',
-     *     full_match: `_.set('络络.好感度', 5)`,
-     *     args: ['络络.好感度', 5],
+     *     full_match: `_.set('络络.好感度', '5')`,
+     *     args: ['络络.好感度', '5'],
      *     reason: '脚本强行更新',
      *   });
      * });
@@ -186,19 +181,9 @@ interface ListenerType {
 
   [Mvu.events.VARIABLE_UPDATE_STARTED]: (variables: Mvu.MvuData) => void;
 
-  [Mvu.events.COMMAND_PARSED]: (
-    variables: Mvu.MvuData,
-    commands: Mvu.CommandInfo[],
-    message_content: string
-  ) => void;
+  [Mvu.events.COMMAND_PARSED]: (variables: Mvu.MvuData, commands: Mvu.CommandInfo[], message_content: string) => void;
 
-  [Mvu.events.VARIABLE_UPDATE_ENDED]: (
-    variables: Mvu.MvuData,
-    variables_before_update: Mvu.MvuData
-  ) => void;
+  [Mvu.events.VARIABLE_UPDATE_ENDED]: (variables: Mvu.MvuData, variables_before_update: Mvu.MvuData) => void;
 
-  [Mvu.events.BEFORE_MESSAGE_UPDATE]: (context: {
-    variables: Mvu.MvuData;
-    message_content: string;
-  }) => void;
+  [Mvu.events.BEFORE_MESSAGE_UPDATE]: (context: { variables: Mvu.MvuData; message_content: string }) => void;
 }
