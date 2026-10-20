@@ -201,7 +201,7 @@ export const EntityEditorModal: FC<EntityEditorModalProps> = ({ entity, onCancel
 
   return (
     <div className="animate-in fade-in fixed inset-0 z-[12000] flex items-stretch justify-center bg-background/80 backdrop-blur-sm sm:items-center sm:p-4">
-      <div className="engram-acrylic animate-in zoom-in-95 mx-auto flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-[var(--shadow-3)] sm:h-[88dvh] sm:rounded-xl sm:border sm:border-border sm:p-6">
+      <div className="engram-acrylic cq animate-in zoom-in-95 mx-auto flex h-[100dvh] w-full max-w-5xl flex-col overflow-hidden p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-[var(--shadow-3)] sm:h-[88dvh] sm:rounded-xl sm:border sm:border-border sm:p-6">
         <div className="mb-3 flex shrink-0 items-center justify-between gap-3 border-b border-border/60 pb-2">
           <h3 className="min-w-0 truncate text-base font-semibold">编辑实体</h3>
           <span className="hidden shrink-0 text-xs text-muted-foreground sm:block">
@@ -210,7 +210,7 @@ export const EntityEditorModal: FC<EntityEditorModalProps> = ({ entity, onCancel
         </div>
 
         <div className="custom-scrollbar min-h-0 flex-1 space-y-5 overflow-y-auto overflow-x-hidden pr-1">
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+          <div className="cq-2 gap-3">
             <label className="flex flex-col gap-1">
               <span className="text-xs text-meta">名称</span>
               <input

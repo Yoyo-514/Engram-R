@@ -29,7 +29,7 @@ export const SimpleModal: FC<SimpleModalProps> = ({
   return (
     <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200">
       <div
-        className={`w-full ${maxWidth} flex max-h-[90vh] flex-col rounded-lg border border-border bg-background shadow-xl`}
+        className={`engram-acrylic flex max-h-[90vh] w-full ${maxWidth} flex-col rounded-xl shadow-[var(--shadow-3)]`}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">

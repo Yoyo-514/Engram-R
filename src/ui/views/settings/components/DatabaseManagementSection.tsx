@@ -519,7 +519,7 @@ export const DatabaseManagementSection: FC = () => {
                   className="border border-primary/30 bg-background/60"
                 />
 
-                <div className="grid gap-2 rounded-lg border border-border bg-background/60 p-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="cq-4 gap-2 rounded-lg border border-border bg-background/60 p-3">
                   <div className="w-full min-w-0">
                     <div className="text-[11px] text-muted-foreground">数据库名称</div>
                     <div className="whitespace-normal break-words text-sm font-medium text-foreground">
@@ -678,7 +678,7 @@ export const DatabaseManagementSection: FC = () => {
                     : '当前未连接聊天。'}
               </div>
 
-              <div className="grid gap-2 rounded-lg border border-border bg-background/60 p-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="cq-4 gap-2 rounded-lg border border-border bg-background/60 p-3">
                 <div className="w-full min-w-0">
                   <div className="text-[11px] text-muted-foreground">事件数</div>
                   <div className="text-sm font-medium text-foreground">

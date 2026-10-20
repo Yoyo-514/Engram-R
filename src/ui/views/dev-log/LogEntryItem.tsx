@@ -174,7 +174,7 @@ export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
       {/* 展开的数据详情 */}
       {expanded && hasData && (
         <div className="mb-1 ml-10 mr-2 rounded-r border-l-2 border-zinc-700 bg-zinc-900/50 px-3 py-2 text-[10px]">
-          <pre className="m-0 whitespace-pre-wrap break-words font-mono text-zinc-400">
+          <pre className="custom-scrollbar m-0 max-h-64 overflow-auto whitespace-pre-wrap break-words font-mono text-zinc-400">
             {dataPreview}
           </pre>
         </div>

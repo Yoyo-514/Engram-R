@@ -101,6 +101,39 @@
   }
 }
 
+/* 容器查询：列数跟随容器宽度，避免视口断点在窄容器里强行多列 */
+.cq {
+  container: panel / inline-size;
+}
+
+.cq-2,
+.cq-3,
+.cq-4,
+.cq-cards {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@container panel (min-width: 440px) {
+  .cq-2,
+  .cq-3,
+  .cq-4,
+  .cq-cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container panel (min-width: 760px) {
+  .cq-3,
+  .cq-cards {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .cq-4 {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
 /* 供壳层与浮层复用的 acrylic 材质 */
 .engram-acrylic {
   background: var(--surface-2);

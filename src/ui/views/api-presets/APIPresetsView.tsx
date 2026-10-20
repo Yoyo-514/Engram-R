@@ -23,6 +23,8 @@ import { useResponsive } from '@/ui/hooks/useResponsive';
 
 // Hooks
 import { useLLMPresets } from '../../hooks/useLLMPresets';
+import { notificationService } from '@/ui/services/NotificationService';
+
 import { useRegexRules } from '../../hooks/useRegexRules';
 import { useWorldInfo } from '../../hooks/useWorldInfo';
 import { LLMPresetForm } from './models/LLMPresetForm';
@@ -546,8 +548,11 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
                 onSelect={(r) => handleMobileSelect(() => selectRule(r))}
                 onToggle={toggleRule}
                 onDelete={deleteRule}
-                onAdd={addRule}
-                onReset={resetRules}
+                onAdd={() => handleMobileSelect(addRule)}
+                onReset={() => {
+                  resetRules();
+                  notificationService.info('已恢复默认正则规则');
+                }}
                 onReorder={reorderRules}
                 enableNativeRegex={settings.regexConfig?.enableNativeRegex ?? true}
                 onToggleNativeRegex={(enabled) =>

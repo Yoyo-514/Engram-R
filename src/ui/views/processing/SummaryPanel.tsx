@@ -12,13 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FC, ElementType } from 'react';
 
 import { Logger, LogModule } from '@/core/logger';
-import { chatManager } from '@/data/ChatManager';
-import {
-  entityBuilder,
-  eventTrimmer,
-  summarizerService,
-  type TrimmerStatus,
-} from '@/modules/memory';
+import { eventTrimmer, summarizerService, type TrimmerStatus } from '@/modules/memory';
 import { useConfigStore } from '@/state/configStore';
 import { useMemoryStore } from '@/state/memoryStore';
 /**
@@ -64,9 +58,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const [trimStatus, setTrimStatus] = useState<TrimmerStatus | null>(null);
   const [worldbookTokens, setWorldbookTokens] = useState<number>(0);
   const [activeEventCount, setActiveEventCount] = useState<number>(0); // 蓝灯数
-  const [extractedFloor, setExtractedFloor] = useState<number>(0);
   const [editSummarizedFloor, setEditSummarizedFloor] = useState<number>(0);
-  const [editExtractedFloor, setEditExtractedFloor] = useState<number>(0);
 
   // 加载状态（useCallback 定义在前，effect 仅调用）
   const loadStatus = useCallback(async () => {
@@ -87,12 +79,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       setWorldbookTokens(totalTokens);
       setActiveEventCount(activeCount); // 蓝灯数
 
-      const entityStatus = await entityBuilder.getStatus();
-      setExtractedFloor(entityStatus.lastExtractedFloor || 0);
-
       // Sync edit buffers
       setEditSummarizedFloor(currentStatus.lastSummarizedFloor);
-      setEditExtractedFloor(entityStatus.lastExtractedFloor || 0);
     } catch (error) {
       Logger.error(LogModule.MEMORY_SUMMARY, '加载 Summarizer 状态失败:', error);
     }
@@ -112,16 +100,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       notificationService.success(`总结指针已更新至 ${editSummarizedFloor}`, 'Engram');
     } catch (error) {
       Logger.error(LogModule.MEMORY_SUMMARY, '修改总结指针失败:', error);
-    }
-  };
-
-  const handleSetExtractedFloor = async () => {
-    try {
-      await chatManager.updateState({ last_extracted_floor: editExtractedFloor });
-      await loadStatus();
-      notificationService.success(`提取指针已更新至 ${editExtractedFloor}`, 'Engram');
-    } catch (error) {
-      Logger.error(LogModule.MEMORY_SUMMARY, '修改提取指针失败:', error);
     }
   };
 
@@ -221,7 +199,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const limitConfig = getCurrentLimit();
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+    <div className="cq-2 gap-8 lg:gap-12">
       {/* ========== 左栏：总结管理 ========== */}
       <section className="space-y-8">
         {/* 状态监控 - 按重要性分层 */}
@@ -305,7 +283,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               <Divider length={30} spacing="md" />
 
               {/* 第三层级：指针管理 */}
-              <div className="grid grid-cols-2 gap-6">
+              <div>
                 <div>
                   <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     总结指针 (摘要已覆盖至)
@@ -321,27 +299,6 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                     <button
                       onClick={handleSetSummarizedFloor}
                       disabled={status.lastSummarizedFloor === editSummarizedFloor}
-                      className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                    >
-                      设置
-                    </button>
-                  </div>
-                </div>
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    提取指针 (实体提取已处理至)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={editExtractedFloor}
-                      onChange={(e) => setEditExtractedFloor(Number(e.target.value))}
-                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
-                    />
-                    <button
-                      onClick={handleSetExtractedFloor}
-                      disabled={extractedFloor === editExtractedFloor}
                       className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
                     >
                       设置
@@ -467,16 +424,16 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         </div>
 
         {/* 底部重置按钮区 */}
-        <div className="flex justify-end">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             icon={RefreshCw}
             iconClassName={loading ? 'animate-spin' : ''}
-            label="重置所有进度"
+            label="重置总结进度"
             size="sm"
             danger
             onClick={handleReset}
             disabled={loading}
-            title="重置进度 (重新扫描历史)"
+            title="重置总结进度 (重新扫描历史)"
           />
         </div>
       </section>

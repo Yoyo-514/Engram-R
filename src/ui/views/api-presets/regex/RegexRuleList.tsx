@@ -38,7 +38,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-h-0 flex-1 flex-col gap-4">
       <div className="flex items-center justify-between">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           正则规则列表
@@ -75,7 +75,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
         </div>
       </div>
 
-      <div className="flex flex-col gap-1">
+      <div className="no-scrollbar -mr-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-2">
         {rules.map((rule, index) => (
           <div
             key={rule.id}

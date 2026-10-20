@@ -198,7 +198,7 @@ export const EntityList: FC<EntityListProps> = ({
                               className={
                                 viewMode === 'edit'
                                   ? 'flex flex-col gap-3'
-                                  : 'grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3'
+                                  : 'cq-cards gap-3'
                               }
                             >
                               {sub.entities.map((entity: EntityNode) => (

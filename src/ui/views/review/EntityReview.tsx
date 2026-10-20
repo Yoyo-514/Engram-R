@@ -153,7 +153,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
         {newEntities.length === 0 ? (
           <div className="pl-4 text-xs italic text-muted-foreground">无新增实体</div>
         ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          <div className="cq-2 gap-3">
             {newEntities.map((entity, idx) => (
               <EntityCard
                 key={idx}

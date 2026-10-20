@@ -1,7 +1,7 @@
 export interface CustomMacro {
   /** 唯一标识 */
   id: string;
-  /** 宏名称（不含花括号，如 "用户画像"） */
+  /** 宏名称（不含花括号，仅英文、数字、下划线，如 "user_profile"） */
   name: string;
   /** 宏内容 */
   content: string;

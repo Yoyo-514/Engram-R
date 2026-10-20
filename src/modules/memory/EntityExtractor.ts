@@ -429,6 +429,14 @@ export class EntityBuilder {
   }
 
   /**
+   * 重置实体提取进度 (回到 0 楼，下轮重新扫描全部历史)
+   */
+  async resetProgress(): Promise<void> {
+    await chatManager.updateState({ last_extracted_floor: 0 });
+    Logger.info(LogModule.MEMORY_ENTITY, '实体提取进度已重置');
+  }
+
+  /**
    * 获取状态 (UI 适配)
    * 改为楼层相关状态
    */

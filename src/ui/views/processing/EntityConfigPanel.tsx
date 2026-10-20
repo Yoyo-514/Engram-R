@@ -4,6 +4,7 @@ import type { FC } from 'react';
 
 import { engramEventBus } from '@/core/events';
 import { Logger, LogModule } from '@/core/logger';
+import { chatManager } from '@/data/ChatManager';
 import { entityBuilder } from '@/modules/memory/EntityExtractor';
 /**
  * EntityConfigPanel - 实体提取配置面板
@@ -18,6 +19,7 @@ import type { EntityExtractConfig } from '@/types/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
+import { notificationService } from '@/ui/services/NotificationService';
 
 interface EntityStatus {
   enabled: boolean;
@@ -37,12 +39,14 @@ interface EntityConfigPanelProps {
 export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange }) => {
   const [status, setStatus] = useState<EntityStatus | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [editFloor, setEditFloor] = useState(0);
 
   // 加载状态 (Operational Status)
   const loadStatus = useCallback(async () => {
     try {
       const s = (await entityBuilder.getStatus()) as EntityStatus;
       setStatus(s);
+      setEditFloor(s.lastExtractedFloor || 0);
     } catch (e) {
       Logger.error(LogModule.MEMORY_ENTITY, 'Failed to load status:', e);
     }
@@ -91,6 +95,32 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
     entityBuilder.updateConfig(newConfig);
   };
 
+  // 修改提取指针
+  const handleSetFloor = async () => {
+    try {
+      await chatManager.updateState({ last_extracted_floor: editFloor });
+      await loadStatus();
+      notificationService.success(`提取指针已更新至 ${editFloor}`, 'Engram');
+    } catch (e) {
+      Logger.error(LogModule.MEMORY_ENTITY, '修改提取指针失败:', e);
+    }
+  };
+
+  // 重置提取进度
+  const handleResetProgress = async () => {
+    if (!confirm('确定要重置实体提取进度吗？下轮会重新扫描所有历史楼层。')) return;
+    setIsLoading(true);
+    try {
+      await entityBuilder.resetProgress();
+      await loadStatus();
+      notificationService.success('实体提取进度已重置', 'Engram');
+    } catch (e) {
+      Logger.error(LogModule.MEMORY_ENTITY, '重置提取进度失败:', e);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // 手动提取
   const handleManualExtract = async () => {
     setIsLoading(true);
@@ -120,7 +150,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
   };
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 lg:gap-12">
+    <div className="cq-2 gap-8 lg:gap-12">
       {/* ========== 左栏：状态监控 ========== */}
       <section className="space-y-8">
         <div>
@@ -165,10 +195,23 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
                 </div>
                 <div>
                   <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    上次提取楼层
+                    提取指针 (已处理至)
                   </span>
-                  <div className="font-mono text-xl text-foreground/80">
-                    {status.lastExtractedFloor}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      min="0"
+                      value={editFloor}
+                      onChange={(e) => setEditFloor(Number(e.target.value))}
+                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
+                    />
+                    <button
+                      onClick={handleSetFloor}
+                      disabled={status.lastExtractedFloor === editFloor}
+                      className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      设置
+                    </button>
                   </div>
                 </div>
               </div>
@@ -196,6 +239,16 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
           >
             <Archive size={14} />
             立即清理
+          </button>
+
+          <button
+            onClick={handleResetProgress}
+            disabled={isLoading}
+            className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm text-destructive transition-colors hover:text-destructive/80 disabled:cursor-not-allowed disabled:opacity-50"
+            title="重置提取进度 (重新扫描全部历史)"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            重置提取进度
           </button>
         </div>
       </section>

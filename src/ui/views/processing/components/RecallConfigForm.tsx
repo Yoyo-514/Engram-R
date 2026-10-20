@@ -44,7 +44,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
           召回策略配置
         </h3>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="cq-2 gap-4">
           <div
             className={`rounded-lg border p-4 transition-all ${config.useKeywordRecall ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card hover:border-border'}`}
           >
@@ -161,7 +161,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
         </p>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 border-t border-border/30 pt-4 md:grid-cols-2">
+      <div className="cq-2 gap-6 border-t border-border/30 pt-4">
         <NumberField
           label="初筛数量 (Top-K)"
           description="从向量数据库中检索的候选数量"

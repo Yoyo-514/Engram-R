@@ -26,7 +26,7 @@ export const TabPills: FC<TabPillsProps> = ({
   actions,
 }) => (
   <div
-    className={`mb-6 flex items-center justify-between gap-4 border-b border-border ${sticky ? 'sticky z-20 -mx-4 -mt-4 bg-background px-4 pb-0 pt-4' : 'px-0'} ${className}`}
+    className={`mb-6 flex items-center justify-between gap-4 border-b border-border ${sticky ? 'sticky z-20 -mx-4 -mt-4 bg-background/70 px-4 pb-0 pt-4 backdrop-blur-xl' : 'px-0'} ${className}`}
     style={sticky ? { top } : undefined}
   >
     <div className="no-scrollbar flex gap-2 overflow-x-auto pb-1">

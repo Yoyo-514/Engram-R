@@ -425,7 +425,13 @@ export function refreshCustomMacros(): void {
 
     // 注册每个启用的自定义宏
     for (const macro of customMacros) {
-      if (!macro.enabled || !macro.name) continue;
+      // 宏名必须是 ASCII 标识符，中文等字符在酒馆宏语法中无法解析
+      if (!macro.enabled || !/^[A-Za-z0-9_-]+$/.test(macro.name)) {
+        if (macro.name) {
+          Logger.warn('MacroService', `跳过非法宏名: ${macro.name}`);
+        }
+        continue;
+      }
 
       // 缓存内容
       cachedCustomMacros.set(macro.name, macro.content);

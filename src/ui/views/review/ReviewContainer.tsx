@@ -303,7 +303,7 @@ export const ReviewContainer: FC = () => {
       >
         <div className="animate-in fade-in absolute inset-0 bg-background/80 backdrop-blur-sm duration-200" />
 
-        <div className="engram-acrylic animate-in zoom-in-95 relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden shadow-[var(--shadow-3)] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-xl sm:border sm:border-t-4 sm:border-border sm:border-t-primary">
+        <div className="engram-acrylic cq animate-in zoom-in-95 relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden shadow-[var(--shadow-3)] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-xl sm:border sm:border-t-4 sm:border-border sm:border-t-primary">
           {/* Top Bar: Tabs & Window Controls */}
           <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:pt-2">
             {/* Tabs Scroll Area */}

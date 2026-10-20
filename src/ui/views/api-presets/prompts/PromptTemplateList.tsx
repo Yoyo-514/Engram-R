@@ -103,7 +103,7 @@ export const PromptTemplateList: FC<PromptTemplateListProps> = ({
       </div>
 
       {/* 模板列表 */}
-      <div className="no-scrollbar flex flex-1 flex-col gap-6 overflow-y-auto">
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
         {groupedTemplates.map((group) => (
           <div key={group.value} className="flex flex-col gap-2">
             <div className="flex items-center gap-2 px-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">

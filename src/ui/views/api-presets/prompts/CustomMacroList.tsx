@@ -42,7 +42,7 @@ export const CustomMacroList: FC<CustomMacroListProps> = ({
       </div>
 
       {/* 宏列表 */}
-      <div className="no-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto">
+      <div className="no-scrollbar flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {macros.map((macro) => (
           <div
             key={macro.id}

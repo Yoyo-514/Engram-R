@@ -18,7 +18,7 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
   const content = (
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
-        className="animate-in fixed inset-0 z-[99999] flex flex-col bg-background text-foreground"
+        className="engram-acrylic animate-in fixed inset-0 z-[99999] flex flex-col text-foreground"
         style={{ width: '100vw', height: '100dvh' }}
       >
         {/* 头部 */}

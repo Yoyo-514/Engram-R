@@ -20,10 +20,10 @@ export const CustomMacroForm: FC<CustomMacroFormProps> = ({ macro, onChange }) =
         <TextField
           label="宏名称"
           value={macro.name}
-          onChange={(value) => onChange({ name: value })}
-          placeholder="输入宏名称（不含花括号）"
+          onChange={(value) => onChange({ name: value.replace(/[^A-Za-z0-9_-]/g, '') })}
+          placeholder="例如 user_profile"
           required
-          description="在模板中使用 {{宏名称}} 引用"
+          description="仅支持英文字母、数字、下划线与短横线；在模板中使用 {{宏名称}} 引用"
         />
       </FormSection>
 
