@@ -2,12 +2,11 @@ import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
 import { getErrorMessage } from '@/core/utils/error';
+import { parseJson } from '@/core/utils/JsonParser';
 import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
 import { extractEntitiesFromText } from '@/modules/memory/EntityExtraction';
+import { saveEvents } from '@/modules/memory/EventSave';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
-import { runWorkflow } from '@/modules/workflow';
-import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
-import { ParseJson } from '@/modules/workflow/steps/text/ParseJson';
 import type { BatchTask, IBatchTaskHandler, ImportMode } from '@/types/batch';
 
 /** 外部导入配置 */
@@ -78,25 +77,12 @@ export class ImportTextTask implements IBatchTaskHandler {
           if (checkStopSignal()) return;
 
           if (llmResult) {
-            // 使用 Workflow Engine 解析 JSON 并存储
-            const savedEvents = await runWorkflow(
-              {
-                name: 'ImportFlow',
-                steps: [new ParseJson(), new SaveEvent()],
-              },
-              {
-                llmResponse: {
-                  content: llmResult,
-                  success: true,
-                  tokenUsage: 0,
-                },
-                input: {
-                  isImport: true, // 增加标识放在 input 里
-                  // 模拟 range，用于 SaveEvent 记录 source_range
-                  range: [i, i],
-                },
-              }
-            );
+            const parsed = parseJson<Record<string, unknown>>(llmResult);
+            if (!parsed) {
+              throw new Error('ParseJson: JSON 解析失败');
+            }
+
+            const savedEvents = await saveEvents(parsed, { range: [i, i], isImport: true });
             if (checkStopSignal()) return;
 
             if (Array.isArray(savedEvents) && savedEvents.length > 0) {
@@ -143,30 +129,21 @@ export class ImportTextTask implements IBatchTaskHandler {
         }
 
         // 快速模式 或 降级：直接存储原文/抢救文
-        const fallbackEvents = await runWorkflow(
+        const fallbackEvents = await saveEvents(
           {
-            name: 'ImportFastFlow',
-            steps: [new SaveEvent()],
+            events: [
+              {
+                summary: chunk,
+                time_anchor: new Date().toISOString(),
+                role: ['(import)'],
+                location: ['(import)'],
+                event: '(import)',
+                logic: [],
+                causality: '',
+              },
+            ],
           },
-          {
-            input: {
-              isImport: true, // 增加标识放在 input 里
-              range: [i, i],
-            },
-            parsedData: {
-              events: [
-                {
-                  summary: chunk,
-                  time_anchor: new Date().toISOString(),
-                  role: ['(import)'],
-                  location: ['(import)'],
-                  event: '(import)',
-                  logic: [],
-                  causality: '',
-                },
-              ],
-            },
-          }
+          { range: [i, i], isImport: true }
         );
         if (checkStopSignal()) return;
 

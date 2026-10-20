@@ -2,9 +2,7 @@ import { Logger } from '@/core/logger';
 import { isRecord, isStringArray, parseJson, readNumber, readString } from '@/core/utils';
 import { hideMessageRange, refreshEngramCache } from '@/integrations/tavern';
 import { useMemoryStore } from '@/state/memoryStore';
-import { type EventNode } from '@/types/graph';
-import { type JobContext } from '@/types/job_context';
-import { type IStep } from '@/types/step';
+import type { EventNode } from '@/types/graph';
 import { notificationService } from '@/ui/services/NotificationService';
 
 type EventKvInput = Partial<EventNode['structured_kv']> & {
@@ -21,6 +19,12 @@ type ParsedEventInput = {
 type ParsedEventsPayload = {
   events: ParsedEventInput[];
 };
+
+export interface EventSaveOptions {
+  range: [number, number];
+  isImport?: boolean;
+  autoHide?: boolean;
+}
 
 function normalizeStringArray(value: unknown): string[] {
   if (typeof value === 'string' && value.length > 0) {
@@ -111,107 +115,104 @@ function buildBurnedSummary(event: ParsedEventInput): string {
   return `${titleLine}${metaLine}${rawSummary}`;
 }
 
-async function parseEventsToSave(context: JobContext): Promise<ParsedEventInput[]> {
-  let eventsToSave = extractEvents(context.parsedData);
-
-  if (eventsToSave.length > 0) {
-    return eventsToSave;
+/** 接受事件对象或 JSON 文本，找出待保存的事件列表。 */
+function readEvents(content: unknown): ParsedEventInput[] {
+  const directEvents = extractEvents(content);
+  if (directEvents.length > 0) {
+    return directEvents;
   }
 
-  const content = typeof context.output === 'string' ? context.output : context.cleanedContent;
-  if (!content) {
-    throw new Error('SaveEvent: missing output content');
+  if (typeof content !== 'string' || !content) {
+    throw new Error('EventSave: missing output content');
   }
 
-  try {
-    const parsed = parseJson<ParsedEventsPayload>(content);
-    eventsToSave = extractEvents(parsed);
-  } catch {
-    throw new Error('SaveEvent: failed to parse events JSON');
+  const parsed = parseJson<ParsedEventsPayload>(content);
+  if (!parsed) {
+    throw new Error('EventSave: failed to parse events JSON');
   }
 
-  if (eventsToSave.length === 0) {
-    throw new Error('SaveEvent: no events to save');
+  const events = extractEvents(parsed);
+  if (events.length === 0) {
+    throw new Error('EventSave: no events to save');
   }
 
-  return eventsToSave;
+  return events;
 }
 
-export class SaveEvent implements IStep {
-  name = 'SaveEvent';
+/** 把摘要事件落地，并维护总结楼层、缓存与自动隐藏。 */
+export async function saveEvents(
+  content: unknown,
+  options: EventSaveOptions
+): Promise<EventNode[]> {
+  const eventsToSave = readEvents(content);
+  const store = useMemoryStore.getState();
+  const db = await store.initChat();
 
-  async execute(context: JobContext): Promise<void> {
-    const eventsToSave = await parseEventsToSave(context);
-    const store = useMemoryStore.getState();
-    const db = await store.initChat();
-
-    if (!db) {
-      throw new Error('SaveEvent: no chat context');
-    }
-
-    const savedEvents: EventNode[] = [];
-    const range = context.input.range || [0, 0];
-    const isImport = context.input?.isImport === true;
-    const autoHide = context.config.autoHide === true;
-
-    for (const event of eventsToSave) {
-      const kv = event.structured_kv ?? event.meta ?? {};
-      const rolesArray =
-        kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
-
-      const saved = await store.saveEvent({
-        summary: buildBurnedSummary(event),
-        structured_kv: {
-          time_anchor: kv.time_anchor ?? '',
-          role: rolesArray,
-          location: kv.location ?? [],
-          event: kv.event ?? '',
-          logic: kv.logic ?? [],
-          causality: kv.causality ?? '',
-        },
-        significance_score: event.significance_score ?? 0.5,
-        level: 0,
-        is_embedded: false,
-        is_archived: false,
-        source_range: {
-          start_index: range[0],
-          end_index: range[1],
-        },
-      });
-      savedEvents.push(saved);
-    }
-
-    context.output = savedEvents;
-
-    if (range[1] > 0 && !isImport) {
-      await store.setLastSummarizedFloor(range[1]);
-    }
-
-    await refreshEngramCache();
-
-    if (autoHide && range[1] > 0 && !isImport) {
-      const startIndex = range[0] - 1;
-      const endIndex = range[1] - 1;
-
-      Logger.info('SaveEvent', 'Preparing to auto-hide summarized messages', {
-        workflowRange: range,
-        hideRange: [startIndex, endIndex],
-        savedEventCount: savedEvents.length,
-      });
-
-      try {
-        await hideMessageRange(startIndex, endIndex);
-        Logger.success('SaveEvent', 'Summarized messages hidden successfully');
-      } catch (error) {
-        Logger.error('SaveEvent', 'Auto-hide failed after summary save', error);
-        notificationService.warning(
-          'Summary saved, but auto-hide failed. Please check the chat state.',
-          'Engram'
-        );
-      }
-    }
-
-    Logger.success('SaveEvent', `Saved ${savedEvents.length} event(s)`);
-    notificationService.success(`Saved ${savedEvents.length} event(s)`, 'Engram');
+  if (!db) {
+    throw new Error('EventSave: no chat context');
   }
+
+  const savedEvents: EventNode[] = [];
+  const range = options.range;
+  const isImport = options.isImport === true;
+
+  for (const event of eventsToSave) {
+    const kv = event.structured_kv ?? event.meta ?? {};
+    const rolesArray =
+      kv.role && kv.role.length > 0 ? kv.role : normalizeStringArray(kv.characters);
+
+    const saved = await store.saveEvent({
+      summary: buildBurnedSummary(event),
+      structured_kv: {
+        time_anchor: kv.time_anchor ?? '',
+        role: rolesArray,
+        location: kv.location ?? [],
+        event: kv.event ?? '',
+        logic: kv.logic ?? [],
+        causality: kv.causality ?? '',
+      },
+      significance_score: event.significance_score ?? 0.5,
+      level: 0,
+      is_embedded: false,
+      is_archived: false,
+      source_range: {
+        start_index: range[0],
+        end_index: range[1],
+      },
+    });
+    savedEvents.push(saved);
+  }
+
+  if (range[1] > 0 && !isImport) {
+    await store.setLastSummarizedFloor(range[1]);
+  }
+
+  await refreshEngramCache();
+
+  if (options.autoHide === true && range[1] > 0 && !isImport) {
+    const startIndex = range[0] - 1;
+    const endIndex = range[1] - 1;
+
+    Logger.info('EventSave', 'Preparing to auto-hide summarized messages', {
+      workflowRange: range,
+      hideRange: [startIndex, endIndex],
+      savedEventCount: savedEvents.length,
+    });
+
+    try {
+      await hideMessageRange(startIndex, endIndex);
+      Logger.success('EventSave', 'Summarized messages hidden successfully');
+    } catch (error) {
+      Logger.error('EventSave', 'Auto-hide failed after summary save', error);
+      notificationService.warning(
+        'Summary saved, but auto-hide failed. Please check the chat state.',
+        'Engram'
+      );
+    }
+  }
+
+  Logger.success('EventSave', `Saved ${savedEvents.length} event(s)`);
+  notificationService.success(`Saved ${savedEvents.length} event(s)`, 'Engram');
+
+  return savedEvents;
 }

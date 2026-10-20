@@ -1,4 +1,5 @@
 import { Logger, LogModule } from '@/core/logger';
+import type { CompletionSignal } from '@/modules/llm/Completion';
 import { type JobContext } from '@/types/job_context';
 import { type IStep } from '@/types/step';
 
@@ -28,7 +29,7 @@ export class StopGeneration implements IStep {
   /**
    * 静态方法：直接终止生成
    */
-  static async abort(signal?: JobContext['signal']): Promise<void> {
+  static async abort(signal?: CompletionSignal): Promise<void> {
     try {
       const browserWindow = typeof window !== 'undefined' ? window : undefined;
       const generationId = signal?.generationId;

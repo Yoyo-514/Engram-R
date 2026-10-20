@@ -8,9 +8,10 @@ import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
 import { chatManager } from '@/data/ChatManager';
 import { initWorldBookSlot } from '@/integrations/tavern';
-import { createSummaryWorkflow, runWorkflow, StopGeneration } from '@/modules/workflow';
+import type { CompletionSignal } from '@/modules/llm/Completion';
+import { extractSummary } from '@/modules/memory/SummaryExtraction';
+import { StopGeneration } from '@/modules/workflow/steps/execution/StopGeneration';
 import { useMemoryStore } from '@/state/memoryStore';
-import type { JobContext } from '@/types/job_context';
 import type { SummarizerConfig, SummarizerStatus, SummaryResult } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
 
@@ -85,7 +86,7 @@ class SummarizerService {
     return context?.chatId || null;
   }
 
-  private async requestStopGeneration(signal?: JobContext['signal']): Promise<void> {
+  private async requestStopGeneration(signal?: CompletionSignal): Promise<void> {
     await StopGeneration.abort(signal);
   }
 
@@ -229,7 +230,7 @@ class SummarizerService {
     this.isSummarizing = true;
 
     // 创建取消信号（引用对象，传递给 WorkflowEngine）
-    const cancelSignal: NonNullable<JobContext['signal']> = { cancelled: false };
+    const cancelSignal: CompletionSignal = { cancelled: false };
 
     // 显示运行中通知
     const runningToast = notificationService.running('总结运行中...', 'Engram', () => {
@@ -296,23 +297,18 @@ class SummarizerService {
 
       await initWorldBookSlot();
 
-      const context = await runWorkflow(createSummaryWorkflow(), {
-        trigger: manual ? 'manual' : 'auto',
+      const extraction = await extractSummary({
+        range,
+        manual,
+        previewEnabled: this.config.previewEnabled,
+        autoHide: this.config.autoHide,
+        templateId: this.config.promptTemplateId ?? undefined,
         signal: cancelSignal,
-        config: {
-          previewEnabled: this.config.previewEnabled,
-          autoHide: this.config.autoHide,
-          templateId: this.config.promptTemplateId ?? undefined,
-          logType: 'summarize',
-        },
-        input: {
-          range,
-        },
       });
 
       const result: SummaryResult = {
         id: Date.now().toString(),
-        content: context.cleanedContent || '',
+        content: extraction.content,
         sourceFloors: range,
         timestamp: Date.now(),
         tokenCount: 0,

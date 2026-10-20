@@ -5,7 +5,6 @@ export * from './execution/LlmRequest';
 export * from './execution/StopGeneration';
 export * from './interaction/UserReview';
 export * from './persistence/ApplyTrim';
-export * from './persistence/SaveEvent';
 export * from './text/CleanRegex';
 export * from './text/FormatTrimInput';
 export * from './text/ParseJson';
