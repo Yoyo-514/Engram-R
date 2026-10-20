@@ -81,7 +81,7 @@ const MacroItem = ({ macro }: { macro: MacroDef }) => {
   };
 
   return (
-    <div className="hover:bg-muted/50 group flex items-center justify-between gap-2 rounded p-1.5 transition-colors">
+    <div className="group flex items-center justify-between gap-2 rounded p-1.5 transition-colors hover:bg-muted/50">
       <div className="flex flex-col gap-0.5">
         <code className="font-mono text-[11px] font-medium text-primary">{macro.name}</code>
         <span className="text-[10px] text-muted-foreground">{macro.desc}</span>
@@ -203,22 +203,6 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
           options={modelSourceOptions}
           description="选择用于此模板的 LLM 预设"
         />
-
-        {template.category === 'preprocess' && (
-          <SelectField
-            label="注入模式"
-            value={template.injectionMode || 'replace'}
-            onChange={(value) =>
-              updateTemplate({ injectionMode: value as 'replace' | 'append' | 'prepend' })
-            }
-            options={[
-              { value: 'replace', label: '覆盖 (Overwrite)' },
-              { value: 'append', label: '追加 (Append)' },
-              { value: 'prepend', label: '前置 (Prepend)' },
-            ]}
-            description="预处理结果如何与用户输入组合"
-          />
-        )}
       </FormSection>
 
       {/* 提示词内容 */}
@@ -238,7 +222,7 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
         />
       </FormSection>
 
-      {/* 额外世界书绑定 (V1.2.8) */}
+      {/* 额外世界书绑定 */}
       <FormSection title="知识库绑定">
         <WorldbookBindingField
           selectedBooks={template.extraWorldbooks || []}
@@ -263,7 +247,7 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
       </FormSection>
 
       {/* 可用宏提示 */}
-      <div className="bg-muted/20 border-border/50 space-y-3 rounded-md border px-3 py-3">
+      <div className="space-y-3 rounded-md border border-border/50 bg-muted/20 px-3 py-3">
         <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
           <span>可用宏变量</span>
           <div className="h-px flex-1 bg-border"></div>
@@ -272,8 +256,8 @@ export const PromptTemplateForm: FC<PromptTemplateFormProps> = ({
         <div className="flex flex-col gap-4">
           {Object.entries(groupedMacros).map(([category, macros]) => (
             <div key={category} className="flex flex-col gap-1">
-              <div className="text-primary/70 mb-0.5 px-1 text-[10px] font-medium">{category}</div>
-              <div className="bg-border/20 grid grid-cols-1 gap-px overflow-hidden rounded">
+              <div className="mb-0.5 px-1 text-[10px] font-medium text-primary/70">{category}</div>
+              <div className="grid grid-cols-1 gap-px overflow-hidden rounded bg-border/20">
                 {macros.map((m) => (
                   <div key={m.name} className="bg-background/50">
                     <MacroItem macro={m} />

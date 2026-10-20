@@ -1,7 +1,6 @@
 export type PromptCategory =
   | 'summary' // 剧情摘要 (V0.5 统一为 JSON 输出)
   | 'trim' // 精简/修剪
-  | 'preprocess' // 预处理 (统一分类，包含 Query 增强/剧情编排/描写增强等)
   | 'entity_extraction'; // V0.9: 实体提取
 
 export interface PromptTemplate {
@@ -17,7 +16,7 @@ export interface PromptTemplate {
   isBuiltIn: boolean;
   /** 绑定的 LLM 预设 ID，null 表示使用默认预设 */
   boundPresetId: string | null;
-  /** V1.2.8: 直接绑定的额外世界书列表（导出时会被排除） */
+  /** 直接绑定的额外世界书列表（导出时会被排除） */
   extraWorldbooks?: string[];
   /** 系统提示词 */
   systemPrompt: string;

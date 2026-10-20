@@ -16,7 +16,6 @@ import { engramEventBus } from '@/core/events';
 import type { ReviewAction, ReviewRequest } from '@/core/events/ReviewService';
 import { isRecord } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
-import type { AgenticRecall } from '@/types/preprocess';
 import { ModernButton as Button } from '@/ui/components/core/Button';
 
 import { EntityReview } from './EntityReview';
@@ -26,20 +25,9 @@ import { SummaryReview } from './SummaryReview'; // V1.2
 import type { SummaryReviewEvent } from './SummaryReview';
 
 interface ReviewSessionData {
-  query?: string;
-  agenticRecalls?: AgenticRecall[];
   newEntities?: EntityNode[];
   updatedEntities?: EntityNode[];
   events?: SummaryReviewEvent[];
-}
-
-function isAgenticRecall(value: unknown): value is AgenticRecall {
-  return (
-    isRecord(value) &&
-    typeof value.id === 'string' &&
-    typeof value.score === 'number' &&
-    typeof value.reason === 'string'
-  );
 }
 
 function isEntityNode(value: unknown): value is EntityNode {
@@ -59,11 +47,6 @@ function toReviewSessionData(value: unknown): ReviewSessionData | undefined {
   }
 
   return {
-    query: typeof value.query === 'string' ? value.query : undefined,
-    agenticRecalls:
-      Array.isArray(value.agenticRecalls) && value.agenticRecalls.every(isAgenticRecall)
-        ? value.agenticRecalls
-        : undefined,
     newEntities:
       Array.isArray(value.newEntities) && value.newEntities.every(isEntityNode)
         ? value.newEntities
@@ -90,11 +73,8 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
   const [data, setData] = useState<ReviewSessionData | undefined>(() =>
     toReviewSessionData(request.data)
   );
-  const [query, setQuery] = useState<string | undefined>(
-    () => toReviewSessionData(request.data)?.query
-  );
 
-  // Phase 2 Fix: 监听 request 的变化以同步状态（渲染期间调整 state，替代 effect 同步）
+  // 监听 request 的变化以同步状态（渲染期间调整 state，替代 effect 同步）
   // 防御闭包读取到早期缓存
   const [prevContent, setPrevContent] = useState(request.content);
   const [prevData, setPrevData] = useState(request.data);
@@ -104,13 +84,11 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
     const nextData = toReviewSessionData(request.data);
     setContent(request.content);
     setData(nextData);
-    setQuery(nextData?.query);
   }
 
-  // Reject Feedback State
+  // 打回反馈状态
   const [feedback, setFeedback] = useState('');
   const [showFeedbackInput, setShowFeedbackInput] = useState(false);
-  const [isRecallModalOpen, setIsRecallModalOpen] = useState(false);
 
   const handleAction = (action: ReviewAction) => {
     if (action === 'reject' && !showFeedbackInput) {
@@ -118,11 +96,10 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
       return;
     }
 
-    const resultData = query !== undefined ? { ...data, query } : data;
     request.onResult({
       action,
       content,
-      data: resultData,
+      data,
       feedback: action === 'reject' ? feedback : undefined,
     });
 
@@ -137,7 +114,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
     <div className="flex min-h-0 w-full flex-1 flex-col" style={displayStyle}>
       {/* Header (Session Info) - Optional, can be merged into Tab bar or kept here */}
       {request.description && (
-        <div className="bg-muted/20 flex items-center justify-between gap-3 border-b border-border px-5 py-2 text-xs text-muted-foreground">
+        <div className="flex items-center justify-between gap-3 border-b border-border bg-muted/20 px-5 py-2 text-xs text-muted-foreground">
           <span className="min-w-0 flex-1 break-words">{request.description}</span>
           <span className="shrink-0 rounded border border-border bg-background px-1 uppercase">
             {request.type}
@@ -146,14 +123,14 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
       )}
 
       {/* Content Area */}
-      <div className="bg-background/50 custom-scrollbar min-h-0 flex-1 overflow-y-auto p-5">
+      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto bg-background/50 p-5">
         {showFeedbackInput ? (
           <div className="animate-in fade-in slide-in-from-bottom-2 flex h-full flex-col gap-4">
-            <div className="bg-destructive/10 border-destructive/20 flex items-center gap-3 rounded-md border p-4">
+            <div className="flex items-center gap-3 rounded-md border border-destructive/20 bg-destructive/10 p-4">
               <AlertTriangle className="shrink-0 text-destructive" />
               <div>
                 <h4 className="font-medium text-destructive">准备打回重写</h4>
-                <p className="text-destructive/80 text-xs">
+                <p className="text-xs text-destructive/80">
                   请输入修改意见，AI 将根据您的反馈重新生成。
                 </p>
               </div>
@@ -184,17 +161,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
             }}
           />
         ) : (
-          <MessageReview
-            content={content}
-            onChange={(newContent) => setContent(newContent)}
-            query={query}
-            onQueryChange={query !== undefined ? setQuery : undefined}
-            agenticRecalls={data?.agenticRecalls}
-            onAgenticRecallsChange={(newRecalls) =>
-              setData((prev) => ({ ...prev, agenticRecalls: newRecalls }))
-            }
-            onOpenRecallModal={() => setIsRecallModalOpen(true)}
-          />
+          <MessageReview content={content} onChange={(newContent) => setContent(newContent)} />
         )}
       </div>
 
@@ -228,7 +195,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
                   icon={RotateCcw}
                   onClick={() => handleAction('reject')}
                   disabled={!feedback.trim()}
-                  className="hover:bg-destructive/90 w-full bg-destructive text-destructive-foreground sm:w-auto"
+                  className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:w-auto"
                 />
               ) : (
                 <>
@@ -237,7 +204,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
                       label="打回"
                       icon={RotateCcw}
                       onClick={() => handleAction('reject')}
-                      className="hover:bg-destructive/10 border-destructive/30 flex-1 text-destructive sm:flex-none"
+                      className="flex-1 border-destructive/30 text-destructive hover:bg-destructive/10 sm:flex-none"
                     />
                   )}
                   {request.actions?.includes('reroll') && (
@@ -263,19 +230,6 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
           </div>,
           footerEl
         )}
-
-      {/* Agentic RAG 决策编辑弹窗 (V1.4) */}
-      {data?.agenticRecalls && (
-        <RecallDecisionModal
-          isOpen={isRecallModalOpen}
-          onClose={() => setIsRecallModalOpen(false)}
-          initialRecalls={data.agenticRecalls}
-          onConfirm={(newRecalls) => {
-            setData((prev) => ({ ...prev, agenticRecalls: newRecalls }));
-            setIsRecallModalOpen(false);
-          }}
-        />
-      )}
     </div>
   );
 };
@@ -331,7 +285,7 @@ export const ReviewContainer: FC = () => {
         <div className="animate-in zoom-in slide-in-from-bottom-4 pointer-events-auto fixed bottom-4 right-4 z-[9999]">
           <button
             onClick={handleRestore}
-            className="border-primary-foreground/20 flex items-center gap-2 rounded-full border-2 bg-primary px-4 py-3 font-medium text-primary-foreground shadow-lg transition-transform hover:scale-105"
+            className="flex items-center gap-2 rounded-full border-2 border-primary-foreground/20 bg-primary px-4 py-3 font-medium text-primary-foreground shadow-lg transition-transform hover:scale-105"
           >
             <Layers size={18} className="animate-pulse" />
             <span>待处理 ({requests.length})</span>
@@ -348,11 +302,11 @@ export const ReviewContainer: FC = () => {
         className="pointer-events-auto fixed inset-0 z-[11000] flex items-center justify-center p-4 sm:p-4"
         style={{ height: '100dvh', width: '100vw' }} // Explicitly force full viewport info
       >
-        <div className="bg-background/80 animate-in fade-in absolute inset-0 backdrop-blur-sm duration-200" />
+        <div className="animate-in fade-in absolute inset-0 bg-background/80 backdrop-blur-sm duration-200" />
 
         <div className="animate-in zoom-in-95 relative flex h-[90dvh] min-h-0 w-full max-w-4xl flex-col rounded-lg border border-t-4 border-border border-t-primary bg-popover shadow-2xl sm:h-auto sm:max-h-[90vh] sm:min-h-[500px]">
           {/* Top Bar: Tabs & Window Controls */}
-          <div className="bg-muted/40 flex items-center justify-between border-b border-border px-2 pt-2">
+          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-2 pt-2">
             {/* Tabs Scroll Area */}
             <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto pr-4">
               {requests.map((req) => {
@@ -364,7 +318,7 @@ export const ReviewContainer: FC = () => {
                     className={`mb-[-1px] flex items-center gap-2 rounded-t-md border-x border-t px-4 py-2 text-sm font-medium transition-colors ${
                       isActive
                         ? 'z-10 border-border border-b-transparent bg-popover text-foreground'
-                        : 'bg-muted/50 hover:bg-muted/80 border-transparent text-muted-foreground hover:text-foreground'
+                        : 'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground'
                     } `}
                   >
                     <span className="max-w-[120px] truncate">{req.title}</span>
@@ -393,7 +347,7 @@ export const ReviewContainer: FC = () => {
                     }
                   }
                 }}
-                className="hover:bg-destructive/10 rounded-md p-1.5 text-muted-foreground transition-colors hover:text-destructive"
+                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 title="关闭/取消当前"
               >
                 <X size={16} />
@@ -424,7 +378,7 @@ export const ReviewContainer: FC = () => {
           {/* Footer Slot (Window Level) */}
           <div
             ref={setFooterEl}
-            className="bg-muted/30 min-h-[60px] flex-none border-t border-border"
+            className="min-h-[60px] flex-none border-t border-border bg-muted/30"
           >
             {/* Portaled Content will appear here */}
           </div>

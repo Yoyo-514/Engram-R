@@ -69,7 +69,7 @@ export class LlmRequest implements IStep {
         signal: context.signal,
         generationId,
         presetId: presetId ?? context.config.presetId ?? undefined,
-        internal: true, // 标记为内部请求，防止触发 Preprocessor
+        internal: true, // 标记为内部请求，跳过召回注入
       });
 
       // 3. 记录接收日志

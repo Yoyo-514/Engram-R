@@ -68,7 +68,7 @@ export class RerankMergeStep implements IStep {
       return;
     }
 
-    // P1 Fix: 二次 hard-limit，避免 KeywordRetrieveStep 的候选爆炸穿透到后续
+    // 二次 hard-limit，避免 KeywordRetrieveStep 的候选爆炸穿透到后续
     // - 若配置存在 keywordTopK/events，则以其为上限，否则回退 embedding.topK
     const hardLimit = activeConfig.keywordTopK?.events ?? activeConfig.embedding?.topK ?? 50;
     const scoredCandidates = scoreAndSort(candidates);

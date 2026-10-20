@@ -7,7 +7,7 @@
  * 2. 修复与解析 (Repair & Parse)
  *
  * 注意：输入前的文本清洗（如移除 <think> 标签）应由调用方处理。
- * 推荐在 workflow 中使用 CleanRegex 步骤进行预处理。
+ * 推荐在 workflow 中使用 CleanRegex 步骤进行清洗。
  */
 
 /**
@@ -25,7 +25,7 @@ function extractJsonBlock(text: string): string | null {
   const firstOpenBrace = text.indexOf('{');
   const lastCloseBrace = text.lastIndexOf('}');
 
-  // 3. 尝试查找最外层的方括号 (Array) - V1.0.1
+  // 3. 尝试查找最外层的方括号 (Array)
   const firstOpenBracket = text.indexOf('[');
   const lastCloseBracket = text.lastIndexOf(']');
 
@@ -85,7 +85,7 @@ export function parseJson<T = unknown>(input: string): T | null {
     return null;
   }
 
-  // V1.0.1: 智能封装 (Array -> Object)
+  // 智能封装 (Array -> Object)
   // 如果提取到的是数组 [...]，自动封装为 { events: [...] } 以适配下游消费
   if (jsonString.trim().startsWith('[')) {
     console.info('[RobustJsonParser] 检测到数组格式，尝试自动封装为 { events: [] }');

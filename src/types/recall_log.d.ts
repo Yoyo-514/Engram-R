@@ -1,5 +1,3 @@
-// 召回日志类型定义
-
 /**
  * 单条召回结果
  */
@@ -14,7 +12,6 @@ export interface RecallResultItem {
   isTopK: boolean; // 是否进入 TopK
   isReranked: boolean; // 是否通过 Rerank
   sourceFloor?: number; // 来源楼层
-  reason?: string; // Agentic 召回理由
 }
 
 /**
@@ -25,14 +22,6 @@ export interface RecallStats {
   topKCount: number; // TopK 数量
   rerankCount: number; // Rerank 后数量
   latencyMs: number; // 耗时 (ms)
-}
-
-/**
- * 类脑召回统计
- */
-export interface BrainRecallStats {
-  round: number;
-  snapshot: MemorySlot[];
 }
 
 export interface RecalledEntityLogItem {
@@ -50,10 +39,8 @@ export interface RecallLogEntry {
   id: string;
   timestamp: number;
   query: string; // 检索查询
-  preprocessedQuery?: string; // 预处理后的查询
-  mode: 'embedding' | 'hybrid' | 'agentic'; // (Disabled in V0.8.5)
+  mode: 'embedding' | 'hybrid';
   results: RecallResultItem[]; // 召回结果
   recalledEntities?: RecalledEntityLogItem[]; // V1.4: 被激活的实体列表
   stats: RecallStats; // 统计信息
-  brainStats?: BrainRecallStats; // 类脑召回详情
 }

@@ -32,7 +32,7 @@ import { VectorizationPanel } from './VectorizationPanel';
 
 type ProcessingTab = 'summary' | 'vectorization' | 'recall' | 'entity' | 'batch';
 
-// 主 Tab 配置 - V0.9.6: 添加批量处理
+// 主 Tab 配置 - 添加批量处理
 const MAIN_TABS: Tab[] = [
   { id: 'summary', label: '记忆摘要', icon: <FileText size={16} /> },
   { id: 'entity', label: '实体提取', icon: <Network size={16} /> },
@@ -86,8 +86,6 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
   // Unified Save Handler
   const handleSave = async () => {
     if (configHasChanges) saveConfig();
-    // Optional: Toast notification here
-    // alert('配置已保存');
   };
 
   const hasChanges = configHasChanges;
@@ -112,7 +110,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           <div className="flex items-center gap-2">
             {hasChanges && (
               <button
-                className="border-primary/50 inline-flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+                className="inline-flex items-center gap-1.5 rounded border border-primary/50 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
                 onClick={handleSave}
               >
                 <Save size={12} />
@@ -131,7 +129,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           <SummaryPanel summarizerSettings={summarizerConfig} trimConfig={trimmerConfig} />
         )}
 
-        {/* 向量化 Tab - V0.7 使用 VectorizationPanel */}
+        {/* 向量化 Tab - 使用 VectorizationPanel */}
         {activeTab === 'vectorization' && (
           <VectorizationPanel
             config={embeddingConfig}
@@ -142,7 +140,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           />
         )}
 
-        {/* 召回配置 Tab - V0.8.5 */}
+        {/* 召回配置 Tab - */}
         {activeTab === 'recall' && (
           <RecallPanel
             recallConfig={recallConfig}
@@ -152,7 +150,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           />
         )}
 
-        {/* 实体提取 Tab - V0.9 */}
+        {/* 实体提取 Tab - */}
         {activeTab === 'entity' && (
           <EntityConfigPanel
             config={entityExtractConfig}
@@ -160,7 +158,7 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
           />
         )}
 
-        {/* 批量处理 Tab - V0.9.6 */}
+        {/* 批量处理 Tab - */}
         {activeTab === 'batch' && <BatchProcessingPanel />}
       </div>
     </div>

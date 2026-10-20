@@ -87,14 +87,12 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
       ? (initialNestedTab as PromptSubTabType)
       : 'templates'
   ); // V0.9.2
-  // const [worldbookSubTab, setWorldbookSubTab] = useState<WorldbookSubTabType>('global');
-  // const [editingProfileId, setEditingProfileId] = useState<string | null>(null);
 
-  // V0.9.2: 编辑中的自定义宏
+  // 编辑中的自定义宏
   const [editingMacroId, setEditingMacroId] = useState<string | null>(null);
 
   // 移动端状态
-  // V0.9.7: 使用统一的 useResponsive Hook
+  // 使用统一的 useResponsive Hook
   const { isMobile } = useResponsive();
   const [showMobileForm, setShowMobileForm] = useState(false);
 
@@ -205,8 +203,6 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
     if (configHasChanges) saveConfig();
     if (regexHasChanges) await saveRegexRules();
     if (worldbookHasChanges) await saveWorldInfo();
-    // 简单提示
-    // alert('配置已保存'); // 可选：使用更好看的 toast
   };
 
   const hasChanges = llmHasChanges || configHasChanges || regexHasChanges || worldbookHasChanges;
@@ -355,7 +351,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
         actions={
           hasChanges && (
             <button
-              className="border-primary/50 inline-flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+              className="inline-flex items-center gap-1.5 rounded border border-primary/50 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
               onClick={save}
             >
               <Save size={12} />
@@ -453,7 +449,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
             listWidth="30%"
             list={
               <>
-                {/* V0.9.2: 子标签切换 */}
+                {/* 子标签切换 */}
                 <div className="mb-4 flex items-center gap-2">
                   <button
                     onClick={() => setPromptSubTab('templates')}
@@ -583,7 +579,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
         {/* 世界书配置 Tab */}
         {mainTab === 'worldbook' && (
           <div className="flex h-full flex-col gap-2">
-            {/* V1.2.8: 移除知识库方案子标签，仅保留全局设置 */}
+            {/* 移除知识库方案子标签，仅保留全局设置 */}
 
             <div className="custom-scrollbar max-w-2xl flex-1 overflow-y-auto py-4">
               <WorldbookConfigForm

@@ -60,7 +60,7 @@ export function scanEntities(text: string, entities: EntityNode[]): EntityNode[]
     // 检查别名/触发词
     if (!hit && Array.isArray(entity.aliases)) {
       for (const alias of entity.aliases) {
-        // V1.4.1: 增强匹配 - 如果别名中有逗号或中文逗号，拆分匹配
+        // 增强匹配 - 如果别名中有逗号或中文逗号，拆分匹配
         const potentialAliases =
           alias.includes(',') || alias.includes('，')
             ? alias

@@ -4,7 +4,7 @@
  * 该适配器负责：
  * - 串行化请求，避免共享运行时配置被并发请求交叉污染；
  * - 解析 Engram 侧预设，并映射到 TavernHelper 所需参数；
- * - 处理取消、预处理与基础遥测。
+ * - 处理取消与基础遥测。
  */
 
 import { getSettings } from '@/config/settings';
@@ -29,7 +29,7 @@ interface LLMRequest {
   userPrompt: string;
   /** 预设 ID */
   presetId?: string;
-  /** 是否为内部请求 (不触发预处理/脚本) */
+  /** 是否为内部请求 (不触发召回/脚本) */
   internal?: boolean;
   /** 取消信号 */
   signal?: RequestSignal;

@@ -83,10 +83,6 @@ export async function getOrCreateWorldbook(): Promise<string | null> {
 }
 
 /**
- * 获取所有 Engram 摘要条目（按 order 排序）
- */
-
-/**
  * 获取世界书的作用域分类 (全局/角色/所有)
  */
 export function getScopes(): { global: string[]; chat: string[]; installed: string[] } {

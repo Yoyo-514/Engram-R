@@ -6,4 +6,4 @@ export * from './embedding/EmbeddingService';
 export * from './retrieval/Retriever';
 export * from './retrieval/Reranker';
 export * from './injection/Injector';
-export * from './retrieval/BrainRecallCache';
+export * from './retrieval/RecallCache';

@@ -27,7 +27,7 @@ function toYamlScalar(value: unknown, fallback: string): string {
 }
 
 export interface EntityState {
-  // V0.9 实体相关
+  // 实体相关
   getAllEntities: () => Promise<EntityNode[]>;
   saveEntity: (entity: Omit<EntityNode, 'id' | 'last_updated_at'>) => Promise<EntityNode>;
   saveEntities: (entities: Omit<EntityNode, 'id' | 'last_updated_at'>[]) => Promise<EntityNode[]>;

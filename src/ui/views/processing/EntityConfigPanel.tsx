@@ -7,11 +7,11 @@ import { entityBuilder } from '@/modules/memory/EntityExtractor';
 /**
  * EntityConfigPanel - 实体提取配置面板
  *
- * V0.9.2: 遵循「无框流体」设计，与 SummaryPanel 风格统一
+ * 遵循「无框流体」设计，与 SummaryPanel 风格统一
  * - 默认关闭
  * - 顶层开关 + 详细配置
  * - 去卡片化，使用细线分割
- * V1.4.2: 增加自动归档与手动清理功能
+ * 增加自动归档与手动清理功能
  */
 import type { EntityExtractConfig } from '@/types/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
@@ -147,7 +147,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
                 </div>
                 <div>
                   <span className="mb-1 block text-xs text-muted-foreground">已归档</span>
-                  <div className="text-muted-foreground/60 font-mono text-3xl font-light">
+                  <div className="font-mono text-3xl font-light text-muted-foreground/60">
                     {status.archivedCount}
                   </div>
                 </div>
@@ -157,16 +157,16 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
 
               <div className="grid grid-cols-2 gap-6">
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     楼层间隔
                   </span>
-                  <div className="text-foreground/80 font-mono text-xl">{status.floorInterval}</div>
+                  <div className="font-mono text-xl text-foreground/80">{status.floorInterval}</div>
                 </div>
                 <div>
-                  <span className="text-muted-foreground/70 mb-1 block text-[10px] uppercase tracking-wider">
+                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
                     上次提取楼层
                   </span>
-                  <div className="text-foreground/80 font-mono text-xl">
+                  <div className="font-mono text-xl text-foreground/80">
                     {status.lastExtractedFloor}
                   </div>
                 </div>
@@ -233,7 +233,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
             />
           </div>
 
-          <p className="text-muted-foreground/70 text-xs leading-relaxed">
+          <p className="text-xs leading-relaxed text-muted-foreground/70">
             实体提取会从对话中识别并提取角色、地点、物品等关键信息，用于构建知识图谱。
           </p>
 
@@ -268,7 +268,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
                 value={config.archiveLimit ?? 50}
                 onChange={(val) => handleArchiveLimitChange(val)}
               />
-              <p className="text-muted-foreground/60 text-[10px] italic">
+              <p className="text-[10px] italic text-muted-foreground/60">
                 * 只有未被锁定的实体会被自动归档。归档后的实体将不再参与实时召回。
               </p>
             </div>

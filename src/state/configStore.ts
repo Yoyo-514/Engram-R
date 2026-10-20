@@ -10,7 +10,6 @@ import {
 } from '@/config/settings';
 import type { CustomMacro } from '@/types/macro';
 import type { EntityExtractConfig, SummarizerConfig, TrimmerConfig } from '@/types/memory';
-import type { PreprocessConfig } from '@/types/preprocess';
 import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
 import type { GlobalRegexConfig } from '@/types/regex';
 
@@ -24,7 +23,6 @@ export interface ConfigState {
   customMacros: CustomMacro[];
   summarizerConfig: SummarizerConfig;
   trimmerConfig: TrimmerConfig;
-  preprocessConfig: PreprocessConfig;
   linkedDeletion: EngramSettings['linkedDeletion'];
   syncConfig: EngramSettings['syncConfig'];
   hasChanges: boolean;
@@ -50,7 +48,6 @@ type PersistedConfigState = Pick<
   | 'customMacros'
   | 'summarizerConfig'
   | 'trimmerConfig'
-  | 'preprocessConfig'
   | 'linkedDeletion'
   | 'syncConfig'
 >;
@@ -71,7 +68,6 @@ function readConfig(): PersistedConfigState {
     customMacros: runtime.customMacros,
     summarizerConfig: settings.summarizerConfig,
     trimmerConfig: settings.trimmerConfig,
-    preprocessConfig: settings.preprocessConfig,
     linkedDeletion: settings.linkedDeletion,
     syncConfig: settings.syncConfig,
   };

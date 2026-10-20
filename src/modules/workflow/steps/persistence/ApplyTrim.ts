@@ -32,7 +32,7 @@ export class ApplyTrim implements IStep {
     const eventsToMerge = context.input.eventsToMerge as EventNode[];
 
     // Output from ParseJson (TrimResponse structure)
-    // V1.2.2: 优先从 context.parsedData 读取，对齐 ParseJson 逻辑
+    // 优先从 context.parsedData 读取，对齐 ParseJson 逻辑
     const parsed = context.parsedData || context.output;
 
     if (!parsed || !parsed.events || parsed.events.length === 0) {
@@ -61,7 +61,7 @@ export class ApplyTrim implements IStep {
       level: 1, // 标记为二层精简
       is_embedded: false,
       is_archived: false,
-      // V1.5: 时空归一化核心，抢占它所有子节点中最老的一个时间点并再提前 1 毫秒，确立绝对统领排序位置
+      // 时空归一化核心，抢占它所有子节点中最老的一个时间点并再提前 1 毫秒，确立绝对统领排序位置
       timestamp: Math.min(...eventsToMerge.map((e) => e.timestamp)) - 1,
       source_range: {
         start_index: Math.min(...eventsToMerge.map((e) => e.source_range?.start_index ?? 0)),
@@ -77,7 +77,7 @@ export class ApplyTrim implements IStep {
     if (embeddingConfig?.enabled && embeddingConfig.trigger === 'with_trim') {
       Logger.info('ApplyTrim', '触发联动嵌入', { count: eventsToMerge.length });
       try {
-        // V1.2.2: 初始化 Embedding 服务配置，防止联动时配置丢失
+        // 初始化 Embedding 服务配置，防止联动时配置丢失
         const vectorConfig = settings?.vectorConfig;
         if (vectorConfig) {
           embeddingService.setConfig(vectorConfig);

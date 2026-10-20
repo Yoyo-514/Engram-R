@@ -139,7 +139,7 @@ function setupEventBusListener(): void {
 /**
  * Logger 公共 API
  *
- * V0.9.10: 支持 LogModule 枚举和普通字符串作为模块名
+ * 支持 LogModule 枚举和普通字符串作为模块名
  */
 export const Logger = {
   /**

@@ -28,7 +28,7 @@ interface NotificationOptions {
   parseHtml?: boolean; // 是否允许 HTML
   tapToDismiss?: boolean;
   escapeHtml?: boolean;
-  /** V0.9.10: 点击跳转动作 */
+  /** 点击跳转动作 */
   action?: {
     /** 跳转目标路径，如 'devlog' 或 'devlog:model' */
     goto?: string;
@@ -75,7 +75,7 @@ class NotificationService {
 
   /**
    * 发送成功通知
-   * V0.9.10: 支持 action 跳转
+   * 支持 action 跳转
    */
   public success(
     message: string,
@@ -106,7 +106,7 @@ class NotificationService {
 
   /**
    * 发送信息通知
-   * V0.9.10: 支持 action 跳转
+   * 支持 action 跳转
    */
   public info(message: string, title: string = 'Engram', options: NotificationOptions = {}): void {
     const toastr = this.getToastr();
@@ -133,7 +133,7 @@ class NotificationService {
 
   /**
    * 发送警告通知
-   * V0.9.10: 支持 action 跳转
+   * 支持 action 跳转
    */
   public warning(
     message: string,
@@ -164,7 +164,7 @@ class NotificationService {
 
   /**
    * 发送错误通知
-   * V0.9.10: 默认点击跳转到日志页面
+   * 默认点击跳转到日志页面
    */
   public error(message: string, title: string = 'Engram', options: NotificationOptions = {}): void {
     const toastr = this.getToastr();

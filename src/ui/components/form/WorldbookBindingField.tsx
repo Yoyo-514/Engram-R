@@ -1,5 +1,5 @@
 /**
- * 世界书绑定组件 - V1.2.8
+ * 世界书绑定组件
  * 用于在提示词模板中直接绑定额外世界书
  */
 
@@ -68,12 +68,12 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
           selectedBooks.map((book) => (
             <div
               key={book}
-              className="bg-primary/10 border-primary/20 inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs text-primary"
+              className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-xs text-primary"
             >
               <span className="max-w-32 truncate">{book}</span>
               <button
                 onClick={() => handleRemove(book)}
-                className="hover:bg-primary/20 rounded-full p-0.5 transition-colors"
+                className="rounded-full p-0.5 transition-colors hover:bg-primary/20"
                 title="移除"
               >
                 <X size={10} />
@@ -85,7 +85,7 @@ export const WorldbookBindingField: FC<WorldbookBindingFieldProps> = ({
         {/* 添加按钮 */}
         <button
           onClick={() => setShowPicker(true)}
-          className="hover:border-foreground/50 inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
+          className="inline-flex items-center gap-1 rounded-full border border-dashed border-border px-2 py-0.5 text-xs text-muted-foreground transition-colors hover:border-foreground/50 hover:text-foreground"
         >
           <Plus size={12} />
           添加

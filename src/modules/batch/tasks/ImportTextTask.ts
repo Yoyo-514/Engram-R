@@ -6,7 +6,7 @@ import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
 import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
-import { ParseJson } from '@/modules/workflow/steps/preprocess/ParseJson';
+import { ParseJson } from '@/modules/workflow/steps/text/ParseJson';
 import type { BatchTask, IBatchTaskHandler, ImportMode } from '@/types/batch';
 
 /** 外部导入配置 */
@@ -72,7 +72,7 @@ export class ImportTextTask implements IBatchTaskHandler {
 
       try {
         if (this.config.mode === 'detailed') {
-          // V0.9.7: 调用 LLM 生成结构化摘要
+          // 调用 LLM 生成结构化摘要
           const llmResult = await summarizeChunk(chunk, i);
           if (checkStopSignal()) return;
 
@@ -100,7 +100,7 @@ export class ImportTextTask implements IBatchTaskHandler {
 
             if (Array.isArray(savedEvents) && savedEvents.length > 0) {
               // Pipeline 已处理存储，只需嵌入
-              // V1.2.2: 联动嵌入前确保配置已加载
+              // 联动嵌入前确保配置已加载
               const vectorConfig = get('runtimeSettings')?.vectorConfig;
               if (vectorConfig) {
                 embeddingService.setConfig(vectorConfig);
@@ -110,7 +110,7 @@ export class ImportTextTask implements IBatchTaskHandler {
                 await embeddingService.embedEvent(evt);
               }
 
-              // V1.0.8: 外部导入文本复用执行实体提取 (由于 FetchContext 已经旁路了，这里可以直接塞原文进去让它以为是聊天记录)
+              // 外部导入文本复用执行实体提取 (由于 FetchContext 已经旁路了，这里可以直接塞原文进去让它以为是聊天记录)
               try {
                 await runWorkflow(createEntityWorkflow(), {
                   trigger: 'auto',
@@ -139,7 +139,7 @@ export class ImportTextTask implements IBatchTaskHandler {
             }
           }
 
-          // Fix P3: 降级保护：如果 LLM 返回了数据，尝试抢救 partial summary 复用
+          // 降级保护：如果 LLM 返回了数据，尝试抢救 partial summary 复用
           let fallbackSummary = chunk;
           if (llmResult && typeof llmResult === 'string') {
             const summaryMatch = llmResult.match(/"summary"\s*:\s*"(.*?[^\\])"/);

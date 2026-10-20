@@ -1,17 +1,4 @@
-import {
-  BrainCircuit,
-  Clapperboard,
-  Copy,
-  Download,
-  FolderInput,
-  Paintbrush,
-  Power,
-  RotateCcw,
-  Search,
-  Trash2,
-  Wand2,
-  type LucideIcon,
-} from 'lucide-react';
+import { Copy, Download, FolderInput, Power, RotateCcw, Trash2 } from 'lucide-react';
 import { useRef } from 'react';
 import type { FC, MouseEvent, ChangeEvent } from 'react';
 
@@ -43,8 +30,6 @@ function getCategoryColorClass(category: PromptCategory): string {
       return 'text-label bg-label/10 border border-label/20';
     case 'trim':
       return 'text-emphasis bg-emphasis/10 border border-emphasis/20';
-    case 'preprocess':
-      return 'text-value bg-value/10 border border-value/20';
     default:
       return 'text-muted-foreground bg-muted border border-border';
   }
@@ -162,59 +147,36 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
     }
   };
 
-  const isPreprocess = template.category === 'preprocess';
-
   return (
     <div
       className={`group relative cursor-pointer rounded-lg border p-3 transition-all duration-200 ${
         isSelected
-          ? 'bg-accent/50 border-input'
-          : 'hover:bg-muted/50 border-transparent bg-transparent hover:border-border'
-      } ${!template.enabled && !isPreprocess && 'opacity-50'} `}
+          ? 'border-input bg-accent/50'
+          : 'border-transparent bg-transparent hover:border-border hover:bg-muted/50'
+      } ${!template.enabled && 'opacity-50'} `}
       onClick={onSelect}
     >
       <div className="flex items-start gap-3">
         {/* 状态图标 */}
-        {!isPreprocess ? (
-          <button
-            className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
-              template.enabled
-                ? 'bg-primary/10 text-primary'
-                : 'hover:bg-muted/80 bg-muted text-muted-foreground'
-            } `}
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleEnabled?.(!template.enabled);
-            }}
-            title={template.enabled ? '点击禁用' : '点击启用'}
-          >
-            <Power size={16} />
-          </button>
-        ) : (
-          // 预处理模板：内置模板使用专属图标，自建模板用通用图标
-          (() => {
-            const BUILTIN_ICON_MAP: Record<string, LucideIcon> = {
-              builtin_query_enhance: Search,
-              builtin_plot_director: Clapperboard,
-              builtin_description_enhance: Paintbrush,
-              builtin_agentic_recall: BrainCircuit,
-            };
-            const Icon = BUILTIN_ICON_MAP[template.id] || Wand2;
-            return (
-              <div
-                className="bg-value/10 flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-value"
-                title="预处理模板 (在快捷面板中激活)"
-              >
-                <Icon size={16} />
-              </div>
-            );
-          })()
-        )}
+        <button
+          className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg transition-colors ${
+            template.enabled
+              ? 'bg-primary/10 text-primary'
+              : 'bg-muted text-muted-foreground hover:bg-muted/80'
+          } `}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleEnabled?.(!template.enabled);
+          }}
+          title={template.enabled ? '点击禁用' : '点击启用'}
+        >
+          <Power size={16} />
+        </button>
 
         <div className="min-w-0 flex-1">
           <div className="flex items-center justify-between gap-2">
             <h4
-              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && !isPreprocess && 'line-through'}`}
+              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && 'line-through'}`}
             >
               {template.name}
             </h4>
@@ -234,7 +196,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
             </div>
           </div>
 
-          <div className="text-muted-foreground/70 mt-1 flex items-center justify-between font-mono text-[10px]">
+          <div className="mt-1 flex items-center justify-between font-mono text-[10px] text-muted-foreground/70">
             <span className="max-w-[120px] truncate">
               {template.boundPresetId ? `BOUND: ${template.boundPresetId}` : 'DEFAULT PRESET'}
             </span>
@@ -272,16 +234,15 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         </button>
         {template.isBuiltIn && (
           <button
-            className="hover:bg-emphasis/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-emphasis"
+            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-emphasis/10 hover:text-emphasis"
             onClick={(e) => {
               e.stopPropagation();
-              // 优先尝试通过 ID 精确匹配 (V0.8.6 Fix)
+              // 优先尝试通过 ID 精确匹配
               let defaultTemplate: PromptTemplate | null | undefined = getBuiltInTemplateById(
                 template.id
               );
 
               // 如果找不到 (可能是旧数据的随机 ID)，回退到分类匹配
-              // 注意：对于 preprocess 分类，分类匹配可能不准确，建议刷新页面以触发 ID 迁移
               if (!defaultTemplate) {
                 defaultTemplate = getBuiltInTemplateByCategory(template.category);
               }
@@ -303,7 +264,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         )}
         {!template.isBuiltIn && (
           <button
-            className="hover:bg-destructive/10 rounded p-1.5 text-muted-foreground transition-colors hover:text-destructive"
+            className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               onDelete?.();

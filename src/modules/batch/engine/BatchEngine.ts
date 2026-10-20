@@ -19,14 +19,14 @@ export class BatchEngine {
   // 节流时间阈值 (ms)
   private readonly THROTTLE_MS = 100;
 
-  // P2 Fix: 使用 Promise Lock 替换 setTimeout 轮询
+  // 使用 Promise Lock 替换 setTimeout 轮询
   private pausePromise: Promise<void> | null = null;
   private pauseResolve: (() => void) | null = null;
 
-  // P0 Fix: 执行周期 ID，用于防止 stop() 后的 setTimeout 清理误杀新任务
+  // 执行周期 ID，用于防止 stop() 后的 setTimeout 清理误杀新任务
   private executionId = 0;
 
-  // P2 Fix: 提取 stop 后延迟清理的常量，避免魔法数字
+  // 提取 stop 后延迟清理的常量，避免魔法数字
   private static readonly STOP_CLEAR_DELAY_MS = 500;
 
   /**
@@ -74,7 +74,7 @@ export class BatchEngine {
     // 同步当前的活动任务下标，以便内部抛出异常时能够正确打标
     this.queue.currentTaskIndex = taskIndex;
 
-    // P1 Fix: 解构更新单个 task 元素
+    // 解构更新单个 task 元素
     this.queue.tasks[taskIndex] = {
       ...this.queue.tasks[taskIndex],
       status: 'running',
@@ -83,7 +83,7 @@ export class BatchEngine {
         current: currentProgress,
       },
     };
-    // P1 Fix: 更新数组引用，确保 React 能检测到变化
+    // 更新数组引用，确保 React 能检测到变化
     this.queue.tasks = [...this.queue.tasks];
 
     // 不可变更新 overallProgress
@@ -131,7 +131,7 @@ export class BatchEngine {
 
   /**
    * 将预装配的 Task 投入执行列队
-   * P0 Fix: isRunning 仅在 finally 中释放，引入 executionId 消除竞态
+   * isRunning 仅在 finally 中释放，引入 executionId 消除竞态
    */
   async execute(handler: IBatchTaskHandler): Promise<void> {
     if (this.queue.isRunning) {
@@ -153,7 +153,7 @@ export class BatchEngine {
       // 步骤1：让业务方给出此次调度的预估任务切片名细
       const tasks = await handler.estimate();
 
-      // P0 Fix: 中断死锁保护。如果在 estimate 期间触发了 stop，直接放弃队列覆盖
+      // 中断死锁保护。如果在 estimate 期间触发了 stop，直接放弃队列覆盖
       if (this.stopSignal) {
         Logger.info('BatchEngine', '收到中止信号，正在放弃估计出的新任务');
         return;
@@ -218,8 +218,8 @@ export class BatchEngine {
         }
       }
     } finally {
-      // P0 Fix: isRunning 仅在 finally 中释放，由正在运行的协程自己解锁
-      // 但需要验证 executionId 一致，避免新一轮 execute 被旧轮的 finally 误清
+      // isRunning 仅在 finally 中释放，由正在运行的协程自己解锁
+      // 但需要验证 executionId 一致，避免新一轮 execute() 被旧轮的 finally 误清
       if (this.executionId === currentExecutionId) {
         this.queue.isRunning = false;
       }
@@ -255,11 +255,11 @@ export class BatchEngine {
 
   /**
    * 中止并清理任务
-   * P0 Fix: 不再直接设 isRunning = false，由 execute() 的 finally 块负责解锁
+   * 不再直接设 isRunning = false，由 execute() 的 finally 块负责解锁
    */
   stop(): void {
     this.stopSignal = true;
-    // P0 Fix: 不再直接设置 isRunning = false，让 execute() 的 finally 自行释放
+    // 不再直接设置 isRunning = false，让 execute() 的 finally 自行释放
 
     // 解锁暂停状态，让 execute loop 继续走到 stopSignal 检查点
     this.queue.isPaused = false;
@@ -278,7 +278,7 @@ export class BatchEngine {
 
     this.notifyProgress(true);
 
-    // P2 Fix: 延迟清理队列（让 UI 有时间展示 stop 状态），使用 executionId 守卫
+    // 延迟清理队列（让 UI 有时间展示 stop 状态），使用 executionId 守卫
     const stopExecutionId = this.executionId;
     setTimeout(() => {
       // 只有当 executionId 未变化（没有新任务启动）时才清理

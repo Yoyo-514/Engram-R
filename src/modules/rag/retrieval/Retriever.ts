@@ -1,17 +1,17 @@
 /**
  * Retriever Service
  *
- * V0.8.5: 扩展支持向量检索 + Rerank 混合召回
+ * 扩展支持向量检索 + Rerank 混合召回
  *
  * 召回模式：
- * - full: 预处理 + Embedding + Rerank
+ * - full: Embedding + Rerank
  * - standard: Embedding + Rerank
  * - light: 仅 Embedding
  * - llm_only: LLM 直接召回
  * - keyword_only: 仅关键词扫描
  */
 
-import { DEFAULT_BRAIN_RECALL_CONFIG, DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
+import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { RecallLogService } from '@/core/logger/RecallLogger';
@@ -21,10 +21,9 @@ import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/inte
 import { createRetrievalWorkflow, runWorkflow } from '@/modules/workflow';
 import { KeywordRetrieveStep } from '@/modules/workflow/steps';
 import type { EntityNode, EventNode } from '@/types/graph';
-import type { AgenticRecall } from '@/types/preprocess';
-import type { BrainRecallConfig, RecallCandidate, RecallConfig } from '@/types/rag';
+import type { RecallCandidate, RecallConfig } from '@/types/rag';
 
-import { brainRecallCache } from './BrainRecallCache';
+import { recallCache, type RecentRecall } from './RecallCache';
 
 // ==================== 类型定义 ====================
 
@@ -32,7 +31,7 @@ export interface RetrievalResult {
   entries: string[]; // Formatted entries ready for injection
   nodes: EventNode[]; // Raw nodes
   candidates?: RecallCandidate[]; // 曝露带分数的候选列表供前端装配
-  recalledEntities?: EntityNode[]; // 曝露通过类脑被召回的实体
+  recalledEntities?: EntityNode[]; // 本轮召回的实体
   skippedReason?: string; // 召回短路原因（如无可召回对象）
 }
 
@@ -100,12 +99,10 @@ class Retriever {
   /**
    * 执行检索流程
    * @param userInput 用户原始输入
-   * @param unifiedQueries 预处理生成的查询词（可选）
    * @param options 额外配置（skipContext, mode 等）
    */
   async search(
     userInput: string,
-    unifiedQueries?: string[],
     options?: {
       skipContext?: boolean;
       mode?: string;
@@ -113,7 +110,6 @@ class Retriever {
   ): Promise<RetrievalResult> {
     Logger.debug(LogModule.RAG_INJECT, '>>> Retriever.search 被调用 <<<', {
       input: userInput.substring(0, 20),
-      unifiedCount: unifiedQueries?.length || 0,
       skipContext: options?.skipContext,
     });
 
@@ -134,14 +130,11 @@ class Retriever {
         }
       }
 
-      // 轨道 B: 意图语义增强 (浅层回溯: 2 条) - 仅限正式聊天且无预处理结果时
-      const noUnifiedQueries = !unifiedQueries || unifiedQueries.length === 0;
-      if (noUnifiedQueries) {
-        const shallowContext = this.getRecentContext(2);
-        if (shallowContext) {
-          intentQuery = `${shallowContext}\n\n[Current]\n${userInput}`;
-          Logger.debug(LogModule.RAG_INJECT, '已回溯 2 条聊天历史进行意图兜底增强');
-        }
+      // 轨道 B: 意图语义增强 (浅层回溯: 2 条)
+      const shallowContext = this.getRecentContext(2);
+      if (shallowContext) {
+        intentQuery = `${shallowContext}\n\n[Current]\n${userInput}`;
+        Logger.debug(LogModule.RAG_INJECT, '已回溯 2 条聊天历史进行意图兜底增强');
       }
     } else {
       Logger.debug(LogModule.RAG_INJECT, '手动测试模式：跳过上下文增强');
@@ -188,9 +181,11 @@ class Retriever {
       }
     }
 
-    // 统一走检索工作流：关键词扫描、向量检索、Rerank 与类脑处理都在其中串联
+    // 统一走检索工作流：关键词扫描、向量检索与 Rerank 串联。
     if (recallConfig.enabled || recallConfig.useKeywordRecall) {
-      return this.hybridSearch(intentQuery, unifiedQueries, recallConfig, scanQuery);
+      const result = await this.hybridSearch(intentQuery, recallConfig, scanQuery);
+      this.recordRecent(chatId, result);
+      return result;
     }
 
     // 默认回退
@@ -204,7 +199,6 @@ class Retriever {
    */
   private async hybridSearch(
     intentQuery: string,
-    unifiedQueries: string[] | undefined,
     config: RecallConfig,
     scanQuery?: string
   ): Promise<RetrievalResult> {
@@ -218,7 +212,6 @@ class Retriever {
         input: {
           query: intentQuery,
           scanQuery: scanQuery || intentQuery,
-          unifiedQueries,
           mode: 'hybrid',
         },
         data: {
@@ -243,168 +236,27 @@ class Retriever {
     }
   }
 
-  /**
-   * Agentic RAG 直通检索
-   * 跳过 Embedding/Rerank，直接按 LLM 给出的事件 ID 取回结果
-   * - 正常模式：参与类脑流程，并记录召回日志
-   * - 手动测试模式：仅做结果装配，不污染类脑状态和日志
-   *
-   * @param recalls LLM 输出的召回决策列表
-   * @param options 额外配置 (mode, isManualTest 等)
-   * @returns 检索结果
-   */
-  async agenticSearch(
-    recalls: AgenticRecall[],
-    options?: { mode?: string; isManualTest?: boolean; scanQuery?: string }
-  ): Promise<RetrievalResult> {
-    const startTime = Date.now();
-    const chatId = getCurrentChatId();
-    if (!chatId) {
-      Logger.warn(LogModule.RAG_RETRIEVE, 'Agentic Search: 无当前聊天');
-      return createEmptyResult();
-    }
-
-    const db = tryGetDbForChat(chatId);
-    if (!db) {
-      Logger.warn(LogModule.RAG_RETRIEVE, 'Agentic Search: 数据库不可用');
-      return createEmptyResult();
-    }
-
-    // 1. 按 ID 直接从数据库捣取事件
-    const ids = recalls.map((r) => r.id);
-    const events = await db.events.bulkGet(ids);
-    const validEvents = events.filter((e): e is EventNode => e != null);
-
-    if (validEvents.length === 0) {
-      Logger.warn(LogModule.RAG_RETRIEVE, 'Agentic Search: 无有效事件', {
-        requestedIds: ids,
-      });
-      return createEmptyResult();
-    }
-
-    Logger.info(LogModule.RAG_RETRIEVE, 'Agentic Search: 数据库查询完成', {
-      requested: ids.length,
-      found: validEvents.length,
-    });
-
-    // 2. 构建 RecallCandidate（用 LLM 给的 score 填充双轨）
-    const validEventMap = new Map(validEvents.map((event) => [event.id, event]));
-    const validRecallEntries = recalls.flatMap((recall) => {
-      const event = validEventMap.get(recall.id);
-      return event ? [{ recall, event }] : [];
-    });
-
-    const candidates: RecallCandidate[] = validRecallEntries.map(({ recall, event }) => ({
-      id: recall.id,
-      label: event.structured_kv?.event || recall.id,
-      embeddingScore: recall.score,
-      rerankScore: recall.score, // 双轨同分，让 BrainRecallCache 的门控逻辑正常工作
-    }));
-
-    // 3. 送入 BrainRecallCache（自动触发 Decay Bomb）
-    const recallConfig = this.getRecallConfig();
-    const brainConfig: BrainRecallConfig = recallConfig.brainRecall || DEFAULT_BRAIN_RECALL_CONFIG;
-    let finalNodes = validEvents;
-
-    if (brainConfig.enabled && !options?.isManualTest) {
-      brainRecallCache.setConfig(brainConfig);
-      brainRecallCache.nextRound();
-
-      const brainResults = brainRecallCache.process(candidates);
-
-      // 根据 BrainRecallCache 输出重新排序
-      const brainIdSet = new Set(brainResults.map((s) => s.id));
-      finalNodes = validEvents.filter((e) => brainIdSet.has(e.id));
-
-      Logger.info(LogModule.RAG_RETRIEVE, 'Agentic Search: 类脑召回已应用', {
-        inputCount: candidates.length,
-        outputCount: brainResults.length,
-        round: brainRecallCache.getCurrentRound(),
-      });
-    } else if (options?.isManualTest) {
-      Logger.debug(LogModule.RAG_RETRIEVE, 'Agentic Search: 手动测试模式跳过类脑处理逻辑');
-    }
-
-    if (recallConfig.useKeywordRecall) {
-      try {
-        const keywordContext = await runWorkflow(
-          {
-            name: 'AgenticKeywordScan',
-            steps: [new KeywordRetrieveStep()],
-          },
-          {
-            trigger: options?.isManualTest ? 'manual' : 'auto',
-            input: {
-              scanQuery: options?.scanQuery || this.getRecentContext(5) || '',
-              unifiedQueries: recalls.map((recall) => recall.reason).filter(Boolean),
-            },
-          }
-        );
-
-        if (
-          keywordContext.data?.keywordEntityIds &&
-          brainConfig.enabled &&
-          !options?.isManualTest
-        ) {
-          const entityCandidates: RecallCandidate[] = keywordContext.data.keywordEntityIds.map(
-            (entity: { id: string; score: number }) => ({
-              id: entity.id,
-              label: 'entity',
-              embeddingScore: entity.score,
-              rerankScore: entity.score,
-            })
-          );
-          brainRecallCache.process(entityCandidates);
-        }
-      } catch (error) {
-        Logger.warn(LogModule.RAG_RETRIEVE, 'Agentic 模式下的关键词扫描失败', error);
-      }
-    }
-
-    const totalTime = Date.now() - startTime;
-
-    // 4. 记录召回日志 (如果是手动测试确认，则跳过日志记录)
-    if (!options?.isManualTest) {
-      const brainStats = brainConfig.enabled
-        ? {
-            round: brainRecallCache.getCurrentRound(),
-            snapshot: brainRecallCache.getShortTermSnapshot(),
-          }
-        : undefined;
-
-      RecallLogService.log({
-        query: options?.mode === 'hybrid' ? '[Hybrid Preview Mode]' : '[Agentic RAG]',
-        mode: options?.mode === 'hybrid' ? 'hybrid' : 'agentic',
-        results: validRecallEntries.map(({ recall, event }) => ({
-          eventId: recall.id,
-          summary: event.summary,
-          category: event.structured_kv?.event || 'unknown',
-          embeddingScore: recall.score, // 模型给出的分通常作为主分
-          rerankScore: recall.score, // 对于 Agentic，Rerank 分数默认等同于评估分
-          hybridScore: recall.score,
-          isTopK: true,
-          isReranked: true, // Agentic 模式下默认视为已重排 (LLM 钦定)
-          reason: recall.reason,
-        })),
-        stats: {
-          totalCandidates: recalls.length,
-          topKCount: validRecallEntries.length,
-          rerankCount: 0,
-          latencyMs: totalTime,
-        },
-        brainStats,
-      });
-    }
-
-    // 5. 返回结果
-    const entries = finalNodes.map((n) => n.summary);
-
-    Logger.info(LogModule.RAG_RETRIEVE, 'Agentic Search 完成', {
-      totalTime,
-      resultCount: finalNodes.length,
-    });
-
-    return { entries, nodes: finalNodes, candidates };
+  /** 记录本轮最终候选，供近期召回宏与界面读取。 */
+  private recordRecent(chatId: string | null, result: RetrievalResult): void {
+    if (!chatId) return;
+    const scores = new Map(
+      (result.candidates ?? []).map((c) => [c.id, c.rerankScore ?? c.embeddingScore])
+    );
+    const items: RecentRecall[] = [
+      ...result.nodes.map((node) => ({
+        id: node.id,
+        label: node.structured_kv?.event || node.summary.slice(0, 20),
+        category: 'event' as const,
+        score: scores.get(node.id) ?? 0,
+      })),
+      ...(result.recalledEntities ?? []).map((entity) => ({
+        id: entity.id,
+        label: entity.name,
+        category: 'entity' as const,
+        score: (entity as { _recallWeight?: number })._recallWeight ?? 0,
+      })),
+    ];
+    recallCache.record(chatId, items);
   }
 
   /**

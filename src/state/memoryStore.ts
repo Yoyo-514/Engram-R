@@ -14,7 +14,7 @@ export type { MemoryState } from './memory/types';
 
 /**
  * Memory Store
- * 经 V0.9.15 重构：拆分为多个独立切片 (Slice Pattern) 以降低耦合和文件体积
+ * 拆分为多个独立切片 (Slice Pattern) 以降低耦合和文件体积
  */
 export const useMemoryStore = create<MemoryState>()((...a) => ({
   ...createCoreSlice(...a),

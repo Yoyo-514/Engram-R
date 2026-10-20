@@ -153,7 +153,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     );
 
     // Handlers
-    // Phase 3 Performance Fix: 将大量字符串解析加上防抖，避免卡死输入法
+    // 将大量字符串解析加上防抖，避免卡死输入法
     const handleJsonChangeDebounced = useMemo(
       () =>
         debounce((val: string) => {
@@ -199,7 +199,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       try {
         const profileObj = JSON.parse(profileJson);
 
-        // V1.2.9: Simple YAML structure
+        // Simple YAML structure
         // Format:
         // 实体名称
         // profile:
@@ -217,7 +217,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
         setDescription(newDesc);
         setIsDirty(true);
 
-        // V1.2.9 FIX: Only send incremental updates to avoid stale closure overwriting
+        // Only send incremental updates to avoid stale closure overwriting
         onSave?.(entity.id, { description: newDesc, profile: profileObj });
       } catch {
         alert('Profile JSON 格式错误，无法生成描述');
@@ -247,7 +247,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
               }}
               onBlur={handleBlur}
               style={inputStyle}
-              className="placeholder:text-meta/40 text-lg font-medium text-heading transition-colors focus:border-primary"
+              className="text-lg font-medium text-heading transition-colors placeholder:text-meta/40 focus:border-primary"
             />
           </div>
 
@@ -305,7 +305,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
             value={profileJson}
             onChange={(e) => handleJsonChange(e.target.value)}
             onBlur={handleBlur}
-            className={`bg-muted/50 w-full flex-1 resize-none rounded-md border p-4 font-mono text-xs leading-relaxed outline-none transition-colors ${jsonError ? 'border-destructive focus:border-destructive' : 'border-border focus:border-value'} `}
+            className={`w-full flex-1 resize-none rounded-md border bg-muted/50 p-4 font-mono text-xs leading-relaxed outline-none transition-colors ${jsonError ? 'border-destructive focus:border-destructive' : 'border-border focus:border-value'} `}
             spellCheck={false}
           />
         </div>
@@ -343,17 +343,17 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     if (isFullScreen) {
       return (
         <div className="flex h-full flex-col bg-transparent">
-          <div className="border-border/50 flex shrink-0 items-center gap-3 border-b px-4 py-3">
+          <div className="flex shrink-0 items-center gap-3 border-b border-border/50 px-4 py-3">
             <button
               onClick={onClose}
-              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
+              className="rounded p-1.5 text-meta transition-colors hover:bg-muted/50 hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
             <h2 className="flex-1 text-sm font-medium">编辑实体</h2>
             <button
               onClick={() => isFullScreen && onDelete?.(entity.id)}
-              className="hover:bg-destructive/10 rounded p-1.5 text-destructive"
+              className="rounded p-1.5 text-destructive hover:bg-destructive/10"
             >
               <Trash2 size={16} />
             </button>
@@ -370,7 +370,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
           <div className="flex shrink-0 items-center gap-2 border-b border-border pb-4">
             <button
               onClick={onClose}
-              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
+              className="rounded p-1.5 text-meta transition-colors hover:bg-muted/50 hover:text-foreground"
               title="返回"
             >
               <ArrowLeft size={18} />
@@ -378,7 +378,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
             <h3 className="flex-1 text-sm font-medium text-primary">编辑实体</h3>
             <button
               onClick={() => onDelete?.(entity.id)}
-              className="hover:bg-destructive/10 rounded p-1.5 text-destructive"
+              className="rounded p-1.5 text-destructive hover:bg-destructive/10"
             >
               <Trash2 size={16} />
             </button>

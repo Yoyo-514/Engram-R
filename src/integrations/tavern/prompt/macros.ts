@@ -3,7 +3,7 @@ import { get, subscribe } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getCurrentTavernCharacter } from '@/core/utils';
 import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
-import { brainRecallCache } from '@/modules/rag';
+import { recallCache } from '@/modules/rag';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { CustomMacro } from '@/types/macro';
 
@@ -12,7 +12,7 @@ import { getSTContext } from '../core/context';
 
 /**
  * MacroService 类
- * V0.8: 支持预处理使用的宏，包括 {{engramSummaries}} 和 {{worldbookContext}}
+ * 注册 Engram 宏与缓存刷新。
  */
 let isInitialized = false;
 
@@ -54,13 +54,13 @@ export async function MacroServiceInit(): Promise<void> {
       'Engram: 当前激活的世界书内容'
     );
 
-    // {{userInput}} - 当前用户输入（预处理专用）
+    // {{userInput}} - 当前用户输入
     registerMacro(
       'userInput',
       () => {
         return cachedUserInput;
       },
-      'Engram: 当前用户输入（预处理专用）'
+      'Engram: 当前用户输入'
     );
 
     // {{chatHistory}} - 最近对话历史 (从配置读取 floorInterval - bufferSize)
@@ -81,7 +81,7 @@ export async function MacroServiceInit(): Promise<void> {
       'Engram: 角色卡设定'
     );
 
-    // V0.9: {{engramGraph}} - 事件和实体的结构化 JSON
+    // {{engramGraph}} - 事件和实体的结构化 JSON
     registerMacro(
       'engramGraph',
       () => {
@@ -90,7 +90,7 @@ export async function MacroServiceInit(): Promise<void> {
       'Engram: 事件和实体的结构化 JSON (用于图谱构建)'
     );
 
-    // V0.9.2: {{engramArchivedSummaries}} - 已归档的历史摘要 (绿灯事件)
+    // {{engramArchivedSummaries}} - 已归档的历史摘要 (绿灯事件)
     registerMacro(
       'engramArchivedSummaries',
       () => {
@@ -99,7 +99,7 @@ export async function MacroServiceInit(): Promise<void> {
       'Engram: 已归档的历史摘要 (绿灯事件)'
     );
 
-    // V0.9.2: {{userPersona}} - 用户角色设定
+    // {{userPersona}} - 用户角色设定
     registerMacro(
       'userPersona',
       () => {
@@ -110,31 +110,13 @@ export async function MacroServiceInit(): Promise<void> {
       'Engram: 用户角色设定 (酒馆 Persona Description)'
     );
 
-    // V1.0.0: {{engramEntityStates}} - 实体状态
+    // {{engramEntityStates}} - 实体状态
     registerMacro(
       'engramEntityStates',
       () => {
         return cachedEntityStates;
       },
       'Engram: 实体状态 (角色/场景/物品)'
-    );
-
-    // Agentic RAG: {{engramIndex}} - 双层 XML 目录索引
-    registerMacro(
-      'engramIndex',
-      () => {
-        return cachedAgenticIndex;
-      },
-      'Engram: Agentic RAG 双层目录索引 (极简 structured_kv)'
-    );
-
-    // Agentic RAG: {{engramActiveEvents}} - 纯蓝灯事件
-    registerMacro(
-      'engramActiveEvents',
-      () => {
-        return cachedPureActiveEvents;
-      },
-      'Engram: 纯蓝灯事件摘要 (不含绿灯召回)'
     );
 
     isInitialized = true;
@@ -149,8 +131,6 @@ export async function MacroServiceInit(): Promise<void> {
         '{{engramArchivedSummaries}}',
         '{{userPersona}}',
         '{{engramEntityStates}}',
-        '{{engramIndex}}',
-        '{{engramActiveEvents}}',
       ],
     });
 
@@ -166,13 +146,13 @@ export async function MacroServiceInit(): Promise<void> {
         refreshCache().catch((e) => Logger.warn('MacroService', '刷新缓存失败', e));
       });
 
-      // V1.0.1: 监听酒馆设置更新（通常包含人设描述变更）
+      // 监听酒馆设置更新（通常包含人设描述变更）
       eventSource.on('settings_updated', () => {
         refreshCache().catch((e) => Logger.warn('MacroService', '酒馆设置更新后刷新缓存失败', e));
       });
     }
 
-    // V1.4.7 Fix: 监听 Engram 自身设置更新，避免 worldbookContext 使用陈旧缓存
+    // 监听 Engram 自身设置更新，避免 worldbookContext 使用陈旧缓存
     // 例如关闭世界书主开关 / EJS 开关后，宏应立即反映最新配置
     subscribe(() => {
       cachedWorldbookContext = '';
@@ -192,19 +172,15 @@ let cachedSummaries: string = '';
 let cachedWorldbookContext: string = '';
 let cachedUserInput: string = '';
 let cachedCharDescription: string = '';
-// V0.9: 图谱数据缓存
+// 图谱数据缓存
 let cachedGraphData: string = '';
-// V0.9.2: 新增缓存
+// 新增缓存
 let cachedArchivedSummaries: string = '';
 let cachedUserPersona: string = '';
-// V0.9.2: 自定义宏缓存
+// 自定义宏缓存
 let cachedCustomMacros: Map<string, string> = new Map();
-// V1.0.0: 实体状态缓存
+// 实体状态缓存
 let cachedEntityStates: string = '';
-// Agentic RAG: 目录索引缓存
-let cachedAgenticIndex: string = '';
-// Agentic RAG: 纯蓝灯事件缓存
-let cachedPureActiveEvents: string = '';
 
 /**
  * 获取缓存的事件摘要
@@ -228,7 +204,7 @@ export function getWorldbookContext(): string {
 }
 
 /**
- * 设置用户输入（预处理时调用）
+ * 设置用户输入（生成前缓存）
  */
 export function setUserInput(input: string): void {
   cachedUserInput = input;
@@ -260,33 +236,25 @@ export function clearCache(): void {
   cachedUserPersona = '';
   cachedCustomMacros.clear();
   cachedEntityStates = '';
-  // Agentic RAG
-  cachedAgenticIndex = '';
-  cachedPureActiveEvents = '';
 }
 
 /**
  * 仅刷新 Engram 相关的 DB 缓存 (快速)
  * 用于 Pipeline 结束后的快速更新，避免触发全量世界书扫描
  *
- * V1.0.2: 当未显式传入 recalledIds 时，自动从 BrainRecallCache 获取当前短期记忆
- * 这样所有使用 {{engramSummaries}} 的地方都能自动获得召回上下文
+ * 未显式传入 recalledIds 时使用本轮近期召回记录。
  */
 export async function refreshEngramCache(recalledIds?: string[]): Promise<void> {
   try {
     const store = useMemoryStore.getState();
 
-    // V1.0.2: 自动绑定 BrainRecallCache
-    // 如果没有显式传入 recalledIds，则从 BrainRecallCache 获取当前短期记忆
     let effectiveRecalledIds = recalledIds;
     let effectiveEntityIds: string[] | undefined = undefined;
 
     try {
       // 动态导入避免循环依赖
-      const snapshot = brainRecallCache.getShortTermSnapshot();
+      const snapshot = recallCache.getSnapshot(getSTContext()?.chatId);
 
-      // 自动绑定 BrainRecallCache
-      // 如果没有显式传入 recalledIds，则从 BrainRecallCache 获取当前短期记忆
       // 事件按注入上限（rerankConfig.topN）截断，避免短时记忆槽位全量放行归档事件
       if (!effectiveRecalledIds && snapshot.length > 0) {
         const rerankSettings = get('runtimeSettings')?.rerankConfig;
@@ -303,7 +271,7 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
         .slice(0, DEFAULT_ENTITY_INJECT_LIMIT)
         .map((slot) => slot.id);
     } catch (e) {
-      Logger.debug('MacroService', 'BrainRecallCache 获取失败，跳过', e);
+      Logger.debug('MacroService', '近期召回缓存获取失败，跳过', e);
     }
 
     // 1. 刷新事件摘要（带召回 ID）
@@ -312,15 +280,10 @@ export async function refreshEngramCache(recalledIds?: string[]): Promise<void> 
     // 2. 刷新归档摘要
     await refreshArchivedSummaries();
 
-    // 3. V1.0.0: 刷新实体状态 (带召回 ID)
+    // 3. 刷新实体状态 (带召回 ID)
     cachedEntityStates = await store.getEntityStates(effectiveEntityIds);
 
-    // 4. Agentic RAG: 刷新目录索引和纯蓝灯事件
-    cachedAgenticIndex = await store.getAgenticIndex();
-    cachedPureActiveEvents = await store.getPureActiveEvents();
-
     // 5. 刷新图谱数据 (可选，视性能而定)
-    // await refreshGraphCache();
 
     Logger.debug('MacroService', 'Engram DB 缓存已刷新', {
       summariesLength: cachedSummaries.length,
@@ -353,8 +316,8 @@ export async function refreshWorldbookCache(): Promise<void> {
 }
 
 /**
- * V0.8.5: 使用 RAG 召回的节点刷新缓存
- * V1.0.3 Fix: 复用 getEventSummaries 逻辑，修复召回条目覆盖蓝灯事件和乱序问题
+ * 使用 RAG 召回的节点刷新缓存
+ * 复用 getEventSummaries 逻辑，修复召回条目覆盖蓝灯事件和乱序问题
  * @param nodes RAG 召回的事件节点
  */
 export async function refreshCacheWithNodes(
@@ -367,10 +330,10 @@ export async function refreshCacheWithNodes(
     // 1. 刷新事件摘要
     cachedSummaries = await store.getEventSummaries(recalledIds);
 
-    // 2. V1.4.1: 同步刷新实体状态（注入上限）
+    // 2. 同步刷新实体状态（注入上限）
     try {
-      const entityIds = brainRecallCache
-        .getShortTermSnapshot()
+      const entityIds = recallCache
+        .getSnapshot(getSTContext()?.chatId)
         .filter((slot) => slot.category === 'entity')
         .slice(0, DEFAULT_ENTITY_INJECT_LIMIT)
         .map((slot) => slot.id);
@@ -408,7 +371,7 @@ export function refreshCharDescription(): void {
 }
 
 /**
- * V0.9.2: 刷新归档摘要缓存
+ * 刷新归档摘要缓存
  * 仅返回 is_archived=true 的事件摘要
  */
 export async function refreshArchivedSummaries(): Promise<void> {
@@ -425,7 +388,7 @@ export async function refreshArchivedSummaries(): Promise<void> {
 }
 
 /**
- * V0.9.2: 刷新用户设定缓存
+ * 刷新用户设定缓存
  * 从酒馆 power_user.persona_description 读取
  */
 export function refreshUserPersona(): void {
@@ -442,7 +405,7 @@ export function refreshUserPersona(): void {
 }
 
 /**
- * V0.9.2: 刷新并注册自定义宏
+ * 刷新并注册自定义宏
  * 从 runtimeSettings.customMacros 读取用户定义的宏
  */
 export function refreshCustomMacros(): void {
@@ -486,7 +449,7 @@ export function refreshCustomMacros(): void {
 }
 
 /**
- * V1.2.8: 统一宏注册接口，兼容新旧 API
+ * 统一宏注册接口，兼容新旧 API
  * @param name 宏名称
  * @param handler 宏处理函数
  * @param description 宏描述

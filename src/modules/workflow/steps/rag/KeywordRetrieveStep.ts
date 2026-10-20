@@ -24,7 +24,7 @@ export class KeywordRetrieveStep implements IStep {
 
     const query = context.input?.query as string;
     const scanQuery = context.input?.scanQuery as string;
-    const textInput = context.input?.text as string; // 适配 Preprocessor 的输入格式
+    const textInput = context.input?.text as string; // 文本轨输入
     const chatHistory = context.input?.chatHistory as string | undefined;
     const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
 

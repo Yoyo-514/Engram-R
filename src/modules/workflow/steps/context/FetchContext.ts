@@ -11,7 +11,7 @@ import {
   getSTContext,
   getSummaries,
 } from '@/integrations/tavern';
-import { regexProcessor } from '@/modules/workflow/steps/preprocess/RegexProcessor';
+import { regexProcessor } from '@/modules/workflow/steps/text/RegexProcessor';
 import type { JobContext } from '@/types/job_context';
 import type { IStep } from '@/types/step';
 import type { WorldbookConfig } from '@/types/worldbook';

@@ -1,5 +1,5 @@
 /**
- * ChatManager - V0.6 Multi-Database Architecture
+ * ChatManager - Multi-Database Architecture
  *
  * Manages the current chat context.
  * Each chat_id has its own database, so we just need to track the current chatId.

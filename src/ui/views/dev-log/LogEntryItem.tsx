@@ -12,7 +12,6 @@ import {
   FileCode,
   Database,
   Server,
-  Cpu,
   Zap,
   CloudCog,
   type LucideIcon,
@@ -69,8 +68,6 @@ const MODULE_ICONS: Record<string, LucideIcon> = {
   MacroService: FileCode,
   // 数据层
   Data: Database,
-  // 预处理
-  Preprocess: Cpu,
   // 批处理
   Batch: Zap,
   // LLM

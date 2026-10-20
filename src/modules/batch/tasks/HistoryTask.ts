@@ -312,7 +312,7 @@ export class HistoryTask implements IBatchTaskHandler {
   ) {
     if (checkStopSignal()) return;
 
-    // V1.0 架构中 LevelManager 可能不再以类存在或需要更换方案
+    // 架构中 LevelManager 可能不再以类存在或需要更换方案
     // 目前暂不实现后台自动按 Level 层级归档，预留至检索张 Workflow 升级阶段
     Logger.info(LogModule.BATCH, `自动归档占位触发，当前阶段架构待实现...`);
 

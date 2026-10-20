@@ -32,10 +32,6 @@ export interface EventState {
   markEventsAsEmbedded: (eventIds: string[]) => Promise<void>;
   toggleEventLock: (eventId: string) => Promise<boolean>;
   getArchivedEventSummaries: () => Promise<string>;
-  /** Agentic RAG: 构建双层 XML 目录索引 (极简 structured_kv，不含 summary) */
-  getAgenticIndex: () => Promise<string>;
-  /** Agentic RAG: 仅返回纯蓝灯事件的完整 summary */
-  getPureActiveEvents: () => Promise<string>;
 }
 
 /**
@@ -221,7 +217,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
 
     try {
       const events = await db.events.orderBy('timestamp').toArray();
-      // V1.4.2: 增加 !e.is_locked 过滤点，锁定事件不参与精简合并
+      // 增加 !e.is_locked 过滤点，锁定事件不参与精简合并
       const eligibleEvents = events.filter((e) => e.level === 0 && !e.is_archived && !e.is_locked);
 
       if (eligibleEvents.length <= keepRecentCount) return [];
@@ -326,88 +322,6 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
       return `<archived_summary>\n${summaries}\n</archived_summary>`;
     } catch (e) {
       console.error('[MemoryStore] Failed to get archived event summaries:', e);
-      return '';
-    }
-  },
-
-  // ==================== Agentic RAG 数据源 ====================
-
-  getAgenticIndex: async () => {
-    const db = tryGetCurrentDb();
-    if (!db) return '';
-
-    try {
-      const events = await db.events.toArray();
-      if (events.length === 0) return '';
-
-      // 分区：蓝灯（活跃）和 绿灯（归档）
-      const activeEvents = events.filter((e) => !e.is_archived && e.level === 0);
-      const archivedEvents = events.filter((e) => e.is_archived);
-
-      // 按时间排序
-      activeEvents.toSorted((a, b) => a.timestamp - b.timestamp);
-      archivedEvents.toSorted((a, b) => a.timestamp - b.timestamp);
-
-      // 构建极简 XML record（仅使用 structured_kv，不含 summary 长文本）
-      const buildRecord = (e: EventNode, extraAttrs?: string) => {
-        const kv = e.structured_kv;
-        const attrs = [
-          `id="${e.id}"`,
-          `event="${escapeXml(kv?.event || '')}"`,
-          kv?.role?.length ? `role="${escapeXml(kv.role.join(', '))}"` : '',
-          kv?.location?.length ? `location="${escapeXml(kv.location.join(', '))}"` : '',
-          kv?.causality ? `causality="${escapeXml(kv.causality)}"` : '',
-          extraAttrs || '',
-        ]
-          .filter(Boolean)
-          .join(' ');
-        return `  <record ${attrs}/>`;
-      };
-
-      const lines: string[] = ['<agentic_index>'];
-
-      // 活跃区（蓝灯）
-      if (activeEvents.length > 0) {
-        lines.push('  <active_memory>');
-        for (const e of activeEvents) {
-          lines.push('  ' + buildRecord(e, `score_status="${e.significance_score.toFixed(2)}"`));
-        }
-        lines.push('  </active_memory>');
-      }
-
-      // 归档区（绿灯）
-      if (archivedEvents.length > 0) {
-        lines.push('  <archived_summary>');
-        for (const e of archivedEvents) {
-          lines.push('  ' + buildRecord(e));
-        }
-        lines.push('  </archived_summary>');
-      }
-
-      lines.push('</agentic_index>');
-      return lines.join('\n');
-    } catch (e) {
-      console.error('[MemoryStore] Failed to build agentic index:', e);
-      return '';
-    }
-  },
-
-  getPureActiveEvents: async () => {
-    const db = tryGetCurrentDb();
-    if (!db) return '';
-
-    try {
-      const events = await db.events.toArray();
-      // 纯蓝灯：未归档事件（包含 Level>=1 大纲和 Level 0 详情）
-      const activeEvents = events.filter((e) => !e.is_archived);
-
-      if (activeEvents.length === 0) return '';
-      activeEvents.sort((a, b) => a.timestamp - b.timestamp);
-
-      const summaries = activeEvents.map((e) => e.summary).join('\n\n');
-      return `<active_events>\n${summaries}\n</active_events>`;
-    } catch (e) {
-      console.error('[MemoryStore] Failed to get pure active events:', e);
       return '';
     }
   },

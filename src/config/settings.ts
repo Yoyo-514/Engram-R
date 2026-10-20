@@ -2,7 +2,6 @@ import type { JsonObject } from 'type-fest';
 
 import { getDefaultRuntimeSettings } from '@/config/api/defaults';
 import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
-import { DEFAULT_PREPROCESS_CONFIG } from '@/config/preprocess/defaults';
 import { getBuiltInTemplateById } from '@/config/prompt/templates';
 import { Logger } from '@/core/logger';
 import type { TavernContext } from '@/core/utils';
@@ -10,7 +9,6 @@ import { deepClone } from '@/core/utils/clone';
 import { getRawSTContext } from '@/integrations/tavern/core/context';
 import type { EngramRuntimeSettings } from '@/types/config';
 import type { SummarizerConfig, TrimmerConfig } from '@/types/memory';
-import type { PreprocessConfig } from '@/types/preprocess';
 import type { PromptTemplate } from '@/types/prompt';
 import type { RegexRule } from '@/types/regex';
 
@@ -27,7 +25,6 @@ export interface EngramSettings {
   trimmerConfig: TrimmerConfig;
   regexRules: RegexRule[];
   runtimeSettings: EngramRuntimeSettings;
-  preprocessConfig: PreprocessConfig;
   linkedDeletion: {
     enabled: boolean;
     deleteIndexedDB: boolean;
@@ -48,7 +45,6 @@ const defaultSettings: EngramSettings = {
   trimmerConfig: DEFAULT_TRIMMER_CONFIG,
   regexRules: [],
   runtimeSettings: getDefaultRuntimeSettings(),
-  preprocessConfig: DEFAULT_PREPROCESS_CONFIG,
   linkedDeletion: {
     enabled: true,
     deleteIndexedDB: true,
@@ -106,7 +102,6 @@ export function getSettings(): EngramSettings {
     runtimeSettings: { ...defaults.runtimeSettings, ...saved?.runtimeSettings },
     summarizerConfig: { ...defaults.summarizerConfig, ...saved?.summarizerConfig },
     trimmerConfig: { ...defaults.trimmerConfig, ...saved?.trimmerConfig },
-    preprocessConfig: { ...defaults.preprocessConfig, ...saved?.preprocessConfig },
     linkedDeletion: { ...defaults.linkedDeletion, ...saved?.linkedDeletion },
     syncConfig: { ...defaults.syncConfig, ...saved?.syncConfig },
   };

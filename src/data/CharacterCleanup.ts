@@ -182,10 +182,3 @@ export function initCharacterDeleteService(): void {
   }
 }
 
-/**
- * 检查服务是否已初始化
- */
-/**
- * 重置状态并解绑事件
- * 用于测试、热重载或重新初始化场景
- */

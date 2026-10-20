@@ -28,7 +28,7 @@ export interface JobContext {
    * 不同类型的任务可能有不同的输入字段
    */
   input: {
-    text?: string; // 原始文本输入 (Preprocessor)
+    text?: string; // 原始文本输入
     range?: [number, number]; // 楼层范围 (Summary/Entity)
     chatHistory?: string; // 原始聊天记录 (Entity)
     [key: string]: any;

@@ -1,6 +1,6 @@
 /**
  * CustomMacroForm - 自定义宏编辑表单
- * V0.9.2: 右侧详情页编辑（类似提示词模板）
+ * 右侧详情页编辑（类似提示词模板）
  */
 import type { FC } from 'react';
 
@@ -40,7 +40,7 @@ export const CustomMacroForm: FC<CustomMacroFormProps> = ({ macro, onChange }) =
       </FormSection>
 
       {/* 使用说明 */}
-      <div className="bg-muted/30 rounded border border-border px-3 py-2">
+      <div className="rounded border border-border bg-muted/30 px-3 py-2">
         <div className="mb-2 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
           使用方式
         </div>

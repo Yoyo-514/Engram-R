@@ -32,7 +32,7 @@ export interface UseLLMPresetsReturn {
   addTemplate: (template: PromptTemplate) => void;
   updateTemplate: (template: PromptTemplate) => void;
   deleteTemplate: (template: PromptTemplate) => void;
-  /** V1.0.2: 重置所有内置模板为默认值 */
+  /** 重置所有内置模板为默认值 */
   resetAllTemplates: () => void;
 
   // 保存
@@ -140,7 +140,7 @@ export function useLLMPresets(): UseLLMPresetsReturn {
   }, []);
 
   /**
-   * V1.3.3: 重置所有内置模板为默认值
+   * 重置所有内置模板为默认值
    * - 将所有内置模板恢复为默认内容
    * - 保留用户自定义的模板
    * - 保留当前启用状态和世界书绑定

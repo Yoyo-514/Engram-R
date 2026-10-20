@@ -236,7 +236,7 @@ export class RegexProcessor {
     return this.rules.filter((r) => r.enabled).length;
   }
 
-  // ========== V0.8: 标签捕获方法 ==========
+  // ========== 标签捕获方法 ==========
 
   private getCachedTagRegex(tagName: string, type: 'capture' | 'remove'): RegExp {
     const key = `${type}:${tagName}`;

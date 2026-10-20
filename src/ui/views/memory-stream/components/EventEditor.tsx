@@ -14,7 +14,6 @@ import type { CSSProperties, CompositionEvent } from 'react';
 /**
  * EventEditor - 事件编辑面板
  *
- * V0.8.5:
  * - KV 自动烧录进 summary（始终开启）
  * - 编辑即时反馈到父组件
  */
@@ -140,7 +139,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       setSummary(event.summary);
       setEventType(event.structured_kv?.event || '');
       setTimeAnchor(event.structured_kv?.time_anchor || '');
-      // V1.0.2: location 现在是数组，显示为逗号分隔
+      // location 现在是数组，显示为逗号分隔
       const locArray = event.structured_kv?.location || [];
       setLocation(Array.isArray(locArray) ? locArray.join(', ') : String(locArray || ''));
       setRoleText(event.structured_kv?.role?.join(', ') || '');
@@ -158,8 +157,8 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       }
     };
 
-    // V1.2.9: Use overrides.summary if provided, else auto-generate, else use state
-    // Phase 1 Performance Fix: Debounce sync to avoid excessive re-renders in parent
+    // Use overrides.summary if provided, else auto-generate, else use state
+    // Debounce sync to avoid excessive re-renders in parent
     const syncToParentDebounced = useMemo(
       () =>
         debounce((id: string, updates: Partial<EventNode>) => {
@@ -203,7 +202,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
         };
 
         const autoSummary = generateSummaryFromKV(kv);
-        // V1.4.3 Fix: 优先使用覆盖值，其次是当前手填/暂存的 summary，然后是 KV 生成的，最后兜底用数据库里的
+        // 优先使用覆盖值，其次是当前手填/暂存的 summary，然后是 KV 生成的，最后兜底用数据库里的
         const finalSummary = overrides.summary ?? summary ?? autoSummary ?? event.summary;
 
         const updates = {
@@ -306,7 +305,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setEventType, 'eventType')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 text-heading transition-colors focus:border-primary"
+            className="text-heading transition-colors placeholder:text-meta/40 focus:border-primary"
             placeholder="如：任务确认、战斗结束"
           />
         </div>
@@ -335,7 +334,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                 });
                 setSummary(autoSummary);
                 setIsDirty(true);
-                // V1.2.9: Pass summary directly to avoid stale closure
+                // Pass summary directly to avoid stale closure
                 syncToParent({ summary: autoSummary });
               }}
               className="text-[10px] text-primary hover:underline"
@@ -370,7 +369,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setTimeAnchor, 'timeAnchor')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 transition-colors focus:border-primary"
+            className="transition-colors placeholder:text-meta/40 focus:border-primary"
             placeholder="如：太阳历1023年4月4日"
           />
         </div>
@@ -386,7 +385,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setLocation, 'location')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 text-value transition-colors focus:border-primary"
+            className="text-value transition-colors placeholder:text-meta/40 focus:border-primary"
             placeholder="地点（逗号分隔多个），如：边境公会大厅, 小镇酒馆"
           />
         </div>
@@ -402,7 +401,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setRoleText, 'roleText')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 text-emphasis transition-colors focus:border-primary"
+            className="text-emphasis transition-colors placeholder:text-meta/40 focus:border-primary"
             placeholder="如：{{user}}, 赫伯"
           />
         </div>
@@ -418,7 +417,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
             onCompositionEnd={(e) => handleCompositionEnd(e, setLogicText, 'logicText')}
             onBlur={handleBlur}
             style={inputStyle}
-            className="placeholder:text-meta/40 text-label transition-colors focus:border-primary"
+            className="text-label transition-colors placeholder:text-meta/40 focus:border-primary"
             placeholder="如：起点, 伏笔"
           />
         </div>
@@ -475,7 +474,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                 <LockOpen size={12} className="text-meta/60" />
               )}
             </div>
-            <span className="text-meta/60 text-[10px]">
+            <span className="text-[10px] text-meta/60">
               锁定后将防止该记忆在自动精简或清理时被删除
             </span>
           </div>
@@ -502,7 +501,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
               <span className="text-xs text-meta">归档此事件</span>
               <Archive size={12} className={isArchived ? 'text-primary' : 'text-meta/60'} />
             </div>
-            <span className="text-meta/60 text-[10px]">
+            <span className="text-[10px] text-meta/60">
               归档后将不再参与自动摘要生成和实时上下文
             </span>
           </div>
@@ -553,10 +552,10 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       return (
         <div className="flex h-full flex-col bg-transparent">
           {/* 头部 */}
-          <div className="border-border/50 flex shrink-0 items-center gap-3 border-b px-4 py-3">
+          <div className="flex shrink-0 items-center gap-3 border-b border-border/50 px-4 py-3">
             <button
               onClick={onClose}
-              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
+              className="rounded p-1.5 text-meta transition-colors hover:bg-muted/50 hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
@@ -569,7 +568,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isArchived: val }, true);
                 }}
-                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-meta'}`}
+                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'text-meta hover:bg-muted/50'}`}
                 title={isArchived ? '取消归档' : '归档'}
               >
                 <Archive size={16} className={isArchived ? 'fill-current' : ''} />
@@ -581,14 +580,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isLocked: val }, true);
                 }}
-                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta'}`}
+                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'text-meta hover:bg-muted/50'}`}
                 title={isLocked ? '解锁' : '锁定'}
               >
                 {isLocked ? <Lock size={16} /> : <LockOpen size={16} />}
               </button>
               <button
                 onClick={handleDelete}
-                className="hover:bg-destructive/10 ml-1 rounded p-1.5 text-destructive"
+                className="ml-1 rounded p-1.5 text-destructive hover:bg-destructive/10"
                 title="删除"
               >
                 <Trash2 size={16} />
@@ -603,7 +602,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
           <div className="shrink-0 border-t border-border p-4">
             <button
               onClick={onClose}
-              className="hover:border-foreground/30 w-full rounded-md border border-border py-2 text-sm text-meta transition-colors hover:text-foreground"
+              className="w-full rounded-md border border-border py-2 text-sm text-meta transition-colors hover:border-foreground/30 hover:text-foreground"
             >
               返回列表
             </button>
@@ -620,7 +619,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
           <div className="flex shrink-0 items-center gap-2 border-b border-border pb-4">
             <button
               onClick={onClose}
-              className="hover:bg-muted/50 rounded p-1.5 text-meta transition-colors hover:text-foreground"
+              className="rounded p-1.5 text-meta transition-colors hover:bg-muted/50 hover:text-foreground"
             >
               <ArrowLeft size={18} />
             </button>
@@ -633,7 +632,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isArchived: val }, true);
                 }}
-                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'hover:bg-muted/50 text-meta'}`}
+                className={`rounded p-1.5 transition-colors ${isArchived ? 'bg-primary/10 text-primary' : 'text-meta hover:bg-muted/50'}`}
                 title={isArchived ? '取消归档' : '归档'}
               >
                 <Archive size={16} className={isArchived ? 'fill-current' : ''} />
@@ -645,14 +644,14 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
                   setIsDirty(true);
                   syncToParent({ isLocked: val }, true);
                 }}
-                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta'}`}
+                className={`rounded p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'text-meta hover:bg-muted/50'}`}
                 title={isLocked ? '解锁' : '锁定'}
               >
                 {isLocked ? <Lock size={16} /> : <LockOpen size={16} />}
               </button>
               <button
                 onClick={handleDelete}
-                className="hover:bg-destructive/10 ml-1 rounded p-1.5 text-destructive"
+                className="ml-1 rounded p-1.5 text-destructive hover:bg-destructive/10"
                 title="删除"
               >
                 <Trash2 size={16} />

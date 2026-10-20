@@ -1,7 +1,3 @@
-/**
- * 批处理类型定义
- */
-
 /** 任务类型 */
 export type BatchTaskType = 'summary' | 'entity' | 'trim' | 'embed' | 'archive' | 'import';
 

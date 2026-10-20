@@ -19,7 +19,7 @@ export class FormatTrimInput implements IStep {
     const formattedText = events
       .map((e) => {
         const kv = e.structured_kv;
-        // V1.0.2: location 现在是数组
+        // location 现在是数组
         const locStr = Array.isArray(kv.location) ? kv.location.join(', ') : kv.location;
         return `${e.summary}
 Role: [${kv.role.join(', ')}]
@@ -32,7 +32,7 @@ Significance: ${e.significance_score}`;
       .join('\n\n---\n\n');
 
     // 将格式化后的文本放入变量
-    // V1.2.1: 使用 targetSummaries 存储待精简内容，避免覆盖全局 engramSummaries
+    // 使用 targetSummaries 存储待精简内容，避免覆盖全局 engramSummaries
     context.input.targetSummaries = formattedText;
     context.input.eventsText = formattedText; // 兼容旧名称
     context.input.text = formattedText; // 兼容 {{userInput}}

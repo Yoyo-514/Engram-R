@@ -1,7 +1,6 @@
 /**
  * BatchProcessor - 批量长程调度服务 (Facade)
  *
- * V1.0.0 (架构升级):
  * - 作为外观模式入口，对外暴露易用的 start() API
  * - 内部由 BatchEngine 提供任务队列调度支持
  * - 具体的导入解析逻辑下发到 tasks/ 实现
@@ -35,7 +34,7 @@ class BatchProcessor {
 
   /**
    * 分析并补全历史聊天记录
-   * (V1.0 重构: 组装 HistoryTask 注入 Engine)
+   * 组装 HistoryTask 注入 Engine
    */
   async analyzeHistory(
     startFloor = 0,
@@ -91,7 +90,7 @@ class BatchProcessor {
 
   /**
    * 外部文件分片批量导入
-   * (V1.0 重构: 组装 ImportTextTask 注入 Engine)
+   * 组装 ImportTextTask 注入 Engine
    */
   async importText(text: string, config: ImportConfig): Promise<void> {
     if (!text || text.trim().length === 0) {

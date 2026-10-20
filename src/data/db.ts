@@ -1,15 +1,11 @@
-/**
- * Engram Database (Dexie.js)
- *
- * V0.6 Multi-Database Architecture
- * Each chat_id gets its own isolated IndexedDB database.
- */
+/** 按聊天隔离的 IndexedDB 数据库。 */
 
-import { Dexie, type Table } from 'dexie';
+import { Dexie, type Table, type Transaction } from 'dexie';
 
 import { getRequestHeaders, getSTContext } from '@/integrations/tavern';
 import type { DatabaseBindStatus, DatabaseStats, DatabaseSummary } from '@/types/database';
 
+import { DATA_SYNC_OPTIONS } from '../../engram.config';
 import { Logger } from '../core/logger';
 import type { EntityNode, EventNode } from '../types/graph';
 import { syncService } from './SyncService';
@@ -54,11 +50,18 @@ export class ChatDatabase extends Dexie {
       meta: 'key',
     });
 
-    // 注册数据变动监听钩子
-    const handleChange = () => this.updateLastModified();
+    // 每个成功提交的事务仅通知一次，回滚与远端导入不触发同步。
+    const changedTransactions = new WeakSet<Transaction>();
+    const handleChange = () => {
+      if (syncService.isImportingState) return;
+      const transaction = Dexie.currentTransaction!;
+      if (changedTransactions.has(transaction)) return;
+      changedTransactions.add(transaction);
+      transaction.on('complete', () => this.updateLastModified());
+    };
 
     this.events.hook('creating', handleChange);
-    this.entities.hook('updating', handleChange);
+    this.events.hook('updating', handleChange);
     this.events.hook('deleting', handleChange);
 
     this.entities.hook('creating', handleChange);
@@ -69,9 +72,7 @@ export class ChatDatabase extends Dexie {
   private lastUpdateTimer: ReturnType<typeof setTimeout> | null = null;
 
   /**
-   * 更新最后修改时间并调度上传
-   * V0.9.11: 增强导入期间的保护
-   * V1.4.6: 优化为防抖宏任务，避免 P0/P1 合规性问题
+   * 合并短时间内的提交，写入修改时间并调度上传。
    */
   private updateLastModified() {
     // 检查导入锁 - 如果正在导入，完全跳过
@@ -79,7 +80,7 @@ export class ChatDatabase extends Dexie {
       return;
     }
 
-    // 如果已经有一个在排队了，直接跳过 (500ms 窗口防抖)
+    // 同一窗口只保留一个修改通知。
     if (this.lastUpdateTimer) return;
 
     this.lastUpdateTimer = setTimeout(() => {
@@ -101,7 +102,7 @@ export class ChatDatabase extends Dexie {
           Logger.error(MODULE, '异步更新 lastModified 失败', err);
         }
       });
-    }, 500);
+    }, DATA_SYNC_OPTIONS.changeDelayMs);
   }
 }
 
@@ -121,10 +122,9 @@ export async function exportChatData(db: ChatDatabase): Promise<ChatDataDump> {
   const events = await db.events.toArray();
   const entities = await db.entities.toArray();
   const metaArr = await db.meta.toArray();
-  const meta = metaArr.reduce((acc, cur) => ({ ...acc, [cur.key]: cur.value }), {});
+  const meta = Object.fromEntries(metaArr.map(({ key, value }) => [key, value]));
 
-  // V1.4.6 Optimization: 将 meta 放在最前面，这样 JSON.stringify 出来的字符串中，
-  // 元数据会出现在文件头部。这让 SyncService 的流式正则解析能瞬间命中并切断连接，节省 99% 的带宽喵！
+  // 元数据放在文件头部，供同步服务流式读取修改时间。
   return { meta, events, entities };
 }
 
@@ -181,9 +181,6 @@ function closeDb(chatId: string): void {
   }
 }
 
-/**
- * 检查某个聊天的数据库是否存在（不会自动创建）
- */
 /**
  * 异步检查某个聊天的数据库是否真实存在（不会自动创建）
  */

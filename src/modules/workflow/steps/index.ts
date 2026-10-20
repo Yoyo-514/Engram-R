@@ -8,13 +8,10 @@ export * from './interaction/UserReview';
 export * from './persistence/ApplyTrim';
 export * from './persistence/SaveEntity';
 export * from './persistence/SaveEvent';
-export * from './preprocess/CleanRegex';
-export * from './preprocess/ExtractTags';
-export * from './preprocess/FormatTrimInput';
-export * from './preprocess/ParseJson';
-// Processors moved to steps/processing
-export * from './preprocess/RegexProcessor';
-export * from './rag/BrainRecallStep';
+export * from './text/CleanRegex';
+export * from './text/FormatTrimInput';
+export * from './text/ParseJson';
+export * from './text/RegexProcessor';
 export * from './rag/KeywordRetrieveStep';
 export * from './rag/RecordRecallLogStep';
 export * from './rag/RerankMergeStep';

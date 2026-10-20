@@ -1,7 +1,7 @@
 /**
  * RerankService - Rerank API 调用服务
  *
- * V0.8.5: 用于对向量检索结果进行重排序
+ * 用于对向量检索结果进行重排序
  * 支持 OpenAI 兼容格式的 Rerank API
  */
 
@@ -89,7 +89,7 @@ class RerankService {
       return [];
     }
 
-    // V1.2.4: 并发控制 & 频率限制 (RPM 保护)
+    // 并发控制 & 频率限制 (RPM 保护)
     if (this.isReranking) {
       Logger.warn(LogModule.RAG_RERANK, '已有 Rerank 任务正在进行，跳过本次请求以防止堵塞');
       return documents.map((_, i) => ({ index: i, relevance_score: 0 }));
@@ -107,7 +107,7 @@ class RerankService {
 
     try {
       // 构建 API 端点
-      // V0.9.9: 根据 autoSuffix 配置决定是否自动添加后缀
+      // 根据 autoSuffix 配置决定是否自动添加后缀
       let endpoint = config.url.replace(/\/+$/, '');
       if (config.autoSuffix !== false && !endpoint.endsWith('/rerank')) {
         endpoint = `${endpoint}/rerank`;
@@ -148,7 +148,7 @@ class RerankService {
       // 兼容不同 API 返回格式
       const results = data.results || data.data || [];
 
-      // V1.2.4: 详细的分数分布分析
+      // 详细的分数分布分析
       const scores = results.map((r) => r.relevance_score);
       const topScore = scores.length > 0 ? Math.max(...scores) : 0;
       const avgScore = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : 0;

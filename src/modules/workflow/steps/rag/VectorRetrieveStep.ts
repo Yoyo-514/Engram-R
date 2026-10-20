@@ -37,7 +37,7 @@ export class VectorRetrieveStep implements IStep {
     // Ensure context.data is initialized
     context.data = context.data || {};
 
-    // P0 Fix: 不再暴力抛错，改为在后文根据 fallback 逻辑判断
+    // 不再暴力抛错，改为在后文根据 fallback 逻辑判断
     const query = (context.input?.query as string) || '';
     const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
 
@@ -72,7 +72,7 @@ export class VectorRetrieveStep implements IStep {
     let queryVector: number[];
 
     try {
-      // V1.4.1 Fix: 在嵌入前配置 Embedding 服务，防止 "config not set" 错误
+      // 在嵌入前配置 Embedding 服务，防止 "config not set" 错误
       const vectorConfig = get('runtimeSettings')?.vectorConfig;
       Logger.debug(LogModule.RAG_RETRIEVE, 'VectorRetrieveStep: 准备设置配置', {
         hasConfig: !!vectorConfig,
@@ -86,11 +86,11 @@ export class VectorRetrieveStep implements IStep {
         return;
       }
 
-      // V1.0.3: 优先使用 unifiedQueries 第一条，否则使用 userInput
+      // 优先使用 unifiedQueries 第一条，否则使用 userInput
       const isFallbackFromChat = !unifiedQueries || unifiedQueries.length === 0;
       const rawQuery = !isFallbackFromChat ? unifiedQueries[0] : query;
 
-      // P2 Fix: 使用字符级安全的截断方式，防止 Emoji/多字节字符截断损坏
+      // 使用字符级安全的截断方式，防止 Emoji/多字节字符截断损坏
       const maxLength = isFallbackFromChat ? 300 : 500;
       const searchQuery =
         Array.from(rawQuery).length > maxLength

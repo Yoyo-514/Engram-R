@@ -187,11 +187,11 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                             return (
                               <div
                                 key={entry.uid}
-                                className={`hover:bg-accent/40 group -mx-2 flex items-start justify-between rounded px-2 py-2 transition-colors ${isEntryItemDisabled ? 'opacity-40' : ''}`}
+                                className={`group -mx-2 flex items-start justify-between rounded px-2 py-2 transition-colors hover:bg-accent/40 ${isEntryItemDisabled ? 'opacity-40' : ''}`}
                               >
                                 <div className="flex min-w-0 flex-1 flex-col gap-1 pr-4">
                                   <div className="flex min-w-0 flex-wrap items-center gap-2">
-                                    {/* 状态指示灯 V1.2.9:
+                                    {/* 状态指示灯
                                                                             - 蓝灯 (bg-primary): constant 常驻
                                                                             - 绿灯 (bg-emerald-500): selective 条件触发
                                                                             - 灰灯 (bg-muted-foreground/50): 世界书原本就禁用的条目
@@ -226,7 +226,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
                                         {entry.keys.slice(0, 3).map((key: string, i: number) => (
                                           <span
                                             key={i}
-                                            className="bg-muted/20 max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap rounded border border-border px-1 py-0.5 text-[10px] text-muted-foreground"
+                                            className="max-w-[80px] overflow-hidden text-ellipsis whitespace-nowrap rounded border border-border bg-muted/20 px-1 py-0.5 text-[10px] text-muted-foreground"
                                           >
                                             {key}
                                           </span>
@@ -242,7 +242,7 @@ export const WorldbookConfigForm: FC<WorldbookConfigFormProps> = ({
 
                                   {/* 内容预览 - 添加 break-words 和 truncate */}
                                   {(entry.comment || entry.content) && (
-                                    <p className="text-muted-foreground/80 line-clamp-2 break-words pl-3.5 text-xs">
+                                    <p className="line-clamp-2 break-words pl-3.5 text-xs text-muted-foreground/80">
                                       {entry.comment || entry.content}
                                     </p>
                                   )}

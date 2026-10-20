@@ -12,7 +12,6 @@ export class RecordRecallLogStep implements IStep {
     context.data = context.data || {};
     const candidates: ScoredEvent[] = context.data.candidates || [];
     const query = (context.input?.query as string) || '';
-    const unifiedQueries = context.input?.unifiedQueries as string[] | undefined;
     const mode = (context.input?.mode as string) || 'hybrid';
     const recalledEntities = context.data.recalledEntities || [];
 
@@ -33,8 +32,7 @@ export class RecordRecallLogStep implements IStep {
 
     RecallLogService.log({
       query,
-      preprocessedQuery: unifiedQueries?.[0],
-      mode: mode as 'hybrid' | 'agentic',
+      mode: mode === 'hybrid' ? 'hybrid' : 'embedding',
       results: candidates.map((c) => ({
         eventId: c.id,
         summary: c.summary,
@@ -57,7 +55,6 @@ export class RecordRecallLogStep implements IStep {
           (context.data.keywordRetrieveTime || 0) +
           (context.data.rerankTime || 0),
       },
-      brainStats: context.data.brainStats,
     });
 
     const totalTime =

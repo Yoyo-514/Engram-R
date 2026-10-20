@@ -1,7 +1,7 @@
 /**
  * EntityBuilder - 实体构建服务
  *
- * V0.9.1: 与 SummarizerService 并行，从原始 chatHistory 提取
+ * 与 SummarizerService 并行，从原始 chatHistory 提取
  * - 楼层触发器 (floorInterval)
  * - 输入从原始对话提取，而非 Summary
  */
@@ -31,16 +31,16 @@ export interface EntityBuildResult {
 
 /**
  * EntityBuilder 类
- * V0.9.1: 与 SummarizerService 并行触发
+ * 与 SummarizerService 并行触发
  */
 export class EntityBuilder {
   private config: EntityExtractConfig;
   private isExtracting = false;
-  // V0.9.11: UI State Persistence (fix for component unmount issues)
+  // UI State Persistence (fix for component unmount issues)
   public pendingReviewResult: EntityBuildResult | null = null;
 
   constructor(config?: Partial<EntityExtractConfig>) {
-    // V0.9.10: Fix - 优先从 SettingsManager 加载持久化配置
+    // 优先从 SettingsManager 加载持久化配置
     const savedConfig = get('runtimeSettings')?.entityExtractConfig;
     this.config = { ...DEFAULT_ENTITY_CONFIG, ...savedConfig, ...config };
   }
@@ -69,14 +69,14 @@ export class EntityBuilder {
     return previewEnabled ?? true;
   }
 
-  // ==================== Event Listening (V0.9.14) ====================
+  // ==================== Event Listening ====================
 
   /**
    * Start the Entity Extraction service
-   * V1.0.3 Fix: 使用顶层 import 替代 require，修复浏览器环境报错
+   * 使用顶层 import 替代 require，修复浏览器环境报错
    */
   start(): void {
-    // V1.0.3: 确保 EventWatcher 已启动
+    // 确保 EventWatcher 已启动
     eventWatcher.start();
 
     // Listen to message received events
@@ -89,7 +89,7 @@ export class EntityBuilder {
    * Handle message received event
    */
   private async handleMessageReceived(): Promise<void> {
-    // Fix P1: 移除无意义的 await import 微任务，直接使用顶部已导入的单例
+    // 移除无意义的 await import 微任务，直接使用顶部已导入的单例
     const currentFloor = getCurrentMessageCount();
     const state = await chatManager.getState();
     const lastExtracted = state.last_extracted_floor || 0;
@@ -124,7 +124,7 @@ export class EntityBuilder {
         lastExtracted,
       });
 
-      // V1.0.6: 自动提取也统一使用 "上次总结" 到现在的范围
+      // 自动提取也统一使用 "上次总结" 到现在的范围
       // 确保上下文连贯，并在 extracting 阶段更新已有实体状态
       const lastSummarized = state.last_summarized_floor || 0;
       let startFloor = lastSummarized + 1;
@@ -179,7 +179,7 @@ export class EntityBuilder {
       return false;
     }
 
-    // V0.9.13: 使用增量触发 (Delta) 而非整除触发 (Modulo)
+    // 使用增量触发 (Delta) 而非整除触发 (Modulo)
     const pendingFloors = currentFloor - lastExtractedFloor;
 
     // 纯判断：回溯保护由调用方处理副作用，这里只返回 false
@@ -202,7 +202,7 @@ export class EntityBuilder {
 
   /**
    * 从原始聊天历史提取实体
-   * V0.9.1: 输入从 chatHistory 而非 engramGraph
+   * 输入从 chatHistory 而非 engramGraph
    *
    * @param chatHistory 原始聊天历史文本
    * @param floor 当前楼层
@@ -227,7 +227,7 @@ export class EntityBuilder {
     );
 
     try {
-      // V1.0.4: 复用总结器运行时配置中的修订开关
+      // 复用总结器运行时配置中的修订开关
       const previewEnabled = manual || this.getPreviewEnabled();
 
       // 获取聊天历史 (如果是单条楼层，则宏系统会自动处理)
@@ -325,7 +325,7 @@ export class EntityBuilder {
       if (manual) {
         notificationService.error(`实体提取异常: ${errorMsg}`, 'Engram 错误');
       }
-      // Fix P3: 抛出事件以供其他模块感知和处理
+      // 抛出事件以供其他模块感知和处理
       engramEventBus.emit({
         type: 'WORKFLOW_FAILED',
         payload: { workflowName: 'EntityWorkflow', error: e },
@@ -358,7 +358,7 @@ export class EntityBuilder {
    */
   async extractManual(_dryRun = false): Promise<EntityBuildResult | null> {
     // 获取当前聊天历史 (不传参使用默认 recent)
-    // V1.0.5: 手动提取应该基于 "上次总结" 到现在的范围，
+    // 手动提取应该基于 "上次总结" 到现在的范围，
     // 这样给 LLM 提供的上下文才是完整的 (避免 "他说了什么" 这种指代不明)
     // 用户反馈: "上次提取" 会导致中间一段丢失上下文
     const state = await chatManager.getState();
@@ -391,7 +391,7 @@ export class EntityBuilder {
   async checkAndArchiveEntities(): Promise<void> {
     try {
       const store = useMemoryStore.getState();
-      // V1.4.3 Fix: 强化配置默认值保护，避免 undefined 导致逻辑失效
+      // 强化配置默认值保护，避免 undefined 导致逻辑失效
       const isEnabled = this.config.autoArchive ?? true;
       const limit = this.config.archiveLimit ?? 50;
 
@@ -425,7 +425,7 @@ export class EntityBuilder {
         );
         await store.archiveEntities(ids);
 
-        // V1.4.3: 广播事件，通知 UI (如 EntityConfigPanel) 刷新状态
+        // 广播事件，通知 UI (如 EntityConfigPanel) 刷新状态
         engramEventBus.emit({ type: 'ENTITY_ARCHIVED', payload: { archivedIds: ids } });
       }
     } catch (error) {
@@ -435,7 +435,7 @@ export class EntityBuilder {
 
   /**
    * 获取状态 (UI 适配)
-   * V0.9.1: 改为楼层相关状态
+   * 改为楼层相关状态
    */
   async getStatus() {
     const store = useMemoryStore.getState();

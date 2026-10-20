@@ -7,7 +7,7 @@ export class ParseJson implements IStep {
   name = 'ParseJson';
 
   async execute(context: JobContext): Promise<void> {
-    // V0.9.1: 优先使用 CleanRegex 清洗后的内容
+    // 优先使用 CleanRegex 清洗后的内容
     const contentToparse = context.cleanedContent || context.llmResponse?.content;
 
     if (!contentToparse) {

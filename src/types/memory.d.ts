@@ -27,7 +27,7 @@ export interface SummarizerConfig {
 
 /** 总结结果 */
 export interface SummaryResult {
-  /** 唯一标识 (V4 新增) */
+  /** 唯一标识 */
   id?: string;
 
   /** 总结内容 */
@@ -52,7 +52,7 @@ export interface SummarizerStatus {
   pendingFloors: number;
   /**
    * 触发模式
-   * auto: 自动触发 (基于楼层或 V2 Pipeline)
+   * auto: 自动触发 (基于楼层或 Pipeline)
    * manual: 仅手动
    */
   mode?: SummarizerTriggerType;
@@ -88,7 +88,6 @@ export interface EntityExtractConfig {
   /** 楼层间隔 (每 N 楼触发一次，默认 50) */
   floorInterval: number;
   /** 保留最近 N 条对话不处理 */
-  /** 保留最近 N 条对话不处理 */
   keepRecentCount: number;
   /** 是否启用预览修订 */
   previewEnabled?: boolean;
@@ -100,32 +99,3 @@ export interface EntityExtractConfig {
   archiveLimit?: number;
 }
 
-/**
- * 记忆槽位
- */
-export interface MemorySlot {
-  id: string;
-  label: string; // 可读名称 (Event Type 或 Entity Name)
-  category: 'event' | 'entity'; // 区分实体和事件
-
-  // 双轨强度
-  embeddingStrength: number;
-  rerankStrength: number;
-
-  // 最终计算分 (基础分，不含临时加成)
-  finalScore: number;
-
-  // 时间与计数
-  firstRound: number;
-  lastRound: number;
-  recallCount: number;
-
-  // 连胜计数
-  consecutiveWorkingCount: number;
-
-  // 层级
-  tier: 'working' | 'shortTerm';
-
-  // 向量缓存
-  embeddingVector?: number[];
-}

@@ -2,11 +2,6 @@ import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
 
 /**
- * EventBus - 事件总线封装
- *
- * 提供类型安全的事件订阅/取消订阅接口
- */
-/**
  * 酒馆事件常量 — 值与 @types/event.d.ts 中 tavern_events 保持一致
  *
  * 仅收录 Engram 当前消费 / 近期需要的事件；

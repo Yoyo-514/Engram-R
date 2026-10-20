@@ -62,14 +62,12 @@ const LogListItem: FC<LogListItemProps> = ({ entry, isSelected, onSelect }) => {
       <div className="mb-1 flex items-center gap-2">
         <span
           className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${
-            entry.mode === 'agentic'
-              ? 'bg-amber-500/20 text-amber-400'
-              : entry.mode === 'hybrid'
-                ? 'bg-purple-500/20 text-purple-400'
-                : 'bg-blue-500/20 text-blue-400'
+            entry.mode === 'hybrid'
+              ? 'bg-purple-500/20 text-purple-400'
+              : 'bg-blue-500/20 text-blue-400'
           }`}
         >
-          {entry.mode === 'agentic' ? 'Agentic' : entry.mode === 'hybrid' ? '混合' : '向量'}
+          {entry.mode === 'hybrid' ? '混合' : '向量'}
         </span>
         <span className="text-[10px] text-muted-foreground">
           {entry.stats.rerankCount}/{entry.stats.topKCount} 条
@@ -192,9 +190,6 @@ const ResultItem: FC<{ item: RecallResultItem }> = ({ item }) => {
           {item.hybridScore != null && (
             <ScoreBar label="Hybrid" score={item.hybridScore} color="bg-purple-500" />
           )}
-          {item.reason && (
-            <div className="mt-2 text-xs italic text-muted-foreground">💬 {item.reason}</div>
-          )}
         </div>
       )}
     </div>
@@ -280,18 +275,12 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
         <div className="mb-2 flex items-center gap-2">
           <span
             className={`rounded px-2 py-0.5 text-xs font-medium ${
-              entry.mode === 'agentic'
-                ? 'bg-amber-500/20 text-amber-400'
-                : entry.mode === 'hybrid'
-                  ? 'bg-purple-500/20 text-purple-400'
-                  : 'bg-blue-500/20 text-blue-400'
+              entry.mode === 'hybrid'
+                ? 'bg-purple-500/20 text-purple-400'
+                : 'bg-blue-500/20 text-blue-400'
             }`}
           >
-            {entry.mode === 'agentic'
-              ? 'Agentic 召回'
-              : entry.mode === 'hybrid'
-                ? '混合召回'
-                : '向量召回'}
+            {entry.mode === 'hybrid' ? '混合召回' : '向量召回'}
           </span>
           <span className="text-xs text-muted-foreground">{formatTime(entry.timestamp)}</span>
         </div>
@@ -299,12 +288,6 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
         <p className="mb-2 whitespace-pre-wrap break-words text-sm text-foreground/90">
           {entry.query}
         </p>
-
-        {entry.preprocessedQuery && entry.preprocessedQuery !== entry.query && (
-          <p className="min-w-0 whitespace-pre-wrap break-words text-xs text-muted-foreground">
-            → 预处理: {entry.preprocessedQuery}
-          </p>
-        )}
 
         {/* 统计 */}
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
@@ -317,58 +300,7 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
           </span>
         </div>
 
-        {/* V1.3.1: 类脑召回详情 */}
-        {entry.brainStats && (
-          <div className="mt-4 border-t border-border/30 pt-3">
-            <div className="mb-2 flex items-center gap-2">
-              <span className="text-xs font-medium text-foreground">类脑状态</span>
-              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                第 {entry.brainStats.round} 轮
-              </span>
-            </div>
-
-            <div className="overflow-hidden rounded border border-border/30 bg-muted/20">
-              <table className="w-full table-fixed text-left text-[10px]">
-                <thead className="bg-muted/30 text-muted-foreground">
-                  <tr>
-                    <th className="p-1.5 font-medium">Event</th>
-                    <th className="p-1.5 font-medium">Tier</th>
-                    <th className="p-1.5 text-right font-medium">Score</th>
-                    <th className="p-1.5 text-right font-medium">Count</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entry.brainStats.snapshot.map((slot) => (
-                    <tr
-                      key={slot.id}
-                      className="border-t border-border/10 transition-colors hover:bg-muted/20"
-                    >
-                      <td className="max-w-[80px] truncate p-1.5" title={slot.id}>
-                        {slot.label || slot.id.slice(0, 8)}
-                      </td>
-                      <td className="p-1.5">
-                        <span
-                          className={`rounded px-1 ${slot.tier === 'working' ? 'bg-green-500/10 text-green-500' : 'text-muted-foreground'}`}
-                        >
-                          {slot.tier === 'working' ? 'WM' : 'STM'}
-                        </span>
-                      </td>
-                      <td className="p-1.5 text-right font-mono">{slot.finalScore.toFixed(3)}</td>
-                      <td className="p-1.5 text-right font-mono">{slot.recallCount}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {entry.brainStats.snapshot.length === 0 && (
-                <div className="p-2 text-center text-[10px] italic text-muted-foreground">
-                  短期记忆为空
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* V1.4: 被激活的实体 */}
+        {/* 被激活的实体 */}
         {entry.recalledEntities && entry.recalledEntities.length > 0 && (
           <div className="mt-4 border-t border-border/30 pt-3">
             <div className="mb-2 flex items-center gap-2">

@@ -50,54 +50,6 @@ export interface RerankConfig {
   };
 }
 
-export interface BrainRecallConfig {
-  /** 是否启用 */
-  enabled: boolean;
-
-  // 容量配置
-  /** 工作记忆容量 (当前轮使用的) */
-  workingLimit: number;
-  /** 短期记忆容量 (近几轮召回过的) */
-  shortTermLimit: number;
-
-  /**
-   * P2 Fix: 工作记忆分配额（实体/事件分池）
-   * - 避免实体候选把事件全部挤出 WorkingMemory
-   * - 若不填写，则回退到 workingLimit（保持旧行为）
-   */
-  eventWorkingLimit?: number;
-  entityWorkingLimit?: number;
-
-  // 强化/衰减参数
-  /** 再次召回的强化系数 */
-  reinforceFactor: number;
-  /** 每轮衰减速率 */
-  decayRate: number;
-  /** 淘汰阈值 (低于此值移出短期记忆) */
-  evictionThreshold: number;
-
-  // 上下文感知
-  /** 上下文切换阈值 (当前分/首次分 < 此值触发 softReset) */
-  contextSwitchThreshold: number;
-
-  // V1.2 新算法参数
-  /** Rerank 强化门控阈值 (Rerank分数 < 此值不强化) */
-  gateThreshold: number;
-  /** 强化阻尼 (单次强化最大增量) */
-  maxDamping: number;
-  /** Sigmoid 温度系数 (越小S曲线越陡) */
-  sigmoidTemperature: number;
-
-  // V1.3 进阶参数
-  /** 厌倦惩罚与动态衰减 (V1.3) */
-  boredomThreshold: number; // 连续进入工作记忆 N 次触发厌倦
-  boredomPenalty: number; // 厌倦时的额外衰减
-
-  /** 多样性与冷启动 (V1.3) */
-  mmrThreshold: number; // MMR 相似度阈值 (>此值为了多样性会降权)
-  newcomerBoost: number; // 新人红利 (给新条目的其始 boost)
-}
-
 export interface RecallConfig {
   /** 是否启用 RAG 召回系统 (总开关) */
   enabled: boolean;
@@ -108,13 +60,7 @@ export interface RecallConfig {
   /** 策略 2: 是否使用 Rerank 重排序 */
   useRerank: boolean;
 
-  /** 策略 3: 是否使用 LLM 预处理 (Query 增强/剧情编排) */
-  usePreprocess: boolean;
-
-  /** 策略 4: 是否使用 Agentic RAG (LLM 裁判式召回) */
-  useAgenticRAG: boolean;
-
-  /** 策略 5: 是否使用关键词召回 (0 消耗模式) */
+  /** 策略 3: 是否使用关键词召回 (0 消耗模式) */
   useKeywordRecall?: boolean;
 
   /** 关键词召回细分：是否检索实体 (默认 true) */
@@ -124,7 +70,7 @@ export interface RecallConfig {
   enableEventKeyword?: boolean;
 
   /**
-   * P1 Fix: 关键词召回硬上限 (Hard TopK)
+   * 关键词召回硬上限 (Hard TopK)
    * - 防止 [`KeywordRetrieveStep.execute()`](src/modules/workflow/steps/rag/KeywordRetrieveStep.ts:15) 候选爆炸
    */
   keywordTopK?: {
@@ -139,9 +85,6 @@ export interface RecallConfig {
     topK: number;
     minScoreThreshold: number;
   };
-
-  /** 类脑召回配置 (V0.9.5 实验性) */
-  brainRecall?: BrainRecallConfig;
 }
 
 export interface RecallCandidate {

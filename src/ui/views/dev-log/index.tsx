@@ -57,14 +57,14 @@ const TAB_INFO: Record<TabType, { title: string; subtitle: string }> = {
   recall: { title: '召回日志', subtitle: '查看 RAG 召回记录' },
 };
 
-// V0.9.10: 模块列表自动生成（不再硬编码）
+// 模块列表自动生成（不再硬编码）
 const MODULES = ['ALL', ...ALL_MODULES];
 
 // 日志订阅批量合并间隔：高频日志下把多次 setState 合并为一次
 const LOG_BATCH_INTERVAL_MS = 100;
 
 // 虚拟化列表行类型：分组头或单条日志
-// 重构说明：V0.9.12 的分组展示保留，但改为 flatten 行 + Virtuoso 虚拟化渲染
+// 重构说明：分组展示保留，但改为 flatten 行 + Virtuoso 虚拟化渲染
 // 5000 条日志只渲染可视区域，避免全量 DOM 导致卡顿
 type LogRow =
   | { kind: 'header'; summary: LogGroupSummary }
@@ -85,7 +85,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   const [autoScroll, setAutoScroll] = useState(true);
   const [showLevelDropdown, setShowLevelDropdown] = useState(false);
   const [showModuleDropdown, setShowModuleDropdown] = useState(false);
-  // V0.9.12: 分组展开控制
+  // 分组展开控制
   const [defaultGroupExpanded, setDefaultGroupExpanded] = useState(true);
   const [defaultDataExpanded] = useState(false);
 
@@ -137,7 +137,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
     return result;
   }, [logs, levelFilter, moduleFilter, searchQuery]);
 
-  // V0.9.12: 将日志按模块分组
+  // 将日志按模块分组
   const logGroups = useMemo(() => {
     return groupLogsByModule(filteredLogs);
   }, [filteredLogs]);
@@ -183,7 +183,6 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   return (
     <div className="flex h-full flex-col">
       {/* 页面标题 - 统一样式 */}
-      {/* 页面标题 - 统一样式 */}
       <PageTitle
         breadcrumbs={['开发日志']}
         title={currentInfo.title}
@@ -202,7 +201,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
       {activeTab === 'runtime' && (
         <div className="flex min-h-0 flex-1 flex-col">
           {/* 工具栏 - sticky (Level 2, now top-0 because tabs are in header) */}
-          <div className="bg-background/95 sticky top-0 z-10 -mx-4 border-b border-border px-4 py-3 backdrop-blur-sm">
+          <div className="sticky top-0 z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm">
             <div className="flex flex-wrap items-center gap-2">
               {/* 级别过滤 */}
               <div className="relative">
@@ -287,7 +286,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
 
               {/* 右侧操作 */}
               <div className="ml-auto flex items-center gap-1">
-                {/* V0.9.12: 分组展开控制 */}
+                {/* 分组展开控制 */}
                 <button
                   className={`rounded p-1.5 transition-colors ${defaultGroupExpanded ? 'text-primary' : 'text-muted-foreground hover:text-foreground'}`}
                   onClick={() => setDefaultGroupExpanded(!defaultGroupExpanded)}

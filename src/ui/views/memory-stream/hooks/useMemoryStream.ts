@@ -4,9 +4,9 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EntityType } from '@/config/memory/defaults';
 import { get } from '@/config/settings';
 import { engramEventBus } from '@/core/events/event-bus';
-import { refreshEngramCache } from '@/integrations/tavern';
+import { refreshEngramCache, getCurrentChatId } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
-import { brainRecallCache } from '@/modules/rag/retrieval/BrainRecallCache';
+import { recallCache } from '@/modules/rag/retrieval/RecallCache';
 import { useMemoryStore, getCurrentDb } from '@/state/memoryStore';
 import type { EntityNode, EventNode } from '@/types/graph';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -95,9 +95,9 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // 从类脑缓存刷新激活状态（事件 + 实体）
+  // 从近期召回记录刷新激活状态（事件 + 实体）
   const refreshActiveState = useCallback(() => {
-    const snapshot = brainRecallCache.getShortTermSnapshot();
+    const snapshot = recallCache.getSnapshot(getCurrentChatId());
     setActiveIds(new Set(snapshot.map((s) => s.id)));
     setEntityActiveIds(new Set(snapshot.filter((s) => s.category === 'entity').map((s) => s.id)));
   }, []);
@@ -133,7 +133,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     })();
   }, [loadEvents, loadEntities]);
 
-  // 订阅召回完成事件：类脑缓存更新后实时刷新激活状态（事件与实体高亮/过滤）
+  // 订阅召回完成事件：刷新近期召回的激活状态（事件与实体高亮/过滤）
   useEffect(() => {
     const { unsubscribe } = engramEventBus.subscribe((event) => {
       if (event.type === 'RETRIEVAL_COMPLETE') {
@@ -263,7 +263,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
         await store.updateEntity(id, { is_archived: isArchived });
 
         if (isArchived) {
-          brainRecallCache.forget(id);
+          recallCache.forget(getCurrentChatId(), id);
         }
 
         setEntities((prev) =>
@@ -460,7 +460,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
   }, [loadEvents]);
 
   // ==========================================
-  // 手动创建事件 / 实体 (V1.4.6: 直接写入 DB)
+  // 手动创建事件 / 实体 直接写入 DB
   // ==========================================
 
   const handleCreateEvent = useCallback(async () => {

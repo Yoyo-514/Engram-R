@@ -5,14 +5,19 @@ import { Virtuoso } from 'react-virtuoso';
 
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode, EventNode } from '@/types/graph';
-import type { AgenticRecall } from '@/types/preprocess';
 import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
+
+export interface RecallPreviewItem {
+  id: string;
+  score: number;
+  reason: string;
+}
 
 type RecalledEntity = EntityNode & {
   recallWeight?: number;
 };
 
-type DisplayEvent = AgenticRecall & {
+type DisplayEvent = RecallPreviewItem & {
   summary: string;
   typeLabel: string;
 };
@@ -20,13 +25,13 @@ type DisplayEvent = AgenticRecall & {
 interface RecallDecisionModalProps {
   isOpen: boolean;
   onClose: () => void;
-  initialRecalls: AgenticRecall[];
+  initialRecalls: RecallPreviewItem[];
   recalledEntities?: RecalledEntity[]; // V1.4: 传入被激活的实体
-  onConfirm: (newRecalls: AgenticRecall[]) => void;
+  onConfirm: (newRecalls: RecallPreviewItem[]) => void;
 }
 
 /**
- * RecallDecisionModal - Agentic RAG 召回决策审阅与编辑弹窗
+ * RecallDecisionModal - 召回结果预览与确认
  */
 export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
   isOpen,
@@ -36,7 +41,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
   onConfirm,
 }) => {
   // 状态: 存储组件内编辑的 recalls (基于 initialRecalls 初始化)
-  const [editedRecalls, setEditedRecalls] = useState<AgenticRecall[]>([]);
+  const [editedRecalls, setEditedRecalls] = useState<RecallPreviewItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [allEvents, setAllEvents] = useState<EventNode[]>([]);
 
@@ -99,7 +104,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
   // --- 交互处理 ---
 
   const handleConfirm = () => {
-    // 构建最终的 AgenticRecall 列表并抛出
+    // 构建最终的 RecallPreviewItem 列表并抛出
     onConfirm(editedRecalls);
     onClose();
   };
@@ -149,7 +154,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
     <SimpleModal
       isOpen={isOpen}
       onClose={onClose}
-      title="Agentic 召回审阅"
+      title="召回结果审阅"
       maxWidth="max-w-3xl"
       footer={renderFooter()}
     >
@@ -215,7 +220,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
             )}
           </div>
 
-          {/* V1.4: 被唤醒的实体展示 (只读) */}
+          {/* 被唤醒的实体展示 (只读) */}
           {recalledEntities.length > 0 && (
             <div className="mt-4 border-t border-border/40 pt-4">
               <h5 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">

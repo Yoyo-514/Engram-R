@@ -1,7 +1,7 @@
 /**
  * LogModule - 日志模块枚举
  *
- * V0.9.10: 统一模块命名，按业务域划分
+ * 统一模块命名，按业务域划分
  * 格式: `域/功能` 或 `域`
  */
 
@@ -21,9 +21,6 @@ export enum LogModule {
   RAG_RERANK = 'RAG/Rerank',
   RAG_INJECT = 'RAG/Inject',
   RAG_CACHE = 'RAG/Cache',
-
-  // ===== 预处理 =====
-  PREPROCESS = 'Preprocess',
 
   // ===== 批处理 =====
   BATCH = 'Batch',

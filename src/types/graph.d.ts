@@ -23,7 +23,7 @@ export interface EventNode {
     time_anchor: string;
     /** 涉及人物 */
     role: string[];
-    /** 地点列表 (V1.0.2: 改为数组以支持多地点场景) */
+    /** 地点列表（多地点场景） */
     location: string[];
     /** 事件类型/标题 */
     event: string;
@@ -82,8 +82,7 @@ export interface EventNode {
 
 /**
  * EntityNode - Graph Entities
- * V0.9.4: 重构为 "无边设计 + 双重结构" 范式
- *
+ * 重构为 "无边设计 + 双重结构" 范式
  * 设计理念:
  * - For Model: description 字段存储 YAML 格式的烧录文本
  * - For Machine: profile 字段存储开放式 JSON 结构
@@ -136,7 +135,7 @@ export interface EntityNode {
 
   /**
    * Semantic Vector
-   * (New in V0.9.8)
+   *
    */
   embedding?: number[];
 
@@ -165,8 +164,8 @@ export interface ScopeState {
   token_usage_accumulated: number;
   last_compressed_at: number;
   active_summary_order: number;
-  /** V0.9.1: 上次实体提取的楼层 */
+  /** 上次实体提取的楼层 */
   last_extracted_floor: number;
-  /** V0.9.10: 最后修改时间戳 (用于同步) */
+  /** 最后修改时间戳 (用于同步) */
   lastModified: number;
 }

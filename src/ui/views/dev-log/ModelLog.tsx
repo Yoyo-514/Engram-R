@@ -66,8 +66,10 @@ const formatDuration = (ms?: number): string => {
   return `${(ms / 1000).toFixed(1)}s`;
 };
 
-/** 单条日志卡片 */
-// 性能说明：React.memo + ModelLogger 不可变更新，订阅通知时仅重渲染变化的卡片
+/**
+ * 单条日志卡片。
+ * React.memo + ModelLogger 不可变更新，订阅通知时仅重渲染变化的卡片。
+ */
 const LogCard: FC<{
   sent: ModelLogEntry;
   received?: ModelLogEntry;

@@ -36,8 +36,8 @@ export function chunkText(text: string, chunkSize: number, overlapSize: number):
 }
 
 /**
- * V0.9.7: 调用 LLM 对单个文本块生成结构化摘要
- * V1.0.6: 增强宏支持 ({{chatHistory}} 等)
+ * 调用 LLM 对单个文本块生成结构化摘要
+ * 增强宏支持 ({{chatHistory}} 等)
  */
 export async function summarizeChunk(chunk: string, chunkIndex: number): Promise<string> {
   // 1. 注入当前分块到宏系统 (供 {{userInput}} 使用)

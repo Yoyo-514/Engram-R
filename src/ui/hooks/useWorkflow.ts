@@ -80,7 +80,7 @@ export function useWorkflow(): UseWorkflowReturn {
   }, []);
 
   const start = useCallback(() => {
-    // V1.0 架构下不再由统一的 start() 入口承接所有任务，而是通过 BatchProcessor 暴露的业务接口。
+    // 架构下不再由统一的 start() 入口承接所有任务，而是通过 BatchProcessor 暴露的业务接口。
     // UI 的 start 按钮目前在设计上由业务面板自己调用（如 startHistory）
     console.warn(
       'Generic start() is deprecated. Please use BatchProcessor.startHistory() or importText().'

@@ -20,7 +20,7 @@ import { chatManager } from '@/data/ChatManager';
 /**
  * BatchProcessingPanel - 批量处理面板
  *
- * V0.9.6: Processing 子面板
+ * Processing 子面板
  * - 历史消息批处理
  * - 外部 txt 导入
  */
@@ -101,12 +101,12 @@ const DataBatchSection: FC = () => {
   };
 
   return (
-    <section className="border-border/50 space-y-4 border-t pt-4">
+    <section className="space-y-4 border-t border-border/50 pt-4">
       <h3 className="text-sm font-medium text-primary">数据批处理</h3>
       <p className="text-xs text-muted-foreground">对事件数据进行批量操作（不依赖楼层范围）</p>
 
       {/* 归档操作卡片 */}
-      <div className="bg-card/30 border-border/30 space-y-3 rounded-lg border p-4">
+      <div className="space-y-3 rounded-lg border border-border/30 bg-card/30 p-4">
         <div className="flex items-center gap-2">
           <Archive size={14} className="text-primary" />
           <span className="text-sm font-medium text-foreground">归档已嵌入事件</span>
@@ -117,7 +117,7 @@ const DataBatchSection: FC = () => {
 
         {/* 扫描结果 */}
         {archiveStats && (
-          <div className="bg-muted/20 space-y-1 rounded p-2 text-xs">
+          <div className="space-y-1 rounded bg-muted/20 p-2 text-xs">
             <div className="flex justify-between">
               <span className="text-muted-foreground">level 0 事件总数</span>
               <span className="font-mono text-foreground">{archiveStats.total}</span>
@@ -136,7 +136,7 @@ const DataBatchSection: FC = () => {
         {/* 操作按钮 */}
         <div className="flex items-center gap-2">
           <button
-            className="hover:bg-muted/30 inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground disabled:opacity-40"
             onClick={handleScan}
             disabled={isScanning || isArchiving}
           >
@@ -144,7 +144,7 @@ const DataBatchSection: FC = () => {
             扫描
           </button>
           <button
-            className="hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground transition-colors disabled:opacity-40"
+            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
             onClick={handleArchive}
             disabled={isArchiving || !archiveStats || archiveStats.pending === 0}
           >
@@ -172,7 +172,7 @@ export const BatchProcessingPanel: FC = () => {
   const [startFloor, setStartFloor] = useState(1);
   const [endFloor, setEndFloor] = useState<number>(summarizerService.getStatus().currentFloor || 0);
 
-  // V1.0.8: 异步获取底层指针来初始化 startFloor
+  // 异步获取底层指针来初始化 startFloor
   useEffect(() => {
     const initFloors = async () => {
       try {
@@ -319,7 +319,7 @@ export const BatchProcessingPanel: FC = () => {
         </div>
 
         {/* 任务类型选择 (Checkbox Grid) */}
-        <div className="bg-muted/10 border-border/50 grid grid-cols-2 gap-3 rounded-lg border p-3">
+        <div className="grid grid-cols-2 gap-3 rounded-lg border border-border/50 bg-muted/10 p-3">
           <span className="col-span-2 mb-1 text-xs font-medium text-muted-foreground">
             选择任务类型
           </span>
@@ -390,7 +390,7 @@ export const BatchProcessingPanel: FC = () => {
             <div className="flex flex-wrap gap-3">
               {!queue.isRunning ? (
                 <button
-                  className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors"
+                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
                   onClick={handleStart}
                 >
                   <Play size={14} />
@@ -406,7 +406,7 @@ export const BatchProcessingPanel: FC = () => {
                     {queue.isPaused ? '继续' : '暂停'}
                   </button>
                   <button
-                    className="hover:text-destructive/80 border-destructive/30 inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm text-destructive transition-colors"
+                    className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm text-destructive transition-colors hover:text-destructive/80"
                     onClick={handleStop}
                   >
                     <Square size={14} />
@@ -427,7 +427,7 @@ export const BatchProcessingPanel: FC = () => {
           </>
         )}
 
-        {/* 美化的多级进度条与状态展示 (V0.9.21) - 移出 analysis 块，即使没分析也能在后台跑的时候显示 */}
+        {/* 美化的多级进度条与状态展示  - 移出 analysis 块，即使没分析也能在后台跑的时候显示 */}
         {queue && (queue.isRunning || queue.tasks.length > 0) && (
           <div className="space-y-4 pt-2">
             {/* 1. 总体进度区域 */}
@@ -440,7 +440,7 @@ export const BatchProcessingPanel: FC = () => {
                   {overallPercent}%
                 </span>
               </div>
-              <div className="border-border/40 relative h-2 overflow-hidden rounded-full border bg-muted">
+              <div className="relative h-2 overflow-hidden rounded-full border border-border/40 bg-muted">
                 <div
                   className="absolute left-0 top-0 h-full bg-primary transition-all duration-[var(--duration-slow)] ease-[var(--ease-out)]"
                   style={{ width: `${overallPercent}%` }}
@@ -473,7 +473,7 @@ export const BatchProcessingPanel: FC = () => {
 
             {/* 2. 活动任务焦点窗口 */}
             {queue.isRunning && currentTask && (
-              <div className="border-primary/20 bg-primary/5 flex min-w-0 items-start gap-3 rounded-lg border bg-card p-3">
+              <div className="flex min-w-0 items-start gap-3 rounded-lg border border-primary/20 bg-card bg-primary/5 p-3">
                 <div className="mt-0.5 shrink-0">
                   <RefreshCw size={16} className="animate-spin text-primary" />
                 </div>
@@ -511,14 +511,14 @@ export const BatchProcessingPanel: FC = () => {
                     {TASK_TYPE_LABELS[task.type] || task.type}
                   </span>
                   {task.floorRange && (
-                    <span className="text-muted-foreground/50 font-mono">
+                    <span className="font-mono text-muted-foreground/50">
                       #{task.floorRange.start}-{task.floorRange.end}
                     </span>
                   )}
                 </div>
               ))}
               {queue.tasks.length > 10 && (
-                <div className="text-muted-foreground/50 text-xs">
+                <div className="text-xs text-muted-foreground/50">
                   ...还有 {queue.tasks.length - 10} 个任务
                 </div>
               )}
@@ -632,7 +632,7 @@ export const BatchProcessingPanel: FC = () => {
         {importText && (
           <div>
             <span className="mb-2 block text-xs text-muted-foreground">预览</span>
-            <div className="bg-muted/20 max-h-32 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border p-3 font-mono text-xs text-muted-foreground">
+            <div className="max-h-32 overflow-y-auto whitespace-pre-wrap break-words rounded-lg border border-border bg-muted/20 p-3 font-mono text-xs text-muted-foreground">
               {importText.slice(0, 500)}...
             </div>
             <div className="mt-1 text-[10px] text-muted-foreground">
@@ -643,7 +643,7 @@ export const BatchProcessingPanel: FC = () => {
 
         {/* 导入按钮 */}
         <button
-          className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
           onClick={handleImport}
           disabled={!importText || isImporting}
         >

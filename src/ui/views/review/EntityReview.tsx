@@ -1,4 +1,5 @@
 import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { Logger } from '@/core/logger';
 import { useState } from 'react';
 import type { FC } from 'react';
 
@@ -60,9 +61,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
       const yamlContent = stringifyYaml(entityObj);
       setPreviewDescription(`${editingEntity.entity.name}\n${yamlContent.trim()}`);
     } catch (_error) {
-      // If JSON is invalid during typing, we might not have a valid object to dump.
-      // But here entity.profile is already an object (parsed from JSON input).
-      // So this catch is for yaml dump errors.
+      Logger.warn('EntityReview', 'YAML 预览生成失败，保留原文');
     }
   }
 
@@ -90,7 +89,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
     if (!editingEntity) return;
     const { list, index, entity } = editingEntity;
 
-    // V1.5: Enforce Standard YAML Description Format on Save
+    // Enforce Standard YAML Description Format on Save
     // We use the calculated preview as the source of truth for description
     // 不可变更新：避免直接修改 state 中的实体对象
     const nextEntity = previewDescription ? { ...entity, description: previewDescription } : entity;

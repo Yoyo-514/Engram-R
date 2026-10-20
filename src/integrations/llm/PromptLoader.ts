@@ -99,7 +99,7 @@ export function initPromptLoader(forceReload = false): void {
 }
 
 /**
- * 获取所有内置模板 (V0.9.1)
+ * 获取所有内置模板
  */
 export function getBuiltInTemplates(forceReload = false): PromptTemplate[] {
   // 确保已从 YAML 加载
@@ -108,7 +108,7 @@ export function getBuiltInTemplates(forceReload = false): PromptTemplate[] {
 }
 
 /**
- * 获取所有模板的 Alias (V1.0.0 Refactor)
+ * 获取所有模板的 Alias
  */
 export function getAllTemplates(): PromptTemplate[] {
   return getBuiltInTemplates();

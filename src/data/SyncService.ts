@@ -1,78 +1,74 @@
 import type { DebouncedFunc } from 'lodash-es';
 import debounce from 'lodash-es/debounce';
 
-import { getSettings } from '@/config/settings';
+import { getSettings, subscribe } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
 import { type ChatDataDump, getDbForChat, exportChatData, importChatData } from '@/data/db';
 import { eventBus, events, getRequestHeaders, getSTContext } from '@/integrations/tavern';
 import { notificationService } from '@/ui/services/NotificationService';
 
+import { DATA_SYNC_OPTIONS } from '../../engram.config';
+
 const MODULE = LogModule.DATA_SYNC;
-const DEBOUNCE_DELAY = 3000;
 const SYNC_FILE_PREFIX = 'Engram_sync_';
 const SYNC_FILE_EXT = '.json';
 
 class SyncService {
   private static instance: SyncService;
   private debouncedUploads: Map<string, DebouncedFunc<() => void>> = new Map();
-  private isImporting: boolean = false; // 导入锁，防止导入时触发上传
+  private importingCount = 0;
+  private started = false;
+  private removeListeners?: () => void;
+  private automaticDownloads = new Map<string, Promise<void>>();
 
   public get isImportingState(): boolean {
-    return this.isImporting;
+    return this.importingCount > 0;
   }
 
-  private hasDocumentAccess(): boolean {
-    return typeof document !== 'undefined' && typeof document.addEventListener === 'function';
+  private get automaticSyncEnabled(): boolean {
+    const config = getSettings().syncConfig;
+    return config.enabled && config.autoSync;
   }
 
   private constructor() {
-    Logger.info(MODULE, `Initialized SyncService`);
-    this.initEventListeners();
+    Logger.info(MODULE, 'Initialized SyncService');
   }
 
-  private initEventListeners() {
-    // 动态导入 eventBus 以避免循环依赖（如果 eventBus 依赖其他模块）
-    // 这里假设 eventBus 是独立的或我们延迟绑定
-    // 为确保安全，我们在第一次 getInstance 时不强依赖 Tavern 上下文，
-    // 而是依靠外部调用 init 或在构造函数中尝试
-    setTimeout(() => {
-      void (async () => {
-        // 监听聊天切换事件
-        eventBus.on(events.CHAT_CHANGED, () => {
-          void (async () => {
-            const chatId = getSTContext()?.chatId;
-            if (chatId) {
-              Logger.info(MODULE, `Chat changed to ${chatId}, checking sync...`);
-              // 延迟一点等待 DB 准备好
-              setTimeout(() => {
-                void this.autoSyncDownload(chatId);
-              }, 1000);
-            }
-          })();
-        });
+  /** 设置初始化后启动；自动同步关闭时仅订阅配置变更。 */
+  public start(): void {
+    if (this.started) return;
+    this.started = true;
+    subscribe(() => this.refreshListeners());
+    this.refreshListeners();
+  }
 
-        // 首次加载也检查一次
-        const initialChatId = getSTContext()?.chatId;
-        if (initialChatId) {
-          void this.autoSyncDownload(initialChatId);
-        }
+  private checkCurrentChat = (): void => {
+    const chatId = getSTContext()?.chatId;
+    if (chatId) {
+      void this.autoSyncDownload(chatId).catch((error) => {
+        Logger.error(MODULE, `Auto-download failed for ${chatId}`, error);
+      });
+    }
+  };
 
-        // P1 Fix: 增加可见性监听，实现“重回焦点即检查同步”
-        if (this.hasDocumentAccess()) {
-          document.addEventListener('visibilitychange', () => {
-            if (document.visibilityState === 'visible') {
-              const currentChatId = getSTContext()?.chatId;
-              if (currentChatId) {
-                Logger.debug(MODULE, 'Tab became visible, checking sync...');
-                void this.autoSyncDownload(currentChatId);
-              }
-            }
-          });
-        } else {
-          Logger.debug(MODULE, 'Document API 不可用，跳过 visibilitychange 监听');
-        }
-      })();
-    }, 2000);
+  private refreshListeners(): void {
+    if (!this.automaticSyncEnabled) {
+      this.removeListeners?.();
+      this.removeListeners = undefined;
+      for (const chatId of this.debouncedUploads.keys()) this.clearPendingUpload(chatId);
+      return;
+    }
+    if (this.removeListeners) return;
+    const offChat = eventBus.on(events.CHAT_CHANGED, this.checkCurrentChat);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') this.checkCurrentChat();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    this.removeListeners = () => {
+      offChat();
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+    this.checkCurrentChat();
   }
 
   public static getInstance(): SyncService {
@@ -117,14 +113,13 @@ class SyncService {
    */
   public scheduleUpload(chatId: string) {
     // 检查导入锁
-    if (this.isImporting) {
+    if (this.isImportingState) {
       Logger.debug(MODULE, `Skipping upload schedule for ${chatId} (Importing)`);
       return;
     }
 
     // 检查配置
-    const config = getSettings().syncConfig;
-    if (!config?.enabled || !config?.autoSync) {
+    if (!this.automaticSyncEnabled) {
       this.clearPendingUpload(chatId);
       return;
     }
@@ -135,15 +130,14 @@ class SyncService {
         this.debouncedUploads.delete(chatId);
 
         // 再次检查配置，防止在 debounce 期间被关闭
-        const currentConfig = getSettings().syncConfig;
-        if (!currentConfig?.enabled || !currentConfig?.autoSync) {
+        if (!this.automaticSyncEnabled || this.isImportingState) {
           return;
         }
 
         this.upload(chatId).catch((err) => {
           Logger.error(MODULE, `Auto-upload failed for ${chatId}`, err);
         });
-      }, DEBOUNCE_DELAY);
+      }, DATA_SYNC_OPTIONS.uploadDelayMs);
       this.debouncedUploads.set(chatId, uploadFn);
     }
 
@@ -175,9 +169,9 @@ class SyncService {
 
       const jsonString = JSON.stringify(dump);
 
-      // P3 Fix: 增加超大文件预警，防止静默同步失败喵
+      // 增加超大文件预警，防止静默同步失败喵
       const sizeInMB = jsonString.length / (1024 * 1024);
-      if (sizeInMB > 15) {
+      if (sizeInMB > DATA_SYNC_OPTIONS.largeFileWarningMb) {
         Logger.warn(
           MODULE,
           `同步内容过大 (${sizeInMB.toFixed(2)} MB), 可能会导致同步缓慢或失败喵！`
@@ -190,7 +184,7 @@ class SyncService {
 
       const fileName = this.getSyncFileName(chatId);
 
-      // P0 Fix: 异步转码方案，防止大文件阻塞主线程
+      // 异步转码方案，防止大文件阻塞主线程
       // 使用 Blob + FileReader 转码为数据 URL，它能流式处理并释放 CPU 压力
       const base64Data = await new Promise<string>((resolve, reject) => {
         const blob = new Blob([jsonString], { type: 'application/json' });
@@ -207,7 +201,7 @@ class SyncService {
 
       // 使用 /api/files/upload 上传 (带重试逻辑)
       let response: Response | null = null;
-      for (let i = 0; i < 3; i++) {
+      for (let i = 0; i < DATA_SYNC_OPTIONS.uploadAttempts; i++) {
         try {
           response = await fetch('/api/files/upload', {
             method: 'POST',
@@ -220,14 +214,16 @@ class SyncService {
           if (response.ok) break;
           Logger.warn(MODULE, `Upload attempt ${i + 1} failed, retrying...`);
         } catch (e) {
-          if (i === 2) throw e;
-          await new Promise((r) => setTimeout(r, 1000 * (i + 1))); // 指数退避
+          if (i === DATA_SYNC_OPTIONS.uploadAttempts - 1) throw e;
+          await new Promise((r) => setTimeout(r, DATA_SYNC_OPTIONS.uploadRetryDelayMs * (i + 1)));
         }
       }
 
       if (!response || !response.ok) {
         const errText = await response?.text();
-        throw new Error(`Upload failed after 3 attempts: ${response?.statusText} - ${errText}`);
+        throw new Error(
+          `Upload failed after ${DATA_SYNC_OPTIONS.uploadAttempts} attempts: ${response?.statusText} - ${errText}`
+        );
       }
 
       Logger.success(MODULE, `上传完成: ${fileName}`);
@@ -272,7 +268,7 @@ class SyncService {
 
       if (!response.ok) return { exists: false, timestamp: 0 };
 
-      // P1 Fix: 放弃直接 response.json() 把整个几 MB 甚至几十 MB 吃进内存
+      // 放弃直接 response.json() 把整个几 MB 甚至几十 MB 吃进内存
       // 改为流式读取 Buffer 首部，提取 meta.lastModified 后即刻 abort
       const reader = response.body?.getReader();
       if (!reader) {
@@ -306,7 +302,7 @@ class SyncService {
 
         // 为了防止极端情况下 meta 不在最前面，但也不会找太久
         // 仅扫描前 100KB (粗略判断)，如果在 100KB 内没找到也 abort 以保安全
-        if (chunkStr.length > 102400) {
+        if (chunkStr.length > DATA_SYNC_OPTIONS.statusScanChars) {
           void reader.cancel();
           break;
         }
@@ -323,9 +319,9 @@ class SyncService {
    * 下载并导入数据
    */
   public async download(chatId: string): Promise<string> {
+    this.importingCount++;
     try {
       Logger.info(MODULE, `Downloading for ${chatId}...`);
-      this.isImporting = true; // 加锁
 
       const fileName = this.getSyncFileName(chatId);
       const url = this.getSyncFileUrl(fileName);
@@ -333,14 +329,12 @@ class SyncService {
 
       if (!response.ok) {
         Logger.warn(MODULE, `No remote data found for ${chatId} (HTTP ${response.status})`);
-        this.isImporting = false;
         return 'no_data';
       }
 
       const dump = (await response.json()) as ChatDataDump;
 
       if (!dump.events || !dump.entities) {
-        this.isImporting = false;
         throw new Error('Invalid file format: missing events or entities');
       }
 
@@ -363,10 +357,7 @@ class SyncService {
       Logger.error(MODULE, `Download failed for ${chatId}`, error);
       return 'error';
     } finally {
-      // 延迟释放锁，等待可能的 DB 钩子处理完毕
-      setTimeout(() => {
-        this.isImporting = false;
-      }, 1000);
+      this.importingCount--;
     }
   }
 
@@ -375,27 +366,38 @@ class SyncService {
    * 用于切换聊天时检查
    */
   public async autoSyncDownload(chatId: string): Promise<void> {
-    const config = getSettings().syncConfig;
-    if (!config?.enabled || !config?.autoSync) return;
+    if (!this.automaticSyncEnabled) return;
+    const active = this.automaticDownloads.get(chatId);
+    if (active) return active;
+    const pending = this.downloadIfNewer(chatId);
+    this.automaticDownloads.set(chatId, pending);
+    try {
+      await pending;
+    } finally {
+      this.automaticDownloads.delete(chatId);
+    }
+  }
 
+  private async downloadIfNewer(chatId: string): Promise<void> {
     const remoteStatus = await this.getRemoteStatus(chatId);
-    if (!remoteStatus.exists) return;
+    if (!remoteStatus.exists || !this.automaticSyncEnabled) return;
 
-    // 检查本地时间
-    // 检查本地时间 (lastModified)
+    // 比较同一聊天的远端与本地修改时间。
     const db = getDbForChat(chatId);
     const localMeta = await db.meta.get('lastModified');
     const localTs = (localMeta?.value as number) || 0;
 
     // 如果远程更新
-    if (remoteStatus.timestamp > localTs) {
+    if (this.automaticSyncEnabled && remoteStatus.timestamp > localTs) {
       Logger.info(
         MODULE,
         `Found newer remote data (${remoteStatus.timestamp} > ${localTs}), downloading...`
       );
       const result = await this.download(chatId);
       if (result === 'success') {
-        notificationService.success('已自动同步云端数据', 'Engram', { timeOut: 3000 });
+        notificationService.success('已自动同步云端数据', 'Engram', {
+          timeOut: DATA_SYNC_OPTIONS.notificationDurationMs,
+        });
       }
     } else {
       Logger.debug(

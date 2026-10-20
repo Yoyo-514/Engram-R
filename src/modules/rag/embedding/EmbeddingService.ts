@@ -1,5 +1,5 @@
 /**
- * EmbeddingService V0.7
+ * EmbeddingService
  *
  * 通用向量化 Pipeline 组件
  * - 支持并发队列处理
@@ -297,7 +297,7 @@ export function createEmbeddingService() {
 
     const db = getDbForChat(chatId);
 
-    // 获取未嵌入的事件 (V1.2.2: 仅处理 Level 0 事件，大纲节点不进行向量化)
+    // 获取未嵌入的 Level 0 事件
     let events = await db.events
       .filter((event) => event.level === 0 && !event.is_embedded && !event.embedding)
       .toArray();
@@ -406,7 +406,7 @@ export function createEmbeddingService() {
 
     const db = getDbForChat(chatId);
 
-    // 获取所有事件 (V1.2.2: 仅处理 Level 0 事件)
+    // 获取所有 Level 0 事件
     let events = await db.events.filter((event) => event.level === 0).toArray();
 
     // 应用范围过滤

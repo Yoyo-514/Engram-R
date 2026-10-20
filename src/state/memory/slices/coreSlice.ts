@@ -21,7 +21,6 @@ export interface CoreState {
   clearChatDatabase: () => Promise<void>;
   deleteChatDatabase: () => Promise<void>;
 
-  // V0.6 Compat
   resolveScope: (chatId: string, characterName?: string) => Promise<{ id: number }>;
   currentScope: { id: number } | null;
 }

@@ -69,17 +69,17 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   // 加载状态（useCallback 定义在前，effect 仅调用）
   const loadStatus = useCallback(async () => {
     try {
-      // V0.7.1: 始终刷新缓存，确保待处理数正确
+      // 始终刷新缓存，确保待处理数正确
       await summarizerService.initializeForCurrentChat();
       const currentStatus = summarizerService.getStatus();
       setStatus(currentStatus);
       // Config loading removed as it comes from props
 
-      // 加载精简服务状态 (使用 EventTrimmer V0.7)
+      // 加载精简服务状态 (使用 EventTrimmer )
       const trimmerStatus = await eventTrimmer.getStatus();
       setTrimStatus(trimmerStatus);
 
-      // V0.7.1: 从 IndexedDB 读取事件统计
+      // 从 IndexedDB 读取事件统计
       const store = useMemoryStore.getState();
       const { totalTokens, activeEventCount: activeCount } = await store.countEventTokens();
       setWorldbookTokens(totalTokens);
@@ -158,9 +158,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
     if (!confirm('确定要重置总结进度吗？这会导致扫描所有历史消息。')) return;
     setLoading(true);
     try {
-      // 这是一个 hack，通过设置 lastSummarizedFloor 为 0 来重置
-      // 理想情况下应该在 service 中暴露 reset 方法
-      await summarizerService.setLastSummarizedFloor(0);
+      await summarizerService.resetProgress();
       await loadStatus();
     } catch (error) {
       console.error('重置失败:', error);

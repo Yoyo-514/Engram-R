@@ -1,38 +1,13 @@
-import type {
-  BrainRecallConfig,
-  EmbeddingConfig,
-  RecallConfig,
-  RerankConfig,
-  VectorConfig,
-} from '@/types/rag';
+import type { EmbeddingConfig, RecallConfig, RerankConfig, VectorConfig } from '@/types/rag';
 
 export const DEFAULT_VECTOR_CONFIG: VectorConfig = {
   source: 'transformers',
-};
-
-export const DEFAULT_BRAIN_RECALL_CONFIG: BrainRecallConfig = {
-  enabled: false,
-  workingLimit: 10,
-  shortTermLimit: 35,
-  reinforceFactor: 0.2,
-  decayRate: 0.08,
-  evictionThreshold: 0.25,
-  contextSwitchThreshold: 0.4,
-  gateThreshold: 0.6,
-  maxDamping: 0.1,
-  sigmoidTemperature: 0.15,
-  boredomThreshold: 5,
-  boredomPenalty: 0.1,
-  mmrThreshold: 0.85,
-  newcomerBoost: 0.2,
 };
 
 export const DEFAULT_RECALL_CONFIG: RecallConfig = {
   enabled: true,
   useEmbedding: true,
   useRerank: false,
-  usePreprocess: false,
-  useAgenticRAG: false,
   useKeywordRecall: true,
   enableEntityKeyword: true,
   enableEventKeyword: true,
@@ -44,7 +19,6 @@ export const DEFAULT_RECALL_CONFIG: RecallConfig = {
     topK: 50,
     minScoreThreshold: 0.35,
   },
-  brainRecall: DEFAULT_BRAIN_RECALL_CONFIG,
 };
 
 export const DEFAULT_EMBEDDING_CONFIG: EmbeddingConfig = {
@@ -64,7 +38,7 @@ export const DEFAULT_RERANK_CONFIG: RerankConfig = {
 };
 
 /**
- * 实体注入上限：无论关键词/类脑召回多少实体，注入 prompt 的实体状态最多取这个数
+ * 实体注入上限：无论关键词召回多少实体，注入 prompt 的实体状态最多取这个数
  * 防止实体描述（YAML 烧录）过多撑爆 token
  */
 export const DEFAULT_ENTITY_INJECT_LIMIT = 10;

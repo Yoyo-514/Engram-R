@@ -69,7 +69,7 @@ vi.mock('@/modules/memory', () => ({
   summarizerService: { getConfig: () => ({ floorInterval: 20 }) },
 }));
 vi.mock('@/modules/workflow/steps', () => ({ regexProcessor }));
-vi.mock('@/modules/workflow/steps/preprocess/RegexProcessor', () => ({ regexProcessor }));
+vi.mock('@/modules/workflow/steps/text/RegexProcessor', () => ({ regexProcessor }));
 vi.mock('@/state/memoryStore', () => ({
   useMemoryStore: { getState: () => ({ lastSummarizedFloor: 0 }) },
 }));
