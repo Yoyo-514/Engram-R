@@ -3,7 +3,6 @@ import { getRegexRules, initSettings } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { regexProcessor } from '@/core/regex';
 import { initCharacterDeleteService } from '@/data/CharacterCleanup';
-import { syncService } from '@/data/SyncService';
 import {
   checkTavernIntegration,
   createTopBarButton,
@@ -30,8 +29,6 @@ export async function initializeEngram(): Promise<void> {
   } else {
     Logger.warn('STBridge', 'SettingsManager 初始化超时，后续流程将使用回退配置');
   }
-
-  syncService.start();
 
   // 加载保存的正则规则到全局处理器
   const savedRegexRules = getRegexRules();

@@ -30,10 +30,6 @@ export interface EngramSettings {
     deleteIndexedDB: boolean;
     showConfirmation: boolean;
   };
-  syncConfig: {
-    enabled: boolean;
-    autoSync: boolean;
-  };
 }
 
 const defaultSettings: EngramSettings = {
@@ -49,10 +45,6 @@ const defaultSettings: EngramSettings = {
     enabled: true,
     deleteIndexedDB: true,
     showConfirmation: true,
-  },
-  syncConfig: {
-    enabled: false,
-    autoSync: true,
   },
 };
 
@@ -103,7 +95,6 @@ export function getSettings(): EngramSettings {
     summarizerConfig: { ...defaults.summarizerConfig, ...saved?.summarizerConfig },
     trimmerConfig: { ...defaults.trimmerConfig, ...saved?.trimmerConfig },
     linkedDeletion: { ...defaults.linkedDeletion, ...saved?.linkedDeletion },
-    syncConfig: { ...defaults.syncConfig, ...saved?.syncConfig },
   };
   context.extensionSettings[EXTENSION_NAME] = boundSettings;
   saveContext(context);

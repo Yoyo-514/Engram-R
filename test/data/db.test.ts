@@ -10,13 +10,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { EntityType } from '@/config/memory/defaults';
 import type { EntityNode, EventNode } from '@/types/graph';
 
-vi.mock('@/data/SyncService', () => ({
-  syncService: {
-    isImportingState: false,
-    scheduleUpload: vi.fn<() => void>(),
-  },
-}));
-
 vi.mock('@/integrations/tavern', () => ({
   getSTContext: vi.fn<() => null>(),
   getRequestHeaders: vi.fn<() => Record<string, string>>(() => ({

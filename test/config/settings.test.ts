@@ -41,7 +41,6 @@ describe('酒馆设置', () => {
       runtimeSettings: { llmPresets: [], promptTemplates: [], customMacros: [] },
       summarizerConfig: { floorInterval: 35 },
       linkedDeletion: { enabled: false },
-      syncConfig: { enabled: true },
     };
     const settings = await import('@/config/settings');
     const saved = settings.getSettings();
@@ -53,7 +52,6 @@ describe('酒馆设置', () => {
     expect(saved.summarizerConfig.previewEnabled).toBeTypeOf('boolean');
     expect(saved.trimmerConfig.keepRecentCount).toBeTypeOf('number');
     expect(saved.linkedDeletion).toMatchObject({ enabled: false, deleteIndexedDB: true });
-    expect(saved.syncConfig).toEqual({ enabled: true, autoSync: true });
     expect(host.context!.extensionSettings.engram).toBe(saved);
     expect(host.context!.saveSettingsDebounced).toHaveBeenCalledTimes(1);
   });

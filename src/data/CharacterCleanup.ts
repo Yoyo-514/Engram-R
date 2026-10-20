@@ -4,7 +4,6 @@ import { getSTContext } from '@/integrations/tavern';
 import { notificationService } from '@/ui/services/NotificationService';
 
 import { databaseExists, deleteDatabase, listAllChatIds } from './db';
-import { syncService } from './SyncService';
 
 type CharacterDeletedPayload = {
   id: string;
@@ -37,14 +36,6 @@ async function handleChatDeleted(chatId: string): Promise<void> {
     }
   } catch (e) {
     Logger.error(LogModule.DATA_CLEANUP, `删除数据库失败: ${chatId}`, e);
-  }
-
-  // 2. 删除同步残留文件
-  try {
-    await syncService.purge(chatId);
-    Logger.debug(LogModule.DATA_CLEANUP, `已触发同步文件清理: ${chatId}`);
-  } catch (e) {
-    Logger.warn(LogModule.DATA_CLEANUP, `清理同步文件失败: ${chatId}`, e);
   }
 }
 
@@ -117,12 +108,6 @@ async function handleCharacterDeleted(payload: CharacterDeletedPayload): Promise
     } catch (error) {
       Logger.error(LogModule.DATA_CLEANUP, `删除角色关联数据库失败: ${chatId}`, error);
       continue;
-    }
-
-    try {
-      await syncService.purge(chatId);
-    } catch (error) {
-      Logger.warn(LogModule.DATA_CLEANUP, `清理角色关联同步残留失败: ${chatId}`, error);
     }
   }
 

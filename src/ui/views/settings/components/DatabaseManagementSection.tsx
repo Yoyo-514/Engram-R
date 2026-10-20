@@ -1,10 +1,20 @@
 import { Dexie } from 'dexie';
-import { Link2, RefreshCw, Trash2 } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Download, Link2, RefreshCw, Trash2, Upload } from 'lucide-react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { FC } from 'react';
 
 import { Logger, LogModule } from '@/core/logger';
-import { deleteDatabase, getDatabaseStats, listDatabaseSummaries, rebindDatabase } from '@/data/db';
+import { parseJson } from '@/core/utils/JsonParser';
+import {
+  type ChatDataDump,
+  deleteDatabase,
+  exportChatData,
+  getDatabaseStats,
+  getDbForChat,
+  importChatData,
+  listDatabaseSummaries,
+  rebindDatabase,
+} from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
 import { useConfigStore } from '@/state/configStore';
 import { useMemoryStore } from '@/state/memoryStore';
@@ -35,6 +45,7 @@ export const DatabaseManagementSection: FC = () => {
   const [isLoadingStats, setIsLoadingStats] = useState(false);
   const [isDeletingSelected, setIsDeletingSelected] = useState(false);
   const [bindingDatabase, setBindingDatabase] = useState<string | null>(null);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentDatabaseSummary = useMemo(
     () => databaseSummaries.find((item) => item.name === currentDatabaseName) ?? null,
@@ -183,6 +194,63 @@ export const DatabaseManagementSection: FC = () => {
         `删除失败: ${error instanceof Error ? error.message : String(error)}`,
         'Engram 设置'
       );
+    }
+  };
+
+  const handleExportJson = async () => {
+    if (!currentChatId) {
+      notificationService.warning('当前未连接聊天，无法导出', 'Engram 设置');
+      return;
+    }
+
+    try {
+      const dump = await exportChatData(getDbForChat(currentChatId));
+      const blob = new Blob([JSON.stringify(dump, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Engram_${currentChatId}_${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      notificationService.success('已导出当前聊天数据', 'Engram 设置');
+    } catch (error) {
+      notificationService.error(
+        `导出失败: ${error instanceof Error ? error.message : String(error)}`,
+        'Engram 设置'
+      );
+    }
+  };
+
+  const handleImportJson = async (file: File) => {
+    if (!currentChatId) {
+      notificationService.warning('当前未连接聊天，无法导入', 'Engram 设置');
+      return;
+    }
+
+    if (!confirm('导入会覆盖当前聊天数据库中的全部 Engram 数据，且无法撤销。是否继续？')) {
+      return;
+    }
+
+    try {
+      const parsed = parseJson<ChatDataDump>(await file.text());
+      if (!parsed || !Array.isArray(parsed.events) || !Array.isArray(parsed.entities)) {
+        throw new Error('文件不是有效的 Engram 导出数据');
+      }
+
+      await importChatData(getDbForChat(currentChatId), parsed);
+      useMemoryStore.getState().reset();
+      await useMemoryStore.getState().initChat();
+      notificationService.success('导入完成', 'Engram 设置');
+      await loadAvailableDatabases();
+    } catch (error) {
+      notificationService.error(
+        `导入失败: ${error instanceof Error ? error.message : String(error)}`,
+        'Engram 设置'
+      );
+    } finally {
+      if (importInputRef.current) {
+        importInputRef.current.value = '';
+      }
     }
   };
 
@@ -352,7 +420,7 @@ export const DatabaseManagementSection: FC = () => {
                   联动删除
                 </h4>
                 <p className="mt-1 whitespace-normal break-words text-sm leading-5 text-muted-foreground sm:line-clamp-2">
-                  删除聊天或角色时，自动清理关联的 IndexedDB 分片与同步文件残留。
+                  删除聊天或角色时，自动清理关联的 IndexedDB 分片。
                 </p>
               </div>
             </div>
@@ -365,7 +433,7 @@ export const DatabaseManagementSection: FC = () => {
           {linkedDeletion.enabled && (
             <div className="space-y-3 border-t border-border pt-3">
               <p className="whitespace-normal break-words text-xs leading-5 text-muted-foreground/80">
-                当前仅清理 Engram 数据库与 `Engram_sync_*.json` 文件，不处理世界书。
+                当前仅清理 Engram 数据库，不处理世界书。
               </p>
 
               <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
@@ -496,6 +564,43 @@ export const DatabaseManagementSection: FC = () => {
                 当前未连接聊天，无法执行当前数据库操作。
               </div>
             )}
+          </div>
+
+          <div className="space-y-3 border-t border-border pt-4">
+            <div className="w-full min-w-0">
+              <h5 className="text-sm font-medium text-foreground">数据迁移</h5>
+              <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
+                导出当前聊天的 Engram 数据为 JSON，或将 JSON 覆盖导入当前聊天，用于跨设备迁移。
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+              <button
+                onClick={handleExportJson}
+                className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:w-auto"
+              >
+                <Download size={14} />
+                导出 JSON
+              </button>
+              <button
+                onClick={() => importInputRef.current?.click()}
+                className="inline-flex w-full min-w-0 items-center justify-center gap-2 rounded-md border border-border bg-background px-3 py-2 text-xs font-medium text-foreground transition-colors hover:bg-muted sm:w-auto"
+              >
+                <Upload size={14} />
+                导入 JSON
+              </button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept="application/json,.json"
+                className="hidden"
+                onChange={(event) => {
+                  const file = event.target.files?.[0];
+                  if (file) {
+                    void handleImportJson(file);
+                  }
+                }}
+              />
+            </div>
           </div>
 
           <div className="space-y-3 border-t border-border pt-4">

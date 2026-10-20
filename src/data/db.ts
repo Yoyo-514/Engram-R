@@ -5,10 +5,9 @@ import { Dexie, type Table, type Transaction } from 'dexie';
 import { getRequestHeaders, getSTContext } from '@/integrations/tavern';
 import type { DatabaseBindStatus, DatabaseStats, DatabaseSummary } from '@/types/database';
 
-import { DATA_SYNC_OPTIONS } from '../../engram.config';
+import { DATABASE_OPTIONS } from '../../engram.config';
 import { Logger } from '../core/logger';
 import type { EntityNode, EventNode } from '../types/graph';
-import { syncService } from './SyncService';
 
 /**
  * 每个聊天的元数据存储
@@ -28,12 +27,9 @@ export class ChatDatabase extends Dexie {
   entities!: Table<EntityNode, string>;
   meta!: Table<ChatMeta, string>;
 
-  private chatId: string;
-
   constructor(chatId: string) {
     // 数据库名格式: Engram_{chatId}
     super(`Engram_${chatId}`);
-    this.chatId = chatId;
 
     this.version(3).stores({
       // Events: 核心记忆单元
@@ -50,10 +46,9 @@ export class ChatDatabase extends Dexie {
       meta: 'key',
     });
 
-    // 每个成功提交的事务仅通知一次，回滚与远端导入不触发同步。
+    // 每个成功提交的事务仅通知一次，回滚不触发。
     const changedTransactions = new WeakSet<Transaction>();
     const handleChange = () => {
-      if (syncService.isImportingState) return;
       const transaction = Dexie.currentTransaction!;
       if (changedTransactions.has(transaction)) return;
       changedTransactions.add(transaction);
@@ -75,34 +70,22 @@ export class ChatDatabase extends Dexie {
    * 合并短时间内的提交，写入修改时间并调度上传。
    */
   private updateLastModified() {
-    // 检查导入锁 - 如果正在导入，完全跳过
-    if (syncService.isImportingState) {
-      return;
-    }
-
-    // 同一窗口只保留一个修改通知。
+    // 同一窗口只保留一次写入。
     if (this.lastUpdateTimer) return;
 
     this.lastUpdateTimer = setTimeout(() => {
       this.lastUpdateTimer = null;
 
-      // 再次检查导入状态（防止在延时期间状态变化）
-      if (syncService.isImportingState) {
-        return;
-      }
-
-      // 使用 ignoreTransaction 显式脱离当前潜在的 Hooks 事务
-      // 防止在只读或特定表的事务中试图写入 meta 表导致 DEXIE 报错喵~
+      // 使用 ignoreTransaction 脱离当前 Hooks 事务，
+      // 防止在只读或特定表的事务中写 meta 表导致 Dexie 报错。
       void Dexie.ignoreTransaction(async () => {
         try {
           await this.meta.put({ key: 'lastModified', value: Date.now() });
-          // 调度同步 (SyncService 内部已有防抖)
-          syncService.scheduleUpload(this.chatId);
         } catch (err) {
           Logger.error(MODULE, '异步更新 lastModified 失败', err);
         }
       });
-    }, DATA_SYNC_OPTIONS.changeDelayMs);
+    }, DATABASE_OPTIONS.changeDelayMs);
   }
 }
 
@@ -124,7 +107,7 @@ export async function exportChatData(db: ChatDatabase): Promise<ChatDataDump> {
   const metaArr = await db.meta.toArray();
   const meta = Object.fromEntries(metaArr.map(({ key, value }) => [key, value]));
 
-  // 元数据放在文件头部，供同步服务流式读取修改时间。
+  // 元数据放在文件头部，导出文件的时间戳一目了然。
   return { meta, events, entities };
 }
 

@@ -1,4 +1,4 @@
-import { Database, Settings as SettingsIcon, Workflow } from 'lucide-react';
+import { Database, Workflow } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FC } from 'react';
 
@@ -8,12 +8,10 @@ import type { Tab } from '@/ui/components/layout/TabPills';
 
 import { DatabaseManagementSection } from './components/DatabaseManagementSection';
 import { FeatureSettingsSection } from './components/FeatureSettingsSection';
-import { SyncSettingsSection } from './components/SyncSettingsSection';
 
 const SETTINGS_TABS: Tab[] = [
   { id: 'features', label: '功能', icon: <Workflow size={14} /> },
   { id: 'database', label: '数据库', icon: <Database size={14} /> },
-  { id: 'sync', label: '同步', icon: <SettingsIcon size={14} /> },
 ];
 
 export const Settings: FC = () => {
@@ -23,8 +21,6 @@ export const Settings: FC = () => {
     switch (activeTab) {
       case 'database':
         return <DatabaseManagementSection />;
-      case 'sync':
-        return <SyncSettingsSection />;
       default:
         return <FeatureSettingsSection />;
     }
@@ -32,7 +28,7 @@ export const Settings: FC = () => {
 
   return (
     <div className="animate-in fade-in flex min-h-full flex-col">
-      <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="管理功能、数据库与同步配置" />
+      <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="管理功能与数据库配置" />
 
       <LayoutTabs tabs={SETTINGS_TABS} activeTab={activeTab} onChange={setActiveTab} />
 

@@ -24,7 +24,6 @@ export interface ConfigState {
   summarizerConfig: SummarizerConfig;
   trimmerConfig: TrimmerConfig;
   linkedDeletion: EngramSettings['linkedDeletion'];
-  syncConfig: EngramSettings['syncConfig'];
   hasChanges: boolean;
   updateConfig: <K extends keyof PersistedConfigState>(
     key: K,
@@ -49,7 +48,6 @@ type PersistedConfigState = Pick<
   | 'summarizerConfig'
   | 'trimmerConfig'
   | 'linkedDeletion'
-  | 'syncConfig'
 >;
 type RootConfigKey = keyof PersistedConfigState & keyof EngramSettings;
 
@@ -69,7 +67,6 @@ function readConfig(): PersistedConfigState {
     summarizerConfig: settings.summarizerConfig,
     trimmerConfig: settings.trimmerConfig,
     linkedDeletion: settings.linkedDeletion,
-    syncConfig: settings.syncConfig,
   };
 }
 
