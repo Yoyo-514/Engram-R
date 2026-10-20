@@ -20,8 +20,7 @@ import { ModernButton as Button } from '@/ui/components/core/Button';
 
 import { EntityReview } from './EntityReview';
 import { MessageReview } from './MessageReview';
-import { RecallDecisionModal } from './RecallDecisionModal';
-import { SummaryReview } from './SummaryReview'; // V1.2
+import { SummaryReview } from './SummaryReview';
 import type { SummaryReviewEvent } from './SummaryReview';
 
 interface ReviewSessionData {
@@ -64,7 +63,7 @@ interface ReviewSessionProps {
   request: ReviewRequest;
   isActive: boolean;
   onFinish: (requestId: string) => void;
-  footerEl: HTMLElement | null; // V1.5: Portal target for footer
+  footerEl: HTMLElement | null; // Portal target for footer
 }
 
 const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, footerEl }) => {

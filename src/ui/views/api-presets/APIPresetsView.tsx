@@ -28,8 +28,8 @@ import { useWorldInfo } from '../../hooks/useWorldInfo';
 import { LLMPresetForm } from './models/LLMPresetForm';
 import { RerankConfigForm } from './models/RerankConfigForm';
 import { VectorConfigForm } from './models/VectorConfigForm';
-import { CustomMacroForm } from './prompts/CustomMacroForm'; // V0.9.2
-import { CustomMacroList } from './prompts/CustomMacroList'; // V0.9.2
+import { CustomMacroForm } from './prompts/CustomMacroForm';
+import { CustomMacroList } from './prompts/CustomMacroList';
 import { PromptTemplateForm } from './prompts/PromptTemplateForm';
 import { PromptTemplateList } from './prompts/PromptTemplateList';
 import { RegexRuleForm } from './regex/RegexRuleForm';
@@ -40,7 +40,7 @@ import { WorldbookConfigForm } from './worldbook/WorldbookConfigForm';
 // Tab 类型
 type MainTabType = 'model' | 'prompt' | 'regex' | 'worldbook';
 type ModelSubTabType = 'llm' | 'vector' | 'rerank';
-type PromptSubTabType = 'templates' | 'macros'; // V0.9.2: 提示词模板子 Tab
+type PromptSubTabType = 'templates' | 'macros'; // 提示词模板子 Tab
 
 // 子 Tab 配置
 const MODEL_SUB_TABS: { id: ModelSubTabType; label: string; icon: ElementType }[] = [
@@ -86,8 +86,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
       PROMPT_SUB_TAB_IDS.includes(initialNestedTab as PromptSubTabType)
       ? (initialNestedTab as PromptSubTabType)
       : 'templates'
-  ); // V0.9.2
-
+  );
   // 编辑中的自定义宏
   const [editingMacroId, setEditingMacroId] = useState<string | null>(null);
 
@@ -152,7 +151,7 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
     addTemplate,
     updateTemplate,
     deleteTemplate,
-    resetAllTemplates, // V1.0.2
+    resetAllTemplates,
     saveLLMSettings,
   } = useLLMPresets();
 

@@ -4,7 +4,8 @@ import type { FC } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 
 import { useMemoryStore } from '@/state/memoryStore';
-import type { EntityNode, EventNode } from '@/types/graph';
+import type { EventNode } from '@/types/graph';
+import type { RecalledEntity } from '@/types/rag';
 import { SimpleModal } from '@/ui/components/feedback/SimpleModal';
 
 export interface RecallPreviewItem {
@@ -12,10 +13,6 @@ export interface RecallPreviewItem {
   score: number;
   reason: string;
 }
-
-type RecalledEntity = EntityNode & {
-  recallWeight?: number;
-};
 
 type DisplayEvent = RecallPreviewItem & {
   summary: string;
@@ -26,7 +23,7 @@ interface RecallDecisionModalProps {
   isOpen: boolean;
   onClose: () => void;
   initialRecalls: RecallPreviewItem[];
-  recalledEntities?: RecalledEntity[]; // V1.4: 传入被激活的实体
+  recalledEntities?: RecalledEntity[]; // 本轮注入的实体
   onConfirm: (newRecalls: RecallPreviewItem[]) => void;
 }
 
@@ -236,8 +233,10 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                   >
                     <span className="h-1.5 w-1.5 rounded-full bg-primary/40" />
                     <span className="font-medium">{ent.name}</span>
-                    {ent.recallWeight && (
-                      <span className="font-mono opacity-40">({ent.recallWeight.toFixed(2)})</span>
+                    {ent.recallScore > 0 && (
+                      <span className="font-mono opacity-40">
+                        ({ent.recallScore.toFixed(2)})
+                      </span>
                     )}
                   </div>
                 ))}

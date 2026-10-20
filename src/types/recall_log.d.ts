@@ -29,7 +29,7 @@ export interface RecalledEntityLogItem {
   name: string;
   type?: string;
   description?: string;
-  _recallWeight?: number;
+  score: number;
 }
 
 /**
@@ -41,6 +41,6 @@ export interface RecallLogEntry {
   query: string; // 检索查询
   mode: 'embedding' | 'hybrid';
   results: RecallResultItem[]; // 召回结果
-  recalledEntities?: RecalledEntityLogItem[]; // V1.4: 被激活的实体列表
+  recalledEntities?: RecalledEntityLogItem[]; // 本轮注入的实体列表
   stats: RecallStats; // 统计信息
 }

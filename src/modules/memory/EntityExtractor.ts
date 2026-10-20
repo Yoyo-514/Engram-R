@@ -212,7 +212,7 @@ export class EntityBuilder {
     floor: number,
     manual = false,
     dryRun = false,
-    range?: [number, number] // V1.0.7: Allow passing explicit range
+    range?: [number, number] // Allow passing explicit range
   ): Promise<EntityBuildResult | null> {
     if (this.isExtracting) {
       Logger.warn(LogModule.MEMORY_ENTITY, '正在执行提取，跳过本次触发');
@@ -253,8 +253,8 @@ export class EntityBuilder {
           dryRun,
           previewEnabled,
           logType: 'entity_extraction', // For LlmRequest logging
-          templateId: this.config.promptTemplateId, // V0.9.10: Support custom prompt
-          category: 'entity_extraction', // V1.0.8: Explicitly pass category for FetchContext to find default template
+          templateId: this.config.promptTemplateId, // Support custom prompt
+          category: 'entity_extraction', // Explicitly pass category for FetchContext to find default template
         },
         input: {
           range: range || [floor, floor],

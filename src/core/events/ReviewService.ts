@@ -1,22 +1,21 @@
 import { engramEventBus } from './event-bus';
 
 export type ReviewAction = 'confirm' | 'fill' | 'reject' | 'reroll' | 'cancel';
-export type ReviewData = unknown;
 
 export interface ReviewResult {
   action: ReviewAction;
   content: string;
   feedback?: string;
-  data?: ReviewData;
+  data?: unknown;
 }
 
 export interface ReviewRequest {
-  id: string; // V1.3.1: Unique ID for multi-tab support
+  id: string; // Unique ID for multi-tab support
   title: string;
   description: string;
   content: string; // fallback text
-  type?: 'text' | 'json' | 'entity' | 'summary'; // V1.2
-  data?: ReviewData; // Structured data for specialized views
+  type?: 'text' | 'json' | 'entity' | 'summary';
+  data?: unknown; // Structured data for specialized views
   actions?: ReviewAction[];
   onResult: (result: ReviewResult) => void;
 }
@@ -37,7 +36,7 @@ class ReviewService {
     content: string,
     actions: ReviewAction[] = ['confirm'],
     type: 'text' | 'json' | 'entity' | 'summary' = 'text',
-    data?: ReviewData
+    data?: unknown
   ): Promise<ReviewResult> {
     return new Promise((resolve) => {
       const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 5);

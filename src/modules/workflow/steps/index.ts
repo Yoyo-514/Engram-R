@@ -12,6 +12,7 @@ export * from './text/CleanRegex';
 export * from './text/FormatTrimInput';
 export * from './text/ParseJson';
 export * from './text/RegexProcessor';
+export * from './rag/EntityRecallStep';
 export * from './rag/KeywordRetrieveStep';
 export * from './rag/RecordRecallLogStep';
 export * from './rag/RerankMergeStep';

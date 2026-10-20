@@ -1,6 +1,6 @@
 import { reviewService, type ReviewRequest } from '@/core/events/ReviewService';
 import { Logger } from '@/core/logger';
-import { isRecord, parseJson } from '@/core/utils';
+import { isRecord } from '@/core/utils';
 import { countWorldbookTokens } from '@/integrations/tavern';
 import type { JobContext } from '@/types/job_context';
 import type { IStep, StepResult } from '@/types/step';

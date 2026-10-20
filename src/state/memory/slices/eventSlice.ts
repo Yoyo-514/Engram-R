@@ -34,17 +34,6 @@ export interface EventState {
   getArchivedEventSummaries: () => Promise<string>;
 }
 
-/**
- * XML 属性转义（模块层纯函数）
- */
-function escapeXml(s: string): string {
-  return s
-    .replace(/&/g, '&amp;')
-    .replace(/"/g, '&quot;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;');
-}
-
 export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (set, _get) => ({
   saveEvent: async (eventData) => {
     const db = getCurrentDb();

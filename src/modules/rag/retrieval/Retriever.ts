@@ -14,14 +14,12 @@
 import { DEFAULT_RECALL_CONFIG } from '@/config/rag/defaults';
 import { get } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
-import { RecallLogService } from '@/core/logger/RecallLogger';
 import { getErrorMessage, getErrorStack } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
 import { createRetrievalWorkflow, runWorkflow } from '@/modules/workflow';
-import { KeywordRetrieveStep } from '@/modules/workflow/steps';
-import type { EntityNode, EventNode } from '@/types/graph';
-import type { RecallCandidate, RecallConfig } from '@/types/rag';
+import type { EventNode } from '@/types/graph';
+import type { RecalledEntity, RecallCandidate, RecallConfig } from '@/types/rag';
 
 import { recallCache, type RecentRecall } from './RecallCache';
 
@@ -31,7 +29,7 @@ export interface RetrievalResult {
   entries: string[]; // Formatted entries ready for injection
   nodes: EventNode[]; // Raw nodes
   candidates?: RecallCandidate[]; // 曝露带分数的候选列表供前端装配
-  recalledEntities?: EntityNode[]; // 本轮召回的实体
+  recalledEntities?: RecalledEntity[]; // 本轮召回的实体
   skippedReason?: string; // 召回短路原因（如无可召回对象）
 }
 
@@ -253,7 +251,7 @@ class Retriever {
         id: entity.id,
         label: entity.name,
         category: 'entity' as const,
-        score: (entity as { _recallWeight?: number })._recallWeight ?? 0,
+        score: entity.recallScore,
       })),
     ];
     recallCache.record(chatId, items);

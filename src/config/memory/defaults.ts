@@ -15,11 +15,11 @@ export enum EntityType {
 export const DEFAULT_SUMMARIZER_CONFIG: SummarizerConfig = {
   enabled: true,
   triggerMode: 'auto',
-  floorInterval: 25, // V0.9.5: 20-30 层一次
+  floorInterval: 25, // 20-30 层一次
   previewEnabled: true,
   promptTemplateId: null,
   llmPresetId: null,
-  bufferSize: 10, // V0.9.5: 缓存 10 层
+  bufferSize: 10, // 缓存 10 层
   autoHide: false,
 };
 

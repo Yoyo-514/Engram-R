@@ -5,7 +5,7 @@ import { scanEntities, scanEvents } from '@/modules/memory/EntityScanner';
 import { retriever } from '@/modules/rag/retrieval/Retriever';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode, EventNode } from '@/types/graph';
-import type { RecallCandidate, RecallConfig, RerankConfig } from '@/types/rag';
+import type { RecallCandidate, RecallConfig, RecalledEntity, RerankConfig } from '@/types/rag';
 import { notificationService } from '@/ui/services/NotificationService';
 import { RecallDecisionModal, type RecallPreviewItem } from '@/ui/views/review/RecallDecisionModal';
 
@@ -39,7 +39,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
   const [isTesting, setIsTesting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentRecalls, setCurrentRecalls] = useState<RecallPreviewItem[]>([]);
-  const [currentEntities, setCurrentEntities] = useState<EntityNode[]>([]); // V1.4: 被激活实体状态
+  const [currentEntities, setCurrentEntities] = useState<RecalledEntity[]>([]); // 本轮注入的实体
 
   // Scan Dry Run 专属状态
   const [scanQuery, setScanQuery] = useState('');

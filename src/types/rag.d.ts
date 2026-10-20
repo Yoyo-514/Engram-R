@@ -1,3 +1,5 @@
+import type { EntityNode } from './graph';
+
 export interface VectorConfig {
   /** 向量源 */
   source: VectorSource;
@@ -95,6 +97,9 @@ export interface RecallCandidate {
   rerankScore?: number;
   embeddingVector?: number[];
 }
+
+/** 本轮召回的实体，recallScore 为关键词直中或多跳衰减后的得分。 */
+export type RecalledEntity = EntityNode & { recallScore: number };
 
 export type EmbeddingTriggerType = 'with_trim' | 'standalone' | 'manual';
 

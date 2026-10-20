@@ -4,13 +4,13 @@ import { Logger } from '@/core/logger';
 import {
   getTavernContext,
   isPromptCategory,
-  isRecord,
   readString,
   yieldToMainThread,
 } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';
+import { readKeywordEntityRefs } from '@/modules/rag/retrieval/KeywordEntityRefs';
 import type { JobContext } from '@/types/job_context';
 import type { PromptCategory, PromptTemplate } from '@/types/prompt';
 import type { IStep } from '@/types/step';
@@ -19,32 +19,6 @@ interface BuildPromptConfig {
   templateId?: string;
   category?: PromptCategory;
   vars?: Record<string, string>;
-}
-
-type KeywordEntityRef = {
-  id: string;
-  score?: number;
-};
-
-function readKeywordEntityRefs(value: unknown): KeywordEntityRef[] {
-  if (!Array.isArray(value)) {
-    return [];
-  }
-
-  return value.flatMap((item) => {
-    if (!isRecord(item)) {
-      return [];
-    }
-
-    const id = readString(item.id);
-    if (!id) {
-      return [];
-    }
-
-    const score =
-      typeof item.score === 'number' && Number.isFinite(item.score) ? item.score : undefined;
-    return [{ id, score }];
-  });
 }
 
 function applyMacroReplacements(

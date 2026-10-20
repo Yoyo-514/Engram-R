@@ -3,6 +3,7 @@ import { RecallLogService } from '@/core/logger/RecallLogger';
 import { getLiveActivatedWorldInfo } from '@/integrations/tavern';
 import { type ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import type { JobContext } from '@/types/job_context';
+import type { RecalledEntity } from '@/types/rag';
 import type { IStep } from '@/types/step';
 
 export class RecordRecallLogStep implements IStep {
@@ -13,7 +14,7 @@ export class RecordRecallLogStep implements IStep {
     const candidates: ScoredEvent[] = context.data.candidates || [];
     const query = (context.input?.query as string) || '';
     const mode = (context.input?.mode as string) || 'hybrid';
-    const recalledEntities = context.data.recalledEntities || [];
+    const recalledEntities: RecalledEntity[] = context.data.recalledEntities || [];
 
     // 整理输出结构匹配原 Retriever 的 RetrievalResult
     const nodes = candidates.filter((c) => c.node).map((c) => c.node!);
@@ -45,7 +46,13 @@ export class RecordRecallLogStep implements IStep {
         isReranked: c.rerankScore != null,
         sourceFloor: c.node?.source_range?.start_index,
       })),
-      recalledEntities,
+      recalledEntities: recalledEntities.map((entity) => ({
+        id: entity.id,
+        name: entity.name,
+        type: entity.type,
+        description: entity.description,
+        score: entity.recallScore,
+      })),
       stats: {
         totalCandidates: context.data.originalCandidateCount || candidates.length,
         topKCount: candidates.length,

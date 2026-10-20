@@ -317,10 +317,8 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
                     <span className="min-w-0 truncate" title={ent.name}>
                       {ent.name}
                     </span>
-                    {ent._recallWeight && (
-                      <span className="shrink-0 font-mono opacity-60">
-                        ({ent._recallWeight.toFixed(2)})
-                      </span>
+                    {ent.score > 0 && (
+                      <span className="shrink-0 font-mono opacity-60">({ent.score.toFixed(2)})</span>
                     )}
                   </div>
                   <div className="pointer-events-none absolute bottom-full left-0 z-50 mb-2 hidden w-48 rounded-lg border border-border bg-popover p-2 text-[10px] leading-relaxed text-foreground/80 shadow-xl group-hover:block">

@@ -46,7 +46,7 @@ interface FieldOverrides {
   roleText?: string;
   logicText?: string;
   score?: number;
-  summary?: string; // V1.2.9: Add summary to avoid stale closure
+  summary?: string; // Add summary to avoid stale closure
   isArchived?: boolean;
   isLocked?: boolean;
 }

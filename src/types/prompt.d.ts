@@ -1,7 +1,7 @@
 export type PromptCategory =
-  | 'summary' // 剧情摘要 (V0.5 统一为 JSON 输出)
+  | 'summary' // 剧情摘要（统一为 JSON 输出）
   | 'trim' // 精简/修剪
-  | 'entity_extraction'; // V0.9: 实体提取
+  | 'entity_extraction'; // 实体提取
 
 export interface PromptTemplate {
   /** 唯一标识 */

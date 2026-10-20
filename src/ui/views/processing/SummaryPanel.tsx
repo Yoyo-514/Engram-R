@@ -61,7 +61,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   // Remove local state settings and trimConfig, use props instead
   const [trimStatus, setTrimStatus] = useState<TrimmerStatus | null>(null);
   const [worldbookTokens, setWorldbookTokens] = useState<number>(0);
-  const [activeEventCount, setActiveEventCount] = useState<number>(0); // V0.7.1: 蓝灯数
+  const [activeEventCount, setActiveEventCount] = useState<number>(0); // 蓝灯数
   const [extractedFloor, setExtractedFloor] = useState<number>(0);
   const [editSummarizedFloor, setEditSummarizedFloor] = useState<number>(0);
   const [editExtractedFloor, setEditExtractedFloor] = useState<number>(0);

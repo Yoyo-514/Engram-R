@@ -253,7 +253,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
                   ...defaultTemplate,
                   id: template.id,
                   enabled: template.enabled,
-                  extraWorldbooks: template.extraWorldbooks, // V1.3.3: 保留绑定的世界书
+                  extraWorldbooks: template.extraWorldbooks, // 保留绑定的世界书
                 });
               }
             }}
