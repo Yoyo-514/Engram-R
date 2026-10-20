@@ -1,5 +1,5 @@
 import { Archive, ArrowLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, CompositionEvent } from 'react';
 
 /**
@@ -11,8 +11,8 @@ import type { CSSProperties, CompositionEvent } from 'react';
 import type { EventNode } from '@/types/graph';
 import { TextField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
-import { useBlurCommit } from '@/ui/hooks/useBlurCommit';
 import { useDebouncedCallback } from '@/ui/hooks/useDebouncedCallback';
+import { type DraftFormHandle, useDraftForm } from '@/ui/hooks/useDraftForm';
 import { useResponsive } from '@/ui/hooks/useResponsive';
 
 // ==================== 类型定义 ====================
@@ -27,10 +27,7 @@ interface EventEditorProps {
 }
 
 /** 暴露给父组件的方法 */
-export interface EventEditorHandle {
-  save: () => void;
-  isDirty: () => boolean;
-}
+export type EventEditorHandle = DraftFormHandle;
 
 interface FieldOverrides {
   eventType?: string;
@@ -113,9 +110,6 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
     const [score, setScore] = useState(0.5);
     const [isArchived, setIsArchived] = useState(false);
     const [isLocked, setIsLocked] = useState(false);
-    const [isDirty, setIsDirty] = useState(false);
-    const [lastEventId, setLastEventId] = useState<string | null>(null);
-
     const isComposingRef = useRef(false);
     const isMountedRef = useRef(true);
 
@@ -125,8 +119,9 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       };
     }, []);
 
-    // 同步事件数据到表单（渲染期间调整 state，替代 effect 同步）
-    if (event && event.id !== lastEventId) {
+    // 事件切换时由 useDraftForm 调用，重置表单字段
+    const resetDraft = () => {
+      if (!event) return;
       setSummary(event.summary);
       setEventType(event.structured_kv?.event || '');
       setTimeAnchor(event.structured_kv?.time_anchor || '');
@@ -138,9 +133,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       setScore(event.significance_score);
       setIsArchived(!!event.is_archived);
       setIsLocked(!!event.is_locked);
-      setIsDirty(false);
-      setLastEventId(event.id);
-    }
+    };
 
     const handleDelete = () => {
       if (confirm('确定删除这个事件吗？此操作不可撤销。')) {
@@ -220,14 +213,12 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
     );
 
     // 暴露方法给父组件
-    useImperativeHandle(
-      ref,
-      () => ({
-        save: () => syncToParent({}, true), // Force immediate save
-        isDirty: () => isDirty,
-      }),
-      [syncToParent, isDirty]
-    );
+    const { setDirty: setIsDirty, handleBlur } = useDraftForm(ref, {
+      id: event?.id,
+      reset: resetDraft,
+      commit: () => syncToParent({}, true),
+      blurDelay: 50,
+    });
 
     const handleCompositionStart = () => {
       isComposingRef.current = true;
@@ -256,10 +247,6 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       setIsDirty(true);
       if (!isComposingRef.current) syncToParent({ [fieldName]: value });
     };
-
-    const handleBlur = useBlurCommit(() => {
-      if (isDirty) syncToParent({}, true);
-    }, 50);
 
     // 移除导致全量渲染的无保护 updateScore，交由 input 的拆分事件直接更新
 

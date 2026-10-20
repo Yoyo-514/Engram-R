@@ -1,5 +1,5 @@
 import { AlertTriangle, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
-import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
+import { forwardRef, useCallback, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 import type { EntityType } from '@/config/memory/defaults';
@@ -16,8 +16,8 @@ import { getErrorMessage } from '@/core/utils/error';
  */
 import type { EntityNode } from '@/types/graph';
 import { Divider } from '@/ui/components/layout/Divider';
-import { useBlurCommit } from '@/ui/hooks/useBlurCommit';
 import { useDebouncedCallback } from '@/ui/hooks/useDebouncedCallback';
+import { type DraftFormHandle, useDraftForm } from '@/ui/hooks/useDraftForm';
 import { useResponsive } from '@/ui/hooks/useResponsive';
 
 /**
@@ -41,10 +41,7 @@ function getEntityTextTypeColor(type: string): string {
 }
 
 // 类型别名简化
-type EntityEditorHandle = {
-  save: () => void;
-  isDirty: () => boolean;
-};
+type EntityEditorHandle = DraftFormHandle;
 
 interface EntityEditorProps {
   entity: EntityNode | null;
@@ -84,20 +81,16 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     const [description, setDescription] = useState('');
     const [profileJson, setProfileJson] = useState('');
     const [jsonError, setJsonError] = useState<string | null>(null);
-    const [isDirty, setIsDirty] = useState(false);
-    const [lastEntityId, setLastEntityId] = useState<string | null>(null);
-
-    // Load data：实体切换时重置表单（渲染期间调整 state，替代 effect 同步）
-    if (entity && entity.id !== lastEntityId) {
+    // 实体切换时由 useDraftForm 调用，重置表单字段
+    const resetDraft = () => {
+      if (!entity) return;
       setName(entity.name);
       setType(entity.type);
       setAliases(entity.aliases ? entity.aliases.join(', ') : '');
       setDescription(entity.description || '');
       setProfileJson(JSON.stringify(entity.profile || {}, null, 2));
       setJsonError(null);
-      setIsDirty(false);
-      setLastEntityId(entity.id);
-    }
+    };
 
     // Sync Helper
     const syncToParent = useCallback(() => {
@@ -126,15 +119,13 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       onSave?.(entity.id, updates);
     }, [entity, name, type, aliases, description, profileJson, jsonError, onSave]);
 
-    // Expose Handle
-    useImperativeHandle(
-      ref,
-      () => ({
-        save: syncToParent,
-        isDirty: () => isDirty,
-      }),
-      [syncToParent, isDirty]
-    );
+    const { setDirty: setIsDirty, handleBlur } = useDraftForm(ref, {
+      id: entity?.id,
+      reset: resetDraft,
+      commit: syncToParent,
+      canCommit: (dirty) => dirty && !jsonError,
+      blurDelay: 200,
+    });
 
     // Handlers
     // JSON 语法检查防抖，避免卡死输入法
@@ -157,12 +148,6 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       setIsDirty(true);
       validateJson.call(val); // 防抖进行语法检查
     };
-
-    const handleBlur = useBlurCommit(() => {
-      if (isDirty && !jsonError) {
-        syncToParent();
-      }
-    }, 200);
 
     const handleGenerateDesc = () => {
       if (jsonError || !entity) return;
