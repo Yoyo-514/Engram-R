@@ -17,18 +17,23 @@ import { Logger, LogModule } from '@/core/logger';
 import { getErrorMessage, getErrorStack } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getCurrentChatId, getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
-import { createRetrievalWorkflow, runWorkflow } from '@/modules/workflow';
+import type { ScoredEvent } from '@/modules/rag/retrieval/HybridScorer';
 import type { EventNode } from '@/types/graph';
-import type { RecalledEntity, RecallCandidate, RecallConfig } from '@/types/rag';
+import type { RecalledEntity, RecallConfig } from '@/types/rag';
 
+import { recallEntities } from './EntityRecall';
+import { collectKeywordCandidates } from './KeywordRecall';
+import { mergeAndRerank } from './MergeAndRerank';
 import { recallCache, type RecentRecall } from './RecallCache';
+import { recordRecallLog } from './RecallLog';
+import { collectVectorCandidates } from './VectorRecall';
 
 // ==================== 类型定义 ====================
 
 export interface RetrievalResult {
   entries: string[]; // Formatted entries ready for injection
   nodes: EventNode[]; // Raw nodes
-  candidates?: RecallCandidate[]; // 曝露带分数的候选列表供前端装配
+  candidates?: ScoredEvent[]; // 曝露带分数的候选列表供前端装配
   recalledEntities?: RecalledEntity[]; // 本轮召回的实体
   skippedReason?: string; // 召回短路原因（如无可召回对象）
 }
@@ -200,33 +205,48 @@ class Retriever {
     config: RecallConfig,
     scanQuery?: string
   ): Promise<RetrievalResult> {
-    const startTime = Date.now();
-    Logger.debug(LogModule.RAG_INJECT, '--- 进入 Hybrid Search 工作流 ---', {
+    Logger.debug(LogModule.RAG_INJECT, '--- 进入 Hybrid Search ---', {
       scanQueryLen: scanQuery?.length,
     });
 
     try {
-      const context = await runWorkflow(createRetrievalWorkflow(), {
-        input: {
-          query: intentQuery,
-          scanQuery: scanQuery || intentQuery,
-          mode: 'hybrid',
-        },
-        data: {
-          recallConfig: config,
-          vectorRetrieveStartTime: startTime,
-        },
+      const keyword = await collectKeywordCandidates({
+        query: intentQuery,
+        scanQuery: scanQuery || intentQuery,
+      });
+      const vector = await collectVectorCandidates(intentQuery);
+      const merged = await mergeAndRerank({
+        vectorCandidates: vector.candidates,
+        keywordCandidates: keyword.candidates,
+        query: intentQuery,
+        config,
+      });
+      const recalledEntities = await recallEntities(keyword.entityRefs);
+
+      await recordRecallLog({
+        query: intentQuery,
+        candidates: merged.candidates,
+        recalledEntities,
+        config,
+        totalCandidates: merged.originalCount,
+        keywordElapsedMs: keyword.elapsedMs,
+        vectorElapsedMs: vector.elapsedMs,
+        rerankMs: merged.rerankMs,
       });
 
-      Logger.info(LogModule.RAG_INJECT, 'Hybrid Search 工作流执行完毕', {
-        steps: context.metadata.stepsExecuted,
-        entityCount: context.data?.recalledEntities?.length || 0,
-        candidateCount: context.data?.candidates?.length || 0,
+      Logger.info(LogModule.RAG_INJECT, 'Hybrid Search 完成', {
+        entityCount: recalledEntities.length,
+        candidateCount: merged.candidates.length,
       });
 
-      return (context.output as RetrievalResult | undefined) || createEmptyResult();
+      return {
+        entries: merged.candidates.map((candidate) => candidate.summary),
+        nodes: merged.candidates.flatMap((candidate) => (candidate.node ? [candidate.node] : [])),
+        candidates: merged.candidates,
+        recalledEntities,
+      };
     } catch (error) {
-      Logger.error(LogModule.RAG_INJECT, 'Hybrid Search 工作流遭遇毁灭性失败', {
+      Logger.error(LogModule.RAG_INJECT, 'Hybrid Search 遭遇毁灭性失败', {
         error: getErrorMessage(error),
         stack: getErrorStack(error),
       });
