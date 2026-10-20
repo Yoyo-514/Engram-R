@@ -29,6 +29,7 @@ import { batchProcessor } from '@/modules/batch';
 import { summarizerService } from '@/modules/memory';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { BatchTaskType, HistoryAnalysis, ImportMode } from '@/types/batch';
+import { ModernButton as Button } from '@/ui/components/core/Button';
 import { NumberField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import { useWorkflow } from '@/ui/hooks/useWorkflow';
@@ -136,24 +137,27 @@ const DataBatchSection: FC = () => {
 
         {/* 操作按钮 */}
         <div className="flex items-center gap-2">
-          <button
-            className="inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted/30 hover:text-foreground disabled:opacity-40"
+          <Button
+            size="sm"
+            icon={isScanning ? Loader2 : SearchIcon}
+            iconClassName={isScanning ? 'animate-spin' : ''}
+            label="扫描"
             onClick={handleScan}
             disabled={isScanning || isArchiving}
-          >
-            {isScanning ? <Loader2 size={12} className="animate-spin" /> : <SearchIcon size={12} />}
-            扫描
-          </button>
-          <button
-            className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-40"
+          />
+          <Button
+            size="sm"
+            primary
+            icon={isArchiving ? Loader2 : Archive}
+            iconClassName={isArchiving ? 'animate-spin' : ''}
+            label={
+              isArchiving
+                ? '归档中...'
+                : `归档${archiveStats?.pending ? ` (${archiveStats.pending})` : ''}`
+            }
             onClick={handleArchive}
             disabled={isArchiving || !archiveStats || archiveStats.pending === 0}
-          >
-            {isArchiving ? <Loader2 size={12} className="animate-spin" /> : <Archive size={12} />}
-            {isArchiving
-              ? '归档中...'
-              : `归档${archiveStats?.pending ? ` (${archiveStats.pending})` : ''}`}
-          </button>
+          />
         </div>
       </div>
     </section>
@@ -342,14 +346,13 @@ export const BatchProcessingPanel: FC = () => {
         </div>
 
         {/* 分析按钮 */}
-        <button
-          className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+        <Button
+          icon={RefreshCw}
+          iconClassName={isAnalyzing ? 'animate-spin' : ''}
+          label={isAnalyzing ? '分析中...' : '分析任务'}
           onClick={handleAnalyze}
           disabled={isAnalyzing || queue.isRunning}
-        >
-          <RefreshCw size={14} className={isAnalyzing ? 'animate-spin' : ''} />
-          {isAnalyzing ? '分析中...' : '分析任务'}
-        </button>
+        />
 
         {/* 分析结果 */}
         {analysis && (
@@ -383,39 +386,19 @@ export const BatchProcessingPanel: FC = () => {
             {/* 操作按钮 */}
             <div className="flex flex-wrap gap-3">
               {!queue.isRunning ? (
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90"
-                  onClick={handleStart}
-                >
-                  <Play size={14} />
-                  开始批处理
-                </button>
+                <Button primary icon={Play} label="开始批处理" onClick={handleStart} />
               ) : (
                 <>
-                  <button
-                    className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  <Button
+                    icon={queue.isPaused ? Play : Pause}
+                    label={queue.isPaused ? '继续' : '暂停'}
                     onClick={handlePauseResume}
-                  >
-                    {queue.isPaused ? <Play size={14} /> : <Pause size={14} />}
-                    {queue.isPaused ? '继续' : '暂停'}
-                  </button>
-                  <button
-                    className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm text-destructive transition-colors hover:text-destructive/80"
-                    onClick={handleStop}
-                  >
-                    <Square size={14} />
-                    停止
-                  </button>
+                  />
+                  <Button danger icon={Square} label="停止" onClick={handleStop} />
                 </>
               )}
               {queue && !queue.isRunning && (
-                <button
-                  className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-                  onClick={handleReset}
-                >
-                  <RotateCcw size={14} />
-                  重置
-                </button>
+                <Button icon={RotateCcw} label="重置" onClick={handleReset} />
               )}
             </div>
           </>
@@ -539,13 +522,7 @@ export const BatchProcessingPanel: FC = () => {
             onChange={handleFileSelect}
             className="hidden"
           />
-          <button
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            onClick={triggerFileSelect}
-          >
-            <Upload size={14} />
-            选择文件
-          </button>
+          <Button icon={Upload} label="选择文件" onClick={triggerFileSelect} />
           {importText && (
             <span className="text-xs text-muted-foreground">
               已加载 {(importText.length / 1024).toFixed(1)} KB
@@ -636,14 +613,13 @@ export const BatchProcessingPanel: FC = () => {
         )}
 
         {/* 导入按钮 */}
-        <button
-          className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground transition-colors hover:bg-primary/90 disabled:opacity-50"
+        <Button
+          primary
+          icon={FileText}
+          label={isImporting ? '导入中...' : '开始导入'}
           onClick={handleImport}
           disabled={!importText || isImporting}
-        >
-          <FileText size={14} />
-          {isImporting ? '导入中...' : '开始导入'}
-        </button>
+        />
       </section>
 
       {/* ==================== 数据批处理 ==================== */}

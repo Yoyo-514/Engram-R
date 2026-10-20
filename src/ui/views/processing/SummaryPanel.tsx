@@ -36,6 +36,7 @@ import type {
   TrimmerConfig,
   TrimTriggerType,
 } from '@/types/memory';
+import { ModernButton as Button } from '@/ui/components/core/Button';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
@@ -370,30 +371,17 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         {/* 操作按钮 */}
         <div className="flex gap-3">
           {status?.running ? (
-            <button
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground"
-              onClick={handleStop}
-            >
-              <Pause size={14} />
-              停止监听
-            </button>
+            <Button icon={Pause} label="停止监听" onClick={handleStop} />
           ) : (
-            <button
-              className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-              onClick={handleStart}
-            >
-              <Play size={14} />
-              启动监听
-            </button>
+            <Button icon={Play} label="启动监听" onClick={handleStart} />
           )}
-          <button
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:opacity-50"
+          <Button
+            icon={RefreshCw}
+            iconClassName={loading ? 'animate-spin' : ''}
+            label={loading ? '处理中...' : '手动触发'}
             onClick={handleTrigger}
             disabled={loading || status?.isSummarizing}
-          >
-            <RefreshCw size={14} className={loading ? 'animate-spin' : ''} />
-            {loading ? '处理中...' : '手动触发'}
-          </button>
+          />
         </div>
 
         {/* 总结设置 - 重新布局：开关并开关，滑块并滑块 */}
@@ -480,15 +468,16 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
         {/* 底部重置按钮区 */}
         <div className="flex justify-end">
-          <button
-            className="inline-flex items-center gap-2 rounded border border-red-500/30 px-3 py-1.5 text-xs text-red-500 transition-colors hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-400"
+          <Button
+            icon={RefreshCw}
+            iconClassName={loading ? 'animate-spin' : ''}
+            label="重置所有进度"
+            size="sm"
+            danger
             onClick={handleReset}
             disabled={loading}
             title="重置进度 (重新扫描历史)"
-          >
-            <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
-            重置所有进度
-          </button>
+          />
         </div>
       </section>
 
@@ -613,15 +602,13 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           )}
 
           {/* 执行按钮 - 边框样式 */}
-          <button
-            type="button"
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground disabled:opacity-50"
+          <Button
+            icon={Scissors}
+            iconClassName={trimLoading ? 'animate-pulse' : ''}
+            label={trimLoading ? '精简中...' : '手动执行精简'}
             onClick={handleTriggerTrim}
             disabled={trimLoading || (trimStatus?.pendingEntryCount ?? 0) < 2}
-          >
-            <Scissors size={14} className={trimLoading ? 'animate-pulse' : ''} />
-            {trimLoading ? '精简中...' : '手动执行精简'}
-          </button>
+          />
 
           {/* 说明 - 简化 */}
           <p className="whitespace-normal break-words text-xs leading-relaxed text-muted-foreground/70">
