@@ -5,8 +5,6 @@
  * 替代 console.log，确保调试信息可追踪、可导出。
  */
 
-import { Subject } from 'rxjs';
-
 import { DEFAULT_LOGGER_CONFIG, LogLevel } from '@/config/logger/defaults';
 import { generateShortUUID } from '@/core/utils';
 import type { LogEntry, LoggerConfig } from '@/types/logger';
@@ -20,8 +18,8 @@ import { engramEventBus } from '../events/event-bus';
 import type { EngramEvent } from '../events/event-bus';
 import type { LogModule } from './LogModule';
 
-// 日志流 Subject (RxJS)
-const logSubject = new Subject<LogEntry>();
+// 日志流监听器
+const logListeners = new Set<(entry: LogEntry) => void>();
 
 // 内存中的日志缓存（用于快速访问和 UI 展示）
 // 注意：模块级变量在 HMR 时可能被保留，但完整页面刷新会重置
@@ -111,7 +109,9 @@ function writeLog(level: LogLevel, module: string, message: string, data?: unkno
   }
 
   // 广播给订阅者 (如: DevTools UI)
-  logSubject.next(entry);
+  for (const listener of logListeners) {
+    listener(entry);
+  }
 }
 
 /**
@@ -208,8 +208,10 @@ export const Logger = {
    * @returns 取消订阅函数
    */
   subscribe(callback: (entry: LogEntry) => void): () => void {
-    const subscription = logSubject.subscribe(callback);
-    return () => subscription.unsubscribe();
+    logListeners.add(callback);
+    return () => {
+      logListeners.delete(callback);
+    };
   },
 
   /**

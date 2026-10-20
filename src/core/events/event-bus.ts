@@ -1,12 +1,8 @@
 /**
  * EventBus - 事件总线
  *
- * 基于 RxJS Subject 实现的发布/订阅模式
- * 用于模块间的松耦合通信
+ * 简洁的发布/订阅实现，用于模块间的松耦合通信。
  */
-
-import type { Observable } from 'rxjs';
-import { Subject, filter } from 'rxjs';
 
 // 事件类型定义
 export type EngramEventType =
@@ -27,49 +23,43 @@ export interface EngramEvent<T = unknown> {
   timestamp?: number;
 }
 
-// 全局事件流
-const engramEventSubject = new Subject<EngramEvent>();
+type EventListener = (event: EngramEvent) => void;
 
-/**
- * 事件总线
- */
+const listeners = new Set<EventListener>();
+
+/** 事件总线 */
 export const engramEventBus = {
-  /**
-   * 发布事件
-   */
+  /** 发布事件 */
   emit<T>(event: EngramEvent<T>): void {
-    engramEventSubject.next({
-      ...event,
-      timestamp: Date.now(),
-    });
+    const full: EngramEvent = { ...event, timestamp: Date.now() };
+    // 直接迭代 Set：监听器在回调中退订是安全的
+    for (const listener of listeners) {
+      listener(full);
+    }
   },
 
-  /**
-   * 订阅所有事件
-   */
-  subscribe(callback: (event: EngramEvent) => void): { unsubscribe: () => void } {
-    const subscription = engramEventSubject.subscribe(callback);
+  /** 订阅所有事件 */
+  subscribe(callback: EventListener): { unsubscribe: () => void } {
+    listeners.add(callback);
     return {
-      unsubscribe: () => subscription.unsubscribe(),
+      unsubscribe: () => {
+        listeners.delete(callback);
+      },
     };
   },
 
-  /**
-   * 订阅特定类型的事件
-   */
+  /** 订阅特定类型的事件 */
   on<T>(type: EngramEventType, callback: (payload: T) => void): { unsubscribe: () => void } {
-    const subscription = engramEventSubject
-      .pipe(filter((e) => e.type === type))
-      .subscribe((e) => callback(e.payload as T));
-    return {
-      unsubscribe: () => subscription.unsubscribe(),
+    const listener: EventListener = (event) => {
+      if (event.type === type) {
+        callback(event.payload as T);
+      }
     };
-  },
-
-  /**
-   * 获取事件流（用于 RxJS 操作符）
-   */
-  asObservable(): Observable<EngramEvent> {
-    return engramEventSubject.asObservable();
+    listeners.add(listener);
+    return {
+      unsubscribe: () => {
+        listeners.delete(listener);
+      },
+    };
   },
 };
