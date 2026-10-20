@@ -224,26 +224,36 @@ describe('实体 Patch 匹配契约', () => {
     );
   });
 
-  it.each(['alex', 'captain'])('根新增遇到大小写名称或别名冲突时合并：%s', async (name) => {
+  it.each(['Alex', 'Captain'])('根新增与现有实体冲突时明确失败：%s', async (name) => {
     store.getAllEntities.mockResolvedValue([entity({ aliases: ['Captain'] })]);
     const job = context({
       patches: [{ op: 'add', path: `/entities/${name}`, value: { profile: { role: 'king' } } }],
     });
-    await new SaveEntity().execute(job);
+    await expect(new SaveEntity().execute(job)).rejects.toThrow('已存在');
     expect(store.saveEntity).not.toHaveBeenCalled();
-    expect(store.updateEntity).toHaveBeenCalledWith(
-      'existing',
-      expect.objectContaining({ name: 'Alex', profile: { role: 'king' } })
-    );
+    expect(store.updateEntity).not.toHaveBeenCalled();
   });
 
-  it('唯一叶键仍可纠偏到其真实嵌套位置', async () => {
+  it('别名命中多个实体时明确失败', async () => {
+    store.getAllEntities.mockResolvedValue([
+      entity({ id: 'first', name: 'Alex', aliases: ['队长'] }),
+      entity({ id: 'second', name: 'Bob', aliases: ['队长'] }),
+    ]);
+    const job = context({
+      patches: [{ op: 'replace', path: '/entities/队长/profile/role', value: 'king' }],
+    });
+    await expect(new SaveEntity().execute(job)).rejects.toThrow('别名');
+    expect(store.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it('未知字段路径明确失败，不再猜嵌套位置', async () => {
     store.getAllEntities.mockResolvedValue([entity({ profile: { stats: { age: 20 } } })]);
     const job = context({
       patches: [{ op: 'replace', path: '/entities/Alex/profile/age', value: 21 }],
     });
-    await new SaveEntity({ dryRun: true }).execute(job);
-    expect(job.output.updatedEntities[0].profile).toEqual({ stats: { age: 21 } });
+    await expect(new SaveEntity({ dryRun: true }).execute(job)).rejects.toThrow('目标不存在');
+    expect(store.updateEntity).not.toHaveBeenCalled();
+    expect(store.saveEntity).not.toHaveBeenCalled();
   });
 
   it('保留 add、replace、test、copy、move、remove 六种操作', async () => {

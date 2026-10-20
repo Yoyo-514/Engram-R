@@ -13,6 +13,10 @@ import type { IStep } from '@/types/step';
 // 统一 JSON Patch 格式
 // 新实体: { op: "add", path: "/entities/{name}", value: {...} }
 // 更新:   { op: "replace/add/remove", path: "/entities/{name}/profile/{key}", value: ... }
+//
+// 输入只接受两种形态：审阅后的 { newEntities, updatedEntities }，或模型给出的 patches。
+// 实体身份只按主名称和完整别名做精确匹配，匹配不到、命中多个或路径不存在都直接失败，
+// 不再猜测模型本意去纠偏路径或挑选「最像」的实体。
 
 const PatchOpSchema = z.object({
   op: z.enum(['add', 'replace', 'remove', 'copy', 'move', 'test']),
@@ -66,14 +70,11 @@ type RootPatchValue = {
   aliases?: unknown;
   profile?: unknown;
   description?: unknown;
-  name?: unknown;
 };
 
 type EntityIndexes = {
   byName: Map<string, EntityNode>;
   byAlias: Map<string, EntityNode[]>;
-  byLowerName: Map<string, EntityNode>;
-  byLowerAlias: Map<string, EntityNode[]>;
 };
 
 export class SaveEntity implements IStep {
@@ -152,7 +153,6 @@ export class SaveEntity implements IStep {
     if ('aliases' in value) result.aliases = value.aliases;
     if ('profile' in value) result.profile = value.profile;
     if ('description' in value) result.description = value.description;
-    if ('name' in value) result.name = value.name;
     return result;
   }
 
@@ -171,15 +171,11 @@ export class SaveEntity implements IStep {
     original: EntityNode
   ): DiffOperation[] {
     return operations.map((operation) => {
-      let oldValue: unknown;
-      try {
-        if (operation.op === 'replace' || operation.op === 'remove') {
-          oldValue = jsonpatch.getValueByPointer(original, operation.path) as unknown;
-        }
-      } catch {
-        oldValue = undefined;
+      if (operation.op !== 'replace' && operation.op !== 'remove') {
+        return operation;
       }
 
+      const oldValue = jsonpatch.getValueByPointer(original, operation.path) as unknown;
       return { ...operation, oldValue };
     });
   }
@@ -297,7 +293,7 @@ export class SaveEntity implements IStep {
   private async processUnifiedPatches(
     patches: z.infer<typeof PatchOpSchema>[],
     existingEntities: EntityNode[],
-    store: ReturnType<typeof useMemoryStore.getState>,
+    store: EntityStore,
     isDryRun: boolean,
     newEntities: EntityNode[],
     updatedEntities: EntityNode[]
@@ -310,67 +306,70 @@ export class SaveEntity implements IStep {
       if (!match) continue;
 
       const entityName = decodeURIComponent(match[1]);
-      if (!patchesByEntity.has(entityName)) {
-        patchesByEntity.set(entityName, []);
-      }
-      patchesByEntity.get(entityName)!.push(patch);
+      const entityPatches = patchesByEntity.get(entityName) ?? [];
+      entityPatches.push(patch);
+      patchesByEntity.set(entityName, entityPatches);
     }
 
     for (const [entityName, entityPatches] of patchesByEntity) {
-      let existing = this.resolveEntityIdentity(entityName, entityIndexes);
-
+      const existing = this.resolveExistingEntity(entityName, entityIndexes);
       const addRootPatch = entityPatches.find(
         (p) => p.op === 'add' && this.isEntityRootPath(p.path, entityName)
       );
 
       if (addRootPatch) {
-        // 如果发现新实体声明，但名字发生冲突
-        const conflict = this.findCaseInsensitiveConflict(entityName, entityIndexes);
-
-        if (!conflict) {
-          newEntities.push(
-            await this.createNewEntity(
-              entityName,
-              this.readRootPatchValue(addRootPatch.value),
-              store,
-              isDryRun
-            )
+        if (existing) {
+          throw new Error(
+            `SaveEntity: 实体 "${entityName}" 已存在，新增请求与现有实体冲突，请改用 replace`
           );
-          continue;
-        } else {
-          existing = conflict;
-          Logger.debug(
-            'SaveEntity',
-            `🔭 Duplicate entity detected for "${entityName}", redirecting to merge mode.`
-          );
-          this.convertRootAddToPatches(entityName, addRootPatch.value, entityPatches);
         }
+
+        newEntities.push(
+          await this.createNewEntity(
+            entityName,
+            this.readRootPatchValue(addRootPatch.value),
+            store,
+            isDryRun
+          )
+        );
+        continue;
       }
 
-      if (existing) {
-        await this.applyMergePatches(
-          entityName,
-          existing,
-          entityPatches,
-          store,
-          isDryRun,
-          updatedEntities
-        );
+      if (!existing) {
+        throw new Error(`SaveEntity: 未找到实体 "${entityName}"，无法应用更新 Patch`);
       }
+
+      await this.applyMergePatches(
+        entityName,
+        existing,
+        entityPatches,
+        store,
+        isDryRun,
+        updatedEntities
+      );
     }
   }
 
-  /** 消除别名歧义匹配 */
-  private resolveEntityIdentity(
+  /** 实体身份只认主名称与唯一别名；歧义时交由调用方改用主名称。 */
+  private resolveExistingEntity(
     entityName: string,
     entityIndexes: EntityIndexes
   ): EntityNode | undefined {
-    // 1. 精确匹配名称优先
     const exactMatch = entityIndexes.byName.get(entityName);
-    if (exactMatch) return exactMatch;
+    if (exactMatch) {
+      return exactMatch;
+    }
 
-    // 2. 别名匹配（可能冲突）
-    return this.pickAliasMatch(entityName, entityIndexes.byAlias);
+    const aliasMatches = entityIndexes.byAlias.get(entityName) ?? [];
+    if (aliasMatches.length > 1) {
+      throw new Error(
+        `SaveEntity: 别名 "${entityName}" 命中多个实体（${aliasMatches
+          .map((entity) => entity.name)
+          .join('、')}），请改用实体主名称`
+      );
+    }
+
+    return aliasMatches[0];
   }
 
   private async createNewEntity(
@@ -384,36 +383,6 @@ export class SaveEntity implements IStep {
       : store.saveEntity(this.buildEntityDraft(entityName, source));
   }
 
-  private convertRootAddToPatches(
-    entityName: string,
-    value: unknown,
-    entityPatches: PatchOperation[]
-  ): void {
-    const rootValue = this.readRootPatchValue(value);
-
-    if (rootValue.profile !== undefined) {
-      entityPatches.push({
-        op: 'add',
-        path: this.getEntityPath(entityName, '/profile'),
-        value: rootValue.profile,
-      });
-    }
-    if (rootValue.type !== undefined) {
-      entityPatches.push({
-        op: 'replace',
-        path: this.getEntityPath(entityName, '/type'),
-        value: rootValue.type,
-      });
-    }
-    if (rootValue.aliases !== undefined) {
-      entityPatches.push({
-        op: 'add',
-        path: this.getEntityPath(entityName, '/aliases'),
-        value: rootValue.aliases,
-      });
-    }
-  }
-
   private async applyMergePatches(
     entityName: string,
     existing: EntityNode,
@@ -422,216 +391,145 @@ export class SaveEntity implements IStep {
     isDryRun: boolean,
     updatedEntities: EntityNode[]
   ): Promise<void> {
-    try {
-      const targetDoc: EntityPatchDocument = {
-        ...deepClone(existing),
-        _original: deepClone(existing),
-      };
+    const targetDoc: EntityPatchDocument = {
+      ...deepClone(existing),
+      _original: deepClone(existing),
+    };
 
-      const relativeOps = this.buildRelativePatches(entityName, entityPatches, targetDoc);
+    const relativeOps = this.buildRelativePatches(entityName, entityPatches);
 
-      if (relativeOps.length === 0) {
-        return;
-      }
-
-      Logger.debug('SaveEntity', `Applying ${relativeOps.length} patches to ${entityName}`, {
-        ops: relativeOps,
-      });
-      jsonpatch.applyPatch(targetDoc, relativeOps);
-
-      if (!isDryRun) {
-        const updatePayload = this.buildEntityUpdate(targetDoc);
-        // 当合并目标为已归档实体时，自动解除归档使其重新可见。
-        const wasArchived = existing.is_archived === true;
-        if (wasArchived) {
-          updatePayload.is_archived = false;
-          targetDoc.is_archived = false;
-          Logger.info(
-            'SaveEntity',
-            `🔓 Auto-unarchived entity "${entityName}" — it was updated via merge patch`
-          );
-        }
-
-        await store.updateEntity(existing.id, updatePayload);
-        updatedEntities.push(targetDoc);
-        return;
-      }
-
-      targetDoc.description = this.profileToYaml(
-        targetDoc.name,
-        targetDoc.type,
-        targetDoc.profile || {}
-      );
-      targetDoc.diff = this.buildDiffOperations(relativeOps, existing);
-      updatedEntities.push(targetDoc);
-    } catch (error) {
-      Logger.warn('SaveEntity', `Patch failed for ${entityName}`, error);
+    if (relativeOps.length === 0) {
+      return;
     }
+
+    Logger.debug('SaveEntity', `Applying ${relativeOps.length} patches to ${entityName}`, {
+      ops: relativeOps,
+    });
+    this.assertTargetsExist(targetDoc, relativeOps);
+    jsonpatch.applyPatch(targetDoc, relativeOps);
+
+    if (!isDryRun) {
+      const updatePayload = this.buildEntityUpdate(targetDoc);
+      // 当合并目标为已归档实体时，自动解除归档使其重新可见。
+      const wasArchived = existing.is_archived === true;
+      if (wasArchived) {
+        updatePayload.is_archived = false;
+        targetDoc.is_archived = false;
+        Logger.info(
+          'SaveEntity',
+          `🔓 Auto-unarchived entity "${entityName}" — it was updated via merge patch`
+        );
+      }
+
+      await store.updateEntity(existing.id, updatePayload);
+      updatedEntities.push(targetDoc);
+      return;
+    }
+
+    targetDoc.description = this.profileToYaml(
+      targetDoc.name,
+      targetDoc.type,
+      targetDoc.profile || {}
+    );
+    targetDoc.diff = this.buildDiffOperations(relativeOps, existing);
+    updatedEntities.push(targetDoc);
   }
 
+  /** 把 /entities/{name}/... 路径翻译成实体文档内的相对路径。 */
   private buildRelativePatches(
     entityName: string,
-    entityPatches: PatchOperation[],
-    targetDoc: EntityPatchDocument
+    entityPatches: PatchOperation[]
   ): jsonpatch.Operation[] {
     const relativeOps: jsonpatch.Operation[] = [];
-    const genericKeys = new Set([
-      'profile',
-      'type',
-      'description',
-      'desc',
-      'value',
-      'name',
-      'id',
-      'status',
-      'features',
-      'traits',
-    ]);
 
     for (const patch of entityPatches) {
-      const isRoot = this.isEntityRootPath(patch.path, entityName);
-      if (isRoot && patch.op === 'add') {
-        continue;
-      }
+      if (this.isEntityRootPath(patch.path, entityName)) {
+        if (patch.op === 'add') {
+          continue;
+        }
 
-      if (isRoot && (patch.op === 'replace' || patch.op === 'test')) {
+        if (patch.op !== 'replace' && patch.op !== 'test') {
+          throw new Error(`SaveEntity: 根路径不支持 ${patch.op} 操作`);
+        }
+
         const rootValue = this.readRootPatchValue(patch.value);
         if (rootValue.profile !== undefined) {
-          relativeOps.push({
-            op: patch.op,
-            path: '/profile',
-            value: rootValue.profile,
-          } as jsonpatch.Operation);
+          relativeOps.push({ op: patch.op, path: '/profile', value: rootValue.profile });
         }
         if (rootValue.type !== undefined) {
-          relativeOps.push({
-            op: patch.op,
-            path: '/type',
-            value: rootValue.type,
-          } as jsonpatch.Operation);
+          relativeOps.push({ op: patch.op, path: '/type', value: rootValue.type });
         }
         if (rootValue.aliases !== undefined) {
-          relativeOps.push({
-            op: patch.op,
-            path: '/aliases',
-            value: rootValue.aliases,
-          } as jsonpatch.Operation);
+          relativeOps.push({ op: patch.op, path: '/aliases', value: rootValue.aliases });
         }
         continue;
       }
 
-      if (isRoot) {
-        continue;
-      }
-
-      let relativePath = this.stripEntityPrefix(patch.path, entityName);
-      const parts = relativePath.split('/').filter(Boolean);
-
-      let anchorKey = '';
-      let anchorIndex = -1;
-      for (let i = parts.length - 1; i >= 0; i--) {
-        if (!genericKeys.has(parts[i])) {
-          anchorKey = parts[i];
-          anchorIndex = i;
-          break;
-        }
-      }
-
-      if (anchorKey) {
-        const foundPaths = this.findUniquePath(targetDoc.profile || {}, anchorKey, '/profile');
-        if (foundPaths.length === 1) {
-          const realAnchorPath = foundPaths[0];
-          const suffix = parts.slice(anchorIndex + 1).join('/');
-          const redirectedPath = suffix ? `${realAnchorPath}/${suffix}` : realAnchorPath;
-          if (redirectedPath !== relativePath) {
-            Logger.debug(
-              'SaveEntity',
-              `🔭 Smart Pointer Redirect: ${relativePath} -> ${redirectedPath}`
-            );
-            relativePath = redirectedPath;
-          }
-        }
-      }
-
-      relativeOps.push({ ...patch, path: relativePath } as jsonpatch.Operation);
+      relativeOps.push({
+        ...patch,
+        path: this.stripEntityPrefix(patch.path, entityName),
+      } as jsonpatch.Operation);
     }
 
     return relativeOps;
+  }
+
+  /** 校验 replace / remove 的目标路径确实存在，避免 Patch 静默新增字段。 */
+  private assertTargetsExist(document: unknown, operations: jsonpatch.Operation[]): void {
+    for (const operation of operations) {
+      if (operation.op !== 'replace' && operation.op !== 'remove') {
+        continue;
+      }
+
+      if (!this.hasPointer(document, operation.path)) {
+        throw new Error(`SaveEntity: Patch 目标不存在 ${operation.path}`);
+      }
+    }
+  }
+
+  private hasPointer(document: unknown, pointer: string): boolean {
+    let current: unknown = document;
+
+    for (const segment of pointer.split('/').slice(1)) {
+      const key = segment.replace(/~1/g, '/').replace(/~0/g, '~');
+
+      if (Array.isArray(current)) {
+        if (!/^\d+$/.test(key) || Number(key) >= current.length) {
+          return false;
+        }
+        current = current[Number(key)];
+        continue;
+      }
+
+      if (!isRecord(current) || !(key in current)) {
+        return false;
+      }
+      current = current[key];
+    }
+
+    return true;
   }
 
   private buildEntityIndexes(entities: EntityNode[]): EntityIndexes {
     const indexes: EntityIndexes = {
       byName: new Map(),
       byAlias: new Map(),
-      byLowerName: new Map(),
-      byLowerAlias: new Map(),
     };
 
     for (const entity of entities) {
-      this.indexEntity(indexes, entity);
+      indexes.byName.set(entity.name, entity);
+
+      for (const alias of entity.aliases || []) {
+        const aliasMatches = indexes.byAlias.get(alias);
+        if (aliasMatches) {
+          aliasMatches.push(entity);
+        } else {
+          indexes.byAlias.set(alias, [entity]);
+        }
+      }
     }
 
     return indexes;
-  }
-
-  private indexEntity(indexes: EntityIndexes, entity: EntityNode): void {
-    indexes.byName.set(entity.name, entity);
-    indexes.byLowerName.set(entity.name.toLowerCase(), entity);
-
-    for (const alias of entity.aliases || []) {
-      const aliasMatches = indexes.byAlias.get(alias);
-      if (aliasMatches) {
-        aliasMatches.push(entity);
-      } else {
-        indexes.byAlias.set(alias, [entity]);
-      }
-
-      const lowerAlias = alias.toLowerCase();
-      const lowerAliasMatches = indexes.byLowerAlias.get(lowerAlias);
-      if (lowerAliasMatches) {
-        lowerAliasMatches.push(entity);
-      } else {
-        indexes.byLowerAlias.set(lowerAlias, [entity]);
-      }
-    }
-  }
-
-  private pickAliasMatch(
-    entityName: string,
-    aliasIndex: Map<string, EntityNode[]>
-  ): EntityNode | undefined {
-    const aliasMatches = aliasIndex.get(entityName) || [];
-    if (aliasMatches.length === 1) {
-      return aliasMatches[0];
-    }
-
-    if (aliasMatches.length > 1) {
-      Logger.warn(
-        'SaveEntity',
-        `⚠️ Alias conflict detected for "${entityName}". Multiple entities share this alias. Falling back to first match to avoid crash, but data overwrite may occur.`,
-        {
-          matches: aliasMatches.map((entity) => entity.name),
-        }
-      );
-      return aliasMatches[0];
-    }
-
-    return undefined;
-  }
-
-  private findCaseInsensitiveConflict(
-    entityName: string,
-    entityIndexes: EntityIndexes
-  ): EntityNode | undefined {
-    const normalizedName = entityName.toLowerCase();
-    return (
-      entityIndexes.byLowerName.get(normalizedName) ||
-      this.pickAliasMatch(normalizedName, entityIndexes.byLowerAlias)
-    );
-  }
-
-  private getEntityPath(entityName: string, suffix: string = ''): string {
-    return `/entities/${encodeURIComponent(entityName)}${suffix}`;
   }
 
   private isEntityRootPath(path: string, entityName: string): boolean {
@@ -657,28 +555,5 @@ export class SaveEntity implements IStep {
       Logger.warn('SaveEntity', 'YAML Dump failed', error);
       return `${name} (${type})\n${JSON.stringify(profile, null, 2)}`;
     }
-  }
-
-  /** 查找唯一叶键路径，供现有模型输出的路径纠偏使用。 */
-  private findUniquePath(obj: unknown, targetKey: string, currentPath: string = ''): string[] {
-    if (!isRecord(obj)) {
-      return [];
-    }
-
-    let results: string[] = [];
-
-    for (const [key, value] of Object.entries(obj)) {
-      const newPath = currentPath ? `${currentPath}/${key}` : key;
-
-      if (key === targetKey) {
-        results.push(newPath);
-      }
-
-      if (isRecord(value)) {
-        results = results.concat(this.findUniquePath(value, targetKey, newPath));
-      }
-    }
-
-    return results;
   }
 }
