@@ -26,6 +26,7 @@ interface EntityListProps {
   // Callbacks
   onSelect: (id: string) => void;
   onCheck: (id: string, checked: boolean) => void;
+  onCheckAll: (ids: string[]) => void;
   onArchive: (id: string, isArchived: boolean) => void;
   onToggleLock: (id: string, isLocked: boolean) => void;
 }
@@ -58,6 +59,7 @@ export const EntityList: FC<EntityListProps> = ({
   onActiveToggle,
   onSelect,
   onCheck,
+  onCheckAll,
   onArchive,
   onToggleLock,
 }) => {
@@ -150,7 +152,27 @@ export const EntityList: FC<EntityListProps> = ({
               {showActiveOnly ? '显示全部' : '只看激活'}
             </button>
 
-            <span className="ml-auto text-[11px] text-muted-foreground">共 {totalCount} 项</span>
+            <button
+              onClick={() =>
+                onCheckAll(
+                  groupedEntities.flatMap((group) =>
+                    group.children.flatMap((sub) => sub.entities.map((entity) => entity.id))
+                  )
+                )
+              }
+              disabled={totalCount === 0}
+              className="ml-auto inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              title="全选当前实体列表（再次点击取消）"
+            >
+              {totalCount > 0 &&
+              groupedEntities
+                .flatMap((group) => group.children.flatMap((sub) => sub.entities))
+                .every((entity) => checkedIds.has(entity.id))
+                ? '取消全选'
+                : '全选'}
+            </button>
+
+            <span className="text-[11px] text-muted-foreground">共 {totalCount} 项</span>
           </div>
         </div>
       )}

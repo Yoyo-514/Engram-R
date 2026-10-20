@@ -21,12 +21,12 @@ import { EntityList } from './sections/EntityList';
 import { EventList } from './sections/EventList';
 
 const VIEW_TABS = [
-  { id: 'list', label: '列表', icon: <List size={14} /> },
+  { id: 'list', label: '时间线', icon: <List size={14} /> },
   { id: 'entities', label: '实体', icon: <Users size={14} /> },
 ];
 
 const TAB_INFO = {
-  list: { title: '列表视图', subtitle: '查看和管理记忆事件' },
+  list: { title: '时间线', subtitle: '查看和管理记忆事件' },
   entities: { title: '实体列表', subtitle: '查看和管理提取的实体' },
 };
 
@@ -183,6 +183,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
                 onActiveToggle={() => ms.setShowActiveOnly(!ms.showActiveOnly)}
                 onSelect={ms.handleSelect}
                 onCheck={ms.handleCheck}
+                onCheckAll={ms.handleCheckAll}
                 onGroupCheck={(group, checked) => {
                   ms.setCheckedIds((prev) => {
                     const newSet = new Set(prev);
@@ -213,6 +214,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
                 onActiveToggle={() => ms.setShowActiveOnly(!ms.showActiveOnly)}
                 onSelect={ms.handleSelect}
                 onCheck={ms.handleCheck}
+                onCheckAll={ms.handleCheckAll}
                 onArchive={ms.handleToggleArchive}
                 onToggleLock={ms.handleToggleEntityLock}
               />

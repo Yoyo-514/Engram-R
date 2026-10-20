@@ -30,6 +30,7 @@ interface EventListProps {
   onSelect: (id: string) => void;
   onCheck: (id: string, checked: boolean) => void;
   onGroupCheck: (group: GroupedEvent, checked: boolean) => void;
+  onCheckAll: (ids: string[]) => void;
   onToggleLock: (id: string, isLocked: boolean) => void;
   onArchive?: (id: string, isArchived: boolean) => void;
   onDelete?: (id: string) => void;
@@ -54,6 +55,7 @@ export const EventList: FC<EventListProps> = ({
   onSelect,
   onCheck,
   onGroupCheck,
+  onCheckAll,
   onToggleLock,
   onArchive,
   onDelete,
@@ -113,7 +115,18 @@ export const EventList: FC<EventListProps> = ({
               {showActiveOnly ? '显示全部' : '只看激活'}
             </button>
 
-            <span className="ml-auto text-[11px] text-muted-foreground">
+            <button
+              onClick={() => onCheckAll(filteredEvents.map((event) => event.id))}
+              disabled={filteredEvents.length === 0}
+              className="ml-auto inline-flex items-center gap-1 rounded border border-border bg-background px-2 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground disabled:opacity-40"
+              title="全选当前时间线（再次点击取消）"
+            >
+              {filteredEvents.length > 0 && filteredEvents.every((event) => checkedIds.has(event.id))
+                ? '取消全选'
+                : '全选'}
+            </button>
+
+            <span className="text-[11px] text-muted-foreground">
               共 {filteredEvents.length} 项
             </span>
           </div>

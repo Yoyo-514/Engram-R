@@ -225,6 +225,16 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     });
   }, []);
 
+  const handleCheckAll = useCallback((ids: string[]) => {
+    setCheckedIds((prev) => {
+      const allChecked = ids.length > 0 && ids.every((id) => prev.has(id));
+      const next = new Set(prev);
+      if (allChecked) ids.forEach((id) => next.delete(id));
+      else ids.forEach((id) => next.add(id));
+      return next;
+    });
+  }, []);
+
   const handleCloseEditor = useCallback(() => {
     setViewMode('browse');
     setSelectedId(null);
@@ -624,6 +634,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     setSelectedDbToImport,
     setShowMobileActions,
     setCheckedIds,
+    handleCheckAll,
 
     // Callbacks
     handleSelect,
