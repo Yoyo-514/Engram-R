@@ -18,6 +18,7 @@ import { entityBuilder } from '@/modules/memory/EntityExtractor';
 import type { EntityExtractConfig } from '@/types/memory';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
+import { StatTile } from '@/ui/components/display/StatTile';
 import { Divider } from '@/ui/components/layout/Divider';
 import { notificationService } from '@/ui/services/NotificationService';
 
@@ -187,24 +188,19 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
               <Divider length={100} spacing="md" />
 
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    楼层间隔
-                  </span>
-                  <div className="font-mono text-xl text-foreground/80">{status.floorInterval}</div>
-                </div>
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    提取指针 (已处理至)
-                  </span>
-                  <div className="flex items-center gap-2">
+                <StatTile label="楼层间隔" value={status.floorInterval} />
+                <StatTile
+                  label="提取指针 (已处理至)"
+                  value={
                     <input
                       type="number"
                       min="0"
                       value={editFloor}
                       onChange={(e) => setEditFloor(Number(e.target.value))}
-                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
+                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 outline-none transition-colors focus:border-primary"
                     />
+                  }
+                  action={
                     <button
                       onClick={handleSetFloor}
                       disabled={status.lastExtractedFloor === editFloor}
@@ -212,8 +208,8 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
                     >
                       设置
                     </button>
-                  </div>
-                </div>
+                  }
+                />
               </div>
             </div>
           ) : (

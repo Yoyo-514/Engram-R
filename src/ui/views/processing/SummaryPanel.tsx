@@ -33,6 +33,7 @@ import type {
 import { ModernButton as Button } from '@/ui/components/core/Button';
 import { SliderField } from '@/ui/components/core/SliderField';
 import { SwitchField } from '@/ui/components/form/FormComponents';
+import { StatTile } from '@/ui/components/display/StatTile';
 import { Divider } from '@/ui/components/layout/Divider';
 import { notificationService } from '@/ui/services';
 
@@ -265,60 +266,46 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
 
               {/* 第二层级：次要 - 当前楼层 + 总结次数 */}
               <div className="grid grid-cols-2 gap-6">
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    聊天最新楼层
-                  </span>
-                  <div className="font-mono text-xl text-foreground/80">{status.currentFloor}</div>
-                </div>
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    当前活跃事件数 (蓝灯)
-                  </span>
-                  <div className="font-mono text-xl text-foreground/80">{activeEventCount}</div>
-                </div>
+                <StatTile label="聊天最新楼层" value={status.currentFloor} />
+                <StatTile label="当前活跃事件数 (蓝灯)" value={activeEventCount} />
               </div>
 
               {/* 分割线 */}
               <Divider length={30} spacing="md" />
 
               {/* 第三层级：指针管理 */}
-              <div>
-                <div>
-                  <span className="mb-1 block text-[10px] uppercase tracking-wider text-muted-foreground/70">
-                    总结指针 (摘要已覆盖至)
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="number"
-                      min="0"
-                      value={editSummarizedFloor}
-                      onChange={(e) => setEditSummarizedFloor(Number(e.target.value))}
-                      className="w-16 border-b border-border/50 bg-transparent pb-0.5 font-mono text-xl text-foreground/80 outline-none transition-colors focus:border-primary"
-                    />
-                    <button
-                      onClick={handleSetSummarizedFloor}
-                      disabled={status.lastSummarizedFloor === editSummarizedFloor}
-                      className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
-                    >
-                      设置
-                    </button>
-                  </div>
-                </div>
-              </div>
+              <StatTile
+                label="总结指针 (摘要已覆盖至)"
+                value={
+                  <input
+                    type="number"
+                    min="0"
+                    value={editSummarizedFloor}
+                    onChange={(e) => setEditSummarizedFloor(Number(e.target.value))}
+                    className="w-16 border-b border-border/50 bg-transparent pb-0.5 outline-none transition-colors focus:border-primary"
+                  />
+                }
+                action={
+                  <button
+                    onClick={handleSetSummarizedFloor}
+                    disabled={status.lastSummarizedFloor === editSummarizedFloor}
+                    className="rounded bg-muted/50 px-2 py-1 text-[10px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+                  >
+                    设置
+                  </button>
+                }
+              />
 
               {/* 分割线 */}
               <Divider length={30} spacing="md" />
 
               {/* 第四层级：信息 - 世界书 Token */}
-              <div>
-                <span className="mb-1 block whitespace-normal break-words text-[10px] uppercase tracking-wider text-muted-foreground/60">
-                  已写入摘要层的累计 Token (Engram)
-                </span>
-                <div className="font-mono text-sm text-primary/80">
-                  {worldbookTokens.toLocaleString()}
-                </div>
-              </div>
+              <StatTile
+                label="已写入摘要层的累计 Token (Engram)"
+                value={worldbookTokens.toLocaleString()}
+                tone="primary"
+                size="sm"
+              />
             </div>
           ) : (
             <p className="text-sm text-muted-foreground">加载中...</p>
