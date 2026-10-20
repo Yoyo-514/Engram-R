@@ -376,13 +376,6 @@ export const BatchProcessingPanel: FC = () => {
                   <span className="text-muted-foreground">④ 向量化</span>
                   <span className="font-mono text-foreground">~{analysis.embedTasks} 条</span>
                 </div>
-                <Divider length={30} spacing="sm" />
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">预计 Token</span>
-                  <span className="font-mono text-value">
-                    ~{(analysis.estimatedTokens / 1000).toFixed(0)}k
-                  </span>
-                </div>
               </div>
             </div>
 

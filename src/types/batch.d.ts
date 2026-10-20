@@ -28,7 +28,7 @@ export interface BatchQueue {
 export type BatchProgressCallback = (queue: BatchQueue) => void;
 
 /**
- * 抽象任务接口：所有被 BatchEngine 调度的长程任务都必须实现该接口
+ * 抽象任务接口：所有被批处理调度器执行的长程任务都必须实现该接口
  */
 export interface IBatchTaskHandler {
   /** 任务类型标识 */
@@ -53,7 +53,6 @@ export interface IBatchTaskHandler {
 export interface HistoryAnalysis {
   startFloor: number;
   endFloor: number;
-  estimatedTokens: number;
   summaryTasks: number;
   entityTasks: number;
   trimTasks: number;

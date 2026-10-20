@@ -48,7 +48,7 @@ export class ImportTextTask implements IBatchTaskHandler {
   }
 
   /**
-   * 第二步：在 BatchEngine 的循环 tick 里逐个执行
+   * 第二步：在批处理调度循环里逐个执行
    */
   async *execute(
     tasks: BatchTask[],
