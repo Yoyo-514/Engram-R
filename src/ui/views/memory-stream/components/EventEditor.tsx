@@ -1,14 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { Archive, ArrowLeft, Lock, LockOpen, Trash2 } from 'lucide-react';
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import type { CSSProperties, CompositionEvent } from 'react';
 
 /**
@@ -20,6 +11,8 @@ import type { CSSProperties, CompositionEvent } from 'react';
 import type { EventNode } from '@/types/graph';
 import { TextField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
+import { useBlurCommit } from '@/ui/hooks/useBlurCommit';
+import { useDebouncedCallback } from '@/ui/hooks/useDebouncedCallback';
 import { useResponsive } from '@/ui/hooks/useResponsive';
 
 // ==================== 类型定义 ====================
@@ -125,12 +118,10 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
 
     const isComposingRef = useRef(false);
     const isMountedRef = useRef(true);
-    const blurTimeoutRef = useRef<number | null>(null);
 
     useEffect(() => {
       return () => {
         isMountedRef.current = false;
-        if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
       };
     }, []);
 
@@ -159,17 +150,9 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
 
     // Use overrides.summary if provided, else auto-generate, else use state
     // Debounce sync to avoid excessive re-renders in parent
-    const syncToParentDebounced = useMemo(
-      () =>
-        debounce((id: string, updates: Partial<EventNode>) => {
-          onSave?.(id, updates);
-        }, 500),
-      [onSave]
-    );
-
-    useEffect(() => {
-      return () => syncToParentDebounced.cancel();
-    }, [syncToParentDebounced]);
+    const saveDebounced = useDebouncedCallback((id: string, updates: Partial<EventNode>) => {
+      onSave?.(id, updates);
+    }, 500);
 
     const syncToParent = useCallback(
       (overrides: FieldOverrides = {}, immediate = false) => {
@@ -214,10 +197,10 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
         };
 
         if (immediate) {
-          syncToParentDebounced.cancel();
+          saveDebounced.cancel();
           onSave?.(event.id, updates);
         } else {
-          syncToParentDebounced(event.id, updates);
+          saveDebounced.call(event.id, updates);
         }
       },
       [
@@ -231,7 +214,7 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
         isArchived,
         isLocked,
         summary,
-        syncToParentDebounced,
+        saveDebounced,
         onSave,
       ]
     );
@@ -274,12 +257,9 @@ export const EventEditor = forwardRef<EventEditorHandle, EventEditorProps>(
       if (!isComposingRef.current) syncToParent({ [fieldName]: value });
     };
 
-    const handleBlur = () => {
-      if (blurTimeoutRef.current) clearTimeout(blurTimeoutRef.current);
-      blurTimeoutRef.current = window.setTimeout(() => {
-        if (isMountedRef.current && isDirty) syncToParent({}, true);
-      }, 50);
-    };
+    const handleBlur = useBlurCommit(() => {
+      if (isDirty) syncToParent({}, true);
+    }, 50);
 
     // 移除导致全量渲染的无保护 updateScore，交由 input 的拆分事件直接更新
 

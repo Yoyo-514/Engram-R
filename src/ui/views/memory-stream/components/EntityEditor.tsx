@@ -1,14 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { AlertTriangle, ArrowLeft, RefreshCw, Trash2 } from 'lucide-react';
-import {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useImperativeHandle,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import { forwardRef, useCallback, useImperativeHandle, useState } from 'react';
 import type { CSSProperties } from 'react';
 
 import type { EntityType } from '@/config/memory/defaults';
@@ -25,6 +16,8 @@ import { getErrorMessage } from '@/core/utils/error';
  */
 import type { EntityNode } from '@/types/graph';
 import { Divider } from '@/ui/components/layout/Divider';
+import { useBlurCommit } from '@/ui/hooks/useBlurCommit';
+import { useDebouncedCallback } from '@/ui/hooks/useDebouncedCallback';
 import { useResponsive } from '@/ui/hooks/useResponsive';
 
 /**
@@ -94,16 +87,6 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     const [isDirty, setIsDirty] = useState(false);
     const [lastEntityId, setLastEntityId] = useState<string | null>(null);
 
-    // Refs
-    const isMountedRef = useRef(true);
-    const timeoutRef = useRef<number | null>(null);
-
-    useEffect(() => {
-      return () => {
-        isMountedRef.current = false;
-      };
-    }, []);
-
     // Load data：实体切换时重置表单（渲染期间调整 state，替代 effect 同步）
     if (entity && entity.id !== lastEntityId) {
       setName(entity.name);
@@ -154,28 +137,17 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
     );
 
     // Handlers
-    // 将大量字符串解析加上防抖，避免卡死输入法
-    const handleJsonChangeDebounced = useMemo(
-      () =>
-        debounce((val: string) => {
-          setProfileJson(val);
-          setIsDirty(true);
-          try {
-            JSON.parse(val);
-            setJsonError(null);
-          } catch (e: unknown) {
-            setJsonError(getErrorMessage(e));
-          }
-        }, 300),
-      []
-    );
-
-    // 清理防抖
-    useEffect(() => {
-      return () => {
-        handleJsonChangeDebounced.cancel();
-      };
-    }, [handleJsonChangeDebounced]);
+    // JSON 语法检查防抖，避免卡死输入法
+    const validateJson = useDebouncedCallback((val: string) => {
+      setProfileJson(val);
+      setIsDirty(true);
+      try {
+        JSON.parse(val);
+        setJsonError(null);
+      } catch (e: unknown) {
+        setJsonError(getErrorMessage(e));
+      }
+    }, 300);
 
     const handleJsonChange = (val: string) => {
       // 先局部更新 UI 输入框视图（可以用非受控或直接存一个 immediate state）
@@ -183,17 +155,14 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       // 主要是对 JSON 校验动作进行防抖
       setProfileJson(val); // 保持流畅的回显
       setIsDirty(true);
-      handleJsonChangeDebounced(val); // 防抖进行语法检查
+      validateJson.call(val); // 防抖进行语法检查
     };
 
-    const handleBlur = () => {
-      if (timeoutRef.current) clearTimeout(timeoutRef.current);
-      timeoutRef.current = window.setTimeout(() => {
-        if (isMountedRef.current && isDirty && !jsonError) {
-          syncToParent();
-        }
-      }, 200);
-    };
+    const handleBlur = useBlurCommit(() => {
+      if (isDirty && !jsonError) {
+        syncToParent();
+      }
+    }, 200);
 
     const handleGenerateDesc = () => {
       if (jsonError || !entity) return;
