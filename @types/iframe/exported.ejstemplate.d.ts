@@ -74,11 +74,7 @@ declare const EjsTemplate: {
    * const result   = compiled({ 'user': 'fred' });;
    * => result === 'hello user!'
    */
-  evaltemplate: (
-    code: string,
-    context?: Record<string, any>,
-    options?: Record<string, any>
-  ) => Promise<string>;
+  evaltemplate: (code: string, context?: Record<string, any>, options?: Record<string, any>) => Promise<string>;
 
   /**
    * 创建模板语法处理使用的执行环境 (上下文)
@@ -87,10 +83,7 @@ declare const EjsTemplate: {
    * @param last_message_id 合并消息变量的最大 ID; 默认为所有
    * @returns 执行环境 (上下文)
    */
-  prepareContext: (
-    additional_context?: Record<string, any>,
-    last_message_id?: number
-  ) => Promise<Record<string, any>>;
+  prepareContext: (additional_context?: Record<string, any>, last_message_id?: number) => Promise<Record<string, any>>;
 
   /**
    * 检查模板是否存在语法错误

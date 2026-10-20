@@ -151,11 +151,9 @@ declare function getProxyPresetNames(): string[];
  *   console.info('思考过程: ', result.reasoning);
  * }
  */
+declare function generate(config: GenerateConfig & { should_return_reasoning: true }): Promise<GenerateDetailedResult>;
 declare function generate(
-  config: GenerateConfig & { should_return_reasoning: true }
-): Promise<GenerateDetailedResult>;
-declare function generate(
-  config: GenerateConfig & { should_return_reasoning?: false; tools?: [] | undefined }
+  config: GenerateConfig & { should_return_reasoning?: false; tools?: [] | undefined },
 ): Promise<string>;
 declare function generate(config: GenerateConfig): Promise<string | GenerateDetailedResult>;
 
@@ -212,10 +210,10 @@ declare function generate(config: GenerateConfig): Promise<string | GenerateDeta
  * console.info('收到回复: ', result);
  */
 declare function generateRaw(
-  config: GenerateRawConfig & { should_return_reasoning: true }
+  config: GenerateRawConfig & { should_return_reasoning: true },
 ): Promise<GenerateDetailedResult>;
 declare function generateRaw(
-  config: GenerateRawConfig & { should_return_reasoning?: false; tools?: [] | undefined }
+  config: GenerateRawConfig & { should_return_reasoning?: false; tools?: [] | undefined },
 ): Promise<string>;
 declare function generateRaw(config: GenerateRawConfig): Promise<string | GenerateDetailedResult>;
 
@@ -476,12 +474,7 @@ type ToolDefinition = {
 /**
  * Tool choice 选项
  */
-type ToolChoice =
-  | 'auto'
-  | 'required'
-  | 'none'
-  | 'any'
-  | { type: 'function'; function: { name: string } };
+type ToolChoice = 'auto' | 'required' | 'none' | 'any' | { type: 'function'; function: { name: string } };
 
 /**
  * 当 `should_return_reasoning` 为 true 或存在 tool_calls 时, generate/generateRaw 的返回值, 包含正文和思考过程、工具调用结果等元数据

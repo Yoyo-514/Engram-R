@@ -20,7 +20,7 @@ declare const builtin: {
       insertBefore?: number;
       forceId?: number;
       showSwipes?: boolean;
-    }
+    },
   ) => void;
   /**
    * 复制文本到剪贴板

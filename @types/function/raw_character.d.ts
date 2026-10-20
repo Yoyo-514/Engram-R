@@ -10,11 +10,7 @@ declare class RawCharacter {
    * @param options 查找选项
    * @returns 找到的角色卡数据，找不到为null
    */
-  static find({
-    name,
-  }?: {
-    name: TypeFest.LiteralUnion<'current', string>;
-  }): SillyTavern.v1CharData;
+  static find({ name }?: { name: TypeFest.LiteralUnion<'current', string> }): SillyTavern.v1CharData;
 
   /**
    * 根据名称查找角色卡数据在characters数组中的索引（类似this_chid）
@@ -100,9 +96,7 @@ declare class RawCharacter {
  * @param allowAvatar 是否允许通过头像ID查找
  * @returns 角色卡数据
  */
-declare function getCharData(
-  name: TypeFest.LiteralUnion<'current', string>
-): SillyTavern.v1CharData | null;
+declare function getCharData(name: TypeFest.LiteralUnion<'current', string>): SillyTavern.v1CharData | null;
 
 /**
  * 获取角色头像路径
@@ -120,7 +114,7 @@ declare function getCharAvatarPath(name: TypeFest.LiteralUnion<'current', string
  */
 declare function getChatHistoryBrief(
   name: TypeFest.LiteralUnion<'current', string>,
-  allowAvatar?: boolean
+  allowAvatar?: boolean,
 ): Promise<any[] | null>;
 
 /**
@@ -129,7 +123,4 @@ declare function getChatHistoryBrief(
  * @param isGroupChat 是否为群组聊天
  * @returns 聊天历史详情
  */
-declare function getChatHistoryDetail(
-  data: any[],
-  isGroupChat?: boolean
-): Promise<Record<string, any> | null>;
+declare function getChatHistoryDetail(data: any[], isGroupChat?: boolean): Promise<Record<string, any> | null>;

@@ -24,7 +24,7 @@ declare function formatAsTavernRegexedString(
   text: string,
   source: 'user_input' | 'ai_output' | 'slash_command' | 'world_info' | 'reasoning',
   destination: 'display' | 'prompt',
-  { depth, character_name }?: FormatAsTavernRegexedStringOption
+  { depth, character_name }?: FormatAsTavernRegexedStringOption,
 ): string;
 
 type TavernRegex = {
@@ -75,10 +75,7 @@ type TavernRegexOptionPreset = {
   type: 'preset';
   name?: TypeFest.LiteralUnion<'in_use', string>;
 };
-type TavernRegexOption =
-  | TavernRegexOptionGlobal
-  | TavernRegexOptionCharacter
-  | TavernRegexOptionPreset;
+type TavernRegexOption = TavernRegexOptionGlobal | TavernRegexOptionCharacter | TavernRegexOptionPreset;
 
 /**
  * 获取酒馆正则
@@ -99,10 +96,7 @@ declare function getTavernRegexes(option: TavernRegexOption): TavernRegex[];
  * @param regexes 要用于替换的酒馆正则
  * @param option 要操作的酒馆正则类型
  */
-declare function replaceTavernRegexes(
-  regexes: TavernRegex[],
-  option: TavernRegexOption
-): Promise<void>;
+declare function replaceTavernRegexes(regexes: TavernRegex[], option: TavernRegexOption): Promise<void>;
 
 type TavernRegexUpdater =
   | ((regexes: TavernRegex[]) => TavernRegex[])
@@ -132,5 +126,5 @@ type TavernRegexUpdater =
  */
 declare function updateTavernRegexesWith(
   updater: TavernRegexUpdater,
-  option: TavernRegexOption
+  option: TavernRegexOption,
 ): Promise<TavernRegex[]>;

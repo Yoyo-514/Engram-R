@@ -1,9 +1,7 @@
 /**
  * 获取所有处于启用状态的酒馆助手脚本按钮, 主要是方便 QR 助手等兼容脚本按钮
  */
-declare function getAllEnabledScriptButtons(): {
-  [script_id: string]: { button_id: string; button_name: string }[];
-};
+declare function getAllEnabledScriptButtons(): { [script_id: string]: { button_id: string; button_name: string }[] };
 
 type ScriptButton = {
   name: string;
@@ -58,10 +56,7 @@ declare function getScriptTrees(option: ScriptTreesOptions): ScriptTree[];
  * @param script_trees 要用于替换的酒馆助手列表
  * @param option 要操作的酒馆助手脚本类型
  */
-declare function replaceScriptTrees(
-  script_trees: TypeFest.PartialDeep<ScriptTree>[],
-  option: ScriptTreesOptions
-): void;
+declare function replaceScriptTrees(script_trees: TypeFest.PartialDeep<ScriptTree>[], option: ScriptTreesOptions): void;
 
 /**
  * 用 `updater` 函数更新酒馆助手列表
@@ -73,7 +68,7 @@ declare function replaceScriptTrees(
  */
 declare function updateScriptTreesWith(
   updater: (script_trees: ScriptTree[]) => TypeFest.PartialDeep<ScriptTree>[],
-  option: ScriptTreesOptions
+  option: ScriptTreesOptions,
 ): ScriptTree[];
 
 /**
@@ -86,5 +81,5 @@ declare function updateScriptTreesWith(
  */
 declare function updateScriptTreesWith(
   updater: (script_trees: ScriptTree[]) => Promise<TypeFest.PartialDeep<ScriptTree>[]>,
-  option: ScriptTreesOptions
+  option: ScriptTreesOptions,
 ): Promise<ScriptTree[]>;

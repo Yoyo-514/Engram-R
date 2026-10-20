@@ -58,7 +58,7 @@ declare function getCurrentCharacterId(): string | null;
  */
 declare function createCharacter(
   character_name_or_id: Exclude<string | `${string}.png`, 'current'>,
-  character?: TypeFest.PartialDeep<Character>
+  character?: TypeFest.PartialDeep<Character>,
 ): Promise<boolean>;
 
 /**
@@ -76,7 +76,7 @@ declare function createCharacter(
 declare function createOrReplaceCharacter(
   character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>,
   character?: TypeFest.PartialDeep<Character>,
-  options?: ReplaceCharacterOptions
+  options?: ReplaceCharacterOptions,
 ): Promise<boolean>;
 
 /**
@@ -90,7 +90,7 @@ declare function createOrReplaceCharacter(
  */
 declare function deleteCharacter(
   character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>,
-  options?: { delete_chats?: boolean }
+  options?: { delete_chats?: boolean },
 ): Promise<boolean>;
 
 /**
@@ -103,7 +103,7 @@ declare function deleteCharacter(
  * @throws 如果角色卡不存在, 将会抛出异常
  */
 declare function getCharacter(
-  character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>
+  character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>,
 ): Promise<Character>;
 
 type ReplaceCharacterOptions = {
@@ -143,12 +143,10 @@ type ReplaceCharacterOptions = {
 declare function replaceCharacter(
   character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>,
   character: TypeFest.PartialDeep<Character>,
-  options?: ReplaceCharacterOptions
+  options?: ReplaceCharacterOptions,
 ): Promise<void>;
 
-type CharacterUpdater =
-  | ((character: Character) => Character)
-  | ((character: Character) => Promise<Character>);
+type CharacterUpdater = ((character: Character) => Character) | ((character: Character) => Promise<Character>);
 
 /**
  * 用 `updater` 函数更新 `character_name_or_id` 角色卡
@@ -186,5 +184,5 @@ type CharacterUpdater =
  */
 declare function updateCharacterWith(
   character_name_or_id: TypeFest.LiteralUnion<'current', string | `${string}.png`>,
-  updater: CharacterUpdater
+  updater: CharacterUpdater,
 ): Promise<Character>;

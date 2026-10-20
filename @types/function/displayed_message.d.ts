@@ -43,10 +43,7 @@ type FormatAsDisplayedMessageOption = {
  * const text = formatAsDisplayedMessage("{{char}} speaks in {{lastMessageId}}");
  * => "<p>少女歌剧 speaks in 5</p>";
  */
-declare function formatAsDisplayedMessage(
-  text: string,
-  { message_id }?: FormatAsDisplayedMessageOption
-): string;
+declare function formatAsDisplayedMessage(text: string, { message_id }?: FormatAsDisplayedMessageOption): string;
 
 /**
  * 刷新或替换单个楼层的显示, 如果该楼层并没有显示在网页上则什么也不做
