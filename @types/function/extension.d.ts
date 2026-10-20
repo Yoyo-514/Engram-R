@@ -26,7 +26,9 @@ type ExtensionInstallationInfo = {
  *
  * @param extension_id 扩展 id, 一般是扩展文件夹名
  */
-declare function getExtensionInstallationInfo(extension_id: string): Promise<ExtensionInstallationInfo | null>;
+declare function getExtensionInstallationInfo(
+  extension_id: string
+): Promise<ExtensionInstallationInfo | null>;
 
 /**
  * 检查是否已安装某一扩展

@@ -56,7 +56,7 @@ function EmbeddingBadge({ isEmbedded }: { isEmbedded: boolean }) {
 
   return (
     <span
-      className="bg-primary/10 inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] font-medium text-label"
+      className="inline-flex items-center gap-0.5 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-label"
       title="已向量化"
     >
       <Zap size={10} />
@@ -114,7 +114,7 @@ export const EventCard: FC<EventCardProps> = ({
   if (isCompact) {
     return (
       <div
-        className={`flex cursor-pointer items-center gap-3 border-b border-border p-3 transition-colors duration-150 ${isSelected ? 'border-l-4 border-l-primary bg-transparent' : ''} ${isActive ? 'bg-value/5 border-l-4 border-l-value' : ''} ${!isSelected && !isActive ? 'hover:border-border' : ''} ${className} `}
+        className={`flex cursor-pointer items-center gap-3 border-b border-border p-3 transition-colors duration-150 ${isSelected ? 'border-l-4 border-l-primary bg-transparent' : ''} ${isActive ? 'border-l-4 border-l-value bg-value/5' : ''} ${!isSelected && !isActive ? 'hover:border-border' : ''} ${className} `}
         onClick={onSelect}
       >
         {/* 复选框 */}
@@ -148,7 +148,7 @@ export const EventCard: FC<EventCardProps> = ({
         <div className="flex items-center gap-1">
           {/* 锁定按钮 */}
           <button
-            className={`rounded-md p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta opacity-40 hover:opacity-100'}`}
+            className={`rounded-md p-1.5 transition-colors ${isLocked ? 'bg-emphasis/10 text-emphasis' : 'text-meta opacity-40 hover:bg-muted/50 hover:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               onToggleLock?.(!isLocked);
@@ -160,7 +160,7 @@ export const EventCard: FC<EventCardProps> = ({
 
           {/* 归档按钮 (紧凑模式) */}
           <button
-            className={`rounded-md p-1.5 transition-colors ${event.is_archived ? 'bg-emphasis/10 text-emphasis' : 'hover:bg-muted/50 text-meta opacity-40 hover:opacity-100'}`}
+            className={`rounded-md p-1.5 transition-colors ${event.is_archived ? 'bg-emphasis/10 text-emphasis' : 'text-meta opacity-40 hover:bg-muted/50 hover:opacity-100'}`}
             onClick={(e) => {
               e.stopPropagation();
               onArchive?.(!event.is_archived);
@@ -184,8 +184,8 @@ export const EventCard: FC<EventCardProps> = ({
         isSelected
           ? 'border border-primary bg-transparent shadow-sm'
           : isActive
-            ? 'border-value/50 bg-value/5 border hover:border-value'
-            : 'hover:border-border/50 hover:bg-muted/10 border border-transparent'
+            ? 'border border-value/50 bg-value/5 hover:border-value'
+            : 'border border-transparent hover:border-border/50 hover:bg-muted/10'
       } ${className} `}
       onClick={onSelect}
     >
@@ -193,7 +193,7 @@ export const EventCard: FC<EventCardProps> = ({
 
       {/* Active Label */}
       {isActive && (
-        <div className="bg-value/10 absolute right-2 top-2 rounded px-1.5 py-0.5 text-[10px] font-medium text-value">
+        <div className="absolute right-2 top-2 rounded bg-value/10 px-1.5 py-0.5 text-[10px] font-medium text-value">
           Active
         </div>
       )}
@@ -225,8 +225,8 @@ export const EventCard: FC<EventCardProps> = ({
           <button
             className={`rounded-md p-1.5 transition-all ${
               event.is_archived
-                ? 'bg-emphasis/10 hover:bg-emphasis/20 text-emphasis'
-                : 'hover:bg-muted/50 text-muted-foreground'
+                ? 'bg-emphasis/10 text-emphasis hover:bg-emphasis/20'
+                : 'text-muted-foreground hover:bg-muted/50'
             } `}
             onClick={(e) => {
               e.stopPropagation();
@@ -241,8 +241,8 @@ export const EventCard: FC<EventCardProps> = ({
           <button
             className={`rounded-md p-1.5 transition-all ${
               isLocked
-                ? 'bg-emphasis/10 hover:bg-emphasis/20 text-emphasis opacity-100'
-                : 'hover:bg-muted/50 text-muted-foreground'
+                ? 'bg-emphasis/10 text-emphasis opacity-100 hover:bg-emphasis/20'
+                : 'text-muted-foreground hover:bg-muted/50'
             } `}
             onClick={(e) => {
               e.stopPropagation();
@@ -255,7 +255,7 @@ export const EventCard: FC<EventCardProps> = ({
 
           {/* 删除按钮 (桌面模式) - 保持谨慎颜色 */}
           <button
-            className="hover:bg-destructive/10 rounded-md p-1.5 text-muted-foreground transition-all hover:text-destructive"
+            className="rounded-md p-1.5 text-muted-foreground transition-all hover:bg-destructive/10 hover:text-destructive"
             onClick={(e) => {
               e.stopPropagation();
               if (confirm('确定删除此事件吗？')) {

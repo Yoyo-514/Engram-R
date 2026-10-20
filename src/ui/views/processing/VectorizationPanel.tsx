@@ -207,7 +207,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 进度条 */}
       {progress && (
-        <div className="bg-muted/30 mb-6 rounded-lg p-4">
+        <div className="mb-6 rounded-lg bg-muted/30 p-4">
           <div className="mb-2 flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               嵌入进度 {progress.current}/{progress.total}
@@ -243,7 +243,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 错误提示 */}
       {error && (
-        <div className="bg-destructive/10 mb-6 flex items-center gap-2 rounded-lg p-3 text-destructive">
+        <div className="mb-6 flex items-center gap-2 rounded-lg bg-destructive/10 p-3 text-destructive">
           <AlertCircle size={16} className="shrink-0" />
           <span className="min-w-0 break-words text-sm">{error}</span>
         </div>
@@ -251,7 +251,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
 
       {/* 向量配置状态 */}
       {!isVectorConfigValid && (
-        <div className="bg-muted/50 mb-6 rounded-lg p-3">
+        <div className="mb-6 rounded-lg bg-muted/50 p-3">
           <p className="text-sm text-muted-foreground">
             请在
             <span className="mx-1 text-primary">API 配置 → 模型配置 → 向量化</span>
@@ -285,7 +285,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
         {isProcessing ? (
           <button
             onClick={handleStopEmbedding}
-            className="hover:bg-destructive/90 inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-destructive-foreground transition-colors"
+            className="inline-flex items-center gap-2 rounded-md bg-destructive px-4 py-2 text-destructive-foreground transition-colors hover:bg-destructive/90"
           >
             <Square size={16} />
             停止
@@ -295,7 +295,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
             <button
               onClick={handleStartEmbedding}
               disabled={stats.pending === 0 || !isVectorConfigValid}
-              className="hover:bg-primary/90 inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors disabled:cursor-not-allowed disabled:opacity-50"
+              className="inline-flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-primary-foreground transition-colors hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play size={16} />
               嵌入未处理 ({stats.pending})
@@ -357,7 +357,7 @@ export const VectorizationPanel: FC<VectorizationPanelProps> = ({
         />
 
         {vectorConfig && (
-          <div className="bg-muted/30 rounded-lg p-3">
+          <div className="rounded-lg bg-muted/30 p-3">
             <p className="mb-1 text-xs text-muted-foreground">当前向量配置</p>
             <p className="text-sm">
               <span className="text-primary">{vectorConfig.source}</span>

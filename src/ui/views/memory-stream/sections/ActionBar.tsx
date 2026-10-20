@@ -59,7 +59,7 @@ export const ActionBar: FC<ActionBarProps> = ({
       {/* 保存按钮 - 有修改时显示 */}
       {hasChanges && (
         <button
-          className="border-primary/50 inline-flex items-center gap-1.5 rounded border px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
+          className="inline-flex items-center gap-1.5 rounded border border-primary/50 px-3 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary hover:text-primary-foreground"
           onClick={onSave}
         >
           <Save size={12} />
@@ -80,7 +80,7 @@ export const ActionBar: FC<ActionBarProps> = ({
       {checkedCount > 0 && (
         <button
           onClick={onBatchDelete}
-          className="hover:bg-destructive/10 flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-destructive transition-colors"
+          className="flex items-center gap-1 rounded-md px-2 py-1.5 text-xs text-destructive transition-colors hover:bg-destructive/10"
         >
           <Trash2 size={12} />
           {!isMobile && `删除 (${checkedCount})`}

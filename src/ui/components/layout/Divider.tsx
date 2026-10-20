@@ -60,7 +60,7 @@ export const Divider: FC<DividerProps> = ({
         />
         {/* 移动端水平分割线 - 使用 border-t */}
         <div
-          className={`border-border/30 mx-auto border-t lg:hidden ${spacingClass} ${className}`}
+          className={`mx-auto border-t border-border/30 lg:hidden ${spacingClass} ${className}`}
           style={{ width: `${length}%` }}
         />
       </>
@@ -71,7 +71,7 @@ export const Divider: FC<DividerProps> = ({
   if (orientation === 'vertical') {
     return (
       <div
-        className={`border-border/30 mx-auto border-l ${className}`}
+        className={`mx-auto border-l border-border/30 ${className}`}
         style={{ height: `${length}%` }}
       />
     );
@@ -80,7 +80,7 @@ export const Divider: FC<DividerProps> = ({
   // 水平分割线 - 使用 border-t
   return (
     <div
-      className={`border-border/30 border-t ${spacingClass} ${className}`}
+      className={`border-t border-border/30 ${spacingClass} ${className}`}
       style={{ width: `${length}%` }}
     />
   );

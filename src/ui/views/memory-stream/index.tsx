@@ -52,7 +52,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               {ms.hasChanges && (
                 <button
                   onClick={ms.handleBatchSave}
-                  className="hover:bg-primary/10 mr-1 rounded p-1.5 text-primary transition-colors"
+                  className="mr-1 rounded p-1.5 text-primary transition-colors hover:bg-primary/10"
                   title="保存"
                 >
                   <Save size={16} />
@@ -60,7 +60,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               )}
               <button
                 onClick={() => ms.selectedId && ms.handleDelete(ms.selectedId)}
-                className="hover:bg-destructive/10 mr-1 rounded p-1.5 text-destructive transition-colors"
+                className="mr-1 rounded p-1.5 text-destructive transition-colors hover:bg-destructive/10"
               >
                 <Trash2 size={16} />
               </button>
@@ -89,7 +89,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               {ms.hasChanges && (
                 <button
                   onClick={ms.handleBatchSave}
-                  className="hover:bg-primary/10 mr-1 rounded p-1.5 text-primary transition-colors"
+                  className="mr-1 rounded p-1.5 text-primary transition-colors hover:bg-primary/10"
                   title="保存"
                 >
                   <Save size={16} />
@@ -97,7 +97,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
               )}
               <button
                 onClick={() => ms.selectedId && ms.handleDelete(ms.selectedId)}
-                className="hover:bg-destructive/10 mr-1 rounded p-1.5 text-destructive transition-colors"
+                className="mr-1 rounded p-1.5 text-destructive transition-colors hover:bg-destructive/10"
               >
                 <Trash2 size={16} />
               </button>

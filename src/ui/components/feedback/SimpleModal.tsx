@@ -39,7 +39,7 @@ export const SimpleModal: FC<SimpleModalProps> = ({
           </h3>
           <button
             onClick={onClose}
-            className="hover:bg-muted/50 shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:text-foreground"
+            className="shrink-0 rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
             title="关闭"
           >
             <X size={16} />
@@ -51,7 +51,7 @@ export const SimpleModal: FC<SimpleModalProps> = ({
 
         {/* Footer (Optional) */}
         {footer && (
-          <div className="bg-muted/20 shrink-0 border-t border-border px-4 py-3">{footer}</div>
+          <div className="shrink-0 border-t border-border bg-muted/20 px-4 py-3">{footer}</div>
         )}
       </div>
     </div>

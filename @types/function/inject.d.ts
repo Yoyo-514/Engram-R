@@ -36,7 +36,10 @@ type injectPromptsOptions = {
  * @returns 后续操作
  *   - `uninject`: 取消这个提示词的注入
  */
-declare function injectPrompts(prompts: InjectionPrompt[], options?: injectPromptsOptions): { uninject: () => void };
+declare function injectPrompts(
+  prompts: InjectionPrompt[],
+  options?: injectPromptsOptions
+): { uninject: () => void };
 
 /**
  * 移除注入的提示词

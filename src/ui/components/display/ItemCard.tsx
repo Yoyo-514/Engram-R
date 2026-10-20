@@ -137,7 +137,7 @@ export const ItemCard: FC<ItemCardProps> = ({
 
           {/* 副标题/元信息 */}
           {(subtitle || meta) && (
-            <div className="text-muted-foreground/70 flex w-full flex-col gap-1 text-[11px] sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
+            <div className="flex w-full flex-col gap-1 text-[11px] text-muted-foreground/70 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between">
               {subtitle && (
                 <span className="whitespace-normal break-words leading-5">{subtitle}</span>
               )}
@@ -166,7 +166,7 @@ export const ItemCard: FC<ItemCardProps> = ({
               key={i}
               className={`rounded p-1.5 transition-colors ${
                 action.danger
-                  ? 'hover:bg-destructive/10 text-muted-foreground hover:text-destructive'
+                  ? 'text-muted-foreground hover:bg-destructive/10 hover:text-destructive'
                   : 'text-muted-foreground hover:bg-muted hover:text-foreground'
               } `}
               onClick={(e) => {

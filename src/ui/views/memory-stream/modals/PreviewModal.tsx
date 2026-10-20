@@ -25,7 +25,7 @@ export const PreviewModal: FC<PreviewModalProps> = ({ isOpen, onClose, content }
       }
     >
       <div className="p-4">
-        <pre className="bg-muted/30 border-border/50 whitespace-pre-wrap rounded border p-4 font-mono text-xs leading-relaxed text-muted-foreground">
+        <pre className="whitespace-pre-wrap rounded border border-border/50 bg-muted/30 p-4 font-mono text-xs leading-relaxed text-muted-foreground">
           {content}
         </pre>
       </div>

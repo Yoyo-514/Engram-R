@@ -1,12 +1,7 @@
 import { getBuiltInTemplateByCategory } from '@/config/prompt/templates';
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
-import {
-  getTavernContext,
-  isPromptCategory,
-  readString,
-  yieldToMainThread,
-} from '@/core/utils';
+import { getTavernContext, isPromptCategory, readString, yieldToMainThread } from '@/core/utils';
 import { tryGetDbForChat } from '@/data/db';
 import { getAllTemplates, initPromptLoader } from '@/integrations/llm/PromptLoader';
 import { getCurrentChatId } from '@/integrations/tavern';

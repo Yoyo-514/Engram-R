@@ -9,7 +9,12 @@ declare namespace Mvu {
     [key: string]: any;
   };
 
-  type CommandInfo = SetCommandInfo | InsertCommandInfo | DeleteCommandInfo | AddCommandInfo | MoveCommandInfo;
+  type CommandInfo =
+    | SetCommandInfo
+    | InsertCommandInfo
+    | DeleteCommandInfo
+    | AddCommandInfo
+    | MoveCommandInfo;
   type SetCommandInfo = {
     type: 'set';
     full_match: string;
@@ -181,9 +186,19 @@ interface ListenerType {
 
   [Mvu.events.VARIABLE_UPDATE_STARTED]: (variables: Mvu.MvuData) => void;
 
-  [Mvu.events.COMMAND_PARSED]: (variables: Mvu.MvuData, commands: Mvu.CommandInfo[], message_content: string) => void;
+  [Mvu.events.COMMAND_PARSED]: (
+    variables: Mvu.MvuData,
+    commands: Mvu.CommandInfo[],
+    message_content: string
+  ) => void;
 
-  [Mvu.events.VARIABLE_UPDATE_ENDED]: (variables: Mvu.MvuData, variables_before_update: Mvu.MvuData) => void;
+  [Mvu.events.VARIABLE_UPDATE_ENDED]: (
+    variables: Mvu.MvuData,
+    variables_before_update: Mvu.MvuData
+  ) => void;
 
-  [Mvu.events.BEFORE_MESSAGE_UPDATE]: (context: { variables: Mvu.MvuData; message_content: string }) => void;
+  [Mvu.events.BEFORE_MESSAGE_UPDATE]: (context: {
+    variables: Mvu.MvuData;
+    message_content: string;
+  }) => void;
 }

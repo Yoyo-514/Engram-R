@@ -51,7 +51,9 @@ declare function replaceScriptButtons(buttons: ScriptButton[]): void;
  * // 新增一个按钮到末尾
  * updateVariablesWith(buttons => [...buttons, { name: '新按钮', visible: true }]);
  */
-declare function updateScriptButtonsWith(updater: (buttons: ScriptButton[]) => ScriptButton[]): ScriptButton[];
+declare function updateScriptButtonsWith(
+  updater: (buttons: ScriptButton[]) => ScriptButton[]
+): ScriptButton[];
 
 /**
  * 用 `updater` 函数更新脚本按钮列表, **只能在脚本中使用**
@@ -61,7 +63,7 @@ declare function updateScriptButtonsWith(updater: (buttons: ScriptButton[]) => S
  * @returns 更新后的脚本按钮列表
  */
 declare function updateScriptButtonsWith(
-  updater: (buttons: ScriptButton[]) => Promise<ScriptButton[]>,
+  updater: (buttons: ScriptButton[]) => Promise<ScriptButton[]>
 ): Promise<ScriptButton[]>;
 
 /**

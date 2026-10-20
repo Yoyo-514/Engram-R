@@ -105,9 +105,9 @@ export const RerankConfigForm: FC<RerankConfigFormProps> = ({ config, onChange }
                   color: 'var(--foreground)',
                   outline: 'none',
                 }}
-                className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
+                className="transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
               />
-              <p className="text-muted-foreground/70 break-words text-[10px]">
+              <p className="break-words text-[10px] text-muted-foreground/70">
                 {config.autoSuffix !== false && config.url
                   ? `完整 URL: ${config.url.replace(/\/+$/, '')}/rerank`
                   : '输入基础 URL，将自动添加 /rerank 后缀'}

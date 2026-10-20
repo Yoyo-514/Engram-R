@@ -24,10 +24,10 @@ export const PageTitle: FC<PageTitleProps> = ({
       <h1 className="flex min-w-0 flex-wrap items-center gap-2 break-words text-3xl font-light tracking-tight text-foreground">
         {breadcrumbs.map((crumb, index) => (
           <Fragment key={index}>
-            <span className="text-muted-foreground/60 hover:text-foreground/80 min-w-0 break-words text-xl transition-colors">
+            <span className="min-w-0 break-words text-xl text-muted-foreground/60 transition-colors hover:text-foreground/80">
               {crumb}
             </span>
-            <ChevronRight size={20} className="text-muted-foreground/30 shrink-0 px-0.5" />
+            <ChevronRight size={20} className="shrink-0 px-0.5 text-muted-foreground/30" />
           </Fragment>
         ))}
         <span className="min-w-0 break-words text-foreground drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">

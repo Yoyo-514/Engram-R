@@ -82,10 +82,10 @@ export const SyncSettingsSection: FC = () => {
 
   return (
     <SettingsSection title="同步" description="管理本地数据库与同步文件的同步行为。">
-      <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
+      <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
         <div className="flex items-start justify-between gap-3">
           <div className="flex w-full min-w-0 flex-1 items-center gap-3">
-            <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
+            <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
               <svg
                 width="20"
                 height="20"
@@ -136,7 +136,7 @@ export const SyncSettingsSection: FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">自动同步</span>
-                <p className="text-muted-foreground/60 whitespace-normal break-words text-xs">
+                <p className="whitespace-normal break-words text-xs text-muted-foreground/60">
                   每隔一段时间自动检查并同步本地与远端数据。
                 </p>
               </div>
@@ -150,7 +150,7 @@ export const SyncSettingsSection: FC = () => {
             <div className="flex items-center justify-between gap-3">
               <div className="min-w-0 flex-1">
                 <span className="text-sm text-muted-foreground">上次同步时间</span>
-                <p className="text-muted-foreground/60 whitespace-normal break-words text-xs">
+                <p className="whitespace-normal break-words text-xs text-muted-foreground/60">
                   {lastSyncTime > 0 ? new Date(lastSyncTime).toLocaleString() : '暂无记录'}
                 </p>
               </div>
@@ -163,7 +163,7 @@ export const SyncSettingsSection: FC = () => {
               </button>
             </div>
 
-            <ul className="bg-background/50 text-muted-foreground/60 mt-2 list-inside list-disc whitespace-normal break-words rounded p-2 text-xs">
+            <ul className="mt-2 list-inside list-disc whitespace-normal break-words rounded bg-background/50 p-2 text-xs text-muted-foreground/60">
               <li>
                 同步文件路径:
                 {` data/default-user/files/Engram_sync_${chatId ?? 'unknown'}.json`}
@@ -174,7 +174,7 @@ export const SyncSettingsSection: FC = () => {
           </div>
         )}
 
-        <div className="border-border/50 flex flex-col gap-2 border-t pt-2 sm:flex-row sm:justify-end">
+        <div className="flex flex-col gap-2 border-t border-border/50 pt-2 sm:flex-row sm:justify-end">
           <button
             onClick={async () => {
               try {

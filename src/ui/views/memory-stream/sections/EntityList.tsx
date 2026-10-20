@@ -108,7 +108,7 @@ export const EntityList: FC<EntityListProps> = ({
                 width: '100%',
                 color: 'var(--foreground)',
               }}
-              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
+              className="transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
             />
           </div>
 
@@ -172,10 +172,10 @@ export const EntityList: FC<EntityListProps> = ({
             {groupedEntities.map((group) => {
               const isCollapsed = collapsedGroups.has(group.key);
               return (
-                <div key={group.key} className="border-border/40 overflow-hidden rounded-md border">
+                <div key={group.key} className="overflow-hidden rounded-md border border-border/40">
                   <button
                     onClick={() => toggleGroup(group.key)}
-                    className="bg-muted/20 hover:bg-muted/30 flex w-full items-center gap-2 px-3 py-2 text-left transition-colors"
+                    className="flex w-full items-center gap-2 bg-muted/20 px-3 py-2 text-left transition-colors hover:bg-muted/30"
                   >
                     <ChevronDown
                       size={14}

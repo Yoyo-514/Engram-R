@@ -26,7 +26,7 @@ type RegisterMacroLikeReturn = {
  */
 declare function registerMacroLike(
   regex: RegExp,
-  replace: (context: MacroLikeContext, substring: string, ...args: any[]) => string,
+  replace: (context: MacroLikeContext, substring: string, ...args: any[]) => string
 ): RegisterMacroLikeReturn;
 
 /**

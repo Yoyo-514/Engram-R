@@ -1,9 +1,9 @@
 import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
-import { Logger } from '@/core/logger';
 import { useState } from 'react';
 import type { FC } from 'react';
 
 import { EntityType } from '@/config/memory/defaults';
+import { Logger } from '@/core/logger';
 import { deepClone, stringifyYaml } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
 import { ModernButton as Button } from '@/ui/components/core/Button';

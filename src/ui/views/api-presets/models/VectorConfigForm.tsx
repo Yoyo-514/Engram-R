@@ -65,8 +65,8 @@ const DeploymentDiagnostics: FC<{ url: string }> = ({ url }) => {
           key={i}
           className={`flex gap-2 rounded border p-2 text-[10px] ${
             alert.type === 'error'
-              ? 'bg-destructive/10 border-destructive/20 text-destructive'
-              : 'bg-warning/10 border-warning/20 text-warning'
+              ? 'border-destructive/20 bg-destructive/10 text-destructive'
+              : 'border-warning/20 bg-warning/10 text-warning'
           }`}
         >
           <div className="mt-0.5 flex-shrink-0">{alert.icon}</div>
@@ -239,9 +239,9 @@ export const VectorConfigForm: FC<VectorConfigFormProps> = ({ config, onChange }
                 color: 'var(--foreground)',
                 outline: 'none',
               }}
-              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
+              className="transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
             />
-            <p className="text-muted-foreground/70 break-words text-[10px]">
+            <p className="break-words text-[10px] text-muted-foreground/70">
               {config.source === 'ollama'
                 ? '填写 base URL 即可，会自动拼接 /api/embeddings'
                 : config.autoSuffix !== false && config.apiUrl

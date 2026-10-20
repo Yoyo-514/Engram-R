@@ -293,7 +293,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="bg-muted/20 border-border/50 rounded-md border p-3 text-sm text-muted-foreground">
+      <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-sm text-muted-foreground">
         请确认生成的摘要事件列表。您可以直接手动修改 AI
         原始返回结果，或继续在下方按事件粒度修订结构化数据与描述。
       </div>
@@ -302,7 +302,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
         <button
           type="button"
           onClick={() => setShowRawEditor((current) => !current)}
-          className="hover:bg-muted/40 border-border/60 bg-muted/10 hover:border-primary/30 flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground transition-colors hover:text-primary"
+          className="flex w-full items-center justify-between rounded-md border border-border/60 bg-muted/10 px-3 py-2 text-left text-xs font-medium tracking-wider text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted/40 hover:text-primary"
         >
           <span className="uppercase">AI 原始返回结果</span>
           <span className="flex items-center gap-1 text-[11px] normal-case">
@@ -315,7 +315,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
           <textarea
             value={rawContent}
             onChange={(inputEvent) => handleRawContentChange(inputEvent.target.value)}
-            className="bg-muted/20 min-h-[160px] w-full resize-y rounded-md border border-border p-3 font-mono text-xs transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
+            className="min-h-[160px] w-full resize-y rounded-md border border-border bg-muted/20 p-3 font-mono text-xs transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
             placeholder="可直接编辑 AI 返回的摘要文本内容..."
             spellCheck={false}
           />
@@ -333,11 +333,11 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
           return (
             <div
               key={index}
-              className="border-border/50 hover:border-primary/40 group relative rounded-lg border bg-card p-3 shadow-sm transition-colors"
+              className="group relative rounded-lg border border-border/50 bg-card p-3 shadow-sm transition-colors hover:border-primary/40"
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5">
-                  <div className="bg-primary/60 h-1.5 w-1.5 shrink-0 rounded-full" />
+                  <div className="h-1.5 w-1.5 shrink-0 rounded-full bg-primary/60" />
                   <input
                     value={displayTitle}
                     onChange={(inputEvent) =>
@@ -349,7 +349,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
                 </div>
                 <button
                   onClick={() => handleRemoveEvent(index)}
-                  className="bg-background/50 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                  className="rounded bg-background/50 p-1 text-muted-foreground opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
                   title="移除该事件"
                 >
                   <X size={14} />
@@ -361,7 +361,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
               <textarea
                 value={summaryText}
                 onChange={(inputEvent) => handleChangeEvent(index, inputEvent.target.value)}
-                className="bg-muted/20 min-h-[60px] w-full resize-none rounded-md border border-transparent p-2 text-sm transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
+                className="min-h-[60px] w-full resize-none rounded-md border border-transparent bg-muted/20 p-2 text-sm transition-colors hover:border-border focus:border-primary focus:bg-background focus:outline-none"
                 rows={rowCount}
                 placeholder="摘要详情..."
               />
@@ -375,7 +375,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
 
         <button
           onClick={handleAddEvent}
-          className="hover:bg-muted/50 hover:border-primary/30 flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:text-primary"
+          className="flex w-full items-center justify-center gap-2 rounded-md border border-dashed border-border px-3 py-2 text-xs font-medium text-muted-foreground transition-colors hover:border-primary/30 hover:bg-muted/50 hover:text-primary"
         >
           <Plus size={14} />
           添加事件

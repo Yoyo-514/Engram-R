@@ -57,7 +57,9 @@ declare function getCurrentPersonaId(): string | null;
  *
  * @returns persona 头像路径, 如果 persona 不存在或名称不唯一, 则返回 `null`
  */
-declare function getPersonaAvatarPath(persona_id?: TypeFest.LiteralUnion<'current', string>): string | null;
+declare function getPersonaAvatarPath(
+  persona_id?: TypeFest.LiteralUnion<'current', string>
+): string | null;
 
 /**
  * 获取 persona 的内容
@@ -85,7 +87,7 @@ declare function getPersona(persona_id: TypeFest.LiteralUnion<'current', string>
 declare function createPersona(
   persona_name: Exclude<string, 'current'>,
   persona?: TypeFest.PartialDeep<Persona>,
-  options?: ReplacePersonaOptions,
+  options?: ReplacePersonaOptions
 ): Promise<boolean>;
 
 /**
@@ -104,7 +106,7 @@ declare function createPersona(
 declare function createOrReplacePersona(
   persona_name: Exclude<string, 'current'>,
   persona?: TypeFest.PartialDeep<Persona>,
-  options?: ReplacePersonaOptions,
+  options?: ReplacePersonaOptions
 ): Promise<boolean>;
 
 /**
@@ -116,7 +118,9 @@ declare function createOrReplacePersona(
  *
  * @throws 如果访问后端失败, 将会抛出异常
  */
-declare function deletePersona(persona_id: TypeFest.LiteralUnion<'current', string>): Promise<boolean>;
+declare function deletePersona(
+  persona_id: TypeFest.LiteralUnion<'current', string>
+): Promise<boolean>;
 
 /**
  * 完全替换 persona 的内容
@@ -137,7 +141,7 @@ declare function deletePersona(persona_id: TypeFest.LiteralUnion<'current', stri
 declare function replacePersona(
   persona_id: TypeFest.LiteralUnion<'current', string>,
   persona: TypeFest.PartialDeep<Persona>,
-  options?: ReplacePersonaOptions,
+  options?: ReplacePersonaOptions
 ): Promise<void>;
 
 type PersonaUpdater = ((persona: Persona) => Persona) | ((persona: Persona) => Promise<Persona>);
@@ -164,5 +168,5 @@ type PersonaUpdater = ((persona: Persona) => Persona) | ((persona: Persona) => P
 declare function updatePersonaWith(
   persona_id: TypeFest.LiteralUnion<'current', string>,
   updater: PersonaUpdater,
-  options?: ReplacePersonaOptions,
+  options?: ReplacePersonaOptions
 ): Promise<Persona>;

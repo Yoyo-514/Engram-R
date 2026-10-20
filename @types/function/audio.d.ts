@@ -49,7 +49,10 @@ declare function getAudioList(type: 'bgm' | 'ambient'): Audio[];
  * @param type 背景音乐 ('bgm') 或音效 ('ambient')
  * @param audio_list 新的播放列表; 如果其中音频没有设置标题 (`title`), 则会从链接 (`url`) 提取文件名作为标题
  */
-declare function replaceAudioList(type: 'bgm' | 'ambient', audio_list: AudioWithOptionalTitle[]): void;
+declare function replaceAudioList(
+  type: 'bgm' | 'ambient',
+  audio_list: AudioWithOptionalTitle[]
+): void;
 
 /**
  * 向播放列表末尾添加不存在的音频, 不会重复添加同 `title` 或 `url` 的音频
@@ -57,7 +60,10 @@ declare function replaceAudioList(type: 'bgm' | 'ambient', audio_list: AudioWith
  * @param type 背景音乐 ('bgm') 或音效 ('ambient')
  * @param audio_list 要插入的音频列表; 如果其中音频没有设置标题 (`title`), 则会从链接 (`url`) 提取文件名作为标题
  */
-declare function appendAudioList(type: 'bgm' | 'ambient', audio_list: AudioWithOptionalTitle[]): void;
+declare function appendAudioList(
+  type: 'bgm' | 'ambient',
+  audio_list: AudioWithOptionalTitle[]
+): void;
 
 type AudioSettings = {
   /** 是否启用 */

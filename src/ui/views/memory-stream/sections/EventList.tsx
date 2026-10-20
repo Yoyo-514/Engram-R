@@ -84,7 +84,7 @@ export const EventList: FC<EventListProps> = ({
                 width: '100%',
                 color: 'var(--foreground)',
               }}
-              className="placeholder:text-muted-foreground/40 transition-colors focus:border-primary"
+              className="transition-colors placeholder:text-muted-foreground/40 focus:border-primary"
             />
           </div>
 
@@ -145,7 +145,7 @@ export const EventList: FC<EventListProps> = ({
               const someChecked = group.events.some((e) => checkedIds.has(e.id));
 
               return (
-                <div className="bg-background/80 sticky top-0 z-10 mb-4 flex items-center gap-3 py-2 backdrop-blur-sm">
+                <div className="sticky top-0 z-10 mb-4 flex items-center gap-3 bg-background/80 py-2 backdrop-blur-sm">
                   <input
                     type="checkbox"
                     checked={allChecked}
@@ -158,7 +158,7 @@ export const EventList: FC<EventListProps> = ({
                     className="h-4 w-4 shrink-0 rounded border-border accent-primary"
                   />
                   <div
-                    className="border-border/50 min-w-0 truncate rounded-full border px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
+                    className="min-w-0 truncate rounded-full border border-border/50 px-3 py-1.5 text-xs font-medium text-foreground shadow-sm backdrop-blur-md"
                     title={group.title}
                     style={{
                       backgroundColor:
@@ -167,7 +167,7 @@ export const EventList: FC<EventListProps> = ({
                   >
                     {group.title}
                   </div>
-                  <div className="bg-border/50 h-[1px] flex-1" />
+                  <div className="h-[1px] flex-1 bg-border/50" />
                   <span className="mr-2 shrink-0 text-[10px] text-muted-foreground">
                     {group.events.length} 项
                   </span>
@@ -212,7 +212,7 @@ export const EventList: FC<EventListProps> = ({
                         onDelete={() => onDelete?.(event.id)}
                         className={
                           event.level > 0
-                            ? 'bg-primary/5 border-primary/20 shadow-sm transition-all'
+                            ? 'border-primary/20 bg-primary/5 shadow-sm transition-all'
                             : 'transition-all'
                         } // 重点高亮总结
                       />

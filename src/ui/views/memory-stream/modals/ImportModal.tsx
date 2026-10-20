@@ -50,7 +50,7 @@ export const ImportModal: FC<ImportModalProps> = ({
         </p>
 
         {availableDbs.length === 0 ? (
-          <div className="border-border/50 bg-muted/20 rounded border border-dashed p-4 text-center text-sm text-muted-foreground">
+          <div className="rounded border border-dashed border-border/50 bg-muted/20 p-4 text-center text-sm text-muted-foreground">
             未找到其他 Engram 历史数据库
           </div>
         ) : (

@@ -234,9 +234,7 @@ export const RecallDecisionModal: FC<RecallDecisionModalProps> = ({
                     <span className="h-1.5 w-1.5 rounded-full bg-primary/40" />
                     <span className="font-medium">{ent.name}</span>
                     {ent.recallScore > 0 && (
-                      <span className="font-mono opacity-40">
-                        ({ent.recallScore.toFixed(2)})
-                      </span>
+                      <span className="font-mono opacity-40">({ent.recallScore.toFixed(2)})</span>
                     )}
                   </div>
                 ))}

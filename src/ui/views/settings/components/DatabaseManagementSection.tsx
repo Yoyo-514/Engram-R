@@ -330,7 +330,7 @@ export const DatabaseManagementSection: FC = () => {
             },
           },
         ]}
-        className="bg-background/60 border border-border"
+        className="border border-border bg-background/60"
       />
     );
   };
@@ -341,7 +341,7 @@ export const DatabaseManagementSection: FC = () => {
       description="集中查看当前聊天数据库、历史数据库与本地统计信息。"
     >
       <div className="space-y-4">
-        <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex w-full min-w-0 flex-1 items-center gap-3">
               <div className="flex-shrink-0 rounded-lg bg-red-500/10 p-2 text-red-500">
@@ -364,11 +364,11 @@ export const DatabaseManagementSection: FC = () => {
 
           {linkedDeletion.enabled && (
             <div className="space-y-3 border-t border-border pt-3">
-              <p className="text-muted-foreground/80 whitespace-normal break-words text-xs leading-5">
+              <p className="whitespace-normal break-words text-xs leading-5 text-muted-foreground/80">
                 当前仅清理 Engram 数据库与 `Engram_sync_*.json` 文件，不处理世界书。
               </p>
 
-              <div className="bg-background/50 flex items-start justify-between gap-3 rounded-md border border-border p-3">
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">删除关联数据库</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
@@ -381,7 +381,7 @@ export const DatabaseManagementSection: FC = () => {
                 />
               </div>
 
-              <div className="bg-background/50 flex items-start justify-between gap-3 rounded-md border border-border p-3">
+              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">显示命中确认</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
@@ -397,10 +397,10 @@ export const DatabaseManagementSection: FC = () => {
           )}
         </div>
 
-        <div className="bg-muted/30 space-y-4 rounded-lg border border-border p-4">
+        <div className="space-y-4 rounded-lg border border-border bg-muted/30 p-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex w-full min-w-0 flex-1 items-center gap-3">
-              <div className="bg-primary/10 flex-shrink-0 rounded-lg p-2 text-primary">
+              <div className="flex-shrink-0 rounded-lg bg-primary/10 p-2 text-primary">
                 <RefreshCw size={20} />
               </div>
               <div className="w-full min-w-0 flex-1">
@@ -448,10 +448,10 @@ export const DatabaseManagementSection: FC = () => {
                       ? [{ text: currentDatabaseSummary.characterName, color: 'blue' as const }]
                       : []),
                   ]}
-                  className="border-primary/30 bg-background/60 border"
+                  className="border border-primary/30 bg-background/60"
                 />
 
-                <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 xl:grid-cols-4">
+                <div className="grid gap-2 rounded-lg border border-border bg-background/60 p-3 sm:grid-cols-2 xl:grid-cols-4">
                   <div className="w-full min-w-0">
                     <div className="text-[11px] text-muted-foreground">数据库名称</div>
                     <div className="whitespace-normal break-words text-sm font-medium text-foreground">
@@ -492,7 +492,7 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               </div>
             ) : (
-              <div className="bg-background/40 whitespace-normal rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+              <div className="whitespace-normal rounded-lg border border-dashed border-border bg-background/40 p-3 text-sm text-muted-foreground">
                 当前未连接聊天，无法执行当前数据库操作。
               </div>
             )}
@@ -517,7 +517,7 @@ export const DatabaseManagementSection: FC = () => {
 
             <div className="flex flex-col gap-3">
               {historicalDatabases.length === 0 ? (
-                <div className="bg-background/40 rounded-lg border border-dashed border-border p-3 text-sm text-muted-foreground">
+                <div className="rounded-lg border border-dashed border-border bg-background/40 p-3 text-sm text-muted-foreground">
                   没有可清理的历史数据库。
                 </div>
               ) : (
@@ -543,7 +543,7 @@ export const DatabaseManagementSection: FC = () => {
                       <div className="break-words text-xs font-medium text-muted-foreground">
                         状态未知 · {unknownDatabases.length} 个
                       </div>
-                      <div className="bg-background/40 whitespace-normal break-words rounded-md border border-dashed border-border p-2 text-xs leading-5 text-muted-foreground">
+                      <div className="whitespace-normal break-words rounded-md border border-dashed border-border bg-background/40 p-2 text-xs leading-5 text-muted-foreground">
                         无法确认对应聊天是否存在（酒馆版本或接口限制），请手动确认后再绑定或删除。
                       </div>
                       <div className="flex flex-col gap-2">
@@ -565,7 +565,7 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               )}
 
-              <div className="bg-background/60 whitespace-normal break-words rounded-lg border border-border p-3 text-xs leading-5 text-muted-foreground">
+              <div className="whitespace-normal break-words rounded-lg border border-border bg-background/60 p-3 text-xs leading-5 text-muted-foreground">
                 {selectedSummary
                   ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 状态: ${STATUS_LABELS[selectedSummary.status]} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
                   : currentDatabaseName
@@ -573,7 +573,7 @@ export const DatabaseManagementSection: FC = () => {
                     : '当前未连接聊天。'}
               </div>
 
-              <div className="bg-background/60 grid gap-2 rounded-lg border border-border p-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-2 rounded-lg border border-border bg-background/60 p-3 sm:grid-cols-2 xl:grid-cols-4">
                 <div className="w-full min-w-0">
                   <div className="text-[11px] text-muted-foreground">事件数</div>
                   <div className="text-sm font-medium text-foreground">
@@ -633,7 +633,7 @@ export const DatabaseManagementSection: FC = () => {
             </div>
           </div>
 
-          <div className="bg-background/40 whitespace-normal break-words rounded-lg border border-dashed border-border p-3 text-xs text-muted-foreground">
+          <div className="whitespace-normal break-words rounded-lg border border-dashed border-border bg-background/40 p-3 text-xs text-muted-foreground">
             IndexedDB 版本: {Dexie.semVer || 'Dexie'}
             {currentDatabaseName ? ` · 当前数据库: ${currentDatabaseName}` : ' · 当前未连接聊天'}
           </div>

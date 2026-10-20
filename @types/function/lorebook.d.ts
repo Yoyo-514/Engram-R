@@ -14,7 +14,7 @@ type LorebookSettings = {
   match_whole_words: boolean;
   use_group_scoring: boolean;
   overflow_alert: boolean;
-}
+};
 
 /** @deprecated 请使用内置库 "世界书强制用推荐的全局设置" */
 declare function getLorebookSettings(): LorebookSettings;
@@ -34,13 +34,13 @@ declare function createLorebook(lorebook: string): Promise<boolean>;
 type CharLorebooks = {
   primary: string | null;
   additional: string[];
-}
+};
 
 /** @deprecated 请使用 `getCharWorldbookNames` */
 type GetCharLorebooksOption = {
   name?: string;
   type?: 'all' | 'primary' | 'additional';
-}
+};
 
 /** @deprecated 请使用 `getCharWorldbookNames` */
 declare function getCharLorebooks({ name, type }?: GetCharLorebooksOption): CharLorebooks;

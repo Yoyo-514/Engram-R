@@ -32,7 +32,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         this.props.fallback || (
-          <div className="bg-destructive/10 border-destructive/20 m-2 flex items-center justify-center rounded-md border p-4 text-sm text-destructive">
+          <div className="m-2 flex items-center justify-center rounded-md border border-destructive/20 bg-destructive/10 p-4 text-sm text-destructive">
             <span>组件加载失败，请检查数据完整性或尝试刷新。</span>
           </div>
         )

@@ -104,7 +104,7 @@ export const EntityCard: FC<EntityCardProps> = ({
 
         {/* 归档按钮 (紧凑模式) */}
         <button
-          className="hover:bg-muted/50 rounded p-1 px-2 transition-colors"
+          className="rounded p-1 px-2 transition-colors hover:bg-muted/50"
           onClick={(e) => {
             e.stopPropagation();
             onArchive?.(!isArchived);
@@ -130,7 +130,7 @@ export const EntityCard: FC<EntityCardProps> = ({
       className={`group flex h-full cursor-pointer flex-col rounded-lg p-4 transition-all duration-150 ${
         isSelected
           ? 'border border-primary bg-transparent shadow-sm'
-          : 'hover:border-border/50 bg-secondary/5 border border-transparent'
+          : 'border border-transparent bg-secondary/5 hover:border-border/50'
       } ${isArchived ? 'opacity-60 grayscale-[0.3]' : ''} `}
       onClick={onSelect}
     >
@@ -160,8 +160,8 @@ export const EntityCard: FC<EntityCardProps> = ({
         <button
           className={`ml-auto rounded-md p-1.5 transition-all ${
             isLocked
-              ? 'bg-emphasis/10 hover:bg-emphasis/20 text-emphasis'
-              : 'hover:bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100'
+              ? 'bg-emphasis/10 text-emphasis hover:bg-emphasis/20'
+              : 'text-muted-foreground opacity-0 hover:bg-muted/50 group-hover:opacity-100'
           } `}
           onClick={(e) => {
             e.stopPropagation();
@@ -176,8 +176,8 @@ export const EntityCard: FC<EntityCardProps> = ({
         <button
           className={`rounded-md p-1.5 transition-all ${
             isArchived
-              ? 'bg-primary/10 hover:bg-primary/20 text-primary'
-              : 'hover:bg-muted/50 text-muted-foreground opacity-0 group-hover:opacity-100'
+              ? 'bg-primary/10 text-primary hover:bg-primary/20'
+              : 'text-muted-foreground opacity-0 hover:bg-muted/50 group-hover:opacity-100'
           } `}
           onClick={(e) => {
             e.stopPropagation();

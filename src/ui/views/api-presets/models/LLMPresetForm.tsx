@@ -241,7 +241,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.temperature}
               onChange={(val) => updateParameters('temperature', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">
+            <div className="text-xs text-muted-foreground/70">
               较高的值使输出更随机，较低的值使输出更确定。
             </div>
           </div>
@@ -267,7 +267,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.topP}
               onChange={(val) => updateParameters('topP', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">控制候选 token 的累积概率截断。</div>
+            <div className="text-xs text-muted-foreground/70">控制候选 token 的累积概率截断。</div>
           </div>
 
           {/* Top-K */}
@@ -291,7 +291,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.topK ?? 60}
               onChange={(val) => updateParameters('topK', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">
+            <div className="text-xs text-muted-foreground/70">
               只从前 K 个最可能的结果中进行概率抽取（建议保留 0 为关闭或 60 默认）。
             </div>
           </div>
@@ -340,7 +340,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.maxContext ?? 150000}
               onChange={(val) => updateParameters('maxContext', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">
+            <div className="text-xs text-muted-foreground/70">
               建议值: 150000。限制传给大模型的最大上下文 Token 长度。
             </div>
           </div>
@@ -366,7 +366,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.frequencyPenalty}
               onChange={(val) => updateParameters('frequencyPenalty', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">降低重复 token 的概率。</div>
+            <div className="text-xs text-muted-foreground/70">降低重复 token 的概率。</div>
           </div>
 
           {/* Presence Penalty */}
@@ -390,7 +390,7 @@ export const LLMPresetForm: FC<LLMPresetFormProps> = ({ preset, onChange }) => {
               value={preset.parameters.presencePenalty}
               onChange={(val) => updateParameters('presencePenalty', val)}
             />
-            <div className="text-muted-foreground/70 text-xs">鼓励模型讨论新主题。</div>
+            <div className="text-xs text-muted-foreground/70">鼓励模型讨论新主题。</div>
           </div>
         </div>
       </FormSection>

@@ -433,7 +433,7 @@ declare const SillyTavern: {
       insertBefore?: number;
       forceId?: number;
       showSwipes?: boolean;
-    },
+    }
   ) => JQuery<HTMLElement>;
   readonly deleteLastMessage: () => Promise<void>;
   readonly generate: Function;
@@ -473,7 +473,7 @@ declare const SillyTavern: {
     depth: number,
     scan?: boolean,
     role?: number,
-    filter?: () => Promise<boolean> | boolean,
+    filter?: () => Promise<boolean> | boolean
   ) => Promise<void>;
   readonly updateChatMetadata: (new_values: any, reset: boolean) => void;
   readonly saveChat: () => Promise<void>;
@@ -492,12 +492,12 @@ declare const SillyTavern: {
     group?: string,
     replace_character_card?: boolean,
     additional_macro?: Record<string, any>,
-    post_process_function?: (text: string) => string,
+    post_process_function?: (text: string) => string
   ) => Promise<void>;
   readonly substituteParamsExtended: (
     content: string,
     additional_macro?: Record<string, any>,
-    post_process_function?: (text: string) => string,
+    post_process_function?: (text: string) => string
   ) => Promise<void>;
   readonly SlashCommandParser: any;
   readonly SlashCommand: any;
@@ -516,7 +516,7 @@ declare const SillyTavern: {
   };
   readonly executeSlashCommandsWithOptions: (
     text: string,
-    options?: any,
+    options?: any
   ) => Promise<{
     interrupt: boolean;
     pipe: string;
@@ -528,7 +528,11 @@ declare const SillyTavern: {
     errorMessage: string;
   }>;
   readonly timestampToMoment: (timestamp: string | number) => any;
-  readonly registerMacro: (key: string, value: string | ((uid: string) => string), description?: string) => void;
+  readonly registerMacro: (
+    key: string,
+    value: string | ((uid: string) => string),
+    description?: string
+  ) => void;
   readonly unregisterMacro: (key: string) => void;
   readonly registerFunctionTool: (tool: {
     /** 工具名称 */
@@ -553,13 +557,18 @@ declare const SillyTavern: {
   readonly isToolCallingSupported: () => boolean;
   readonly canPerformToolCalls: (type: string) => boolean;
   readonly ToolManager: any;
-  readonly registerDebugFunction: (function_id: string, name: string, description: string, fn: Function) => void;
+  readonly registerDebugFunction: (
+    function_id: string,
+    name: string,
+    description: string,
+    fn: Function
+  ) => void;
   readonly renderExtensionTemplateAsync: (
     extension_name: string,
     template_id: string,
     template_data?: object,
     sanitize?: boolean,
-    localize?: boolean,
+    localize?: boolean
   ) => Promise<string>;
   readonly registerDataBankScraper: (scraper: any) => Promise<void>;
   readonly showLoader: () => void;
@@ -576,12 +585,15 @@ declare const SillyTavern: {
     quiet_iamge?: string,
     quiet_name?: string,
     response_length?: number,
-    force_chid?: number,
+    force_chid?: number
   ) => Promise<string>;
   /** 严禁使用本方法修改角色卡的 `extensions` 字段, 它会合并原有值和新值而不是替换; 应该使用 `updateCharacterWith` */
   readonly writeExtensionField: (character_id: number, key: string, value: any) => Promise<void>;
   readonly getThumbnailUrl: (type: any, file: any) => string;
-  readonly selectCharacterById: (id: number, { switchMenu }?: { switchMenu?: boolean }) => Promise<void>;
+  readonly selectCharacterById: (
+    id: number,
+    { switchMenu }?: { switchMenu?: boolean }
+  ) => Promise<void>;
   readonly messageFormatting: (
     message: string,
     ch_name: string,
@@ -589,7 +601,7 @@ declare const SillyTavern: {
     is_user: boolean,
     message_id: number,
     sanitizerOverrides?: object,
-    isReasoning?: boolean,
+    isReasoning?: boolean
   ) => string;
   readonly shouldSendOnEnter: () => boolean;
   readonly isMobile: () => boolean;
@@ -608,7 +620,7 @@ declare const SillyTavern: {
       content: JQuery<HTMLElement> | string | Element,
       type: number,
       inputValue?: string,
-      popupOptions?: SillyTavern.PopupOptions,
+      popupOptions?: SillyTavern.PopupOptions
     ): {
       dlg: HTMLDialogElement;
 
@@ -644,7 +656,7 @@ declare const SillyTavern: {
     content: JQuery<HTMLElement> | string | Element,
     type: number,
     inputValue?: string,
-    popupOptions?: SillyTavern.PopupOptions,
+    popupOptions?: SillyTavern.PopupOptions
   ) => Promise<number | string | boolean | undefined>;
   /** oai_settings */
   readonly chatCompletionSettings: any;
@@ -659,9 +671,13 @@ declare const SillyTavern: {
   readonly updateMessageBlock: (
     message_id: number,
     message: object,
-    { rerenderMessage }?: { rerenderMessage?: boolean },
+    { rerenderMessage }?: { rerenderMessage?: boolean }
   ) => void;
-  readonly appendMediaToMessage: (mes: object, messageElement: JQuery<HTMLElement>, adjust_scroll?: boolean) => void;
+  readonly appendMediaToMessage: (
+    mes: object,
+    messageElement: JQuery<HTMLElement>,
+    adjust_scroll?: boolean
+  ) => void;
 
   readonly loadWorldInfo: (name: string) => Promise<any | null>;
   readonly saveWorldInfo: (name: string, data: any, immediately?: boolean) => Promise<void>;
@@ -675,7 +691,7 @@ declare const SillyTavern: {
   readonly getWorldInfoPrompt: (
     chat: string[],
     max_context: number,
-    is_dry_run: boolean,
+    is_dry_run: boolean
   ) => Promise<{
     worldInfoString: string;
     worldInfoBefore: string;
@@ -697,9 +713,12 @@ declare const SillyTavern: {
   readonly ConnectionManagerRequestService: any;
   readonly updateReasoningUI: (
     message_id_or_element: number | JQuery<HTMLElement> | HTMLElement,
-    { reset }?: { reset?: boolean },
+    { reset }?: { reset?: boolean }
   ) => void;
-  readonly parseReasoningFromString: (string: string, { strict }?: { strict?: boolean }) => any | null;
+  readonly parseReasoningFromString: (
+    string: string,
+    { strict }?: { strict?: boolean }
+  ) => any | null;
   readonly unshallowCharacter: (character_id?: string) => Promise<void>;
   readonly unshallowGroupMembers: (group_id: string) => Promise<void>;
   readonly symbols: {

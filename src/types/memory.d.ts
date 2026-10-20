@@ -98,4 +98,3 @@ export interface EntityExtractConfig {
   /** 实体数量上限 (默认 50) */
   archiveLimit?: number;
 }
-
