@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { EntityType } from '@/config/memory/defaults';
 import { Logger } from '@/core/logger';
 import { deepClone, isRecord, stringifyYaml } from '@/core/utils';
+import { getErrorMessage } from '@/core/utils/error';
 import { parseJson } from '@/core/utils/JsonParser';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode } from '@/types/graph';
@@ -81,9 +82,16 @@ export interface EntitySaveOptions {
   rawExistingEntities?: EntityNode[];
 }
 
+export interface EntitySaveConflict {
+  entityName: string;
+  message: string;
+}
+
 export interface EntitySaveResult {
   newEntities: EntityNode[];
   updatedEntities: EntityNode[];
+  /** 被跳过的实体，其余实体仍会正常保存 */
+  conflicts: EntitySaveConflict[];
 }
 
 function normalizeEntityType(value: unknown): EntityType {
@@ -385,7 +393,8 @@ async function processUnifiedPatches(
   store: MemoryStoreState,
   isDryRun: boolean,
   newEntities: EntityNode[],
-  updatedEntities: EntityNode[]
+  updatedEntities: EntityNode[],
+  conflicts: EntitySaveConflict[]
 ): Promise<void> {
   const entityIndexes = buildEntityIndexes(existingEntities);
   const patchesByEntity = new Map<string, PatchOperation[]>();
@@ -401,29 +410,40 @@ async function processUnifiedPatches(
   }
 
   for (const [entityName, entityPatches] of patchesByEntity) {
-    const existing = resolveExistingEntity(entityName, entityIndexes);
-    const addRootPatch = entityPatches.find(
-      (patch) => patch.op === 'add' && isEntityRootPath(patch.path, entityName)
-    );
+    try {
+      const existing = resolveExistingEntity(entityName, entityIndexes);
+      const addRootPatch = entityPatches.find(
+        (patch) => patch.op === 'add' && isEntityRootPath(patch.path, entityName)
+      );
 
-    if (addRootPatch) {
-      if (existing) {
-        throw new Error(
-          `EntityStore: 实体 "${entityName}" 已存在，新增请求与现有实体冲突，请改用 replace`
+      if (addRootPatch) {
+        if (existing) {
+          throw new Error(`实体 "${entityName}" 已存在，根 add 已跳过，请改用 replace`);
+        }
+
+        newEntities.push(
+          await createNewEntity(entityName, readRootPatchValue(addRootPatch.value), store, isDryRun)
         );
+        continue;
       }
 
-      newEntities.push(
-        await createNewEntity(entityName, readRootPatchValue(addRootPatch.value), store, isDryRun)
+      if (!existing) {
+        throw new Error(`未找到实体 "${entityName}"，无法应用更新 Patch`);
+      }
+
+      await applyMergePatches(
+        entityName,
+        existing,
+        entityPatches,
+        store,
+        isDryRun,
+        updatedEntities
       );
-      continue;
+    } catch (error) {
+      const message = getErrorMessage(error);
+      conflicts.push({ entityName, message });
+      Logger.warn('EntityStore', `跳过实体 "${entityName}"：${message}`);
     }
-
-    if (!existing) {
-      throw new Error(`EntityStore: 未找到实体 "${entityName}"，无法应用更新 Patch`);
-    }
-
-    await applyMergePatches(entityName, existing, entityPatches, store, isDryRun, updatedEntities);
   }
 }
 
@@ -472,7 +492,7 @@ export async function saveEntities(
   options: EntitySaveOptions
 ): Promise<EntitySaveResult> {
   const store = useMemoryStore.getState();
-  const result: EntitySaveResult = { newEntities: [], updatedEntities: [] };
+  const result: EntitySaveResult = { newEntities: [], updatedEntities: [], conflicts: [] };
 
   let source: unknown = content;
   if (typeof source === 'string') {
@@ -512,7 +532,8 @@ export async function saveEntities(
         store,
         options.dryRun,
         result.newEntities,
-        result.updatedEntities
+        result.updatedEntities,
+        result.conflicts
       );
     }
   }

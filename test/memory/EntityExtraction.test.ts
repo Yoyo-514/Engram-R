@@ -20,7 +20,10 @@ vi.mock('@/core/logger', async () => ({
   },
 }));
 vi.mock('@/ui/services/NotificationService', () => ({
-  notificationService: { info: vi.fn<(message: string, title?: string) => void>() },
+  notificationService: {
+    info: vi.fn<(message: string, title?: string) => void>(),
+    warning: vi.fn<(message: string, title?: string) => void>(),
+  },
 }));
 vi.mock('@/modules/llm/PromptBuilder', () => ({
   buildPrompt: vi.fn<(input: unknown, options: unknown) => Promise<unknown>>(),
@@ -59,7 +62,7 @@ const memory: MemoryContext = {
 
 const rawExistingEntities: EntityNode[] = [];
 const committed: EntityNode[] = [{ id: 'saved', name: 'Alex' } as EntityNode];
-const previewResult = { newEntities: [], updatedEntities: [] };
+const previewResult = { newEntities: [], updatedEntities: [], conflicts: [] };
 
 function options(previewEnabled = true) {
   return {
@@ -85,7 +88,9 @@ beforeEach(() => {
   });
   vi.mocked(requestCompletion).mockResolvedValue({ content: '{"patches":[]}' });
   vi.mocked(saveEntities).mockImplementation(async (_content, saveOptions) =>
-    saveOptions.dryRun ? previewResult : { newEntities: committed, updatedEntities: [] }
+    saveOptions.dryRun
+      ? previewResult
+      : { newEntities: committed, updatedEntities: [], conflicts: [] }
   );
 });
 
@@ -150,13 +155,58 @@ describe('实体提取链', () => {
 
     const result = await extractEntities(options());
 
-    expect(result).toEqual({ newEntities: [], updatedEntities: [] });
+    expect(result).toEqual({ newEntities: [], updatedEntities: [], conflicts: [] });
     expect(saveEntities).toHaveBeenCalledExactlyOnceWith(
       { patches: [] },
       {
         dryRun: true,
         rawExistingEntities,
       }
+    );
+  });
+
+  it('冲突实体被跳过并提示，其余结果继续提交', async () => {
+    vi.mocked(saveEntities).mockImplementation(async (_content, saveOptions) =>
+      saveOptions.dryRun
+        ? {
+            newEntities: [],
+            updatedEntities: [],
+            conflicts: [{ entityName: 'Alex', message: '实体 "Alex" 已存在' }],
+          }
+        : { newEntities: committed, updatedEntities: [], conflicts: [] }
+    );
+    vi.mocked(requestOutputReview).mockResolvedValueOnce(
+      reviewResult({ action: 'confirm', data: { newEntities: [], updatedEntities: [] } })
+    );
+
+    const result = await extractEntities(options());
+
+    expect(notificationService.warning).toHaveBeenCalledExactlyOnceWith(
+      '已跳过 1 个冲突实体: Alex',
+      'Engram'
+    );
+    expect(result.newEntities).toBe(committed);
+  });
+
+  it('实体表由本次读取的实体库渲染', async () => {
+    await extractEntities({
+      ...options(false),
+      rawExistingEntities: [
+        {
+          id: 'alex',
+          name: 'Alex',
+          type: 'char',
+          aliases: ['A'],
+          profile: {},
+          description: 'Alex\nprofile:\n  role: 骑士',
+          last_updated_at: 1,
+        },
+      ],
+    });
+
+    expect(buildPrompt).toHaveBeenCalledWith(
+      expect.objectContaining({ engramEntityStates: expect.stringContaining('role: 骑士') }),
+      expect.anything()
     );
   });
 

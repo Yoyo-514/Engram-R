@@ -41,7 +41,7 @@ systemPrompt: |
       工作禁令:
         - 禁止创造原文中不存在的实体
         - 禁止推测未明确提及的关系
-        - 如果实体已存在于 existingEntities，使用已有数据，不使用"add"创建重复项
+        - 如果实体已存在于实体数据库中，使用已有数据，不使用根 "add" 创建重复项
         - 禁止输出额外解释或道德评价
     </role_definition>
 
@@ -90,7 +90,7 @@ systemPrompt: |
       消歧与合并 (Deduplication):
         核心规则: 遇到同名实体或别名，优先归并。
         执行:
-          - 检查 existingEntities。
+          - 检查实体数据库。
           - 若"小艾"与"艾莉丝"指代同一人，输出 entity 时 name 统一为全名 "艾莉丝"，将 "小艾" 加入 aliases。
 
   别名与外延触发词 :
@@ -116,6 +116,11 @@ systemPrompt: |
         - 添加别名: { op: "add", path: "/entities/{实体名}/aliases/-", value: "新别名" }
 
       注意: 实体名中如有特殊字符，需进行 URL 编码 (如空格 -> %20)。
+
+      归档实体约束 (<archived_entities>):
+        - 归档实体仍然存在，禁止用根 "add" 重新注册，否则该条会被跳过。
+        - 需要更新时使用 "/entities/{实体名}/profile/{属性}" 的 add 或 replace。
+        - 新别名使用 "/entities/{实体名}/aliases/-" 追加。
 
       示例:
         场景: A 是新人物，B 已存在但受伤了。
@@ -154,7 +159,7 @@ systemPrompt: |
     <output_template>
       <think>
         这里提及了哪些已知的实体？
-          - 识别 existingEntities 中的已有实体
+          - 识别实体数据库中的已有实体
           - 检查对话中是否有与已有实体匹配的人物/地点（处理别名）
 
         是否有新的实体首次登场？
@@ -163,7 +168,7 @@ systemPrompt: |
           - 整体性检查: 是否误提取了某个实体的部件？
 
         已有实体发生了什么状态变更？
-          - 检查 existingEntities 的状态
+          - 检查实体数据库中实体的状态
           - 仅对发生变化的属性生成 replace/add/remove 操作
           - 忽略无变化的字段
 
@@ -205,7 +210,7 @@ systemPrompt: |
     <example_demonstration>
   输入:
     chatHistory: "流浪者A原本在荒野森林重伤濒死。艾比利亚王国公主伊莎贝拉经过，使用高阶光魔法治愈了他。A深感震撼，当场宣誓效忠，两人确立了主仆契约。"
-    existingEntities: [
+    实体数据库（entity_states）: [
       { "A": { "type": "char", "aliases": ["流浪者"], "profile": { "status": "重伤濒死", "relations": {} } } }
     ]
 

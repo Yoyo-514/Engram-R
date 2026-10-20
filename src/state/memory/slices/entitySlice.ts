@@ -1,30 +1,11 @@
 import { type StateCreator } from 'zustand';
 
 import { generateShortUUID } from '@/core/utils';
+import { renderEntityStates } from '@/modules/memory/EntityStates';
 import type { EntityNode } from '@/types/graph';
 
 import type { MemoryState } from '../types';
 import { getCurrentDb, tryGetCurrentDb } from './coreSlice';
-
-function toYamlScalar(value: unknown, fallback: string): string {
-  if (typeof value === 'string') {
-    return value;
-  }
-
-  if (typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-
-  if (value == null) {
-    return fallback;
-  }
-
-  try {
-    return JSON.stringify(value);
-  } catch {
-    return fallback;
-  }
-}
 
 export interface EntityState {
   // 实体相关
@@ -224,83 +205,8 @@ export const createEntitySlice: StateCreator<MemoryState, [], [], EntityState> =
     if (!db) return '';
 
     try {
-      let fullEntities: EntityNode[] = [];
-      let summaryEntities: EntityNode[] = [];
-
-      const all = await db.entities.toArray();
-
-      if (ids && ids.length > 0) {
-        // 情况 A: 有召回 ID 列表
-        // 详细展示：活跃实体 + 被召回的归档实体
-        // 简略展示：未被召回的归档实体
-        fullEntities = all.filter((e) => !e.is_archived || ids.includes(e.id));
-        summaryEntities = all.filter((e) => e.is_archived && !ids.includes(e.id));
-      } else {
-        // 情况 B: 无召回 ID 列表
-        // 详细展示：所有活跃实体
-        // 简略展示：所有归档实体
-        fullEntities = all.filter((e) => !e.is_archived);
-        summaryEntities = all.filter((e) => e.is_archived);
-      }
-
-      if (fullEntities.length === 0 && summaryEntities.length === 0) return '';
-
-      const groups: Record<string, EntityNode[]> = {
-        char: [],
-        loc: [],
-        item: [],
-        concept: [],
-        unknown: [],
-      };
-
-      for (const entity of fullEntities) {
-        const typeKey = entity.type || 'unknown';
-        if (groups[typeKey]) {
-          groups[typeKey].push(entity);
-        } else {
-          groups.unknown.push(entity);
-        }
-      }
-
-      const tagMap: Record<string, string> = {
-        char: 'character_state',
-        loc: 'scene_state',
-        item: 'item_state',
-        concept: 'concept_state',
-        unknown: 'entity_state',
-      };
-
-      const sections: string[] = [];
-
-      for (const [typeKey, entityList] of Object.entries(groups)) {
-        if (entityList.length === 0) continue;
-
-        const tag = tagMap[typeKey];
-        const contents = entityList
-          .map((e) => e.description || `# ${e.name}\n(无详细信息)`)
-          .join('\n---\n');
-
-        sections.push(`<${tag}>\n${contents}\n</${tag}>`);
-      }
-
-      // 补充未登场/未召回的已归档实体（仅提供极简特征作为防遗忘和防重提醒）
-      if (summaryEntities.length > 0) {
-        const yamlLines = [
-          '<archived_entities>',
-          '以下实体目前未出场，但需要你保持对其设定的认知，请勿重复创建新实体:',
-        ];
-        for (const e of summaryEntities) {
-          const identity = e.profile?.identity ?? '未知身份';
-          const description = e.profile?.description ?? '无具体备注';
-          yamlLines.push(`${e.name}:`);
-          yamlLines.push(`  identity: ${toYamlScalar(identity, '未知')}`);
-          yamlLines.push(`  description: ${toYamlScalar(description, '暂无描述')}`);
-        }
-        yamlLines.push('</archived_entities>');
-        sections.push(yamlLines.join('\n'));
-      }
-
-      return sections.join('\n\n');
+      const entities = await db.entities.toArray();
+      return renderEntityStates(entities, { recalledIds: ids });
     } catch (e) {
       console.error('[MemoryStore] Failed to get entity states:', e);
       return '';

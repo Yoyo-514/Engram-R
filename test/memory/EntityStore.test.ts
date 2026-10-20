@@ -192,7 +192,7 @@ describe('实体写入与预演', () => {
   ])('空结果有效且不读写实体库：%j', async (source) => {
     const result = await preview(source);
 
-    expect(result).toEqual({ newEntities: [], updatedEntities: [] });
+    expect(result).toEqual({ newEntities: [], updatedEntities: [], conflicts: [] });
     expect(store.getAllEntities).not.toHaveBeenCalled();
     expect(store.saveEntity).not.toHaveBeenCalled();
     expect(store.updateEntity).not.toHaveBeenCalled();
@@ -235,38 +235,64 @@ describe('实体 Patch 匹配契约', () => {
     );
   });
 
-  it.each(['Alex', 'Captain'])('根新增与现有实体冲突时明确失败：%s', async (name) => {
+  it.each(['Alex', 'Captain'])('根新增与现有实体冲突时跳过并记录：%s', async (name) => {
     store.getAllEntities.mockResolvedValue([entity({ aliases: ['Captain'] })]);
 
-    await expect(
-      commit({
-        patches: [{ op: 'add', path: `/entities/${name}`, value: { profile: { role: 'king' } } }],
-      })
-    ).rejects.toThrow('已存在');
+    const result = await commit({
+      patches: [{ op: 'add', path: `/entities/${name}`, value: { profile: { role: 'king' } } }],
+    });
+
+    expect(result.newEntities).toEqual([]);
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.conflicts[0].entityName).toBe(name);
+    expect(result.conflicts[0].message).toContain('已存在');
     expect(store.saveEntity).not.toHaveBeenCalled();
     expect(store.updateEntity).not.toHaveBeenCalled();
   });
 
-  it('别名命中多个实体时明确失败', async () => {
+  it('别名命中多个实体时跳过并记录', async () => {
     store.getAllEntities.mockResolvedValue([
       entity({ id: 'first', name: 'Alex', aliases: ['队长'] }),
       entity({ id: 'second', name: 'Bob', aliases: ['队长'] }),
     ]);
 
-    await expect(
-      commit({ patches: [{ op: 'replace', path: '/entities/队长/profile/role', value: 'king' }] })
-    ).rejects.toThrow('别名');
+    const result = await commit({
+      patches: [{ op: 'replace', path: '/entities/队长/profile/role', value: 'king' }],
+    });
+
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.conflicts[0].message).toContain('别名');
     expect(store.updateEntity).not.toHaveBeenCalled();
   });
 
-  it('未知字段路径明确失败，不再猜嵌套位置', async () => {
+  it('未知字段路径跳过并记录，不再猜嵌套位置', async () => {
     store.getAllEntities.mockResolvedValue([entity({ profile: { stats: { age: 20 } } })]);
 
-    await expect(
-      preview({ patches: [{ op: 'replace', path: '/entities/Alex/profile/age', value: 21 }] })
-    ).rejects.toThrow('目标不存在');
+    const result = await preview({
+      patches: [{ op: 'replace', path: '/entities/Alex/profile/age', value: 21 }],
+    });
+
+    expect(result.updatedEntities).toEqual([]);
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.conflicts[0].message).toContain('目标不存在');
     expect(store.updateEntity).not.toHaveBeenCalled();
     expect(store.saveEntity).not.toHaveBeenCalled();
+  });
+
+  it('单个实体冲突不影响同一批次的其它实体', async () => {
+    store.getAllEntities.mockResolvedValue([entity()]);
+
+    const result = await commit({
+      patches: [
+        { op: 'add', path: '/entities/Alex', value: { profile: { role: 'king' } } },
+        { op: 'add', path: '/entities/Bob', value: { profile: { role: 'mage' } } },
+      ],
+    });
+
+    expect(result.conflicts).toHaveLength(1);
+    expect(result.newEntities).toHaveLength(1);
+    expect(result.newEntities[0].name).toBe('Bob');
+    expect(store.saveEntity).toHaveBeenCalledTimes(1);
   });
 
   it('保留 add、replace、test、copy、move、remove 六种操作', async () => {

@@ -3,7 +3,12 @@ import { Logger, LogModule } from '@/core/logger';
 import { parseJson } from '@/core/utils/JsonParser';
 import { requestCompletion, type CompletionSignal } from '@/modules/llm/Completion';
 import { buildPrompt } from '@/modules/llm/PromptBuilder';
-import { saveEntities, type EntitySaveResult } from '@/modules/memory/EntityStore';
+import { ENTITY_STATES_MAX_CHARS, renderEntityStates } from '@/modules/memory/EntityStates';
+import {
+  saveEntities,
+  type EntitySaveConflict,
+  type EntitySaveResult,
+} from '@/modules/memory/EntityStore';
 import { fetchMemoryContext, type MemoryContext } from '@/modules/memory/MemoryContext';
 import { regexProcessor } from '@/modules/workflow/steps/text/RegexProcessor';
 import { useMemoryStore } from '@/state/memoryStore';
@@ -54,16 +59,19 @@ async function runOnce(options: EntityExtractionOptions): Promise<EntitySaveResu
 
     // 关闭审阅时直接把模型结果落库，不再经过预演。
     if (!options.previewEnabled) {
-      return saveEntities(parsed, {
+      const saved = await saveEntities(parsed, {
         dryRun: false,
         rawExistingEntities: options.rawExistingEntities,
       });
+      reportConflicts(saved.conflicts);
+      return saved;
     }
 
     const preview = await saveEntities(parsed, {
       dryRun: true,
       rawExistingEntities: options.rawExistingEntities,
     });
+    reportConflicts(preview.conflicts);
 
     const review = await requestOutputReview(cleaned, {
       title: '实体提取确认',
@@ -95,7 +103,7 @@ async function runOnce(options: EntityExtractionOptions): Promise<EntitySaveResu
     if (review.action === 'fill') {
       // 与旧流程一致：填充正文后不再落库。
       Logger.info(LogModule.MEMORY_ENTITY, '用户选择填充，跳过落库');
-      return { newEntities: [], updatedEntities: [] };
+      return { newEntities: [], updatedEntities: [], conflicts: [] };
     }
 
     return saveEntities(review.data ?? review.content, {
@@ -109,7 +117,29 @@ async function runOnce(options: EntityExtractionOptions): Promise<EntitySaveResu
 export async function extractEntities(
   options: EntityExtractionOptions
 ): Promise<EntityExtractionResult> {
-  return runOnce(options);
+  // 实体表与 Patch 解析同源，避免读到上一次提取前的缓存
+  const memory = {
+    ...options.memory,
+    engramEntityStates: renderEntityStates(options.rawExistingEntities, {
+      maxChars: ENTITY_STATES_MAX_CHARS,
+    }),
+  };
+
+  return runOnce({ ...options, memory });
+}
+
+function reportConflicts(conflicts: EntitySaveConflict[]): void {
+  if (conflicts.length === 0) {
+    return;
+  }
+
+  const names = conflicts.map((conflict) => conflict.entityName).join('、');
+  Logger.warn(
+    LogModule.MEMORY_ENTITY,
+    `已跳过 ${conflicts.length} 个冲突实体：${names}`,
+    conflicts
+  );
+  notificationService.warning(`已跳过 ${conflicts.length} 个冲突实体: ${names}`, 'Engram');
 }
 
 /** 导入外部文本时的实体提取：直接使用原文，不读取聊天记录。 */
@@ -123,7 +153,7 @@ export async function extractEntitiesFromText(
   );
   const rawExistingEntities = await useMemoryStore.getState().getAllEntities();
 
-  return runOnce({
+  return extractEntities({
     memory,
     rawExistingEntities,
     previewEnabled: false,
