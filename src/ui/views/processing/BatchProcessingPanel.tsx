@@ -103,7 +103,7 @@ const DataBatchSection: FC = () => {
   };
 
   return (
-    <section className="space-y-4 border-t border-border/50 pt-4">
+    <section className="cq-span-full min-w-0 space-y-4 border-t border-border/50 pt-4">
       <h3 className="text-sm font-medium text-primary">数据批处理</h3>
       <p className="text-xs text-muted-foreground">对事件数据进行批量操作（不依赖楼层范围）</p>
 
@@ -127,7 +127,7 @@ const DataBatchSection: FC = () => {
             <div className="flex justify-between">
               <span className="text-muted-foreground">待归档（已嵌入 & 未归档）</span>
               <span
-                className={`font-mono ${archiveStats.pending > 0 ? 'text-amber-400' : 'text-value'}`}
+                className={`font-mono ${archiveStats.pending > 0 ? 'text-warning' : 'text-value'}`}
               >
                 {archiveStats.pending}
               </span>
@@ -136,7 +136,7 @@ const DataBatchSection: FC = () => {
         )}
 
         {/* 操作按钮 */}
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button
             size="sm"
             icon={isScanning ? Loader2 : SearchIcon}
@@ -296,16 +296,16 @@ export const BatchProcessingPanel: FC = () => {
       : 0;
 
   return (
-    <div className="cq-2 gap-8 lg:gap-12">
+    <div className="cq-panels gap-8 lg:gap-12">
       {/* ========== 左栏：历史消息批处理 ========== */}
-      <section className="space-y-6">
+      <section className="cq min-w-0 space-y-6">
         <div>
           <h2 className="mb-1 text-sm font-medium text-heading">历史消息批处理</h2>
           <p className="text-xs text-meta">根据当前配置处理历史聊天记录</p>
         </div>
 
         {/* 范围设置 */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="cq-2 gap-6">
           <NumberField
             label="起始楼层"
             value={startFloor}
@@ -464,7 +464,7 @@ export const BatchProcessingPanel: FC = () => {
                       {TASK_TYPE_LABELS[queue.tasks[queue.currentTaskIndex]?.type] || '执行任务'}
                     </span>
                     {queue.tasks[queue.currentTaskIndex]?.floorRange && (
-                      <span className="ml-1 whitespace-nowrap text-label">
+                      <span className="ml-1 text-label">
                         (楼层 {queue.tasks[queue.currentTaskIndex].floorRange!.start}-
                         {queue.tasks[queue.currentTaskIndex].floorRange!.end})
                       </span>
@@ -505,8 +505,8 @@ export const BatchProcessingPanel: FC = () => {
       </section>
 
       {/* ========== 右栏：外部导入 ========== */}
-      <section className="relative space-y-6 lg:pl-8">
-        <Divider responsive length={30} />
+      <section className="cq relative min-w-0 space-y-6">
+        <Divider length={30} />
 
         <div>
           <h2 className="mb-1 text-sm font-medium text-heading">外部文本导入</h2>
@@ -580,7 +580,7 @@ export const BatchProcessingPanel: FC = () => {
         </div>
 
         {/* 分块设置 */}
-        <div className="grid grid-cols-2 gap-6">
+        <div className="cq-2 gap-6">
           <NumberField
             label="块大小（字）"
             value={chunkSize}

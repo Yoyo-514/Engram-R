@@ -22,16 +22,22 @@ export const MobileFullscreenForm: FC<MobileFullscreenFormProps> = ({
         style={{ width: '100vw', height: '100dvh' }}
       >
         {/* 头部 */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-border px-4 py-3">
-          <button onClick={onClose} aria-label="返回列表" className="rounded p-1 hover:bg-accent">
+        <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 pb-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <button
+            onClick={onClose}
+            aria-label="返回列表"
+            className="shrink-0 rounded p-1 hover:bg-accent"
+          >
             <ArrowLeft size={20} />
           </button>
           <h2 className="min-w-0 flex-1 break-words text-lg font-light">{title}</h2>
-          {actions && <div className="flex shrink-0 items-center gap-2">{actions}</div>}
+          {actions && <div className="flex max-w-full flex-wrap items-center gap-2">{actions}</div>}
         </div>
 
         {/* 内容区域 */}
-        <div className="no-scrollbar flex-1 overflow-y-auto p-4">{children}</div>
+        <div className="cq no-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          {children}
+        </div>
       </div>
     </div>
   );

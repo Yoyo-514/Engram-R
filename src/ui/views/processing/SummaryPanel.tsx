@@ -32,8 +32,8 @@ import type {
 } from '@/types/memory';
 import { ModernButton as Button } from '@/ui/components/core/Button';
 import { SliderField } from '@/ui/components/core/SliderField';
-import { SwitchField } from '@/ui/components/form/FormComponents';
 import { StatTile } from '@/ui/components/display/StatTile';
+import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import { notificationService } from '@/ui/services';
 
@@ -200,9 +200,9 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
   const limitConfig = getCurrentLimit();
 
   return (
-    <div className="cq-2 gap-8 lg:gap-12">
+    <div className="cq-panels gap-8 lg:gap-12">
       {/* ========== 左栏：总结管理 ========== */}
-      <section className="space-y-8">
+      <section className="cq min-w-0 space-y-8">
         {/* 状态监控 - 按重要性分层 */}
         <div>
           <div className="mb-6 flex items-center justify-between">
@@ -225,7 +225,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 <div>
                   <span className="mb-1 block text-xs text-muted-foreground">运行状态</span>
                   <div
-                    className={`flex items-center gap-2 text-lg font-medium ${status.running ? 'text-green-500' : 'text-muted-foreground'}`}
+                    className={`flex items-center gap-2 text-lg font-medium ${status.running ? 'text-success' : 'text-muted-foreground'}`}
                   >
                     {status.running ? <CheckCircle2 size={18} /> : <AlertCircle size={18} />}
                     {status.running ? '运行中' : '已停止'}
@@ -244,8 +244,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                   <span className="mb-1 block text-xs text-muted-foreground">
                     待进入总结队列的楼层
                   </span>
-                  <div className="flex items-baseline gap-2">
-                    <div className="font-mono text-3xl font-light text-amber-500">
+                  <div className="flex min-w-0 flex-wrap items-baseline gap-2">
+                    <div className="font-mono text-3xl font-light text-warning">
                       {status.pendingFloors}
                     </div>
                     <div className="whitespace-normal break-words text-[10px] text-muted-foreground">
@@ -313,7 +313,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
         </div>
 
         {/* 操作按钮 */}
-        <div className="flex gap-3">
+        <div className="flex flex-wrap gap-3">
           {status?.running ? (
             <Button icon={Pause} label="停止监听" onClick={handleStop} />
           ) : (
@@ -334,8 +334,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           <Divider length={100} />
 
           {/* 开关区域：自动总结 + 自动隐藏 并列 */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center justify-between">
+          <div className="cq-2 gap-4">
+            <div className="flex items-center justify-between gap-3">
               <span className="text-sm text-foreground">自动总结</span>
               <SwitchField
                 label=""
@@ -345,8 +345,8 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
                 }}
               />
             </div>
-            <div className="flex items-center justify-between">
-              <div className="flex flex-col">
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <span className="text-sm text-foreground">自动隐藏原文</span>
                 <span className="text-[10px] text-muted-foreground">
                   总结写入后隐藏对应历史楼层
@@ -365,7 +365,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           {/* 滑块区域：触发间隔 + 缓冲楼层 并列 */}
           {settings.enabled && (
             <>
-              <div className="grid grid-cols-2 gap-6">
+              <div className="cq-2 gap-6">
                 {/* 触发间隔 - 指引式标签 */}
                 <div className="space-y-3">
                   <div className="whitespace-normal break-words text-xs leading-relaxed text-muted-foreground">
@@ -426,12 +426,11 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       </section>
 
       {/* ========== 右栏：精简配置 - 无框流体设计 ========== */}
-      <section className="relative space-y-6 lg:pl-8">
-        {/* 响应式分割线 - 30% 长度 */}
-        <Divider responsive length={30} />
+      <section className="cq relative min-w-0 space-y-6">
+        <Divider length={30} />
         {/* 标题 + 开关 */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h2 className="text-sm font-medium text-foreground">精简配置</h2>
             <p className="mt-0.5 whitespace-normal break-words text-xs text-muted-foreground">
               对较早的摘要层再次压缩，不直接处理最新原始聊天楼层
@@ -450,7 +449,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
           {/* 触发条件 - 无框单选 */}
           <div className="space-y-3">
             <span className="text-xs text-muted-foreground">触发依据（作用在摘要层）</span>
-            <div className="flex gap-6">
+            <div className="flex flex-wrap gap-4">
               {TRIGGER_OPTIONS.map((opt) => (
                 <label
                   key={opt.id}
@@ -538,7 +537,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
               </div>
               <div className="flex justify-between">
                 <span>当前摘要层{trimConfig.trigger === 'token' ? ' Token' : '条目数'}:</span>
-                <span className={`font-mono ${trimStatus.triggered ? 'text-amber-500' : ''}`}>
+                <span className={`font-mono ${trimStatus.triggered ? 'text-warning' : ''}`}>
                   {trimStatus.currentValue} / {limitConfig.value}
                 </span>
               </div>

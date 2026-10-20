@@ -9,7 +9,7 @@ interface PageTitleProps {
 
 export const PageTitle: FC<PageTitleProps> = ({ title, subtitle, actions, className = '' }) => (
   <div
-    className={`animate-in fade-in slide-in-from-bottom-2 mb-5 flex min-w-0 items-start justify-between gap-4 px-4 duration-500 md:px-0 ${className}`}
+    className={`animate-in fade-in slide-in-from-bottom-2 mb-5 flex min-w-0 flex-col items-start justify-between gap-3 duration-500 sm:flex-row ${className}`}
   >
     <div className="min-w-0 flex-1">
       <h1 className="min-w-0 break-words text-xl font-medium tracking-tight text-foreground">
@@ -21,6 +21,8 @@ export const PageTitle: FC<PageTitleProps> = ({ title, subtitle, actions, classN
         </p>
       )}
     </div>
-    {actions && <div className="flex shrink-0 flex-wrap justify-end gap-2">{actions}</div>}
+    {actions && (
+      <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:justify-end">{actions}</div>
+    )}
   </div>
 );

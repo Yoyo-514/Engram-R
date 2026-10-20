@@ -8,7 +8,10 @@
 .engram-app-root {
   color: var(--foreground);
   font-family: var(--font-sans);
+  font-size: 14px;
   line-height: 1.5;
+  overflow-wrap: anywhere;
+  text-shadow: none;
   -webkit-font-smoothing: antialiased;
   accent-color: var(--primary);
   caret-color: var(--primary);
@@ -21,6 +24,7 @@
 .engram-app-root ::after {
   box-sizing: border-box;
   border: 0 solid var(--border);
+  text-shadow: none;
   --tw-border-spacing-x: 0;
   --tw-border-spacing-y: 0;
   --tw-translate-x: 0;
@@ -87,10 +91,7 @@
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  /* 底层自绘冷色光斑，保证毛玻璃有可模糊的结构；再叠宿主背景 */
-  background:
-    radial-gradient(120% 70% at 12% 0%, rgb(41 89 170 / 0.12), transparent 62%),
-    radial-gradient(90% 60% at 100% 100%, rgb(143 94 21 / 0.08), transparent 58%), var(--shell);
+  background: var(--shell);
   backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
   -webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
 }
@@ -109,7 +110,8 @@
 .cq-2,
 .cq-3,
 .cq-4,
-.cq-cards {
+.cq-cards,
+.cq-panels {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
 }
@@ -134,6 +136,25 @@
   }
 }
 
+/* 操作面板需要容纳表单与按钮，比普通字段网格更晚分栏。 */
+@container panel (min-width: 880px) {
+  .cq-panels {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.cq-2 > *,
+.cq-3 > *,
+.cq-4 > *,
+.cq-cards > *,
+.cq-panels > * {
+  min-width: 0;
+}
+
+.cq-span-full {
+  grid-column: 1 / -1;
+}
+
 /* 供壳层与浮层复用的 acrylic 材质 */
 .engram-acrylic {
   background: var(--surface-2);
@@ -148,12 +169,22 @@
   pointer-events: none;
 }
 
-:where(.engram-app-root) button {
+/* 在扩展作用域内隔离酒馆的字号、阴影与原生控件皮肤。 */
+.engram-app-root :is(h1, h2, h3, h4, h5, h6, p, pre, blockquote) {
+  margin: 0;
+}
+
+.engram-app-root :is(h1, h2, h3, h4, h5, h6, label) {
+  font-size: inherit;
+  font-weight: inherit;
+}
+
+.engram-app-root button {
   background: transparent;
   border: none;
   box-shadow: none;
   color: inherit;
-  font-family: inherit;
+  font: inherit;
   padding: 0;
   margin: 0;
   text-shadow: none;
@@ -163,25 +194,61 @@
   text-transform: none;
 }
 
-:where(.engram-app-root) input,
-:where(.engram-app-root) textarea,
-:where(.engram-app-root) select {
-  font-family: inherit;
+.engram-app-root input,
+.engram-app-root textarea,
+.engram-app-root select {
+  min-width: 0;
+  max-width: 100%;
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  font: inherit;
   color: inherit;
+  text-shadow: none;
   box-shadow: none;
 }
 
-:where(.engram-app-root) :focus-visible {
+.engram-app-root select option,
+.engram-app-root select option:not(:checked) {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.engram-app-root select option[disabled]:not(:checked) {
+  color: var(--muted-foreground);
+}
+
+.engram-app-root input:where([type='checkbox']) {
+  appearance: auto;
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
+  transform: none;
+  filter: none;
+  outline: none;
+}
+
+.engram-app-root input[type='checkbox']::before {
+  content: none;
+}
+
+.engram-app-root svg {
+  flex-shrink: 0;
+}
+
+.engram-app-root :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;
 }
 
-:where(.engram-app-root) ::placeholder {
+.engram-app-root ::placeholder {
   color: var(--muted-foreground);
   opacity: 1;
 }
 
-:where(.engram-app-root) ::selection {
+.engram-app-root ::selection {
   background: color-mix(in srgb, var(--primary) 20%, transparent);
   color: var(--foreground);
 }

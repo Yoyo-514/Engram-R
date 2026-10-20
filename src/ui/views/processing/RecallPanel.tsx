@@ -150,21 +150,21 @@ export const RecallPanel: FC<RecallPanelProps> = ({
 
       {/* 静态扫描快速测试（零消耗） */}
       <div className="mt-6 border-t border-border pt-6">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
-          <Zap size={16} className="text-amber-500" />
+        <h3 className="mb-3 flex flex-wrap items-center gap-2 text-sm font-medium">
+          <Zap size={16} className="text-warning" />
           Keyword Scan Dry Run
-          <span className="ml-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-normal text-amber-500/80">
+          <span className="ml-1 rounded bg-warning/10 px-1.5 py-0.5 text-[10px] font-normal text-warning">
             零消耗・正则测试
           </span>
         </h3>
 
-        <div className="flex gap-2">
-          <div className="flex flex-1 flex-col gap-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
             <textarea
               value={scanQuery}
               onChange={(e) => setScanQuery(e.target.value)}
               placeholder="输入文本测试匹配 (实际检索会自动回溯最近 5 条消息)..."
-              className="min-h-[80px] resize-y whitespace-pre-wrap break-words rounded-md border border-border/40 bg-secondary/20 p-3 text-sm transition-colors focus:border-primary/50 focus:outline-none"
+              className="min-h-[80px] w-full min-w-0 resize-y whitespace-pre-wrap break-words rounded-md border border-border/40 bg-secondary/20 p-3 text-sm transition-colors focus:border-primary/50 focus:outline-none"
             />
 
             {/* 扫描匹配结果直接在这里渲染，不使用弹窗 */}
@@ -206,7 +206,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           <button
             onClick={handleScanDryRun}
             disabled={!scanQuery.trim()}
-            className={`flex min-w-[80px] flex-col items-center justify-center gap-1 rounded-md px-4 text-sm font-medium transition-all ${
+            className={`flex shrink-0 items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-medium transition-colors sm:min-w-[80px] sm:flex-col ${
               !scanQuery.trim()
                 ? 'cursor-not-allowed bg-muted text-muted-foreground'
                 : 'bg-primary/80 text-primary-foreground shadow-sm hover:bg-primary'
@@ -223,7 +223,7 @@ export const RecallPanel: FC<RecallPanelProps> = ({
 
       {/* 模型召回测试（有消耗） */}
       <div className="mt-8 border-t border-border pt-6">
-        <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
+        <h3 className="mb-3 flex flex-wrap items-center gap-2 text-sm font-medium">
           <Search size={16} className="text-primary" />
           召回预览
           <span className="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-normal italic text-primary">
@@ -231,18 +231,18 @@ export const RecallPanel: FC<RecallPanelProps> = ({
           </span>
         </h3>
 
-        <div className="flex gap-2">
+        <div className="flex min-w-0 flex-col gap-2 sm:flex-row">
           <textarea
             value={testQuery}
             onChange={(e) => setTestQuery(e.target.value)}
             placeholder="模拟 User Input 触发召回预览..."
-            className="min-h-[80px] flex-1 resize-y whitespace-pre-wrap break-words rounded-md border border-border/50 bg-secondary/30 p-3 text-sm transition-colors focus:border-primary/50 focus:outline-none"
+            className="min-h-[80px] w-full min-w-0 flex-1 resize-y whitespace-pre-wrap break-words rounded-md border border-border/50 bg-secondary/30 p-3 text-sm transition-colors focus:border-primary/50 focus:outline-none"
           />
-          <div className="flex flex-col gap-2">
+          <div className="flex shrink-0 flex-col gap-2">
             <button
               onClick={handlePreviewTest}
               disabled={!testQuery.trim() || isTesting}
-              className={`flex min-w-[100px] flex-1 flex-col items-center justify-center gap-1 rounded-md px-4 py-3 text-sm font-medium transition-all ${
+              className={`flex flex-1 items-center justify-center gap-2 rounded-md px-4 py-3 text-sm font-medium transition-colors sm:min-w-[100px] sm:flex-col ${
                 !testQuery.trim() || isTesting
                   ? 'cursor-not-allowed bg-muted text-muted-foreground'
                   : 'bg-primary text-primary-foreground shadow-sm hover:bg-primary/90'

@@ -121,7 +121,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
       {/* Updated Entities Section (Show first as they are usually more critical) */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-amber-500">
+        <div className="flex items-center gap-2 text-sm font-medium text-warning">
           <span className="h-2 w-2 rounded-full bg-amber-500" />
           更新实体 ({updatedEntities.length})
         </div>
@@ -145,7 +145,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
       {/* New Entities Section */}
       <div className="space-y-3">
-        <div className="flex items-center gap-2 text-sm font-medium text-green-500">
+        <div className="flex items-center gap-2 text-sm font-medium text-success">
           <span className="h-2 w-2 rounded-full bg-green-500" />
           新增实体 ({newEntities.length})
         </div>
@@ -187,9 +187,9 @@ const EntityCard: FC<{
   onEdit: () => void;
 }> = ({ entity, type, onRemove, onEdit }) => {
   const isUpdated = type === 'updated';
-  const borderColor = isUpdated ? 'border-amber-500/30' : 'border-green-500/30';
-  const bgColor = isUpdated ? 'bg-amber-500/5' : 'bg-green-500/5';
-  const textColor = isUpdated ? 'text-amber-500' : 'text-green-500';
+  const borderColor = isUpdated ? 'border-warning/30' : 'border-success/30';
+  const bgColor = isUpdated ? 'bg-warning/5' : 'bg-success/5';
+  const textColor = isUpdated ? 'text-warning' : 'text-success';
 
   return (
     <div
@@ -220,10 +220,12 @@ const EntityCard: FC<{
       </div>
 
       <div className="flex min-w-0 flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <span className="text-base font-bold text-foreground">{entity.name}</span>
+        <div className="flex min-w-0 items-start gap-2 pr-14">
+          <span className="min-w-0 flex-1 break-words text-base font-bold text-foreground">
+            {entity.name}
+          </span>
           <span
-            className={`rounded border border-current px-1.5 py-0.5 text-[10px] uppercase opacity-80 ${textColor}`}
+            className={`shrink-0 rounded border border-current px-1.5 py-0.5 text-[10px] uppercase opacity-80 ${textColor}`}
           >
             {entity.type}
           </span>
@@ -233,9 +235,12 @@ const EntityCard: FC<{
         {isUpdated && entity.diff ? (
           <div className="mt-1 flex flex-col gap-1 rounded bg-background/50 p-2.5 font-mono text-xs">
             {entity.diff.map((op, i) => (
-              <div key={i} className="flex min-w-0 items-baseline gap-2 break-words">
+              <div
+                key={i}
+                className="flex min-w-0 flex-col gap-1 break-words sm:flex-row sm:items-baseline sm:gap-2"
+              >
                 {/* Path */}
-                <span className="min-w-[30px] shrink-0 font-medium text-foreground/80">
+                <span className="min-w-0 max-w-full break-words font-medium text-foreground/80">
                   {op.path}
                 </span>
 

@@ -174,15 +174,15 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
         </button>
 
         <div className="min-w-0 flex-1">
-          <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
             <h4
-              className={`truncate text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && 'line-through'}`}
+              className={`min-w-0 flex-1 break-words text-sm font-medium ${isSelected ? 'text-heading' : 'text-muted-foreground group-hover:text-heading'} ${!template.enabled && 'line-through'}`}
             >
               {template.name}
             </h4>
 
             {/* 标签 */}
-            <div className="flex flex-shrink-0 items-center gap-1.5">
+            <div className="flex max-w-full shrink-0 flex-wrap items-center gap-1.5">
               <span
                 className={`rounded-sm px-1.5 py-0.5 text-[10px] font-medium ${getCategoryColorClass(template.category)}`}
               >
@@ -206,7 +206,7 @@ export const PromptTemplateCard: FC<PromptTemplateCardProps> = ({
 
       {/* Action Buttons - Visible on hover or selected */}
       <div
-        className={`mt-2 flex justify-end gap-1 ${isSelected || 'opacity-0 group-hover:opacity-100'} transition-opacity`}
+        className={`mt-2 flex flex-wrap justify-end gap-1 ${isSelected ? 'opacity-100' : 'opacity-100 sm:opacity-0 sm:group-hover:opacity-100'} transition-opacity`}
       >
         <button
           className="rounded p-1.5 text-muted-foreground transition-colors hover:text-foreground"

@@ -27,9 +27,9 @@ export const SimpleModal: FC<SimpleModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm duration-200">
+    <div className="animate-in fade-in fixed inset-0 z-50 flex items-center justify-center bg-foreground/25 p-4 backdrop-blur-sm duration-200">
       <div
-        className={`engram-acrylic flex max-h-[90vh] w-full ${maxWidth} flex-col rounded-xl shadow-[var(--shadow-3)]`}
+        className={`engram-acrylic cq flex max-h-[90dvh] w-full min-w-0 ${maxWidth} flex-col overflow-hidden rounded-xl shadow-[var(--shadow-3)]`}
       >
         {/* Header */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-b border-border px-4 py-3">
@@ -47,7 +47,7 @@ export const SimpleModal: FC<SimpleModalProps> = ({
         </div>
 
         {/* Body (Scrollable) */}
-        <div className="flex-1 overflow-auto">{children}</div>
+        <div className="min-h-0 min-w-0 flex-1 overflow-auto">{children}</div>
 
         {/* Footer (Optional) */}
         {footer && (

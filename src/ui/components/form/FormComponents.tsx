@@ -24,13 +24,15 @@ export const FormSection: FC<FormSectionProps> = ({
   const [isCollapsed, setIsCollapsed] = useState(collapsible ? defaultCollapsed : false);
 
   return (
-    <div className={`mb-8 ${className}`}>
+    <div className={`mb-8 min-w-0 ${className}`}>
       <div
         className={`mb-4 ${collapsible ? 'group flex cursor-pointer select-none items-center justify-between' : ''}`}
         onClick={() => collapsible && setIsCollapsed(!isCollapsed)}
       >
-        <div>
-          <h3 className="flex items-center gap-2 text-sm font-medium text-primary">{title}</h3>
+        <div className="min-w-0">
+          <h3 className="flex flex-wrap items-center gap-2 text-sm font-medium text-primary">
+            {title}
+          </h3>
           {description && (
             <p className="mt-1 break-words text-xs text-muted-foreground">{description}</p>
           )}
@@ -38,7 +40,7 @@ export const FormSection: FC<FormSectionProps> = ({
         {collapsible && (
           <ChevronDown
             size={16}
-            className={`text-muted-foreground transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
+            className={`shrink-0 text-muted-foreground transition-transform duration-200 ${isCollapsed ? '-rotate-90' : 'rotate-0'}`}
           />
         )}
       </div>
@@ -95,7 +97,6 @@ export const TextField: FC<TextFieldProps> = ({
     borderBottom: '1px solid var(--border)',
     borderRadius: 0,
     boxShadow: 'none',
-    outline: 'none',
     padding: '8px 0',
     fontSize: '14px',
     width: '100%',
@@ -103,7 +104,7 @@ export const TextField: FC<TextFieldProps> = ({
   };
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`}>
+    <div className={`flex min-w-0 flex-col gap-1 ${className}`}>
       <label className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {required && <span className="text-destructive">*</span>}
@@ -117,7 +118,7 @@ export const TextField: FC<TextFieldProps> = ({
           readOnly={readOnly}
           rows={rows}
           style={inputStyle}
-          className="min-h-[80px] resize-y font-mono transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:opacity-50"
+          className="min-h-[80px] resize-y font-mono transition-colors placeholder:text-muted-foreground focus:border-primary disabled:opacity-50"
         />
       ) : (
         <input
@@ -128,7 +129,7 @@ export const TextField: FC<TextFieldProps> = ({
           disabled={disabled}
           readOnly={readOnly}
           style={inputStyle}
-          className="transition-colors placeholder:text-muted-foreground/40 focus:border-primary disabled:opacity-50"
+          className="transition-colors placeholder:text-muted-foreground focus:border-primary disabled:opacity-50"
         />
       )}
       {description && (
@@ -167,13 +168,13 @@ export const NumberField: FC<NumberFieldProps> = ({
   suffix,
 }) => {
   return (
-    <div className={`flex flex-col gap-2 ${className}`}>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+    <div className={`flex min-w-0 flex-col gap-2 ${className}`}>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-x-3 gap-y-2">
         <label className="flex items-center gap-1 text-xs text-muted-foreground">
           {label}
           {required && <span className="text-destructive">*</span>}
         </label>
-        <div className="flex items-center justify-end gap-1 sm:justify-normal">
+        <div className="ml-auto flex min-w-0 max-w-full items-center justify-end gap-1">
           <input
             type="number"
             min={min}
@@ -232,7 +233,6 @@ export const SelectField: FC<SelectFieldProps> = ({
     borderBottom: '1px solid var(--border)',
     borderRadius: 0,
     boxShadow: 'none',
-    outline: 'none',
     padding: '8px 24px 8px 0',
     fontSize: '14px',
     width: '100%',
@@ -248,7 +248,7 @@ export const SelectField: FC<SelectFieldProps> = ({
         {label}
         {required && <span className="text-destructive">*</span>}
       </label>
-      <div className="relative">
+      <div className="relative min-w-0">
         <select
           value={value}
           onChange={(e) => onChange(e.target.value)}
@@ -301,12 +301,12 @@ export const SwitchField: FC<SwitchFieldProps> = ({
 }) => {
   return (
     <div
-      className={`flex items-start justify-between gap-4 ${compact ? 'py-0' : 'py-1'} ${className} ${disabled ? 'pointer-events-none opacity-50' : ''}`}
+      className={`flex min-w-0 items-start justify-between gap-4 ${compact ? 'py-0' : 'py-1'} ${className} ${disabled ? 'pointer-events-none opacity-50' : ''}`}
     >
       {label && (
         <div className="min-w-0 flex-1">
           <label
-            className="block cursor-pointer truncate text-xs text-foreground"
+            className="block cursor-pointer whitespace-normal break-words text-xs text-foreground"
             onClick={() => !disabled && onChange(!checked)}
           >
             {label}
@@ -393,7 +393,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
   };
 
   return (
-    <div className={`flex flex-col gap-1 ${className}`} ref={containerRef}>
+    <div className={`relative flex min-w-0 flex-col gap-1 ${className}`} ref={containerRef}>
       <label className="flex items-center gap-1 text-xs text-muted-foreground">
         {label}
         {required && <span className="text-destructive">*</span>}
@@ -406,7 +406,9 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
         disabled={disabled}
         className="relative w-full cursor-pointer border-0 border-b border-border bg-transparent py-2 pr-6 text-left text-sm text-foreground transition-colors focus:border-primary disabled:cursor-not-allowed disabled:opacity-50"
       >
-        <span className={value ? '' : 'text-muted-foreground'}>{selectedLabel}</span>
+        <span className={`block break-words ${value ? '' : 'text-muted-foreground'}`}>
+          {selectedLabel}
+        </span>
         <ChevronDown
           size={14}
           className={`absolute right-0 top-1/2 -translate-y-1/2 text-muted-foreground/50 transition-transform ${isOpen ? 'rotate-180' : ''}`}
@@ -428,7 +430,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="搜索模型..."
-              className="flex-1 border-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
+              className="min-w-0 flex-1 border-none bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground/50"
             />
             {search && (
               <button
@@ -448,7 +450,7 @@ export const SearchableSelectField: FC<SearchableSelectFieldProps> = ({
                 <div
                   key={opt.value}
                   onClick={() => handleSelect(opt.value)}
-                  className={`cursor-pointer truncate px-3 py-2 text-sm transition-colors ${
+                  className={`cursor-pointer whitespace-normal break-words px-3 py-2 text-sm transition-colors ${
                     opt.value === value
                       ? 'bg-primary/15 text-primary'
                       : 'text-foreground hover:bg-muted'

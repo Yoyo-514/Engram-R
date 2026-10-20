@@ -1,12 +1,4 @@
-import {
-  AlertTriangle,
-  Check,
-  Layers,
-  Minus,
-  RefreshCw,
-  RotateCcw,
-  X,
-} from 'lucide-react';
+import { AlertTriangle, Check, Layers, Minus, RefreshCw, RotateCcw, X } from 'lucide-react';
 import type { FC } from 'react';
 import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
@@ -167,24 +159,22 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
       {footerEl &&
         isActive &&
         createPortal(
-          <div className="flex h-full w-full flex-col-reverse items-center justify-between gap-4 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-row sm:gap-0 sm:px-5 sm:py-4">
-            <div className="flex w-full gap-2 sm:w-auto">
-              {showFeedbackInput && (
-                <Button
-                  label="返回"
-                  onClick={() => setShowFeedbackInput(false)}
-                  className="w-full sm:w-auto"
-                />
-              )}
-            </div>
-            <div className="flex w-full gap-3 sm:w-auto">
+          <div className="flex w-full min-w-0 flex-col-reverse items-center justify-between gap-3 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-row sm:gap-0 sm:px-5 sm:py-4">
+            {showFeedbackInput && (
+              <Button
+                label="返回"
+                onClick={() => setShowFeedbackInput(false)}
+                className="w-full sm:w-auto"
+              />
+            )}
+            <div className="grid w-full min-w-0 grid-cols-2 gap-2 sm:ml-auto sm:flex sm:w-auto sm:flex-wrap">
               {showFeedbackInput ? (
                 <Button
                   label="提交打回"
                   icon={RotateCcw}
                   onClick={() => handleAction('reject')}
                   disabled={!feedback.trim()}
-                  className="w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:w-auto"
+                  className="col-span-2 w-full bg-destructive text-destructive-foreground hover:bg-destructive/90 sm:w-auto"
                 />
               ) : (
                 <>
@@ -210,7 +200,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
                       icon={Check}
                       primary
                       onClick={() => handleAction('confirm')}
-                      className="min-w-[100px] flex-1 sm:flex-none"
+                      className="col-span-2 sm:flex-none"
                     />
                   )}
                 </>
@@ -297,14 +287,14 @@ export const ReviewContainer: FC = () => {
           {/* Top Bar: Tabs & Window Controls */}
           <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:pt-2">
             {/* Tabs Scroll Area */}
-            <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto pr-4">
+            <div className="no-scrollbar flex min-w-0 flex-1 items-center gap-1 overflow-x-auto pr-4">
               {requests.map((req) => {
                 const isActive = req.id === activeId;
                 return (
                   <button
                     key={req.id}
                     onClick={() => setActiveId(req.id)}
-                    className={`mb-[-1px] flex items-center gap-2 rounded-t-md border-x border-t px-4 py-2 text-sm font-medium transition-colors ${
+                    className={`mb-[-1px] flex shrink-0 items-center gap-2 rounded-t-md border-x border-t px-4 py-2 text-sm font-medium transition-colors ${
                       isActive
                         ? 'z-10 border-border border-b-transparent bg-popover text-foreground'
                         : 'border-transparent bg-muted/50 text-muted-foreground hover:bg-muted/80 hover:text-foreground'
@@ -317,7 +307,7 @@ export const ReviewContainer: FC = () => {
             </div>
 
             {/* Window Controls */}
-            <div className="mb-1 flex items-center gap-1 px-2">
+            <div className="mb-1 flex shrink-0 items-center gap-1 px-2">
               <button
                 onClick={() => setIsMinimized(true)}
                 className="rounded-md p-1.5 text-muted-foreground transition-colors hover:text-foreground"
@@ -365,10 +355,7 @@ export const ReviewContainer: FC = () => {
           </div>
 
           {/* Footer Slot (Window Level) */}
-          <div
-            ref={setFooterEl}
-            className="flex-none border-t border-border/60 bg-muted/20"
-          >
+          <div ref={setFooterEl} className="flex-none border-t border-border/60 bg-muted/20">
             {/* Portaled Content will appear here */}
           </div>
         </div>

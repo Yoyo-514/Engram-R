@@ -39,7 +39,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
           正则规则列表
         </h3>
@@ -75,7 +75,7 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
         </div>
       </div>
 
-      <div className="no-scrollbar -mr-2 flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto pr-2">
+      <div className="no-scrollbar flex min-h-0 min-w-0 flex-1 flex-col gap-1 overflow-y-auto pr-2">
         {rules.map((rule, index) => (
           <div
             key={rule.id}
@@ -121,15 +121,17 @@ export const RegexRuleList: FC<RegexRuleListProps> = ({
               <Power size={14} />
             </button>
             <div className="min-w-0 flex-1">
-              <h4 className={`truncate text-sm font-medium ${!rule.enabled ? 'line-through' : ''}`}>
+              <h4
+                className={`whitespace-normal break-words text-sm font-medium ${!rule.enabled ? 'line-through' : ''}`}
+              >
                 {rule.name}
               </h4>
-              <code className="mt-0.5 inline-block max-w-[120px] truncate rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
+              <code className="mt-0.5 inline-block max-w-full truncate rounded bg-muted px-1 font-mono text-[10px] text-muted-foreground">
                 /{rule.pattern}/{rule.flags}
               </code>
             </div>
             <button
-              className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+              className="shrink-0 rounded p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
               onClick={(event) => {
                 event.stopPropagation();
                 onDelete(rule.id);

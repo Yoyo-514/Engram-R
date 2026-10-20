@@ -3,9 +3,9 @@
   color-scheme: light;
   --background: #e6e7ed;
   --foreground: #343b58;
-  --card: rgb(255 255 255 / 0.78);
+  --card: rgb(255 255 255 / 0.94);
   --card-foreground: #343b58;
-  --popover: rgb(230 231 237 / 0.94);
+  --popover: #f7f8fc;
   --popover-foreground: #343b58;
   --primary: #2959aa;
   --primary-foreground: #ffffff;
@@ -40,12 +40,12 @@
   --radius: 0.65rem;
 
   /* Fluent acrylic 材质：半透明底 + 背景模糊 + 分层阴影 */
-  --surface-1: rgb(255 255 255 / 0.72);
-  --surface-2: rgb(255 255 255 / 0.52);
-  --surface-3: rgb(255 255 255 / 0.36);
-  --shell: rgb(230 231 237 / 0.86);
+  --surface-1: rgb(255 255 255 / 0.96);
+  --surface-2: rgb(247 248 252 / 0.94);
+  --surface-3: rgb(230 231 237 / 0.9);
+  --shell: rgb(230 231 237 / 0.97);
   --acrylic-blur: 24px;
-  --acrylic-saturate: 160%;
+  --acrylic-saturate: 120%;
   --shadow-1: 0 1px 2px rgb(52 59 88 / 0.06), 0 1px 3px rgb(52 59 88 / 0.08);
   --shadow-2: 0 8px 24px -10px rgb(52 59 88 / 0.2), 0 2px 6px rgb(52 59 88 / 0.06);
   --shadow-3: 0 28px 72px -28px rgb(52 59 88 / 0.38), 0 10px 28px -14px rgb(52 59 88 / 0.2);

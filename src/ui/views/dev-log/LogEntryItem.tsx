@@ -137,16 +137,16 @@ export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
   return (
     <div className="group">
       <div
-        className={`flex items-start gap-3 rounded-sm px-2 py-1 transition-colors hover:bg-white/[0.02] ${hasData ? 'cursor-pointer' : ''} `}
+        className={`flex min-w-0 flex-wrap items-start gap-x-2 gap-y-1 rounded-sm px-2 py-1 transition-colors hover:bg-accent/50 sm:flex-nowrap ${hasData ? 'cursor-pointer' : ''} `}
         onClick={() => hasData && setExpanded(!expanded)}
       >
         {/* 展开箭头 */}
-        <span className="mt-0.5 flex w-3 shrink-0 items-center text-zinc-600">
+        <span className="mt-0.5 flex w-3 shrink-0 items-center text-muted-foreground">
           {hasData ? expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} /> : null}
         </span>
 
         {/* 时间戳 - 加深颜色 */}
-        <span className="shrink-0 text-[11px] tabular-nums text-zinc-500">
+        <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
           {formatTime(entry.timestamp)}
         </span>
 
@@ -159,22 +159,22 @@ export const LogEntryItem: FC<LogEntryItemProps> = memo(function LogEntryItem({
 
         {/* 模块标签 - 加深颜色，长模块名截断避免挤压消息 */}
         <span
-          className="max-w-[120px] shrink-0 truncate text-[11px] text-zinc-400"
+          className="min-w-0 max-w-[120px] flex-1 truncate text-[11px] text-label sm:flex-none"
           title={entry.module}
         >
           {entry.module}
         </span>
 
         {/* 消息内容 */}
-        <span className="min-w-0 flex-1 break-words text-[11px] leading-relaxed text-zinc-300">
+        <span className="min-w-0 flex-1 basis-full break-words text-[11px] leading-relaxed text-foreground sm:basis-0">
           {entry.message}
         </span>
       </div>
 
       {/* 展开的数据详情 */}
       {expanded && hasData && (
-        <div className="mb-1 ml-10 mr-2 rounded-r border-l-2 border-zinc-700 bg-zinc-900/50 px-3 py-2 text-[10px]">
-          <pre className="custom-scrollbar m-0 max-h-64 overflow-auto whitespace-pre-wrap break-words font-mono text-zinc-400">
+        <div className="mb-1 ml-4 mr-2 min-w-0 rounded-r border-l border-border bg-muted/30 px-3 py-2 text-[10px] sm:ml-10">
+          <pre className="custom-scrollbar m-0 max-h-64 overflow-auto whitespace-pre-wrap break-words font-mono text-muted-foreground">
             {dataPreview}
           </pre>
         </div>
@@ -229,11 +229,11 @@ export const LogGroupHeader: FC<LogGroupHeaderProps> = ({ summary, expanded, onT
 
   return (
     <div
-      className="flex cursor-pointer items-center gap-2 rounded-sm px-2 py-1.5 text-[11px] transition-colors hover:bg-white/[0.02]"
+      className="flex min-w-0 cursor-pointer flex-wrap items-center gap-2 rounded-sm px-2 py-1.5 text-[11px] transition-colors hover:bg-accent/50"
       onClick={onToggle}
     >
       {/* 展开箭头 */}
-      <span className="shrink-0 text-zinc-500">
+      <span className="shrink-0 text-muted-foreground">
         {expanded ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
       </span>
 
@@ -244,7 +244,10 @@ export const LogGroupHeader: FC<LogGroupHeaderProps> = ({ summary, expanded, onT
       })}
 
       {/* 模块名 */}
-      <span className={`min-w-0 truncate font-medium ${levelStyle.text}`} title={summary.module}>
+      <span
+        className={`min-w-0 flex-1 truncate font-medium ${levelStyle.text}`}
+        title={summary.module}
+      >
         {summary.module}
       </span>
 
@@ -256,7 +259,9 @@ export const LogGroupHeader: FC<LogGroupHeaderProps> = ({ summary, expanded, onT
       </span>
 
       {/* 时间范围 - 加深颜色 */}
-      <span className="ml-auto shrink-0 tabular-nums text-zinc-500">{timeRange}</span>
+      <span className="basis-full tabular-nums text-muted-foreground sm:ml-auto sm:shrink-0 sm:basis-auto">
+        {timeRange}
+      </span>
     </div>
   );
 };

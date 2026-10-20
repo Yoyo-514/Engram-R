@@ -90,8 +90,11 @@ const FieldRow: FC<{
   const kind = detectKind(value);
 
   return (
-    <div className="flex min-w-0 items-start gap-2 rounded-md border border-border/40 bg-card/40 p-2">
-      <span className="w-24 shrink-0 truncate pt-1.5 font-mono text-xs text-meta" title={name}>
+    <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto] items-start gap-2 rounded-md border border-border/40 bg-card/40 p-2 sm:grid-cols-[6rem_minmax(0,1fr)_auto]">
+      <span
+        className="col-span-full min-w-0 break-words font-mono text-xs text-meta sm:col-auto sm:pt-1.5"
+        title={name}
+      >
         {name}
       </span>
       <div className="min-w-0 flex-1">
@@ -233,7 +236,7 @@ export const EntityEditorModal: FC<EntityEditorModalProps> = ({ entity, onCancel
                 ))}
               </select>
             </label>
-            <label className="flex flex-col gap-1 sm:col-span-2">
+            <label className="cq-span-full flex min-w-0 flex-col gap-1">
               <span className="text-xs text-meta">别名（逗号分隔）</span>
               <input
                 value={aliases}
@@ -292,14 +295,12 @@ export const EntityEditorModal: FC<EntityEditorModalProps> = ({ entity, onCancel
           </section>
 
           <section className="space-y-2">
-            <div className="flex items-center justify-between gap-2">
-              <h4 className="shrink-0 text-xs font-medium text-muted-foreground">
-                烧录文本 (description)
-              </h4>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h4 className="text-xs font-medium text-muted-foreground">烧录文本 (description)</h4>
               <button
                 type="button"
                 onClick={() => setDescription(generatedYaml)}
-                className="shrink-0 text-[11px] text-primary transition-colors hover:text-primary/80"
+                className="text-[11px] text-primary transition-colors hover:text-primary/80"
               >
                 按 profile 重新生成
               </button>
@@ -321,7 +322,7 @@ export const EntityEditorModal: FC<EntityEditorModalProps> = ({ entity, onCancel
           </section>
         </div>
 
-        <div className="mt-3 flex shrink-0 justify-end gap-2 border-t border-border/60 pt-3">
+        <div className="mt-3 flex shrink-0 flex-wrap justify-end gap-2 border-t border-border/60 pb-[env(safe-area-inset-bottom)] pt-3">
           <Button label="取消" onClick={onCancel} />
           <Button label="确认更新" primary onClick={handleSave} />
         </div>

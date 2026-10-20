@@ -183,11 +183,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   return (
     <div className="flex h-full flex-col">
       {/* 页面标题 - 统一样式 */}
-      <PageTitle
-        title={currentInfo.title}
-        subtitle={currentInfo.subtitle}
-        className="mb-2"
-      />
+      <PageTitle title={currentInfo.title} subtitle={currentInfo.subtitle} className="mb-2" />
 
       {/* Tab 切换 - 使用 LayoutTabs */}
       <LayoutTabs
@@ -200,7 +196,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
       {activeTab === 'runtime' && (
         <div className="flex min-h-0 flex-1 flex-col">
           {/* 工具栏 - sticky (Level 2, now top-0 because tabs are in header) */}
-          <div className="sticky top-0 z-10 -mx-4 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-sm">
+          <div className="sticky top-0 z-10 min-w-0 border-b border-border bg-background/95 py-3 backdrop-blur-sm">
             <div className="flex flex-wrap items-center gap-2">
               {/* 级别过滤 */}
               <div className="relative">
@@ -272,7 +268,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
               <div className="h-4 w-px bg-border" />
 
               {/* 搜索框 */}
-              <div className="flex items-center gap-1.5 text-muted-foreground">
+              <div className="flex min-w-0 items-center gap-1.5 text-muted-foreground">
                 <Search size={12} />
                 <input
                   type="text"
@@ -320,7 +316,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
 
           {/* 日志内容区 - 无边框 */}
           {/* 性能说明：Virtuoso 虚拟化渲染，只挂载可视区域内的行 */}
-          <div className="min-h-0 flex-1 py-2 font-mono text-xs leading-relaxed">
+          <div className="min-h-0 min-w-0 flex-1 py-2 font-mono text-xs leading-relaxed">
             {filteredLogs.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
                 <Terminal size={32} strokeWidth={1} className="opacity-30" />
@@ -331,11 +327,11 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
                 className="min-h-0 flex-1"
                 style={{ height: '100%' }}
                 data={rows}
-                computeItemKey={(index, row) =>
+                computeItemKey={(_index, row) =>
                   row.kind === 'header' ? `header-${row.summary.first.id}` : row.entry.id
                 }
                 followOutput={autoScroll ? (isAtBottom) => (isAtBottom ? 'smooth' : false) : false}
-                itemContent={(index, row) => {
+                itemContent={(_index, row) => {
                   if (row.kind === 'header') {
                     return (
                       <LogGroupHeader
@@ -351,7 +347,7 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
                   );
                   // 分组内条目带缩进边线，保持 Docker 风格视觉
                   return row.indent ? (
-                    <div className="ml-4 border-l border-zinc-800 pl-2">{item}</div>
+                    <div className="ml-2 min-w-0 border-l border-border pl-2 sm:ml-4">{item}</div>
                   ) : (
                     item
                   );

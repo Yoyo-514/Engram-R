@@ -16,9 +16,10 @@ import { entityBuilder } from '@/modules/memory/EntityExtractor';
  * 增加自动归档与手动清理功能
  */
 import type { EntityExtractConfig } from '@/types/memory';
+import { ModernButton as Button } from '@/ui/components/core/Button';
 import { SliderField } from '@/ui/components/core/SliderField';
-import { SwitchField } from '@/ui/components/form/FormComponents';
 import { StatTile } from '@/ui/components/display/StatTile';
+import { SwitchField } from '@/ui/components/form/FormComponents';
 import { Divider } from '@/ui/components/layout/Divider';
 import { notificationService } from '@/ui/services/NotificationService';
 
@@ -151,9 +152,9 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
   };
 
   return (
-    <div className="cq-2 gap-8 lg:gap-12">
+    <div className="cq-panels gap-8 lg:gap-12">
       {/* ========== 左栏：状态监控 ========== */}
-      <section className="space-y-8">
+      <section className="cq min-w-0 space-y-8">
         <div>
           <div className="mb-6 flex items-center justify-between">
             <h2 className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
@@ -179,7 +180,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
                 </div>
                 <div>
                   <span className="mb-1 block text-xs text-muted-foreground">已归档</span>
-                  <div className="font-mono text-3xl font-light text-muted-foreground/60">
+                  <div className="font-mono text-3xl font-light text-muted-foreground">
                     {status.archivedCount}
                   </div>
                 </div>
@@ -217,44 +218,39 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
           )}
         </div>
 
-        <div className="flex gap-3">
-          <button
+        <div className="flex flex-wrap gap-3">
+          <Button
+            icon={RefreshCw}
+            iconClassName={isLoading ? 'animate-spin' : ''}
+            label={isLoading ? '提取中...' : '手动提取'}
             onClick={handleManualExtract}
             disabled={isLoading || status?.isExtracting || !config.enabled}
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            {isLoading ? '提取中...' : '手动提取'}
-          </button>
-
-          <button
+          />
+          <Button
+            icon={Archive}
+            label="立即清理"
             onClick={handleArchiveNow}
             disabled={isLoading || !config.enabled}
-            className="inline-flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-muted-foreground transition-colors hover:text-emphasis disabled:cursor-not-allowed disabled:opacity-50"
             title="立即根据上限归档旧记忆"
-          >
-            <Archive size={14} />
-            立即清理
-          </button>
-
-          <button
+          />
+          <Button
+            danger
+            icon={RefreshCw}
+            iconClassName={isLoading ? 'animate-spin' : ''}
+            label="重置提取进度"
             onClick={handleResetProgress}
             disabled={isLoading}
-            className="inline-flex items-center gap-2 rounded-lg border border-destructive/30 px-4 py-2 text-sm text-destructive transition-colors hover:text-destructive/80 disabled:cursor-not-allowed disabled:opacity-50"
             title="重置提取进度 (重新扫描全部历史)"
-          >
-            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
-            重置提取进度
-          </button>
+          />
         </div>
       </section>
 
       {/* ========== 右栏：配置 ========== */}
-      <section className="relative space-y-6 lg:pl-8">
-        <Divider responsive length={30} />
+      <section className="cq relative min-w-0 space-y-6">
+        <Divider length={30} />
 
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0 flex-1">
             <h2 className="text-sm font-medium text-foreground">实体提取</h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
               从对话中提取角色、地点、物品等实体
@@ -290,8 +286,8 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
           <Divider spacing="md" />
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-medium text-foreground">自动归档</h2>
                 <p className="mt-0.5 text-xs text-muted-foreground">当活跃实体数量过多时自动清理</p>
               </div>

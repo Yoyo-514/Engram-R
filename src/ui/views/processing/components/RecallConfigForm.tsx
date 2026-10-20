@@ -23,8 +23,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
   return (
     <div className="animate-in fade-in slide-in-from-right-4 space-y-6 duration-500">
       <div className="rounded-lg border border-border/50 bg-secondary/20 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
             <div
               className={`rounded-md p-2 ${config.enabled ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'}`}
             >
@@ -44,12 +44,12 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
           召回策略配置
         </h3>
 
-        <div className="cq-2 gap-4">
+        <div className="cq-panels gap-4">
           <div
             className={`rounded-lg border p-4 transition-all ${config.useKeywordRecall ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                 <Search
                   size={16}
                   className={config.useKeywordRecall ? 'text-primary' : 'text-muted-foreground'}
@@ -63,7 +63,7 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
             </div>
             <p className="text-xs italic leading-relaxed text-muted-foreground">
               基于 Trigger Keywords 和元数据进行正则扫描，
-              <span className="font-medium text-amber-500/80">零 Token 消耗</span>。
+              <span className="font-medium text-warning">零 Token 消耗</span>。
             </p>
             {config.useKeywordRecall && (
               <div className="mt-3 grid grid-cols-2 gap-4 border-t border-primary/10 pt-3">
@@ -104,8 +104,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
           <div
             className={`rounded-lg border p-4 transition-all ${config.useEmbedding ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                 <Database
                   size={16}
                   className={config.useEmbedding ? 'text-primary' : 'text-muted-foreground'}
@@ -125,8 +125,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
           <div
             className={`rounded-lg border p-4 transition-all ${config.useRerank ? 'border-primary/30 bg-primary/5' : 'border-border/50 bg-card hover:border-border'}`}
           >
-            <div className="mb-2 flex items-start justify-between">
-              <div className="flex items-center gap-2 text-sm font-medium">
+            <div className="mb-2 flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-1 items-center gap-2 text-sm font-medium">
                 <Layers
                   size={16}
                   className={config.useRerank ? 'text-primary' : 'text-muted-foreground'}
@@ -151,8 +151,8 @@ export const RecallConfigForm: FC<RecallConfigFormProps> = ({ config, onChange }
         </div>
       </div>
 
-      <div className="rounded-md border border-amber-500/20 bg-amber-500/5 p-3">
-        <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-amber-500/90">
+      <div className="rounded-md border border-warning/30 bg-warning/10 p-3">
+        <p className="flex items-start gap-1.5 text-[10px] leading-relaxed text-warning">
           <Sparkles size={12} className="mt-0.5 shrink-0" />
           <span>
             💡 <strong>提示：</strong>实体（NPC/地点）召回基于触发词 (Trigger Keywords)

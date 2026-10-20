@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import { useRef, type FC } from 'react';
 
 interface SliderFieldProps {
   min: number;
@@ -21,11 +21,14 @@ export const SliderField: FC<SliderFieldProps> = ({
   onChange,
   className = '',
 }) => {
+  const touchStartValue = useRef(value);
   const range = max - min;
   const percentage = range === 0 ? 0 : Math.min(100, Math.max(0, ((value - min) / range) * 100));
 
   return (
-    <div className={`group relative flex h-5 cursor-pointer items-center ${className}`}>
+    <div
+      className={`group relative flex h-11 cursor-pointer items-center [@media(pointer:fine)]:h-5 ${className}`}
+    >
       {/* 轨道底 */}
       <div
         className="absolute inset-x-0 top-1/2 h-1 rounded-full bg-border"
@@ -41,7 +44,10 @@ export const SliderField: FC<SliderFieldProps> = ({
       {/* Thumb - 纯 div 渲染 */}
       <div
         className="pointer-events-none absolute top-1/2 h-3 w-3 rounded-full bg-primary shadow-sm transition-transform duration-100 ease-out group-hover:scale-125"
-        style={{ left: `${percentage}%`, transform: 'translate(-50%, -50%)' }}
+        style={{
+          left: `clamp(0.375rem, ${percentage}%, calc(100% - 0.375rem))`,
+          transform: 'translate(-50%, -50%)',
+        }}
       />
 
       {/* 交互层 - 隐藏原生 input */}
@@ -52,6 +58,13 @@ export const SliderField: FC<SliderFieldProps> = ({
         step={step}
         value={value}
         onChange={(e) => onChange(Number(e.target.value))}
+        onPointerDown={(event) => {
+          if (event.pointerType === 'touch') touchStartValue.current = value;
+        }}
+        onPointerCancel={(event) => {
+          // 竖向手势交给页面滚动时，撤回原生 range 在按下瞬间的跳值。
+          if (event.pointerType === 'touch') onChange(touchStartValue.current);
+        }}
         style={{
           position: 'absolute',
           inset: '0',
@@ -59,6 +72,7 @@ export const SliderField: FC<SliderFieldProps> = ({
           height: '100%',
           opacity: 0,
           cursor: 'pointer',
+          touchAction: 'pan-y',
           zIndex: 10,
           margin: 0,
           padding: 0,
