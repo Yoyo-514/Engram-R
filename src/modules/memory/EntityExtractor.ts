@@ -13,7 +13,8 @@ import { eventWatcher } from '@/core/events/EventWatcher';
 import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
 import { getChatHistory, getCurrentMessageCount } from '@/integrations/tavern';
-import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
+import { extractEntities } from '@/modules/memory/EntityExtraction';
+import { fetchMemoryContext } from '@/modules/memory/MemoryContext';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode } from '@/types/graph';
 import type { EntityExtractConfig } from '@/types/memory';
@@ -221,17 +222,11 @@ export class EntityBuilder {
 
     this.isExtracting = true;
     const startTime = Date.now();
-    Logger.info(
-      LogModule.MEMORY_ENTITY,
-      `开始实体提取 (Workflow) (楼层 ${floor}, DryRun: ${dryRun})`
-    );
+    Logger.info(LogModule.MEMORY_ENTITY, `开始实体提取 (楼层 ${floor}, DryRun: ${dryRun})`);
 
     try {
       // 复用总结器运行时配置中的修订开关
       const previewEnabled = manual || this.getPreviewEnabled();
-
-      // 获取聊天历史 (如果是单条楼层，则宏系统会自动处理)
-      const chatHistory = getChatHistory(range || [floor, floor]);
 
       // 231: Cancel Signal
       const signal = { cancelled: false };
@@ -246,26 +241,26 @@ export class EntityBuilder {
         });
       }
 
-      const contextPromise = runWorkflow(createEntityWorkflow(), {
-        trigger: manual ? 'manual' : 'auto',
+      const extractionRange = range || [floor, floor];
+      const memory = await fetchMemoryContext(
+        { range: extractionRange },
+        {
+          trigger: manual ? 'manual' : 'auto',
+          templateId: this.config.promptTemplateId,
+          category: 'entity_extraction',
+        }
+      );
+      const rawExistingEntities = await useMemoryStore.getState().getAllEntities();
+
+      const result = await extractEntities({
+        memory,
+        rawExistingEntities,
+        previewEnabled,
         signal,
-        config: {
-          dryRun,
-          previewEnabled,
-          logType: 'entity_extraction', // For LlmRequest logging
-          templateId: this.config.promptTemplateId, // Support custom prompt
-          category: 'entity_extraction', // Explicitly pass category for FetchContext to find default template
-        },
-        input: {
-          range: range || [floor, floor],
-          chatHistory,
-        },
+        templateId: this.config.promptTemplateId,
+        range: extractionRange,
       });
-
-      const context = await contextPromise;
       if (runningToast) notificationService.remove(runningToast);
-
-      const result = context.output; // From SaveEntity
 
       if (!dryRun) {
         const finalFloor = range?.[1] ?? floor;
@@ -328,7 +323,7 @@ export class EntityBuilder {
       // 抛出事件以供其他模块感知和处理
       engramEventBus.emit({
         type: 'WORKFLOW_FAILED',
-        payload: { workflowName: 'EntityWorkflow', error: e },
+        payload: { workflowName: 'EntityExtraction', error: e },
       });
       return { success: false, newEntities: [], updatedEntities: [], error: errorMsg };
     } finally {

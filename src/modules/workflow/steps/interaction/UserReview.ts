@@ -1,7 +1,7 @@
-import { reviewService, type ReviewRequest } from '@/core/events/ReviewService';
+import { requestOutputReview } from '@/core/events/OutputReview';
+import { type ReviewRequest } from '@/core/events/ReviewService';
 import { Logger } from '@/core/logger';
 import { isRecord } from '@/core/utils';
-import { countWorldbookTokens } from '@/integrations/tavern';
 import type { JobContext } from '@/types/job_context';
 import type { IStep, StepResult } from '@/types/step';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -28,6 +28,7 @@ function isReviewPayload(value: unknown): value is ReviewPayload {
   );
 }
 
+/** 工作流适配层；实体链已改用 requestOutputReview 的显式循环。 */
 export class UserReview implements IStep {
   name = 'UserReview';
 
@@ -49,33 +50,22 @@ export class UserReview implements IStep {
     }
 
     const contentToReview = context.cleanedContent || context.llmResponse?.content || '';
-    if (!contentToReview.trim()) {
-      Logger.warn('UserReview', 'Content is empty, skipping review');
-      throw new Error('生成的摘要内容为空，请检查模型输出或 Token 限制。');
-    }
-
-    const tokenCount = await countWorldbookTokens(contentToReview);
-    const range = context.input.range
-      ? `${context.input.range[0]} - ${context.input.range[1]} 楼`
-      : '未知范围';
     const reviewType = this.config.type ?? 'text';
-    let reviewData: unknown;
-
-    if (reviewType === 'entity') {
-      reviewData = context.output ?? context.parsedData;
-    } else if (reviewType === 'json') {
-      reviewData = context.parsedData;
-    }
+    const reviewData =
+      reviewType === 'entity'
+        ? (context.output ?? context.parsedData)
+        : reviewType === 'json'
+          ? context.parsedData
+          : undefined;
 
     Logger.info('UserReview', '等待用户修订...');
-    const result = await reviewService.requestReview(
-      this.config.title,
-      this.config.description || `范围: ${range} | Token: ${tokenCount}`,
-      contentToReview,
-      ['confirm', 'fill', 'reject', 'reroll', 'cancel'],
-      reviewType,
-      reviewData
-    );
+    const result = await requestOutputReview(contentToReview, {
+      title: this.config.title,
+      description: this.config.description,
+      type: reviewType,
+      range: context.input.range,
+      data: reviewData,
+    });
 
     if (result.action === 'fill') {
       // 填充正文后结束流程，跳过后续专用处理。
@@ -88,7 +78,7 @@ export class UserReview implements IStep {
     if (result.action === 'reroll') {
       Logger.info('UserReview', '用户选择重抽 (无反馈)');
       context.input.feedback = '';
-      this.clearContextOutput(context);
+      clearContextOutput(context);
       return { action: 'jump', targetStep: 'BuildPrompt', reason: 'User reroll' };
     }
 
@@ -96,7 +86,7 @@ export class UserReview implements IStep {
       Logger.info('UserReview', '用户选择打回重生成');
       context.input.feedback = result.feedback;
       context.input.previousOutput = contentToReview;
-      this.clearContextOutput(context);
+      clearContextOutput(context);
       return { action: 'jump', targetStep: 'BuildPrompt', reason: 'User rejected' };
     }
 
@@ -122,13 +112,13 @@ export class UserReview implements IStep {
     Logger.info('UserReview', '用户确认修订');
     return { action: 'next' };
   }
+}
 
-  private clearContextOutput(context: JobContext) {
-    context.output = undefined;
-    context.parsedData = undefined;
-    if (context.llmResponse) {
-      context.llmResponse.content = '';
-    }
-    context.extractedTags = undefined;
+function clearContextOutput(context: JobContext): void {
+  context.output = undefined;
+  context.parsedData = undefined;
+  if (context.llmResponse) {
+    context.llmResponse.content = '';
   }
+  context.extractedTags = undefined;
 }

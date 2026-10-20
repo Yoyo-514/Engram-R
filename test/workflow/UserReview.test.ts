@@ -106,6 +106,24 @@ describe('审阅类型与请求数据', () => {
     expect(captured?.data).toBe(parsed);
   });
 
+  it('关闭预览时跳过审阅，文本流程保留清洗正文', async () => {
+    const job = context();
+    job.config.previewEnabled = false;
+    await new UserReview({ title: '审阅', type: 'summary' }).execute(job);
+    expect(captured).toBeUndefined();
+    expect(job.output).toBe('生成的正文');
+  });
+
+  it('关闭预览时实体流程保留结构化预演结果', async () => {
+    const job = context();
+    job.config.previewEnabled = false;
+    const previewResult = { newEntities: [], updatedEntities: [] };
+    job.output = previewResult;
+    await new UserReview({ title: '实体', type: 'entity' }).execute(job);
+    expect(captured).toBeUndefined();
+    expect(job.output).toBe(previewResult);
+  });
+
   it('正文可来自原始模型响应，并生成范围与 Token 描述', async () => {
     const job = context();
     job.cleanedContent = undefined;

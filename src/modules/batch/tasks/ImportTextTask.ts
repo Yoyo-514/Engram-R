@@ -3,8 +3,9 @@ import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
 import { getErrorMessage } from '@/core/utils/error';
 import { chunkText, summarizeChunk } from '@/modules/batch/utils/BatchUtils';
+import { extractEntitiesFromText } from '@/modules/memory/EntityExtraction';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
-import { createEntityWorkflow, runWorkflow } from '@/modules/workflow';
+import { runWorkflow } from '@/modules/workflow';
 import { SaveEvent } from '@/modules/workflow/steps/persistence/SaveEvent';
 import { ParseJson } from '@/modules/workflow/steps/text/ParseJson';
 import type { BatchTask, IBatchTaskHandler, ImportMode } from '@/types/batch';
@@ -110,22 +111,9 @@ export class ImportTextTask implements IBatchTaskHandler {
                 await embeddingService.embedEvent(evt);
               }
 
-              // 外部导入文本复用执行实体提取 (由于 FetchContext 已经旁路了，这里可以直接塞原文进去让它以为是聊天记录)
+              // 外部导入文本直接抽取实体，不读取聊天记录
               try {
-                await runWorkflow(createEntityWorkflow(), {
-                  trigger: 'auto',
-                  config: {
-                    previewEnabled: false,
-                    dryRun: false,
-                    logType: 'entity_extraction',
-                    category: 'entity_extraction',
-                  },
-                  input: {
-                    isImport: true,
-                    chatHistory: chunk, // 原文分块
-                    range: [i, i],
-                  },
-                });
+                await extractEntitiesFromText(chunk, [i, i]);
               } catch (entError: unknown) {
                 Logger.error(LogModule.BATCH, `分块 ${i} 实体提取异常`, {
                   error: getErrorMessage(entError),

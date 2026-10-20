@@ -1,116 +1,38 @@
-import { get } from '@/config/settings';
-import { Logger } from '@/core/logger';
-import { ModelLogger } from '@/core/logger/ModelLogger';
-import { getErrorMessage } from '@/core/utils/error';
-import { llmAdapter } from '@/integrations/llm/Adapter';
-import { getCurrentCharacter, getCurrentModel } from '@/integrations/tavern';
-import { type JobContext } from '@/types/job_context';
-import type { LLMPreset } from '@/types/llm';
-import { type IStep, type RetryConfig } from '@/types/step';
+import type { ModelLogType } from '@/core/logger/ModelLogger';
+import { requestCompletion } from '@/modules/llm/Completion';
+import type { JobContext } from '@/types/job_context';
+import type { IStep } from '@/types/step';
 
+/** 工作流适配层；新代码直接调用 requestCompletion。 */
 export class LlmRequest implements IStep {
   name = 'LlmRequest';
-
-  get retry(): RetryConfig {
-    const runtimeSettings = get('runtimeSettings');
-    const presets = runtimeSettings?.llmPresets || [];
-    const activePresetId = runtimeSettings?.selectedPresetId;
-    const activePreset =
-      presets.find((preset: LLMPreset) => preset.id === activePresetId) || presets[0];
-    const customConfig = activePreset?.retryConfig;
-
-    return {
-      maxAttempts: customConfig?.maxAttempts ?? 3,
-      delay: customConfig?.retryDelay ?? 2000,
-      backoff: 'exponential',
-      retryIf: (error: unknown) => {
-        const msg =
-          error instanceof Error ? error.message.toLowerCase() : String(error).toLowerCase();
-        return (
-          msg.includes('429') ||
-          msg.includes('rate limit') ||
-          msg.includes('timeout') ||
-          msg.includes('network') ||
-          msg.includes('failed to fetch')
-        );
-      },
-    };
-  }
 
   async execute(context: JobContext): Promise<void> {
     if (!context.prompt) {
       throw new Error('LlmRequest: Prompt 未准备好 (previous step missing?)');
     }
 
-    const { system, user, presetId } = context.prompt;
-    const generationId = `engram_${context.id}_${Date.now()}`;
-
-    if (context.signal) {
-      context.signal.generationId = generationId;
-    }
-
-    // 1. 记录发送日志
-    const logId = ModelLogger.logSend({
-      type: context.config.logType || 'other', // 允许 config 覆盖
-      systemPrompt: system,
-      userPrompt: user,
-      model: getCurrentModel() || 'Unknown',
-      character: getCurrentCharacter()?.name,
-      floorRange: context.input.range,
-    });
-
-    const startTime = Date.now();
-
-    try {
-      // 2. 调用 Adapter
-      const response = await llmAdapter.generate({
-        systemPrompt: system,
-        userPrompt: user,
+    const prompt = context.prompt;
+    const result = await requestCompletion(
+      {
+        system: prompt.system,
+        user: prompt.user,
+        templateId: prompt.templateId ?? '',
+        presetId: prompt.presetId ?? null,
+      },
+      {
+        logType: (context.config.logType as ModelLogType | undefined) ?? 'other',
+        jobId: context.id,
         signal: context.signal,
-        generationId,
-        presetId: presetId ?? context.config.presetId ?? undefined,
-        internal: true, // 标记为内部请求，跳过召回注入
-      });
-
-      // 3. 记录接收日志
-      ModelLogger.logReceive(logId, {
-        response: response.content,
-        status: response.success ? 'success' : 'error',
-        error: response.error,
-        duration: Date.now() - startTime,
-      });
-
-      if (!response.success) {
-        throw new Error(response.error || 'LLM Generation Failed');
+        range: context.input.range,
+        presetId: (context.config.presetId as string | null | undefined) ?? undefined,
       }
+    );
 
-      // 4. 保存结果
-      context.llmResponse = {
-        content: response.content,
-        success: true,
-        tokenUsage: response.tokenUsage,
-      };
-
-      Logger.debug('LlmRequest', 'LLM 请求成功', { duration: Date.now() - startTime });
-    } catch (e: unknown) {
-      const errorMsg = getErrorMessage(e);
-      const isCancelled =
-        (typeof e === 'object' &&
-          e !== null &&
-          'isCancellation' in e &&
-          e.isCancellation === true) ||
-        errorMsg === 'UserCancelled';
-
-      ModelLogger.logReceive(logId, {
-        status: isCancelled ? 'cancelled' : 'error',
-        error: isCancelled ? '用户手动取消' : errorMsg,
-        duration: Date.now() - startTime,
-      });
-      throw e;
-    } finally {
-      if (context.signal?.generationId === generationId) {
-        delete context.signal.generationId;
-      }
-    }
+    context.llmResponse = {
+      content: result.content,
+      success: true,
+      tokenUsage: result.tokenUsage,
+    };
   }
 }
