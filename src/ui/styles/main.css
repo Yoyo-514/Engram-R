@@ -87,7 +87,26 @@
   width: 100%;
   height: 100dvh;
   overflow: hidden;
-  background: var(--background);
+  /* 底层自绘冷色光斑，保证毛玻璃有可模糊的结构；再叠宿主背景 */
+  background:
+    radial-gradient(120% 70% at 12% 0%, rgb(41 89 170 / 0.12), transparent 62%),
+    radial-gradient(90% 60% at 100% 100%, rgb(143 94 21 / 0.08), transparent 58%), var(--shell);
+  backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
+  -webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  #engram-panel-root {
+    background: var(--background);
+  }
+}
+
+/* 供壳层与浮层复用的 acrylic 材质 */
+.engram-acrylic {
+  background: var(--surface-2);
+  backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
+  -webkit-backdrop-filter: blur(var(--acrylic-blur)) saturate(var(--acrylic-saturate));
+  border-color: var(--surface-border);
 }
 
 /* 根挂载点不拦截酒馆点击，审阅内容自行启用 pointer-events。 */

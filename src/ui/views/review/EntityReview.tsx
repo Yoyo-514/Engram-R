@@ -115,7 +115,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
   };
 
   return (
-    <div className="flex flex-col gap-6 font-sans">
+    <div className="flex min-w-0 flex-col gap-6 font-sans">
       <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-sm text-muted-foreground">
         请确认本次提取的结果。点击卡片可进行编辑，点击右上角删除可移除。
       </div>
@@ -129,8 +129,8 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
 
       {/* Editing Modal/Overlay */}
       {editingEntity && (
-        <div className="animate-in fade-in fixed inset-0 z-[12000] flex items-center justify-center bg-background/80 p-4 backdrop-blur-sm">
-          <div className="animate-in zoom-in-95 mx-auto flex h-[90dvh] w-full max-w-6xl flex-col gap-4 overflow-hidden rounded-lg border border-border bg-popover p-6 shadow-2xl">
+        <div className="animate-in fade-in fixed inset-0 z-[12000] flex items-stretch justify-center bg-background/80 backdrop-blur-sm sm:items-center sm:p-4">
+          <div className="engram-acrylic animate-in zoom-in-95 mx-auto flex h-[100dvh] w-full max-w-6xl flex-col gap-4 overflow-y-auto p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-[var(--shadow-3)] sm:h-[90dvh] sm:overflow-hidden sm:rounded-xl sm:border sm:border-border sm:p-6">
             <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-2">
               <h3 className="shrink-0 text-lg font-bold">编辑实体</h3>
               <div className="min-w-0 break-words text-xs text-muted-foreground">
@@ -138,7 +138,7 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
               </div>
             </div>
 
-            <div className="grid shrink-0 grid-cols-2 gap-4">
+            <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="flex flex-col gap-2">
                 <label className="text-xs font-medium text-muted-foreground">名称 (Name)</label>
                 <input
@@ -324,7 +324,7 @@ const EntityCard: FC<{
 
   return (
     <div
-      className={`group relative rounded-lg border p-4 ${borderColor} ${bgColor} cursor-pointer transition-all hover:bg-opacity-20`}
+      className={`group relative min-w-0 overflow-hidden rounded-lg border p-4 ${borderColor} ${bgColor} cursor-pointer transition-all hover:bg-opacity-20`}
       onClick={onEdit}
     >
       <div className="absolute right-2 top-2 flex items-center gap-1 opacity-100 transition-opacity group-hover:opacity-100 sm:opacity-0">
@@ -364,16 +364,16 @@ const EntityCard: FC<{
         {isUpdated && entity.diff ? (
           <div className="mt-1 flex flex-col gap-1 rounded bg-background/50 p-2.5 font-mono text-xs">
             {entity.diff.map((op, i) => (
-              <div key={i} className="flex items-baseline gap-2 break-words">
+              <div key={i} className="flex min-w-0 items-baseline gap-2 break-words">
                 {/* Path */}
                 <span className="min-w-[30px] shrink-0 font-medium text-foreground/80">
                   {op.path}
                 </span>
 
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex min-w-0 flex-wrap items-center gap-1.5">
                   {/* Old Value (Red) - for replace/remove */}
                   {(op.op === 'replace' || op.op === 'remove') && op.oldValue !== undefined && (
-                    <span className="rounded border border-destructive/10 bg-destructive/5 px-1 text-destructive line-through decoration-destructive/40">
+                    <span className="max-w-full break-all rounded border border-destructive/10 bg-destructive/5 px-1 text-destructive line-through decoration-destructive/40">
                       {formatValue(op.oldValue)}
                     </span>
                   )}
@@ -385,7 +385,7 @@ const EntityCard: FC<{
 
                   {/* New Value (Green) - for replace/add */}
                   {(op.op === 'replace' || op.op === 'add') && op.value !== undefined && (
-                    <span className="rounded border border-value/20 bg-value/10 px-1 font-semibold text-value">
+                    <span className="max-w-full break-all rounded border border-value/20 bg-value/10 px-1 font-semibold text-value">
                       {formatValue(op.value)}
                     </span>
                   )}

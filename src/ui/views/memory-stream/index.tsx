@@ -1,4 +1,4 @@
-import { Save, Trash2 } from 'lucide-react';
+import { List, Save, Trash2, Users } from 'lucide-react';
 import { useRef } from 'react';
 import type { FC } from 'react';
 
@@ -21,8 +21,8 @@ import { EntityList } from './sections/EntityList';
 import { EventList } from './sections/EventList';
 
 const VIEW_TABS = [
-  { id: 'list', label: '列表', icon: <span className="i-lucide-list text-[14px]" /> },
-  { id: 'entities', label: '实体', icon: <span className="i-lucide-users text-[14px]" /> },
+  { id: 'list', label: '列表', icon: <List size={14} /> },
+  { id: 'entities', label: '实体', icon: <Users size={14} /> },
 ];
 
 const TAB_INFO = {
@@ -119,7 +119,6 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
   return (
     <div className="animate-in fade-in absolute inset-0 flex flex-col overflow-hidden p-4 md:p-6">
       <PageTitle
-        breadcrumbs={['记忆编辑']}
         title={currentInfo.title}
         subtitle={currentInfo.subtitle}
       />

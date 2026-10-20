@@ -122,7 +122,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
       )}
 
       {/* Content Area */}
-      <div className="custom-scrollbar min-h-0 flex-1 overflow-y-auto bg-background/50 p-5">
+      <div className="custom-scrollbar min-h-0 min-w-0 flex-1 overflow-y-auto overflow-x-hidden bg-background/40 p-4 sm:p-5">
         {showFeedbackInput ? (
           <div className="animate-in fade-in slide-in-from-bottom-2 flex h-full flex-col gap-4">
             <div className="flex items-center gap-3 rounded-md border border-destructive/20 bg-destructive/10 p-4">
@@ -168,7 +168,7 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
       {footerEl &&
         isActive &&
         createPortal(
-          <div className="flex h-full w-full flex-col-reverse items-center justify-between gap-4 px-4 py-4 sm:flex-row sm:gap-0 sm:px-5">
+          <div className="flex h-full w-full flex-col-reverse items-center justify-between gap-4 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-row sm:gap-0 sm:px-5 sm:py-4">
             <div className="flex w-full gap-2 sm:w-auto">
               {showFeedbackInput ? (
                 <Button
@@ -298,14 +298,14 @@ export const ReviewContainer: FC = () => {
   return createPortal(
     <div className="engram-app-root" style={{ display: 'contents' }}>
       <div
-        className="pointer-events-auto fixed inset-0 z-[11000] flex items-center justify-center p-4 sm:p-4"
+        className="pointer-events-auto fixed inset-0 z-[11000] flex items-stretch justify-center p-0 sm:items-center sm:p-4"
         style={{ height: '100dvh', width: '100vw' }} // Explicitly force full viewport info
       >
         <div className="animate-in fade-in absolute inset-0 bg-background/80 backdrop-blur-sm duration-200" />
 
-        <div className="animate-in zoom-in-95 relative flex h-[90dvh] min-h-0 w-full max-w-4xl flex-col rounded-lg border border-t-4 border-border border-t-primary bg-popover shadow-2xl sm:h-auto sm:max-h-[90vh] sm:min-h-[500px]">
+        <div className="engram-acrylic animate-in zoom-in-95 relative flex h-[100dvh] min-h-0 w-full flex-col overflow-hidden shadow-[var(--shadow-3)] sm:h-auto sm:max-h-[90vh] sm:max-w-4xl sm:rounded-xl sm:border sm:border-t-4 sm:border-border sm:border-t-primary">
           {/* Top Bar: Tabs & Window Controls */}
-          <div className="flex items-center justify-between border-b border-border bg-muted/40 px-2 pt-2">
+          <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-2 pt-[max(0.5rem,env(safe-area-inset-top))] sm:pt-2">
             {/* Tabs Scroll Area */}
             <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto pr-4">
               {requests.map((req) => {
@@ -377,7 +377,7 @@ export const ReviewContainer: FC = () => {
           {/* Footer Slot (Window Level) */}
           <div
             ref={setFooterEl}
-            className="min-h-[60px] flex-none border-t border-border bg-muted/30"
+            className="flex-none border-t border-border/60 bg-muted/20"
           >
             {/* Portaled Content will appear here */}
           </div>

@@ -233,7 +233,7 @@ class NotificationService {
         : message;
 
       const toast = toastr.info(displayMessage, title, {
-        timeOut: 20000, // 最大显示 20 秒
+        timeOut: 6000, // 最长 6 秒，避免遮挡界面
         extendedTimeOut: 0, // 悬停时不延长
         closeButton: false, // 不显示关闭按钮
         progressBar: true, // 显示进度条（表示倒计时）

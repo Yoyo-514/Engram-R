@@ -28,7 +28,7 @@ export const Settings: FC = () => {
 
   return (
     <div className="animate-in fade-in flex min-h-full flex-col">
-      <PageTitle breadcrumbs={['设置']} title="全局选项" subtitle="管理功能与数据库配置" />
+      <PageTitle title="全局选项" subtitle="管理功能与数据库配置" />
 
       <LayoutTabs tabs={SETTINGS_TABS} activeTab={activeTab} onChange={setActiveTab} />
 

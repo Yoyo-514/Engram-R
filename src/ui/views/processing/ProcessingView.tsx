@@ -94,7 +94,6 @@ export const ProcessingView: FC<ProcessingViewProps> = ({ onNavigate }) => {
     <div className="animate-in fade-in flex h-full w-full flex-col overflow-x-hidden">
       {/* 页面标题 - 统一样式：大标题 + 简短介绍 */}
       <PageTitle
-        breadcrumbs={['数据处理']}
         title={currentInfo.title}
         subtitle={currentInfo.subtitle}
         className="mb-6"

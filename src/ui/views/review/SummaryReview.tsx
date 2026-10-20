@@ -292,7 +292,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
   };
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex min-w-0 flex-col gap-4">
       <div className="rounded-md border border-border/50 bg-muted/20 p-3 text-sm text-muted-foreground">
         请确认生成的摘要事件列表。您可以直接手动修改 AI
         原始返回结果，或继续在下方按事件粒度修订结构化数据与描述。
@@ -333,7 +333,7 @@ export const SummaryReview: FC<SummaryReviewProps> = ({ content, data, onChange 
           return (
             <div
               key={index}
-              className="group relative rounded-lg border border-border/50 bg-card p-3 shadow-sm transition-colors hover:border-primary/40"
+              className="group relative min-w-0 overflow-hidden rounded-lg border border-border/50 bg-card p-3 shadow-sm transition-colors hover:border-primary/40"
             >
               <div className="mb-3 flex items-center justify-between">
                 <div className="flex min-w-0 flex-1 items-center gap-1.5">

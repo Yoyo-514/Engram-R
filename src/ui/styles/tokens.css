@@ -38,6 +38,17 @@
   --engram-warning: #8f5e15;
   --engram-error: #8c4351;
   --radius: 0.65rem;
+
+  /* Fluent acrylic 材质：半透明底 + 背景模糊 + 分层阴影 */
+  --surface-1: rgb(255 255 255 / 0.72);
+  --surface-2: rgb(255 255 255 / 0.52);
+  --surface-3: rgb(255 255 255 / 0.36);
+  --shell: rgb(230 231 237 / 0.86);
+  --acrylic-blur: 24px;
+  --acrylic-saturate: 160%;
+  --shadow-1: 0 1px 2px rgb(52 59 88 / 0.06), 0 1px 3px rgb(52 59 88 / 0.08);
+  --shadow-2: 0 8px 24px -10px rgb(52 59 88 / 0.2), 0 2px 6px rgb(52 59 88 / 0.06);
+  --shadow-3: 0 28px 72px -28px rgb(52 59 88 / 0.38), 0 10px 28px -14px rgb(52 59 88 / 0.2);
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'Cascadia Code', Consolas, ui-monospace, monospace;
   --duration-fast: 150ms;

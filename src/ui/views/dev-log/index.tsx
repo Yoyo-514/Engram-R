@@ -184,7 +184,6 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
     <div className="flex h-full flex-col">
       {/* 页面标题 - 统一样式 */}
       <PageTitle
-        breadcrumbs={['开发日志']}
         title={currentInfo.title}
         subtitle={currentInfo.subtitle}
         className="mb-2"

@@ -28,7 +28,7 @@ export const Sidebar: FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, onClo
       )}
       <aside
         id="engram-navigation"
-        className={`fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r border-border/50 bg-sidebar p-4 shadow-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:px-2 md:shadow-none ${isOpen ? 'flex' : 'hidden'}`}
+        className={`fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r border-border/50 bg-sidebar/70 p-4 shadow-xl backdrop-blur-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:px-2 md:shadow-none ${isOpen ? 'flex' : 'hidden'}`}
       >
         <div className="mb-4 flex items-center justify-between md:hidden">
           <span className="font-semibold text-sidebar-foreground">导航</span>

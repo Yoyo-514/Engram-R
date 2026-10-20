@@ -331,7 +331,6 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
   return (
     <div className="animate-in fade-in flex h-full flex-col">
       <PageTitle
-        breadcrumbs={['API 配置']}
         title={currentInfo.title}
         subtitle={currentInfo.subtitle}
         className="mb-2"
