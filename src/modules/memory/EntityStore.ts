@@ -175,7 +175,10 @@ function buildEntityUpdate(entity: EntityPatchDocument): Partial<EntityNode> {
   return {
     profile: entity.profile,
     aliases: entity.aliases,
-    description: profileToYaml(entity.name, entity.type, entity.profile || {}),
+    description:
+      typeof entity.description === 'string' && entity.description.trim()
+        ? entity.description
+        : profileToYaml(entity.name, entity.type, entity.profile || {}),
     name: entity.name,
     type: entity.type,
   };

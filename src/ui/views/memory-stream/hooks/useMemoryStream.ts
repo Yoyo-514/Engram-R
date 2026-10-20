@@ -183,6 +183,30 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
     );
   }, [entities, pendingEntityChanges, debouncedSearchQuery, showActiveOnly, entityActiveIds]);
 
+  // 可见集合：筛选条件变化后，选中项收敛到当前可见范围，避免删掉看不见的数据
+  const visibleIds = useMemo(
+    () => new Set((viewTab === 'list' ? filteredEvents : filteredEntities).map((item) => item.id)),
+    [viewTab, filteredEvents, filteredEntities]
+  );
+
+  // 筛选变化后收敛选中项：渲染期同步，避免 effect 内 setState 触发级联渲染
+  const [prevVisibleIds, setPrevVisibleIds] = useState(visibleIds);
+  if (prevVisibleIds !== visibleIds) {
+    setPrevVisibleIds(visibleIds);
+    if (!isLoading) {
+      setCheckedIds((prev) => {
+        if (prev.size === 0) return prev;
+        const next = new Set<string>();
+        let changed = false;
+        prev.forEach((id) => {
+          if (visibleIds.has(id)) next.add(id);
+          else changed = true;
+        });
+        return changed ? next : prev;
+      });
+    }
+  }
+
   const groupedEntities = useMemo(() => {
     return groupEntities(filteredEntities, entitySortMode, entityGroupMode);
   }, [filteredEntities, entitySortMode, entityGroupMode]);
@@ -403,7 +427,8 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
 
   const handleBatchDelete = useCallback(async () => {
     if (checkedIds.size === 0) return;
-    if (!confirm(`确定删除选中的 ${checkedIds.size} 个项目吗？`)) return;
+    const unit = viewTab === 'entities' ? '个实体' : '条事件';
+    if (!confirm(`确定删除选中的 ${checkedIds.size} ${unit}吗？`)) return;
 
     try {
       if (viewTab === 'entities') {
@@ -425,7 +450,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
         });
       }
       setCheckedIds(new Set());
-      notificationService.success(`成功删除 ${checkedIds.size} 条记录`, 'MemoryStream');
+      notificationService.success(`成功删除 ${checkedIds.size} ${unit}`, 'MemoryStream');
     } catch (error) {
       notificationService.error(
         `批量删除失败: ${error instanceof Error ? error.message : '未知错误'}`,

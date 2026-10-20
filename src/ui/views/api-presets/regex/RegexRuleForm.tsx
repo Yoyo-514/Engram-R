@@ -101,7 +101,7 @@ export const RegexRuleForm: FC<RegexRuleFormProps> = ({ rule, onChange }) => {
       </div>
 
       {/* 正则表达式 */}
-      <div className="flex flex-col gap-3 rounded-lg border border-border bg-card p-4">
+      <div className="engram-acrylic flex flex-col gap-3 rounded-lg border p-4">
         <div className="flex flex-col gap-1.5">
           <div className="flex items-center gap-2">
             <label className="text-sm font-medium text-foreground">正则表达式</label>

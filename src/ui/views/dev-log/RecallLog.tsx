@@ -394,15 +394,16 @@ const DetailPanel: FC<DetailPanelProps> = ({ entry, isFullScreen, onClose }) => 
       </div>
 
       {/* 结果列表 */}
-      <div className="-mx-4 flex-1 overflow-y-auto md:mx-0">
+      <div className="min-h-0 flex-1">
         {displayedResults.length === 0 ? (
           <div className="py-8 text-center text-sm text-muted-foreground">无匹配结果</div>
         ) : (
-          <div className="flex flex-col">
-            {displayedResults.map((item, index) => (
-              <ResultItem key={index} item={item} />
-            ))}
-          </div>
+          <Virtuoso
+            style={{ height: '100%' }}
+            data={displayedResults}
+            computeItemKey={(index) => index}
+            itemContent={(_, item) => <ResultItem item={item} />}
+          />
         )}
       </div>
 

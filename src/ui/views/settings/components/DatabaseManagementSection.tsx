@@ -436,7 +436,7 @@ export const DatabaseManagementSection: FC = () => {
                 当前仅清理 Engram 数据库，不处理世界书。
               </p>
 
-              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+              <div className="engram-acrylic flex items-start justify-between gap-3 rounded-md border p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">删除关联数据库</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
@@ -449,7 +449,7 @@ export const DatabaseManagementSection: FC = () => {
                 />
               </div>
 
-              <div className="flex items-start justify-between gap-3 rounded-md border border-border bg-background/50 p-3">
+              <div className="engram-acrylic flex items-start justify-between gap-3 rounded-md border p-3">
                 <div className="min-w-0 flex-1">
                   <div className="text-sm font-medium text-foreground">显示命中确认</div>
                   <p className="mt-1 whitespace-normal break-words text-xs leading-5 text-muted-foreground">
@@ -519,7 +519,7 @@ export const DatabaseManagementSection: FC = () => {
                   className="border border-primary/30 bg-background/60"
                 />
 
-                <div className="cq-4 gap-2 rounded-lg border border-border bg-background/60 p-3">
+                <div className="cq-4 engram-acrylic gap-2 rounded-lg border p-3">
                   <div className="w-full min-w-0">
                     <div className="text-[11px] text-muted-foreground">数据库名称</div>
                     <div className="whitespace-normal break-words text-sm font-medium text-foreground">
@@ -670,7 +670,7 @@ export const DatabaseManagementSection: FC = () => {
                 </div>
               )}
 
-              <div className="whitespace-normal break-words rounded-lg border border-border bg-background/60 p-3 text-xs leading-5 text-muted-foreground">
+              <div className="engram-acrylic whitespace-normal break-words rounded-lg border p-3 text-xs leading-5 text-muted-foreground">
                 {selectedSummary
                   ? `聊天 ID: ${selectedSummary.chatId} · 角色: ${selectedSummary.characterName ?? '未识别角色'} · 状态: ${STATUS_LABELS[selectedSummary.status]} · 当前聊天: ${selectedSummary.isCurrent ? '是' : '否'}`
                   : currentDatabaseName
@@ -678,7 +678,7 @@ export const DatabaseManagementSection: FC = () => {
                     : '当前未连接聊天。'}
               </div>
 
-              <div className="cq-4 gap-2 rounded-lg border border-border bg-background/60 p-3">
+              <div className="cq-4 engram-acrylic gap-2 rounded-lg border p-3">
                 <div className="w-full min-w-0">
                   <div className="text-[11px] text-muted-foreground">事件数</div>
                   <div className="text-sm font-medium text-foreground">
