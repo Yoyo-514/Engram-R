@@ -1,12 +1,11 @@
-import { AlertTriangle, Edit2, Save, Trash2, ChevronDown, ChevronRight } from 'lucide-react';
+import { AlertTriangle, Edit2, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import type { FC } from 'react';
 
-import { EntityType } from '@/config/memory/defaults';
-import { Logger } from '@/core/logger';
-import { deepClone, stringifyYaml } from '@/core/utils';
+import { deepClone } from '@/core/utils';
 import type { EntityNode } from '@/types/graph';
-import { ModernButton as Button } from '@/ui/components/core/Button';
+
+import { EntityEditorModal } from './EntityEditorModal';
 
 interface EntityReviewProps {
   data: {
@@ -27,7 +26,14 @@ interface DiffOperation {
 // 扩展类型以包含 diff 信息
 interface EntityNodeWithDiff extends EntityNode {
   diff?: DiffOperation[];
-  _original?: EntityNode;
+}
+
+/** 剥离审阅期附带的 diff，避免写回实体数据 */
+function toEntityNode(entity: EntityNodeWithDiff): EntityNode {
+  if (!entity.diff) return entity;
+  const next = { ...entity };
+  delete next.diff;
+  return next;
 }
 
 export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
@@ -40,9 +46,6 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
     index: number;
     entity: EntityNodeWithDiff;
   } | null>(null);
-  const [previewDescription, setPreviewDescription] = useState<string>('');
-  const [isEditorExpanded, setIsEditorExpanded] = useState<boolean>(true);
-  const [isPreviewExpanded, setIsPreviewExpanded] = useState<boolean>(true);
 
   // Sync when external data changes（渲染期间调整 state，替代 effect 同步）
   const [prevData, setPrevData] = useState(data);
@@ -50,19 +53,6 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
     setPrevData(data);
     setNewEntities(data.newEntities || []);
     setUpdatedEntities(data.updatedEntities || []);
-  }
-
-  // Update preview when editing entity changes（渲染期间调整 state）
-  const [prevEditingEntity, setPrevEditingEntity] = useState(editingEntity);
-  if (editingEntity && prevEditingEntity !== editingEntity) {
-    setPrevEditingEntity(editingEntity);
-    try {
-      const entityObj = { profile: editingEntity.entity.profile };
-      const yamlContent = stringifyYaml(entityObj);
-      setPreviewDescription(`${editingEntity.entity.name}\n${yamlContent.trim()}`);
-    } catch (_error) {
-      Logger.warn('EntityReview', 'YAML 预览生成失败，保留原文');
-    }
   }
 
   const notifyChange = (n: EntityNodeWithDiff[], u: EntityNodeWithDiff[]) => {
@@ -85,25 +75,19 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
     setEditingEntity({ list, index, entity: deepClone(entity) });
   };
 
-  const handleEditSave = () => {
+  const handleEditSave = (nextEntity: EntityNode) => {
     if (!editingEntity) return;
-    const { list, index, entity } = editingEntity;
-
-    // Enforce Standard YAML Description Format on Save
-    // We use the calculated preview as the source of truth for description
-    // 不可变更新：避免直接修改 state 中的实体对象
-    const nextEntity = previewDescription ? { ...entity, description: previewDescription } : entity;
+    const { list, index } = editingEntity;
+    const saved = toEntityNode({ ...nextEntity, diff: editingEntity.entity.diff });
 
     if (list === 'new') {
       const next = [...newEntities];
-      next[index] = nextEntity;
+      next[index] = saved;
       setNewEntities(next);
       notifyChange(next, updatedEntities);
     } else {
       const next = [...updatedEntities];
-      const { diff: removedDiff, ...withoutDiff } = nextEntity;
-      void removedDiff; // 仅用于剥离临时 diff 字段
-      next[index] = withoutDiff;
+      next[index] = saved;
       setUpdatedEntities(next);
       notifyChange(newEntities, next);
     }
@@ -127,127 +111,12 @@ export const EntityReview: FC<EntityReviewProps> = ({ data, onChange }) => {
         </div>
       )}
 
-      {/* Editing Modal/Overlay */}
       {editingEntity && (
-        <div className="animate-in fade-in fixed inset-0 z-[12000] flex items-stretch justify-center bg-background/80 backdrop-blur-sm sm:items-center sm:p-4">
-          <div className="engram-acrylic animate-in zoom-in-95 mx-auto flex h-[100dvh] w-full max-w-6xl flex-col gap-4 overflow-y-auto p-4 pt-[max(1rem,env(safe-area-inset-top))] shadow-[var(--shadow-3)] sm:h-[90dvh] sm:overflow-hidden sm:rounded-xl sm:border sm:border-border sm:p-6">
-            <div className="mb-2 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b pb-2">
-              <h3 className="shrink-0 text-lg font-bold">编辑实体</h3>
-              <div className="min-w-0 break-words text-xs text-muted-foreground">
-                保存时将自动使用右侧预览的 YAML 格式
-              </div>
-            </div>
-
-            <div className="grid shrink-0 grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-muted-foreground">名称 (Name)</label>
-                <input
-                  className="rounded-md border border-border bg-muted p-2 text-sm"
-                  value={editingEntity.entity.name}
-                  onChange={(e) =>
-                    setEditingEntity({
-                      ...editingEntity,
-                      entity: { ...editingEntity.entity, name: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <label className="text-xs font-medium text-muted-foreground">类型 (Type)</label>
-                <select
-                  className="rounded-md border border-border bg-muted p-2 text-sm"
-                  value={editingEntity.entity.type}
-                  onChange={(e) =>
-                    setEditingEntity({
-                      ...editingEntity,
-                      entity: { ...editingEntity.entity, type: e.target.value as EntityType },
-                    })
-                  }
-                >
-                  {Object.values(EntityType).map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-
-            {/* Vertical Edit & Preview View */}
-            <div className="flex min-h-0 w-full flex-1 flex-col gap-4 overflow-hidden">
-              {/* Profile JSON Editor Panel */}
-              <div
-                className={`flex flex-col gap-2 rounded-md border border-border bg-muted/10 p-4 transition-all ${isEditorExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
-              >
-                <button
-                  className="group flex w-full cursor-pointer items-center justify-between"
-                  onClick={() => setIsEditorExpanded(!isEditorExpanded)}
-                >
-                  <div className="flex items-center gap-2 text-xs font-bold text-foreground">
-                    <Edit2 size={14} />
-                    编辑属性 (Edit Profile JSON)
-                  </div>
-                  <div className="text-muted-foreground group-hover:text-foreground">
-                    {isEditorExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </div>
-                </button>
-
-                {isEditorExpanded && (
-                  <textarea
-                    className="custom-scrollbar min-h-0 w-full flex-1 resize-none whitespace-pre-wrap break-words rounded-md border border-border/50 bg-muted/50 p-3 font-mono text-xs outline-none focus:ring-2 focus:ring-primary/20"
-                    value={JSON.stringify(editingEntity.entity.profile, null, 2)}
-                    onChange={(e) => {
-                      try {
-                        const parsed: unknown = JSON.parse(e.target.value);
-                        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-                          return;
-                        }
-                        setEditingEntity({
-                          ...editingEntity,
-                          entity: {
-                            ...editingEntity.entity,
-                            profile: parsed as Record<string, unknown>,
-                          },
-                        });
-                      } catch (_error) {
-                        // Ignore parse error while typing
-                      }
-                    }}
-                  />
-                )}
-              </div>
-
-              {/* New Description Preview Panel */}
-              <div
-                className={`flex flex-col gap-2 rounded-md border border-primary/20 bg-primary/5 p-4 transition-all ${isPreviewExpanded ? 'min-h-0 flex-1' : 'shrink-0'}`}
-              >
-                <button
-                  className="group flex w-full cursor-pointer items-center justify-between"
-                  onClick={() => setIsPreviewExpanded(!isPreviewExpanded)}
-                >
-                  <div className="flex items-center gap-2 text-xs font-bold text-primary">
-                    <span className="inline-block h-2 w-2 rounded-full bg-primary"></span>
-                    新烧录文本预览 (New Description Preview)
-                  </div>
-                  <div className="text-muted-foreground group-hover:text-primary">
-                    {isPreviewExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                  </div>
-                </button>
-
-                {isPreviewExpanded && (
-                  <div className="custom-scrollbar min-h-0 w-full flex-1 select-text overflow-y-auto overflow-x-hidden whitespace-pre-wrap break-words rounded-md border border-primary/10 bg-background/50 p-3 font-mono text-xs text-foreground">
-                    {previewDescription}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="mt-2 flex shrink-0 justify-end gap-2 border-t border-border pt-2">
-              <Button label="取消" onClick={handleEditCancel} />
-              <Button label="确认更新" onClick={handleEditSave} primary icon={Save} />
-            </div>
-          </div>
-        </div>
+        <EntityEditorModal
+          entity={editingEntity.entity}
+          onCancel={handleEditCancel}
+          onSave={handleEditSave}
+        />
       )}
 
       {/* Updated Entities Section (Show first as they are usually more critical) */}

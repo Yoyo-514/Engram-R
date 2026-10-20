@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useState, memo } from 'react';
 import type { FC } from 'react';
+import { Virtuoso } from 'react-virtuoso';
 
 import { Logger, LogModule } from '@/core/logger';
 /**
@@ -248,7 +249,7 @@ export const ModelLog: FC = () => {
       </div>
 
       {/* 日志列表 */}
-      <div className="flex-1 overflow-y-auto p-4">
+      <div className="min-h-0 flex-1 p-4">
         {logs.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-muted-foreground">
             <Bot size={48} className="opacity-30" />
@@ -256,11 +257,16 @@ export const ModelLog: FC = () => {
             <p className="text-xs">触发总结或向量化后，调用记录将显示在这里</p>
           </div>
         ) : (
-          <div className="flex h-full flex-col gap-3">
-            {logs.map((log) => (
-              <LogCard key={log.sent.id} sent={log.sent} received={log.received} />
-            ))}
-          </div>
+          <Virtuoso
+            style={{ height: '100%' }}
+            data={logs}
+            computeItemKey={(_, log) => log.sent.id}
+            itemContent={(_, log) => (
+              <div className="pb-3">
+                <LogCard sent={log.sent} received={log.received} />
+              </div>
+            )}
+          />
         )}
       </div>
     </div>

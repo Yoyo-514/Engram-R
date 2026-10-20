@@ -18,6 +18,7 @@ import {
   Trash2,
   Zap,
 } from 'lucide-react';
+import { Virtuoso } from 'react-virtuoso';
 import { useEffect, useMemo, useState } from 'react';
 import type { FC } from 'react';
 
@@ -485,7 +486,7 @@ export const RecallLog: FC = () => {
       <div className="flex min-h-0 flex-1">
         {/* 左侧：日志列表 */}
         <div
-          className={` ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'} overflow-y-auto ${!isMobile ? 'border-r border-border/50' : ''} `}
+          className={` ${isMobile ? 'w-full' : 'w-[30%] min-w-[240px]'} overflow-hidden ${!isMobile ? 'border-r border-border/50' : ''} `}
         >
           {logs.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center gap-3 p-4 text-muted-foreground">
@@ -494,16 +495,20 @@ export const RecallLog: FC = () => {
               <p className="text-xs opacity-70">触发 RAG 召回后显示</p>
             </div>
           ) : (
-            <div className="flex flex-col pb-4">
-              {logs.map((entry) => (
-                <LogListItem
-                  key={entry.id}
-                  entry={entry}
-                  isSelected={entry.id === selectedId}
-                  onSelect={() => handleSelect(entry.id)}
-                />
-              ))}
-            </div>
+            <Virtuoso
+              style={{ height: '100%' }}
+              data={logs}
+              computeItemKey={(_, entry) => entry.id}
+              itemContent={(_, entry) => (
+                <div className="pb-2">
+                  <LogListItem
+                    entry={entry}
+                    isSelected={entry.id === selectedId}
+                    onSelect={() => handleSelect(entry.id)}
+                  />
+                </div>
+              )}
+            />
           )}
         </div>
 

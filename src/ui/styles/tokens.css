@@ -3,9 +3,9 @@
   color-scheme: light;
   --background: #e6e7ed;
   --foreground: #343b58;
-  --card: #ffffff;
+  --card: rgb(255 255 255 / 0.78);
   --card-foreground: #343b58;
-  --popover: #e6e7ed;
+  --popover: rgb(230 231 237 / 0.94);
   --popover-foreground: #343b58;
   --primary: #2959aa;
   --primary-foreground: #ffffff;
