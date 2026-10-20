@@ -2,20 +2,10 @@
 
 import { get, set } from '@/config/settings';
 import { Logger, LogModule } from '@/core/logger';
-import { createTrimmerWorkflow, runWorkflow } from '@/modules/workflow';
+import { trimEvents, type TrimResult } from '@/modules/memory/TrimExecution';
 import { useMemoryStore } from '@/state/memoryStore';
-import type { EventNode } from '@/types/graph';
 import type { TrimmerConfig } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
-
-interface TrimResult {
-  /** 精简后的事件 */
-  newEvent: EventNode;
-  /** 被删除的事件数量 */
-  deletedCount: number;
-  /** 原始事件 ID 列表 */
-  sourceEventIds: string[];
-}
 
 /**
  * 精简状态
@@ -72,21 +62,7 @@ class EventTrimmer {
 
     try {
       const config = this.getConfig();
-      const context = await runWorkflow(createTrimmerWorkflow(), {
-        trigger: manual ? 'manual' : 'auto',
-        config: {
-          keepRecentCount: config.keepRecentCount,
-          previewEnabled: config.previewEnabled,
-          templateId: 'builtin_trim',
-          logType: 'trim',
-        },
-      });
-
-      if (context.data?.skipTrimming) {
-        return null;
-      }
-
-      return context.output as TrimResult;
+      return await trimEvents({ manual, keepRecentCount: config.keepRecentCount });
     } catch (e) {
       const errorMsg = e instanceof Error ? e.message : String(e);
       if (errorMsg === 'UserCancelled') {

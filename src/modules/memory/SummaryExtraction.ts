@@ -1,11 +1,11 @@
 import { requestOutputReview } from '@/core/events/OutputReview';
 import { Logger, LogModule } from '@/core/logger';
+import { regexProcessor } from '@/core/regex';
+import { stopGeneration } from '@/integrations/tavern/generation';
 import { requestCompletion, type CompletionSignal } from '@/modules/llm/Completion';
 import { buildPrompt } from '@/modules/llm/PromptBuilder';
 import { saveEvents } from '@/modules/memory/EventSave';
 import { fetchMemoryContext } from '@/modules/memory/MemoryContext';
-import { StopGeneration } from '@/modules/workflow/steps/execution/StopGeneration';
-import { regexProcessor } from '@/modules/workflow/steps/text/RegexProcessor';
 import type { PromptCategory } from '@/types/prompt';
 import { notificationService } from '@/ui/services/NotificationService';
 
@@ -39,7 +39,7 @@ export async function extractSummary(
 
   // 手动总结先终止当前生成，避免与模型输出抢占
   if (options.manual) {
-    await StopGeneration.abort(options.signal);
+    await stopGeneration(options.signal);
   }
 
   const jobId = `summary_${Date.now()}`;

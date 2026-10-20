@@ -1,6 +1,7 @@
 /** 初始化酒馆集成与记忆服务。 */
 import { getRegexRules, initSettings } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { regexProcessor } from '@/core/regex';
 import { initCharacterDeleteService } from '@/data/CharacterCleanup';
 import { syncService } from '@/data/SyncService';
 import {
@@ -12,7 +13,6 @@ import {
 } from '@/integrations/tavern';
 import { summarizerService, entityBuilder } from '@/modules/memory';
 import { injector } from '@/modules/rag';
-import { regexProcessor } from '@/modules/workflow/steps';
 
 /**
  * 初始化 Engram 插件

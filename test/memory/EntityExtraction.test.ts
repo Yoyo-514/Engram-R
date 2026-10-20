@@ -43,7 +43,7 @@ vi.mock('@/modules/memory/EntityStore', () => ({
       ) => Promise<{ newEntities: EntityNode[]; updatedEntities: EntityNode[] }>
     >(),
 }));
-vi.mock('@/modules/workflow/steps/text/RegexProcessor', () => ({
+vi.mock('@/core/regex', () => ({
   regexProcessor: { process: vi.fn<(content: string) => string>((content) => content) },
 }));
 

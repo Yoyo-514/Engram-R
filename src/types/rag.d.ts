@@ -73,7 +73,7 @@ export interface RecallConfig {
 
   /**
    * 关键词召回硬上限 (Hard TopK)
-   * - 防止 [`KeywordRetrieveStep.execute()`](src/modules/workflow/steps/rag/KeywordRetrieveStep.ts:15) 候选爆炸
+   * - 防止关键词召回候选爆炸
    */
   keywordTopK?: {
     /** 关键词命中的事件上限 */

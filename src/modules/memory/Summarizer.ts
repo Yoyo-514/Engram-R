@@ -8,9 +8,9 @@ import { Logger } from '@/core/logger';
 import { getTavernContext } from '@/core/utils';
 import { chatManager } from '@/data/ChatManager';
 import { initWorldBookSlot } from '@/integrations/tavern';
+import { stopGeneration } from '@/integrations/tavern/generation';
 import type { CompletionSignal } from '@/modules/llm/Completion';
 import { extractSummary } from '@/modules/memory/SummaryExtraction';
-import { StopGeneration } from '@/modules/workflow/steps/execution/StopGeneration';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { SummarizerConfig, SummarizerStatus, SummaryResult } from '@/types/memory';
 import { notificationService } from '@/ui/services/NotificationService';
@@ -87,7 +87,7 @@ class SummarizerService {
   }
 
   private async requestStopGeneration(signal?: CompletionSignal): Promise<void> {
-    await StopGeneration.abort(signal);
+    await stopGeneration(signal);
   }
 
   // ==================== 生命周期 ====================
@@ -229,7 +229,7 @@ class SummarizerService {
 
     this.isSummarizing = true;
 
-    // 创建取消信号（引用对象，传递给 WorkflowEngine）
+    // 创建取消信号（引用对象，取消时直接置位）
     const cancelSignal: CompletionSignal = { cancelled: false };
 
     // 显示运行中通知

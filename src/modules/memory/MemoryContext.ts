@@ -1,5 +1,6 @@
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { regexProcessor } from '@/core/regex';
 import { getCurrentTavernCharacter } from '@/core/utils';
 import { getAllTemplates } from '@/integrations/llm';
 import {
@@ -11,7 +12,6 @@ import {
   getSTContext,
   getSummaries,
 } from '@/integrations/tavern';
-import { regexProcessor } from '@/modules/workflow/steps/text/RegexProcessor';
 import type { PromptCategory } from '@/types/prompt';
 import type { WorldbookConfig } from '@/types/worldbook';
 

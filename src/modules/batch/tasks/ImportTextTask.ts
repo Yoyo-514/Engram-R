@@ -134,12 +134,14 @@ export class ImportTextTask implements IBatchTaskHandler {
             events: [
               {
                 summary: chunk,
-                time_anchor: new Date().toISOString(),
-                role: ['(import)'],
-                location: ['(import)'],
-                event: '(import)',
-                logic: [],
-                causality: '',
+                structured_kv: {
+                  time_anchor: new Date().toISOString(),
+                  role: ['(import)'],
+                  location: ['(import)'],
+                  event: '(import)',
+                  logic: [],
+                  causality: '',
+                },
               },
             ],
           },

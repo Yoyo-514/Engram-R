@@ -1,8 +1,8 @@
 import { get } from '@/config/settings';
 import { Logger } from '@/core/logger';
+import { regexProcessor } from '@/core/regex';
 import { getTavernHelper } from '@/core/utils';
 import { summarizerService } from '@/modules/memory';
-import { regexProcessor } from '@/modules/workflow/steps';
 import { useMemoryStore } from '@/state/memoryStore';
 
 import { getSTContext, type RawSTChatMessage } from '../core/context';

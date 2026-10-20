@@ -1,5 +1,6 @@
 import { requestOutputReview } from '@/core/events/OutputReview';
 import { Logger, LogModule } from '@/core/logger';
+import { regexProcessor } from '@/core/regex';
 import { parseJson } from '@/core/utils/JsonParser';
 import { requestCompletion, type CompletionSignal } from '@/modules/llm/Completion';
 import { buildPrompt } from '@/modules/llm/PromptBuilder';
@@ -10,7 +11,6 @@ import {
   type EntitySaveResult,
 } from '@/modules/memory/EntityStore';
 import { fetchMemoryContext, type MemoryContext } from '@/modules/memory/MemoryContext';
-import { regexProcessor } from '@/modules/workflow/steps/text/RegexProcessor';
 import { useMemoryStore } from '@/state/memoryStore';
 import type { EntityNode } from '@/types/graph';
 import type { PromptCategory } from '@/types/prompt';

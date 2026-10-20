@@ -6,7 +6,7 @@ import type { FC } from 'react';
  * RegexRuleForm - 正则规则编辑表单
  */
 import { REGEX_SCOPE_OPTIONS } from '@/config/regex/defaults';
-import { RegexProcessor } from '@/modules/workflow/steps';
+import { RegexProcessor } from '@/core/regex';
 import type { RegexRule } from '@/types/regex';
 
 interface RegexRuleFormProps {

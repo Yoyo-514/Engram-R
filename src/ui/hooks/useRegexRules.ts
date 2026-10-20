@@ -9,7 +9,7 @@ import {
   getRegexRules as getSettingsRegexRules,
   setRegexRules as setSettingsRegexRules,
 } from '@/config/settings';
-import { regexProcessor } from '@/modules/workflow';
+import { regexProcessor } from '@/core/regex';
 import type { RegexRule } from '@/types/regex';
 
 export interface UseRegexRulesReturn {

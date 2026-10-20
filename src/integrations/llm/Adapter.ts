@@ -10,7 +10,7 @@
 import { getSettings } from '@/config/settings';
 import { Logger } from '@/core/logger';
 import { getTavernHelper, yieldToMainThread } from '@/core/utils';
-import { regexProcessor } from '@/modules/workflow';
+import { regexProcessor } from '@/core/regex';
 import type { LLMPreset } from '@/types/llm';
 
 const MODULE = 'LLMAdapter';

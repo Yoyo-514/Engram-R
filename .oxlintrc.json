@@ -31,7 +31,7 @@
       "warn",
       {
         "allowAfterThis": true,
-        "allow": ["_engram_processed", "_engram_internal", "__COMMIT_HASH__", "_recallWeight"]
+        "allow": ["_engram_processed", "_engram_internal", "__COMMIT_HASH__", "_recallWeight", "_original"]
       }
     ],
     "typescript/consistent-type-imports": "error",

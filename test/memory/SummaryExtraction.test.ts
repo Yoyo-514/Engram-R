@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { requestOutputReview } from '@/core/events/OutputReview';
 import type { ReviewResult } from '@/core/events/ReviewService';
+import { stopGeneration } from '@/integrations/tavern/generation';
 import { requestCompletion } from '@/modules/llm/Completion';
 import { buildPrompt } from '@/modules/llm/PromptBuilder';
 import { saveEvents } from '@/modules/memory/EventSave';
 import { fetchMemoryContext } from '@/modules/memory/MemoryContext';
 import { extractSummary } from '@/modules/memory/SummaryExtraction';
-import { StopGeneration } from '@/modules/workflow/steps/execution/StopGeneration';
 import { notificationService } from '@/ui/services/NotificationService';
 
 vi.mock('@/core/logger', async () => ({
@@ -37,11 +37,11 @@ vi.mock('@/modules/memory/EventSave', () => ({
 vi.mock('@/modules/memory/MemoryContext', () => ({
   fetchMemoryContext: vi.fn<(...args: unknown[]) => Promise<unknown>>(),
 }));
-vi.mock('@/modules/workflow/steps/text/RegexProcessor', () => ({
+vi.mock('@/core/regex', () => ({
   regexProcessor: { process: vi.fn<(content: string) => string>((content) => content) },
 }));
-vi.mock('@/modules/workflow/steps/execution/StopGeneration', () => ({
-  StopGeneration: { abort: vi.fn<(...args: unknown[]) => Promise<void>>() },
+vi.mock('@/integrations/tavern/generation', () => ({
+  stopGeneration: vi.fn<(...args: unknown[]) => Promise<void>>(),
 }));
 
 const memory = {
@@ -97,11 +97,11 @@ describe('剧情总结链', () => {
 
   it('手动总结先中止当前生成，自动总结不中止', async () => {
     await extractSummary(options({ previewEnabled: false }));
-    expect(StopGeneration.abort).not.toHaveBeenCalled();
+    expect(stopGeneration).not.toHaveBeenCalled();
 
     const signal = { cancelled: false };
     await extractSummary(options({ previewEnabled: false, manual: true, signal }));
-    expect(StopGeneration.abort).toHaveBeenCalledExactlyOnceWith(signal);
+    expect(stopGeneration).toHaveBeenCalledExactlyOnceWith(signal);
   });
 
   it('确认后保存审阅文本并返回编辑后的内容', async () => {
