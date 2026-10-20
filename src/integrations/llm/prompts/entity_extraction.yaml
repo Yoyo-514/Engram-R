@@ -116,8 +116,7 @@ systemPrompt: |
 
       路径约定:
         - 新实体: { op: "add", path: "/entities/{实体名}", value: {完整实体对象} }
-        - 更新属性: { op: "replace",
-        path: "/entities/{实体名}/profile/{属性}", value: 新值 }
+        - 更新属性: { op: "replace", path: "/entities/{实体名}/profile/{属性}", value: 新值 }
         - 删除属性: { op: "remove", path: "/entities/{实体名}/profile/{属性}" }
         - 添加别名: { op: "add", path: "/entities/{实体名}/aliases/-", value: "新别名" }
 
@@ -132,8 +131,7 @@ systemPrompt: |
         场景: A 是新人物，B 已存在但受伤了。
         输出:
           patches:
-            - { op: "add", path: "/entities/A",
-            value: { type: "char", profile: {...} } }
+            - { op: "add", path: "/entities/A", value: { type: "char", profile: {...} } }
             - { op: "replace", path: "/entities/B/profile/status", value: "受伤" }
     </update_strategy>
 
