@@ -133,17 +133,6 @@ describe('剧情总结链', () => {
     expect(result.content).toBe('final');
   });
 
-  it('填充正文时跳过落库', async () => {
-    vi.mocked(requestOutputReview).mockResolvedValueOnce(
-      reviewResult({ action: 'fill', content: '人工补充' })
-    );
-
-    const result = await extractSummary(options());
-
-    expect(saveEvents).not.toHaveBeenCalled();
-    expect(result.content).toBe('{"events":[]}');
-  });
-
   it('取消时终止并提示', async () => {
     vi.mocked(requestOutputReview).mockResolvedValueOnce(reviewResult({ action: 'cancel' }));
 

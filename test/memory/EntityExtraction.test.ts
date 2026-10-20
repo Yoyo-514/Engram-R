@@ -148,23 +148,6 @@ describe('实体提取链', () => {
     });
   });
 
-  it('填充正文时跳过落库', async () => {
-    vi.mocked(requestOutputReview).mockResolvedValueOnce(
-      reviewResult({ action: 'fill', content: '人工补充的实体' })
-    );
-
-    const result = await extractEntities(options());
-
-    expect(result).toEqual({ newEntities: [], updatedEntities: [], conflicts: [] });
-    expect(saveEntities).toHaveBeenCalledExactlyOnceWith(
-      { patches: [] },
-      {
-        dryRun: true,
-        rawExistingEntities,
-      }
-    );
-  });
-
   it('冲突实体被跳过并提示，其余结果继续提交', async () => {
     vi.mocked(saveEntities).mockImplementation(async (_content, saveOptions) =>
       saveOptions.dryRun

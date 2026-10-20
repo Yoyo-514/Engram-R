@@ -1,6 +1,6 @@
 import { engramEventBus } from './event-bus';
 
-export type ReviewAction = 'confirm' | 'fill' | 'reject' | 'reroll' | 'cancel';
+export type ReviewAction = 'confirm' | 'reject' | 'reroll' | 'cancel';
 
 export interface ReviewResult {
   action: ReviewAction;

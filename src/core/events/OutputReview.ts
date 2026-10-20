@@ -25,7 +25,7 @@ export async function requestOutputReview(
     options.title,
     options.description || `范围: ${range} | Token: ${tokenCount}`,
     content,
-    ['confirm', 'fill', 'reject', 'reroll', 'cancel'],
+    ['confirm', 'reject', 'reroll', 'cancel'],
     options.type ?? 'text',
     options.data
   );

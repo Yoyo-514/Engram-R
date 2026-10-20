@@ -1,6 +1,5 @@
 import {
   AlertTriangle,
-  ArrowDownToLine,
   Check,
   Layers,
   Minus,
@@ -170,21 +169,12 @@ const ReviewSession: FC<ReviewSessionProps> = ({ request, isActive, onFinish, fo
         createPortal(
           <div className="flex h-full w-full flex-col-reverse items-center justify-between gap-4 px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:flex-row sm:gap-0 sm:px-5 sm:py-4">
             <div className="flex w-full gap-2 sm:w-auto">
-              {showFeedbackInput ? (
+              {showFeedbackInput && (
                 <Button
                   label="返回"
                   onClick={() => setShowFeedbackInput(false)}
                   className="w-full sm:w-auto"
                 />
-              ) : (
-                request.actions?.includes('fill') && (
-                  <Button
-                    label="填充"
-                    icon={ArrowDownToLine}
-                    onClick={() => handleAction('fill')}
-                    className="w-full text-muted-foreground hover:text-foreground sm:w-auto"
-                  />
-                )
               )}
             </div>
             <div className="flex w-full gap-3 sm:w-auto">

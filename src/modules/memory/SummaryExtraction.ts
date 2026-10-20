@@ -81,12 +81,6 @@ export async function extractSummary(
       throw new Error('UserCancelled');
     }
 
-    if (review.action === 'fill') {
-      // 填充正文后跳过落库，与旧流程一致
-      Logger.info(LogModule.MEMORY_SUMMARY, '用户选择填充，跳过落库');
-      return { content: cleaned };
-    }
-
     if (review.action === 'reroll') {
       Logger.info(LogModule.MEMORY_SUMMARY, '用户选择重抽');
       previousOutput = '';

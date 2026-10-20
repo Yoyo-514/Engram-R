@@ -100,12 +100,6 @@ async function runOnce(options: EntityExtractionOptions): Promise<EntitySaveResu
       continue;
     }
 
-    if (review.action === 'fill') {
-      // 与旧流程一致：填充正文后不再落库。
-      Logger.info(LogModule.MEMORY_ENTITY, '用户选择填充，跳过落库');
-      return { newEntities: [], updatedEntities: [], conflicts: [] };
-    }
-
     return saveEntities(review.data ?? review.content, {
       dryRun: false,
       rawExistingEntities: options.rawExistingEntities,
