@@ -24,7 +24,6 @@ export default defineConfig(({ mode }) => ({
   css: {
     devSourcemap: true,
     preprocessorOptions: {
-      scss: {},
     },
   },
 

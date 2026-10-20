@@ -14,6 +14,7 @@ export enum LogModule {
   MEMORY_SUMMARY = 'Memory/Summary',
   MEMORY_ENTITY = 'Memory/Entity',
   MEMORY_TRIM = 'Memory/Trim',
+  MEMORY_STORE = 'Memory/Store',
 
   // ===== RAG 系统 =====
   RAG_EMBED = 'RAG/Embed',

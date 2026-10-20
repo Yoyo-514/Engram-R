@@ -16,6 +16,7 @@ import {
 import { useCallback, useRef, useState, useEffect } from 'react';
 import type { FC, ChangeEvent } from 'react';
 
+import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
 /**
  * BatchProcessingPanel - 批量处理面板
@@ -179,7 +180,7 @@ export const BatchProcessingPanel: FC = () => {
         const state = await chatManager.getState();
         setStartFloor((state.last_summarized_floor || 0) + 1);
       } catch (e) {
-        console.error('[BatchPanel] 获取初始楼层失败:', e);
+        Logger.error(LogModule.BATCH, '获取初始楼层失败:', e);
       }
     };
     void initFloors();
@@ -217,7 +218,7 @@ export const BatchProcessingPanel: FC = () => {
       setAnalysis(result);
       setEndFloor(result.endFloor);
     } catch (error) {
-      console.error('[BatchPanel] Analyze failed:', error);
+      Logger.error(LogModule.BATCH, 'Analyze failed:', error);
     } finally {
       setIsAnalyzing(false);
     }
@@ -261,7 +262,7 @@ export const BatchProcessingPanel: FC = () => {
         overlapSize,
       });
     } catch (e) {
-      console.error('Import failed', e);
+      Logger.error(LogModule.BATCH, 'Import failed', e);
       notificationService.error('导入失败', 'Engram Batch');
     } finally {
       setIsImporting(false);

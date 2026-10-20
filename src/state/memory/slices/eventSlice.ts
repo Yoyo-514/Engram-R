@@ -1,6 +1,7 @@
 import { Dexie } from 'dexie';
 import { type StateCreator } from 'zustand';
 
+import { Logger, LogModule } from '@/core/logger';
 import { generateShortUUID } from '@/core/utils';
 import { countWorldbookTokens } from '@/integrations/tavern';
 import type { EventNode } from '@/types/graph';
@@ -147,7 +148,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
       if (lines.length === 0) return '';
       return `<summary>\n${lines.join('\n\n')}\n</summary>`;
     } catch (e) {
-      console.error('[MemoryStore] Failed to get event summaries:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to get event summaries:', e);
       return '';
     }
   },
@@ -171,7 +172,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
         activeEventCount: activeEvents.length,
       };
     } catch (e) {
-      console.error('[MemoryStore] Failed to count event tokens:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to count event tokens:', e);
       return { totalTokens: 0, eventCount: 0, activeEventCount: 0 };
     }
   },
@@ -182,9 +183,9 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
     if (!db) return;
     try {
       await db.events.where('id').anyOf(eventIds).modify({ is_archived: true });
-      console.info(`[MemoryStore] Archived ${eventIds.length} events`);
+      Logger.info(LogModule.MEMORY_STORE, `[MemoryStore] Archived ${eventIds.length} events`);
     } catch (e) {
-      console.error('[MemoryStore] Failed to archive events:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to archive events:', e);
     }
   },
 
@@ -194,9 +195,12 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
     if (!db) return;
     try {
       await db.events.where('id').anyOf(eventIds).modify({ is_embedded: true });
-      console.info(`[MemoryStore] Marked ${eventIds.length} events as embedded`);
+      Logger.info(
+        LogModule.MEMORY_STORE,
+        `[MemoryStore] Marked ${eventIds.length} events as embedded`
+      );
     } catch (e) {
-      console.error('[MemoryStore] Failed to mark events as embedded:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to mark events as embedded:', e);
     }
   },
 
@@ -212,7 +216,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
       if (eligibleEvents.length <= keepRecentCount) return [];
       return eligibleEvents.slice(0, eligibleEvents.length - keepRecentCount);
     } catch (e) {
-      console.error('[MemoryStore] Failed to get events to merge:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to get events to merge:', e);
       return [];
     }
   },
@@ -224,9 +228,9 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
 
     try {
       await db.events.bulkDelete(eventIds);
-      console.info(`[MemoryStore] Deleted ${eventIds.length} events`);
+      Logger.info(LogModule.MEMORY_STORE, `[MemoryStore] Deleted ${eventIds.length} events`);
     } catch (e) {
-      console.error('[MemoryStore] Failed to delete events:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to delete events:', e);
       throw e;
     }
   },
@@ -239,9 +243,9 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
     try {
       const { id: _id, timestamp: _ts, ...safeUpdates } = updates;
       await db.events.update(eventId, safeUpdates);
-      console.info(`[MemoryStore] Updated event: ${eventId}`, safeUpdates);
+      Logger.info(LogModule.MEMORY_STORE, `[MemoryStore] Updated event: ${eventId}`, safeUpdates);
     } catch (e) {
-      console.error('[MemoryStore] Failed to update event:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to update event:', e);
       throw e;
     }
   },
@@ -258,9 +262,12 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
           await db.events.update(id, safeUpdates);
         }
       });
-      console.info(`[MemoryStore] Batch updated ${updatesList.length} events`);
+      Logger.info(
+        LogModule.MEMORY_STORE,
+        `[MemoryStore] Batch updated ${updatesList.length} events`
+      );
     } catch (e) {
-      console.error('[MemoryStore] Failed to batch update events:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to batch update events:', e);
       throw e;
     }
   },
@@ -276,10 +283,13 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
 
       const newLockState = !existing.is_locked;
       await db.events.update(eventId, { is_locked: newLockState });
-      console.log(`[MemoryStore] Toggled event lock: ${eventId} -> ${newLockState}`);
+      Logger.debug(
+        LogModule.MEMORY_STORE,
+        `[MemoryStore] Toggled event lock: ${eventId} -> ${newLockState}`
+      );
       return newLockState;
     } catch (e) {
-      console.error('[MemoryStore] Failed to toggle event lock:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to toggle event lock:', e);
       return false;
     }
   },
@@ -291,7 +301,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
     try {
       return await db.events.orderBy('timestamp').toArray();
     } catch (e) {
-      console.error('[MemoryStore] Failed to get all events:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to get all events:', e);
       return [];
     }
   },
@@ -310,7 +320,7 @@ export const createEventSlice: StateCreator<MemoryState, [], [], EventState> = (
       const summaries = archivedEvents.map((e) => e.summary).join('\n\n');
       return `<archived_summary>\n${summaries}\n</archived_summary>`;
     } catch (e) {
-      console.error('[MemoryStore] Failed to get archived event summaries:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to get archived event summaries:', e);
       return '';
     }
   },

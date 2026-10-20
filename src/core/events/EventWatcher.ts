@@ -9,6 +9,7 @@
  * 基于 tavern/TavernEvents.ts 的 eventBus 进行封装
  */
 
+import { Logger, LogModule } from '@/core/logger';
 import { eventBus, events, type Unsubscribe } from '@/integrations/tavern';
 
 /** 监听回调类型 */
@@ -47,14 +48,14 @@ export function createEventWatcher() {
 
     cbs.forEach((cb) => {
       Promise.resolve(cb()).catch((e) => {
-        console.error(`[EventWatcher] Callback error for ${eventKey}:`, e);
+        Logger.error(LogModule.EVENTS, `[EventWatcher] Callback error for ${eventKey}:`, e);
       });
     });
   };
 
   const start = (): void => {
     if (unsubscribers.length > 0) {
-      console.info('[EventWatcher] Already started.');
+      Logger.info(LogModule.EVENTS, 'Already started.');
       return;
     }
 
@@ -65,13 +66,13 @@ export function createEventWatcher() {
       eventBus.on(events.GENERATION_ENDED, () => emit('generationEnded'))
     );
 
-    console.info('[EventWatcher] Started, listening to core events.');
+    Logger.info(LogModule.EVENTS, 'Started, listening to core events.');
   };
 
   const stop = (): void => {
     unsubscribers.forEach((unsub) => unsub());
     unsubscribers = [];
-    console.info('[EventWatcher] Stopped.');
+    Logger.info(LogModule.EVENTS, 'Stopped.');
   };
 
   const on = (event: WatcherEvent, callback: Callback): Unsubscribe => {

@@ -14,6 +14,7 @@ import {
 import { useEffect, useState, memo } from 'react';
 import type { FC } from 'react';
 
+import { Logger, LogModule } from '@/core/logger';
 /**
  * ModelLog - 模型日志可视化组件
  *
@@ -94,7 +95,7 @@ const LogCard: FC<{
           setCalcRecvTokens(t);
         }
       } catch (e) {
-        console.warn('Failed to count tokens', e);
+        Logger.warn(LogModule.LLM, 'Failed to count tokens', e);
       }
     };
     void countTokens();

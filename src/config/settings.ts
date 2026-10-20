@@ -1,5 +1,3 @@
-import type { JsonObject } from 'type-fest';
-
 import { getDefaultRuntimeSettings } from '@/config/api/defaults';
 import { DEFAULT_SUMMARIZER_CONFIG, DEFAULT_TRIMMER_CONFIG } from '@/config/memory/defaults';
 import { getBuiltInTemplateById } from '@/config/prompt/templates';
@@ -15,6 +13,9 @@ import type { RegexRule } from '@/types/regex';
 type SettingsCapableContext = Omit<TavernContext, 'extensionSettings'> & {
   extensionSettings?: Record<string, EngramSettings | undefined>;
 };
+
+type JsonValue = string | number | boolean | null | JsonValue[] | JsonObject;
+type JsonObject = { [key: string]: JsonValue };
 
 export interface EngramSettings {
   presets: JsonObject;

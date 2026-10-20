@@ -11,6 +11,7 @@ import {
 import { useCallback, useEffect, useState } from 'react';
 import type { FC, ElementType } from 'react';
 
+import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
 import {
   entityBuilder,
@@ -92,7 +93,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       setEditSummarizedFloor(currentStatus.lastSummarizedFloor);
       setEditExtractedFloor(entityStatus.lastExtractedFloor || 0);
     } catch (error) {
-      console.error('加载 Summarizer 状态失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '加载 Summarizer 状态失败:', error);
     }
   }, []);
 
@@ -109,7 +110,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       await loadStatus();
       notificationService.success(`总结指针已更新至 ${editSummarizedFloor}`, 'Engram');
     } catch (error) {
-      console.error('修改总结指针失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '修改总结指针失败:', error);
     }
   };
 
@@ -119,7 +120,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       await loadStatus();
       notificationService.success(`提取指针已更新至 ${editExtractedFloor}`, 'Engram');
     } catch (error) {
-      console.error('修改提取指针失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '修改提取指针失败:', error);
     }
   };
 
@@ -128,7 +129,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       summarizerService.start();
       await loadStatus();
     } catch (error) {
-      console.error('启动失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '启动失败:', error);
     }
   };
 
@@ -137,7 +138,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       summarizerService.stop();
       await loadStatus();
     } catch (error) {
-      console.error('停止失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '停止失败:', error);
     }
   };
 
@@ -147,7 +148,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       await summarizerService.triggerSummary(true);
       await loadStatus();
     } catch (error) {
-      console.error('触发失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '触发失败:', error);
     } finally {
       setLoading(false);
     }
@@ -161,7 +162,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       await summarizerService.resetProgress();
       await loadStatus();
     } catch (error) {
-      console.error('重置失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '重置失败:', error);
     } finally {
       setLoading(false);
     }
@@ -192,7 +193,7 @@ export const SummaryPanel: FC<SummaryPanelProps> = ({
       await eventTrimmer.trim(true);
       await loadStatus();
     } catch (error) {
-      console.error('精简失败:', error);
+      Logger.error(LogModule.MEMORY_SUMMARY, '精简失败:', error);
     } finally {
       setTrimLoading(false);
     }

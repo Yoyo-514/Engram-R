@@ -1,7 +1,0 @@
-dist/
-coverage/
-node_modules/
-docs/reference/
-*.log
-pnpm-lock.yaml
-@types/

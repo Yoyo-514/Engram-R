@@ -11,5 +11,9 @@
   "endOfLine": "lf",
   "sortImports": {},
   "experimentalSortPackageJson": false,
-  "sortTailwindcss": {}
+  "sortTailwindcss": {},
+  "ignorePatterns": [
+    "dist/**",
+    "coverage/**"
+  ]
 }

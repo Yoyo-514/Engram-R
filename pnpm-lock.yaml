@@ -81,18 +81,12 @@ importers:
       postcss-minify:
         specifier: ^1.2.0
         version: 1.2.0(postcss@8.5.26)
-      sass:
-        specifier: ^1.89.0
-        version: 1.103.1
       tailwindcss:
         specifier: ^3.4.17
         version: 3.4.19(yaml@2.9.0)
       terser:
         specifier: ^5.46.1
         version: 5.50.0
-      type-fest:
-        specifier: ^4.41.0
-        version: 4.41.0
       typescript:
         specifier: ^5.7.3
         version: 5.9.3
@@ -1692,10 +1686,6 @@ packages:
   tslib@2.8.1:
     resolution: {integrity: sha512-oJFu94HQb+KVduSUQL7wnpmqnfmLsOA/nAh6b6EH0wCEoK0/mPeXU6c3wKDV83MkOuHPRHtSXKKU99IBazS/2w==}
 
-  type-fest@4.41.0:
-    resolution: {integrity: sha512-TeTSQ6H5YHvpqVwBRcnLDCBnDOHWYu7IvGbHT6N8AOymcr9PJGjc1GTtiWZTYg0NCgYwvnYWEkVChQAr9bjfwA==}
-    engines: {node: '>=16'}
-
   typescript@5.9.3:
     resolution: {integrity: sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==}
     engines: {node: '>=14.17'}
@@ -2612,6 +2602,7 @@ snapshots:
   chokidar@5.0.0:
     dependencies:
       readdirp: 5.1.1
+    optional: true
 
   commander@2.20.3: {}
 
@@ -2743,7 +2734,8 @@ snapshots:
   immer@10.2.0:
     optional: true
 
-  immutable@5.1.9: {}
+  immutable@5.1.9:
+    optional: true
 
   is-binary-path@2.1.0:
     dependencies:
@@ -3015,7 +3007,8 @@ snapshots:
     dependencies:
       picomatch: 2.3.2
 
-  readdirp@5.1.1: {}
+  readdirp@5.1.1:
+    optional: true
 
   resolve@1.22.12:
     dependencies:
@@ -3069,6 +3062,7 @@ snapshots:
       source-map-js: 1.2.1
     optionalDependencies:
       '@parcel/watcher': 2.6.0
+    optional: true
 
   scheduler@0.27.0: {}
 
@@ -3179,8 +3173,6 @@ snapshots:
 
   tslib@2.8.1:
     optional: true
-
-  type-fest@4.41.0: {}
 
   typescript@5.9.3: {}
 

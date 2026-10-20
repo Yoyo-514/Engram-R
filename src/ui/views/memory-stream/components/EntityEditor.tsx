@@ -12,6 +12,7 @@ import {
 import type { CSSProperties } from 'react';
 
 import type { EntityType } from '@/config/memory/defaults';
+import { Logger, LogModule } from '@/core/logger';
 import { stringifyYaml } from '@/core/utils';
 import { getErrorMessage } from '@/core/utils/error';
 /**
@@ -123,7 +124,7 @@ export const EntityEditor = forwardRef<EntityEditorHandle, EntityEditorProps>(
       try {
         parsedProfile = JSON.parse(profileJson);
       } catch (e) {
-        console.error('JSON Parse Error during sync', e);
+        Logger.error(LogModule.MEMORY_ENTITY, 'JSON Parse Error during sync', e);
         // 🐛 P0 Bugfix: 如果 JSON 有语法错误，直接阻断提交，绝不使用 `{}` 覆盖原数据
         return;
       }

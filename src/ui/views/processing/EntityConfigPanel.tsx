@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import type { FC } from 'react';
 
 import { engramEventBus } from '@/core/events';
+import { Logger, LogModule } from '@/core/logger';
 import { entityBuilder } from '@/modules/memory/EntityExtractor';
 /**
  * EntityConfigPanel - 实体提取配置面板
@@ -43,7 +44,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
       const s = (await entityBuilder.getStatus()) as EntityStatus;
       setStatus(s);
     } catch (e) {
-      console.error('[EntityConfigPanel] Failed to load status:', e);
+      Logger.error(LogModule.MEMORY_ENTITY, 'Failed to load status:', e);
     }
   }, []);
 
@@ -99,7 +100,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
         await loadStatus();
       }
     } catch (e) {
-      console.error('[EntityConfigPanel] Manual extraction failed:', e);
+      Logger.error(LogModule.MEMORY_ENTITY, 'Manual extraction failed:', e);
     } finally {
       setIsLoading(false);
     }
@@ -112,7 +113,7 @@ export const EntityConfigPanel: FC<EntityConfigPanelProps> = ({ config, onChange
       await entityBuilder.checkAndArchiveEntities();
       // loadStatus() 已经由 EventBus 监听器处理，不再需要手动调用
     } catch (e) {
-      console.error('[EntityConfigPanel] Manual archiving failed:', e);
+      Logger.error(LogModule.MEMORY_ENTITY, 'Manual archiving failed:', e);
     } finally {
       setIsLoading(false);
     }

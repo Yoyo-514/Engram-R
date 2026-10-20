@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { EntityType } from '@/config/memory/defaults';
 import { get } from '@/config/settings';
 import { engramEventBus } from '@/core/events/event-bus';
+import { Logger, LogModule } from '@/core/logger';
 import { refreshEngramCache, getCurrentChatId } from '@/integrations/tavern';
 import { embeddingService } from '@/modules/rag/embedding/EmbeddingService';
 import { recallCache } from '@/modules/rag/retrieval/RecallCache';
@@ -110,7 +111,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       setEvents(allEvents);
       refreshActiveState();
     } catch (error) {
-      console.error('[MemoryStream] Failed to load events:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to load events:', error);
     } finally {
       setIsLoading(false);
     }
@@ -122,7 +123,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       const allEntities = await store.getAllEntities();
       setEntities(allEntities);
     } catch (error) {
-      console.error('[MemoryStream] Failed to load entities:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to load entities:', error);
     }
   }, [store]);
 
@@ -274,7 +275,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
 
         notificationService.success(isArchived ? '实体已归档' : '实体已恢复活跃', 'MemoryStream');
       } catch (error) {
-        console.error('[MemoryStream] Archive toggle failed:', error);
+        Logger.error(LogModule.MEMORY_STORE, 'Archive toggle failed:', error);
         notificationService.error('调整归档状态失败', 'MemoryStream');
       }
     },
@@ -288,7 +289,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
         setEntities((prev) => prev.map((e) => (e.id === id ? { ...e, is_locked: isLocked } : e)));
         notificationService.success(isLocked ? '实体已锁定' : '实体已解锁', 'MemoryStream');
       } catch (error) {
-        console.error('[MemoryStream] Entity lock toggle failed:', error);
+        Logger.error(LogModule.MEMORY_STORE, 'Entity lock toggle failed:', error);
         notificationService.error('调整锁定状态失败', 'MemoryStream');
       }
     },
@@ -302,7 +303,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
         setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, is_locked: isLocked } : e)));
         notificationService.success(isLocked ? '事件已锁定' : '事件已解锁', 'MemoryStream');
       } catch (error) {
-        console.error('[MemoryStream] Event lock toggle failed:', error);
+        Logger.error(LogModule.MEMORY_STORE, 'Event lock toggle failed:', error);
         notificationService.error('调整锁定状态失败', 'MemoryStream');
       }
     },
@@ -316,7 +317,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
         setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, is_archived: isArchived } : e)));
         notificationService.success(isArchived ? '事件已归档' : '事件已从归档恢复', 'MemoryStream');
       } catch (error) {
-        console.error('[MemoryStream] Event archive toggle failed:', error);
+        Logger.error(LogModule.MEMORY_STORE, 'Event archive toggle failed:', error);
         notificationService.error('调整归档状态失败', 'MemoryStream');
       }
     },
@@ -352,7 +353,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       setPendingChanges(new Map());
       setPendingEntityChanges(new Map());
     } catch (error) {
-      console.error('[MemoryStream] Batch save failed:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Batch save failed:', error);
       notificationService.error('保存过程中发生严重错误', 'MemoryStream');
     }
   }, [pendingChanges, pendingEntityChanges, store, loadEvents, loadEntities]);
@@ -443,13 +444,16 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       }
 
       await embeddingService.reembedAllEvents((current, total, errors) => {
-        console.info(`[MemoryStream] Reembedding: ${current}/${total}, errors: ${errors}`);
+        Logger.info(
+          LogModule.MEMORY_STORE,
+          `[MemoryStream] Reembedding: ${current}/${total}, errors: ${errors}`
+        );
       });
 
       await loadEvents();
       notificationService.success('重嵌完工！', 'MemoryStream');
     } catch (error) {
-      console.error('[MemoryStream] Reembed failed:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Reembed failed:', error);
       notificationService.error(
         `重嵌失败: ${error instanceof Error ? error.message : '未知错误'}`,
         'MemoryStream'
@@ -532,7 +536,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       }
       setShowImportModal(true);
     } catch (error) {
-      console.error('[MemoryStream] Failed to get database names:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to get database names:', error);
       notificationService.error('获取历史数据库列表失败', 'MemoryStream');
     }
   }, [hasChanges]);
@@ -560,7 +564,7 @@ export function useMemoryStream(initialTab: ViewTab = 'list') {
       await loadEvents();
       await loadEntities();
     } catch (error) {
-      console.error('[MemoryStream] Import failed:', error);
+      Logger.error(LogModule.MEMORY_STORE, 'Import failed:', error);
       notificationService.error(
         `导入失败: ${error instanceof Error ? error.message : '未知错误'}`,
         'MemoryStream'

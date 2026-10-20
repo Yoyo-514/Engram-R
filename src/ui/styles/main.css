@@ -119,17 +119,6 @@
   box-shadow: none;
 }
 
-@layer components {
-  .engram-input,
-  .engram-select {
-    all: unset;
-    display: block;
-    box-sizing: border-box;
-    font-family: var(--font-sans);
-    width: 100%;
-  }
-}
-
 :where(.engram-app-root) :focus-visible {
   outline: 2px solid var(--ring);
   outline-offset: 2px;

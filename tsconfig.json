@@ -17,7 +17,7 @@
     "paths": {
       "@/*": ["./src/*"]
     },
-    "types": ["node", "jquery", "type-fest", "toastr"]
+    "types": ["node", "jquery", "toastr"]
   },
   "include": [
     "src/**/*",

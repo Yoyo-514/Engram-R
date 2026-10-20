@@ -1,5 +1,6 @@
 import { type StateCreator } from 'zustand';
 
+import { Logger, LogModule } from '@/core/logger';
 import { chatManager } from '@/data/ChatManager';
 import { deleteDatabase, getDbForChat, tryGetDbForChat, type ChatDatabase } from '@/data/db';
 import { getCurrentChatId } from '@/integrations/tavern';
@@ -60,12 +61,12 @@ export const createCoreSlice: StateCreator<MemoryState, [], [], CoreState> = (se
   initChat: async () => {
     const chatId = getCurrentChatId();
     if (!chatId) {
-      console.warn('[MemoryStore] No chat_id available');
+      Logger.warn(LogModule.MEMORY_STORE, 'No chat_id available');
       return null;
     }
 
     if (chatId !== get().currentChatId) {
-      console.debug(`[MemoryStore] Switching to chat: ${chatId}`);
+      Logger.debug(LogModule.MEMORY_STORE, `[MemoryStore] Switching to chat: ${chatId}`);
       const state = await chatManager.getState();
       set({
         currentChatId: chatId,
@@ -100,7 +101,7 @@ export const createCoreSlice: StateCreator<MemoryState, [], [], CoreState> = (se
       // Try to initialize it if missing
       db = await get().initChat();
       if (!db) {
-        console.warn('[MemoryStore] No database available to clear');
+        Logger.warn(LogModule.MEMORY_STORE, 'No database available to clear');
         return;
       }
     }
@@ -115,9 +116,9 @@ export const createCoreSlice: StateCreator<MemoryState, [], [], CoreState> = (se
         lastSummarizedFloor: 0,
         recentEvents: [],
       });
-      console.info('[MemoryStore] Database cleared successfully');
+      Logger.info(LogModule.MEMORY_STORE, 'Database cleared successfully');
     } catch (e) {
-      console.error('[MemoryStore] Failed to clear database:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to clear database:', e);
       throw e;
     }
   },
@@ -131,9 +132,9 @@ export const createCoreSlice: StateCreator<MemoryState, [], [], CoreState> = (se
     try {
       await deleteDatabase(chatId);
       get().reset();
-      console.info('[MemoryStore] Database deleted successfully');
+      Logger.info(LogModule.MEMORY_STORE, 'Database deleted successfully');
     } catch (e) {
-      console.error('[MemoryStore] Failed to delete database:', e);
+      Logger.error(LogModule.MEMORY_STORE, 'Failed to delete database:', e);
       throw e;
     }
   },

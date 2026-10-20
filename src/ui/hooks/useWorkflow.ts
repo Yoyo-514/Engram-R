@@ -4,6 +4,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 
+import { Logger, LogModule } from '@/core/logger';
 import { batchProcessor } from '@/modules/batch';
 import type { BatchQueue, BatchTaskStatus } from '@/types/batch';
 
@@ -82,9 +83,7 @@ export function useWorkflow(): UseWorkflowReturn {
   const start = useCallback(() => {
     // 架构下不再由统一的 start() 入口承接所有任务，而是通过 BatchProcessor 暴露的业务接口。
     // UI 的 start 按钮目前在设计上由业务面板自己调用（如 startHistory）
-    console.warn(
-      'Generic start() is deprecated. Please use BatchProcessor.startHistory() or importText().'
-    );
+    Logger.warn(LogModule.BATCH, 'Generic start() 已废弃，请使用 startHistory() 或 importText()');
   }, []);
   const pause = useCallback(() => batchProcessor.pause(), []);
   const resume = useCallback(() => batchProcessor.resume(), []);
