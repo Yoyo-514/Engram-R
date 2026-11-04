@@ -13,7 +13,7 @@ interface SidebarProps {
   onClose: () => void;
 }
 
-/** 桌面侧栏与移动抽屉使用同一份导航内容，通过响应式样式切换布局。 */
+/** 桌面侧栏与移动抽屉共用导航；隐藏仅限移动端，避开酒馆全局 .hidden 的 visibility 规则。 */
 export const Sidebar: FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, onClose }) => {
   const activePage = activeTab.split(':')[0];
 
@@ -26,9 +26,10 @@ export const Sidebar: FC<SidebarProps> = ({ activeTab, onNavigate, isOpen, onClo
           aria-label="关闭导航"
         />
       )}
+      {/* 移动抽屉使用实色背景，避免下层遮罩透过面板；桌面保留半透明材质。 */}
       <aside
         id="engram-navigation"
-        className={`fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r border-border/50 bg-sidebar/70 p-4 shadow-xl backdrop-blur-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:px-2 md:shadow-none ${isOpen ? 'flex' : 'hidden'}`}
+        className={`fixed inset-y-0 left-0 z-[70] w-64 max-w-[80vw] shrink-0 flex-col border-r border-border/50 bg-sidebar p-4 shadow-xl backdrop-blur-xl md:static md:z-40 md:flex md:w-40 md:max-w-none md:bg-sidebar/70 md:px-2 md:shadow-none ${isOpen ? 'flex' : 'max-md:hidden'}`}
       >
         <div className="mb-4 flex items-center justify-between md:hidden">
           <span className="font-semibold text-sidebar-foreground">导航</span>
