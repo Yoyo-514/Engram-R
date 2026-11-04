@@ -26,7 +26,7 @@ export const Header: FC<HeaderProps> = ({ isMenuOpen, onToggleMenu, onClose }) =
     </div>
     <p className="min-w-0 flex-1 text-xs text-muted-foreground">需要酒馆助手 Tavern Helper</p>
     <button
-      className="rounded-md p-2 text-muted-foreground transition-colors hover:bg-destructive hover:text-destructive-foreground"
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
       onClick={onClose}
       aria-label="关闭扩展"
       title="关闭扩展"

@@ -37,7 +37,9 @@ export const AppLayout: FC<AppLayoutProps> = ({ children, activeTab, onNavigate,
         </div>
 
         <main className="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden bg-transparent">
-          <div className="cq h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8">
+          <div
+            className={`cq h-full w-full flex-1 overflow-y-auto overflow-x-hidden scroll-smooth px-4 pb-8 ${activeTab.split(':')[0] === 'devlog' ? 'pt-1' : 'pt-2 md:pt-3'}`}
+          >
             <div className="mx-auto h-full max-w-6xl">{children}</div>
           </div>
         </main>

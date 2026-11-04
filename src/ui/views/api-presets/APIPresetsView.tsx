@@ -13,18 +13,16 @@ import type { ElementType, FC } from 'react';
 import { useConfigStore } from '@/state/configStore';
 import type { CustomMacro } from '@/types/macro';
 // Components
-import { PageTitle } from '@/ui/components/display/PageTitle';
 import { EmptyState } from '@/ui/components/feedback/EmptyState';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { MasterDetailLayout } from '@/ui/components/layout/MasterDetailLayout';
 import { MobileFullscreenForm } from '@/ui/components/layout/MobileFullscreenForm'; // Added import
 import { TabPills } from '@/ui/components/layout/TabPills';
 import { useResponsive } from '@/ui/hooks/useResponsive';
+import { notificationService } from '@/ui/services/NotificationService';
 
 // Hooks
 import { useLLMPresets } from '../../hooks/useLLMPresets';
-import { notificationService } from '@/ui/services/NotificationService';
-
 import { useRegexRules } from '../../hooks/useRegexRules';
 import { useWorldInfo } from '../../hooks/useWorldInfo';
 import { LLMPresetForm } from './models/LLMPresetForm';
@@ -51,14 +49,6 @@ const MODEL_SUB_TABS: { id: ModelSubTabType; label: string; icon: ElementType }[
   { id: 'rerank', label: 'Rerank', icon: Layers },
 ];
 
-// Tab 信息映射
-const TAB_INFO: Record<MainTabType, { title: string; subtitle: string }> = {
-  model: { title: '模型配置', subtitle: '管理 LLM、向量模型和重排序模型参数' },
-  prompt: { title: '提示词模板', subtitle: '管理系统提示词、剧情推进和自定义宏' },
-  regex: { title: '正则规则', subtitle: '配置基于正则的文本替换和处理规则' },
-  worldbook: { title: '世界书', subtitle: '管理世界观设定和通过关键词触发的条目' },
-};
-
 interface APIPresetsProps {
   onNavigate?: (path: string) => void;
   initialTab?: MainTabType;
@@ -77,7 +67,6 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
 
   // Tab 状态
   const [mainTab, setMainTab] = useState<MainTabType>(resolvedMainTab);
-  const currentInfo = TAB_INFO[mainTab];
   const [modelSubTab, setModelSubTab] = useState<ModelSubTabType>(
     resolvedMainTab === 'model' && MODEL_SUB_TAB_IDS.includes(initialNestedTab as ModelSubTabType)
       ? (initialNestedTab as ModelSubTabType)
@@ -332,12 +321,6 @@ export const APIPresets: FC<APIPresetsProps> = ({ initialTab, initialTabPath }) 
   // =============== 主视图 ===============
   return (
     <div className="animate-in fade-in flex h-full flex-col">
-      <PageTitle
-        title={currentInfo.title}
-        subtitle={currentInfo.subtitle}
-        className="mb-2"
-      />
-
       {/* 顶部标签栏 - 自动 Portal 到 Layout Header */}
       <LayoutTabs
         tabs={[

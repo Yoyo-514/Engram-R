@@ -18,7 +18,7 @@
   --destructive: #8c4351;
   --destructive-foreground: #ffffff;
   --border: #cbccd1;
-  --input: #ffffff;
+  --input: rgb(255 255 255 / 0.72);
   --ring: #2959aa;
   --heading: #5a3e8e;
   --label: #0f4b6e;

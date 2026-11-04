@@ -2,8 +2,6 @@ import { List, Save, Trash2, Users } from 'lucide-react';
 import { useRef } from 'react';
 import type { FC } from 'react';
 
-import { PageTitle } from '@/ui/components/display/PageTitle';
-import { Divider } from '@/ui/components/layout/Divider';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { MasterDetailLayout } from '@/ui/components/layout/MasterDetailLayout';
 import { MobileFullscreenForm } from '@/ui/components/layout/MobileFullscreenForm';
@@ -25,11 +23,6 @@ const VIEW_TABS = [
   { id: 'entities', label: '实体', icon: <Users size={14} /> },
 ];
 
-const TAB_INFO = {
-  list: { title: '时间线', subtitle: '查看和管理记忆事件' },
-  entities: { title: '实体列表', subtitle: '查看和管理提取的实体' },
-};
-
 interface MemoryStreamProps {
   initialTab?: 'list' | 'entities';
 }
@@ -37,8 +30,6 @@ interface MemoryStreamProps {
 export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
   const ms = useMemoryStream(initialTab);
   const editorRef = useRef<EventEditorHandle>(null);
-
-  const currentInfo = TAB_INFO[ms.viewTab];
 
   // =============== 移动端独立渲染 (顶层覆盖) ===============
   if (ms.isMobile && ms.viewMode === 'edit') {
@@ -117,13 +108,7 @@ export const MemoryStream: FC<MemoryStreamProps> = ({ initialTab }) => {
   }
 
   return (
-    <div className="animate-in fade-in absolute inset-0 flex flex-col overflow-hidden p-4 md:p-6">
-      <PageTitle
-        title={currentInfo.title}
-        subtitle={currentInfo.subtitle}
-      />
-      <Divider className="mb-6" />
-
+    <div className="animate-in fade-in absolute inset-0 flex flex-col overflow-hidden px-4 pb-4 pt-2 md:px-6 md:pb-6 md:pt-3">
       {/* Tab 导航 */}
       <LayoutTabs
         tabs={VIEW_TABS}

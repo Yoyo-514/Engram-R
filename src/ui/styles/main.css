@@ -209,6 +209,16 @@
   box-shadow: none;
 }
 
+/* 酒馆主题可能用 !important 填充文本框；仅在扩展内固定输入底色。 */
+.engram-app-root :is(input[type='text'], input[type='number'], input:not([type]), textarea) {
+  background-color: var(--input) !important;
+}
+
+/* 复合搜索框由外层提供底色，内部输入仍遵循透明背景契约。 */
+.engram-app-root :is(input, textarea).bg-transparent {
+  background-color: transparent !important;
+}
+
 .engram-app-root select option,
 .engram-app-root select option:not(:checked) {
   background: var(--background);

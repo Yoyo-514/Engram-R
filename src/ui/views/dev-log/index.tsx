@@ -26,7 +26,6 @@ import type { LogLevel } from '@/config/logger/defaults';
 import { LogLevelConfig } from '@/config/logger/presentation';
 import { Logger, ALL_MODULES } from '@/core/logger';
 import type { LogEntry } from '@/types/logger';
-import { PageTitle } from '@/ui/components/display/PageTitle';
 import { LayoutTabs } from '@/ui/components/layout/LayoutTabs';
 import { type Tab } from '@/ui/components/layout/TabPills';
 
@@ -50,13 +49,6 @@ const TABS: Tab[] = [
   { id: 'recall', label: '召回日志', icon: <Target size={14} /> },
 ];
 
-// Tab 信息映射
-const TAB_INFO: Record<TabType, { title: string; subtitle: string }> = {
-  runtime: { title: '运行日志', subtitle: '查看系统运行时日志' },
-  model: { title: '模型日志', subtitle: '查看 LLM 调用记录' },
-  recall: { title: '召回日志', subtitle: '查看 RAG 召回记录' },
-};
-
 // 模块列表自动生成（不再硬编码）
 const MODULES = ['ALL', ...ALL_MODULES];
 
@@ -76,7 +68,6 @@ interface DevLogProps {
 
 export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab || 'runtime');
-  const currentInfo = TAB_INFO[activeTab];
   // 初始化日志：直接用惰性初始化器读取存量日志，避免 effect 中同步 setState
   const [logs, setLogs] = useState<LogEntry[]>(() => Logger.getLogs());
   const [searchQuery, setSearchQuery] = useState('');
@@ -182,9 +173,6 @@ export const DevLog: FC<DevLogProps> = ({ initialTab }) => {
 
   return (
     <div className="flex h-full flex-col">
-      {/* 页面标题 - 统一样式 */}
-      <PageTitle title={currentInfo.title} subtitle={currentInfo.subtitle} className="mb-2" />
-
       {/* Tab 切换 - 使用 LayoutTabs */}
       <LayoutTabs
         tabs={TABS}
